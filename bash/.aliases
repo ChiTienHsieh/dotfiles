@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# =============================================================================
+# .aliases - Portable aliases and functions for any Unix system
+# =============================================================================
+# Machine-specific aliases (cd shortcuts, project paths) should go in
+# ~/.aliases.local which is NOT tracked in dotfiles.
+
+# -----------------------------------------------------------------------------
+# Navigation
+# -----------------------------------------------------------------------------
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+alias downloads="cd ~/Downloads"
+alias desktop="cd ~/Desktop"
+
+# -----------------------------------------------------------------------------
+# File listing
+# -----------------------------------------------------------------------------
+alias d="du -d1 -h | sort -h"           # Directory sizes, sorted
+alias lsh="ls -hl | sort -h"            # Files by size
+alias lsl="ls -lt"                      # Files by time (newest first)
+alias lsa="ls -a"                       # Show hidden files
+alias lla="ls -lGtra --color=auto"      # All files, detailed
+
+# -----------------------------------------------------------------------------
+# Utilities
+# -----------------------------------------------------------------------------
+alias vi="nvim"
+alias tree="tree -I '__pycache__|*.pyc|node_modules|.git'"
+alias search="find . -name"
+alias rlp="realpath"
+alias t="type"                          # Check what a command is
+
+# macOS specific
+alias pbc="pbcopy"                      # Copy to clipboard
+Textedit() { open -e "$@"; }            # Open in TextEdit
+
+# -----------------------------------------------------------------------------
+# File operations
+# -----------------------------------------------------------------------------
+trash() { mv -fv "$@" ~/.Trash/; }      # Move to Trash (macOS)
+bak() { cp -vr "$@" ".${@}.bak"; }      # Create backup with .bak suffix
+hide() { mv -v "$@" ".${@}"; }          # Hide file (prepend dot)
+
+# Find large files
+Find_files_bigger_than() {
+    local size="$1"
+    find . -type f -size "+${size}M" 2>/dev/null
+}
+
+# -----------------------------------------------------------------------------
+# Config file shortcuts
+# -----------------------------------------------------------------------------
+alias viprofile="vi ~/.bash_profile"
+alias srprofile="source ~/.bash_profile"
+alias vimrc="vi ~/.config/nvim/init.lua"
+alias prompt="vi ~/.bashPrompt"
+
+# -----------------------------------------------------------------------------
+# Smart alias creator with conflict detection and AI suggestions
+# -----------------------------------------------------------------------------
+# Requires: OPENAI_API_KEY in environment
+
+check_name_conflict() {
+    local name="$1"
+    if type "$name" >/dev/null 2>&1 || alias "$name" >/dev/null 2>&1; then
+        return 0  # Conflict exists
+    fi
+    return 1  # No conflict
+}
+
+suggest_alternative_name() {
+    local original_name="$1"
+    local conflicted_names="$2"
+
+    if [ -z "$OPENAI_API_KEY" ]; then
+        echo ""
+        return 1
+    fi
+
+    local prompt="I want to create a bash alias named '$original_name' but it conflicts with existing commands. These names are already taken: $conflicted_names. Please suggest 1 short alternative name (preferably 2-4 characters) that would be similar but not conflict. Reply with just the suggested name, nothing else."
+
+    local suggestion=$(curl -s -X POST \
+        "https://api.openai.com/v1/responses" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $OPENAI_API_KEY" \
+        -d "{
+            \"model\": \"gpt-4.1-nano-2025-04-14\",
+            \"input\": \"$prompt\"
+        }" | jq -r '.output[0].content[0].text' 2>/dev/null || echo "")
+
+    suggestion=$(echo "$suggestion" | xargs)
+    echo "$suggestion"
+}
+
+addali() {
+    local alias_name=""
+    local conflicted_names=""
+    local llm_calls=0
+    local max_llm_calls=5
+
+    read -p "Enter the alias name: " alias_name
+
+    if [ -z "$alias_name" ]; then
+        echo "Alias name cannot be empty!"
+        return 1
+    fi
+
+    local original_name="$alias_name"
+    conflicted_names="$alias_name"
+
+    while check_name_conflict "$alias_name"; do
+        echo "⚠️  '$alias_name' conflicts with an existing command/alias."
+
+        if [ $llm_calls -ge $max_llm_calls ]; then
+            echo "❌ Reached max LLM calls. Please choose manually:"
+            read -p "Enter a different alias name: " alias_name
+            [ -z "$alias_name" ] && return 1
+            continue
+        fi
+
+        echo "🤖 Asking OpenAI for a suggestion..."
+        suggested_name=$(suggest_alternative_name "$original_name" "$conflicted_names")
+        llm_calls=$((llm_calls + 1))
+
+        if [ -z "$suggested_name" ]; then
+            echo "❌ Failed to get AI suggestion. Please enter manually:"
+            read -p "Enter a different alias name: " alias_name
+        else
+            echo "💡 OpenAI suggests: '$suggested_name'"
+            read -p "Accept? (y/n/manual): " choice
+            case $choice in
+                y|Y) alias_name="$suggested_name" ;;
+                n|N) conflicted_names="$conflicted_names, $alias_name"; continue ;;
+                *)   read -p "Enter your preferred name: " alias_name ;;
+            esac
+        fi
+
+        conflicted_names="$conflicted_names, $alias_name"
+    done
+
+    echo "✅ '$alias_name' is available!"
+
+    read -p "Enter the command to alias: " alias_command
+    [ -z "$alias_command" ] && echo "Command cannot be empty!" && return 1
+
+    alias_command_escaped=$(echo "$alias_command" | sed "s/'/'\\\\''/g")
+    full_alias="alias $alias_name='$alias_command_escaped'"
+
+    echo "$full_alias" >> ~/.aliases.local
+    eval "$full_alias"
+
+    echo ""
+    echo "🎉 Alias created!"
+    echo "📝 Added to ~/.aliases.local: $full_alias"
+    echo "🚀 Use '$alias_name' to run: $alias_command"
+
+    source ~/.aliases.local 2>/dev/null
+}
+
+# -----------------------------------------------------------------------------
+# Claude Code MCP helpers
+# -----------------------------------------------------------------------------
+cldaddcontext7() {
+    echo "🔧 Adding Context7 MCP server to Claude Code..."
+    claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
+    echo "✅ Done! Use 'use context7' in prompts for latest docs"
+}
+
+cldaddplaywright() {
+    echo "🔧 Adding Playwright MCP server to Claude Code..."
+    claude mcp add playwright npx @playwright/mcp@latest
+    echo "✅ Done! Say 'use playwright mcp to open browser to example.com'"
+}
+
+# -----------------------------------------------------------------------------
+# Source machine-specific aliases (not tracked in dotfiles)
+# -----------------------------------------------------------------------------
+[ -f ~/.aliases.local ] && source ~/.aliases.local

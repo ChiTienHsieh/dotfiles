@@ -1,0 +1,8 @@
+# Don't track these
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Local overrides (these are copied from templates, not symlinked)
+# They live in ~/, not in this repo

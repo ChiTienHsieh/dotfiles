@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# =============================================================================
+# .aliases.local - Machine-specific aliases (NOT tracked in dotfiles)
+# =============================================================================
+# Copy this template: cp ~/.aliases.local.template ~/.aliases.local
+# Add your project shortcuts, SSH aliases, and local paths here.
+
+# -----------------------------------------------------------------------------
+# Project shortcuts (customize for your machine)
+# -----------------------------------------------------------------------------
+# alias cf="cd ~/path/to/your/projects"
+# alias repo="cd ~/path/to/your/repos"
+
+# -----------------------------------------------------------------------------
+# SSH shortcuts
+# -----------------------------------------------------------------------------
+# alias sshwork="ssh user@work.server.com"
+# alias sshdev="ssh user@dev.server.com -p 2222"
+
+# -----------------------------------------------------------------------------
+# Editor shortcuts
+# -----------------------------------------------------------------------------
+# alias c="cursor ."      # Open Cursor IDE
+# alias code="code ."     # Open VS Code
+
+# -----------------------------------------------------------------------------
+# Custom aliases created by addali()
+# -----------------------------------------------------------------------------
+# (addali will automatically append new aliases here)

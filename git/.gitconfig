@@ -1,0 +1,34 @@
+# =============================================================================
+# .gitconfig - Git configuration
+# =============================================================================
+
+[user]
+    name = ChiTien Hsieh (7.)
+    email = chitienhsieh@gmail.com
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    autoSetupRemote = true        # git push 自動設定 upstream
+
+[core]
+    editor = nvim
+
+[alias]
+    st = status
+    co = checkout
+    br = branch
+    ci = commit
+    lg = log --oneline --graph --all --decorate
+    last = log -1 HEAD --stat     # 看最後一個 commit
+    unstage = reset HEAD --       # 取消 stage
+
+[diff]
+    colorMoved = default          # 搬移的程式碼用不同顏色顯示
+
+[merge]
+    conflictstyle = diff3         # 衝突時顯示 base 版本，更容易理解
