@@ -6,7 +6,7 @@ Personal dotfiles for Unix systems. Managed with symlinks.
 
 ```bash
 # Clone the repo
-git clone --recursive https://github.com/YOUR_USERNAME/dotfiles.git ~/dotfiles
+git clone --recursive https://github.com/ChiTienHsieh/dotfiles.git ~/dotfiles
 
 # Run install script
 cd ~/dotfiles
