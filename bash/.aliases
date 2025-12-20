@@ -16,8 +16,10 @@ alias downloads="cd ~/Downloads"
 alias desktop="cd ~/Desktop"
 
 # -----------------------------------------------------------------------------
-# File listing
+# File listing (with colors!)
 # -----------------------------------------------------------------------------
+alias ls='ls --color=auto'              # Colorize ls (dirs=blue, etc.)
+alias ll='ls -lGtr --color=auto'        # Long list, newest last
 alias d="du -d1 -h | sort -h"           # Directory sizes, sorted
 alias lsh="ls -hl | sort -h"            # Files by size
 alias lsl="ls -lt"                      # Files by time (newest first)
@@ -55,8 +57,9 @@ Find_files_bigger_than() {
 # -----------------------------------------------------------------------------
 alias viprofile="vi ~/.bash_profile"
 alias srprofile="source ~/.bash_profile"
+alias src="source ~/.bash_profile"      # Shorter version
 alias vimrc="vi ~/.config/nvim/init.lua"
-alias prompt="vi ~/.bashPrompt"
+alias prompt="vi ~/.bash_prompt"
 
 # -----------------------------------------------------------------------------
 # Smart alias creator with conflict detection and AI suggestions
