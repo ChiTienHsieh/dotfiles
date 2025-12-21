@@ -47,10 +47,32 @@ backup_and_link() {
     echo "  Linked: $dest -> $src"
 }
 
+# Hard link version (for files that don't work well with symlinks, e.g. settings.json)
+backup_and_hardlink() {
+    local src="$1"
+    local dest="$2"
+
+    mkdir -p "$(dirname "$dest")"
+
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+        mkdir -p "$BACKUP_DIR"
+        echo "  Backing up: $dest -> $BACKUP_DIR/"
+        mv "$dest" "$BACKUP_DIR/"
+    fi
+
+    if [ -L "$dest" ]; then
+        rm "$dest"
+    fi
+
+    # Create hard link (same inode, works around symlink detection issues)
+    ln -f "$src" "$dest"
+    echo "  Hard linked: $dest"
+}
+
 # -----------------------------------------------------------------------------
 # Initialize submodules (for nvim config)
 # -----------------------------------------------------------------------------
-echo "[1/6] Initializing git submodules..."
+echo "[1/7] Initializing git submodules..."
 if [ -f "$DOTFILES_DIR/.gitmodules" ]; then
     git -C "$DOTFILES_DIR" submodule update --init --recursive
     echo "  Done!"
@@ -62,7 +84,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Bash configuration
 # -----------------------------------------------------------------------------
-echo "[2/6] Installing bash configuration..."
+echo "[2/7] Installing bash configuration..."
 backup_and_link "$DOTFILES_DIR/bash/.bash_profile" "$HOME/.bash_profile"
 backup_and_link "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
 backup_and_link "$DOTFILES_DIR/bash/.bash_prompt" "$HOME/.bash_prompt"
@@ -72,7 +94,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Git configuration
 # -----------------------------------------------------------------------------
-echo "[3/6] Installing git configuration..."
+echo "[3/7] Installing git configuration..."
 backup_and_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
 backup_and_link "$DOTFILES_DIR/git/.config/git/ignore" "$HOME/.config/git/ignore"
 echo ""
@@ -80,27 +102,49 @@ echo ""
 # -----------------------------------------------------------------------------
 # Vim configuration
 # -----------------------------------------------------------------------------
-echo "[4/6] Installing vim configuration..."
+echo "[4/7] Installing vim configuration..."
 backup_and_link "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Tmux configuration
 # -----------------------------------------------------------------------------
-echo "[5/6] Installing tmux configuration..."
+echo "[5/7] Installing tmux configuration..."
 backup_and_link "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Other configurations
 # -----------------------------------------------------------------------------
-echo "[6/6] Installing other configurations..."
+echo "[6/7] Installing other configurations..."
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 
 # Nvim (if submodule exists)
 if [ -d "$DOTFILES_DIR/nvim" ] && [ "$(ls -A "$DOTFILES_DIR/nvim" 2>/dev/null)" ]; then
     backup_and_link "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
 fi
+echo ""
+
+# -----------------------------------------------------------------------------
+# Claude Code configuration
+# -----------------------------------------------------------------------------
+echo "[7/7] Installing Claude Code configuration..."
+mkdir -p "$HOME/.claude/commands"
+
+# Main config files
+backup_and_link "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+backup_and_hardlink "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"  # Hard link to avoid CC symlink bug
+backup_and_link "$DOTFILES_DIR/claude/claude-powerline.json" "$HOME/.claude/claude-powerline.json"
+backup_and_link "$DOTFILES_DIR/claude/nvim-progress.json" "$HOME/.claude/nvim-progress.json"
+
+# Directories (agents and hooks can be fully symlinked)
+backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
+backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
+
+# Commands (individual files - directory has local state we don't track)
+for cmd in chill.md eternal-code-seeker.md headless-agents.md level-up.md nvim-tutor.md remember.md; do
+    backup_and_link "$DOTFILES_DIR/claude/commands/$cmd" "$HOME/.claude/commands/$cmd"
+done
 echo ""
 
 # -----------------------------------------------------------------------------

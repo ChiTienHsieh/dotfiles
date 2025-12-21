@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "cleanupPeriodDays": 120,
+  "env": {},
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "WebSearch",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(find:*)",
+      "Bash(file:*)",
+      "Bash(stat:*)",
+      "Bash(du:*)",
+      "Bash(df:*)",
+      "Bash(ps:*)",
+      "Bash(env)",
+      "Bash(which:*)",
+      "Bash(whereis:*)",
+      "Bash(type:*)",
+      "Bash(uname:*)",
+      "Bash(lsof:*)",
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(pwd)",
+      "Bash(echo:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git blame:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git stash list:*)",
+      "Bash(git remote -v)",
+      "Bash(git branch --list:*)",
+      "Bash(git config --get:*)",
+      "Bash(git config --list)"
+    ],
+    "deny": [
+      "SlashCommand",
+      "NotebookEdit",
+      "NotebookRead",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(~/.aws/**)",
+      "Read(~/.ssh/**)"
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y @owloops/claude-powerline@latest"
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "excludedCommands": [
+      "git",
+      "docker"
+    ]
+  },
+  "alwaysThinkingEnabled": true,
+  "feedbackSurveyState": {
+    "lastShownTime": 1754087621967
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  }
+}
