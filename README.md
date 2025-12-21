@@ -30,6 +30,8 @@ dotfiles/
 │   └── .config/git/ignore  # Global gitignore
 ├── vim/
 │   └── .vimrc           # Vim fallback config
+├── tmux/
+│   └── .tmux.conf       # Tmux configuration
 ├── gh/
 │   └── .config/gh/config.yml  # GitHub CLI config
 ├── templates/

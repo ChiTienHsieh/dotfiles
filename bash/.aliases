@@ -42,7 +42,38 @@ Textedit() { open -e "$@"; }            # Open in TextEdit
 # -----------------------------------------------------------------------------
 # File operations
 # -----------------------------------------------------------------------------
-trash() { mv -fv "$@" ~/.Trash/; }      # Move to Trash (macOS)
+# Move to Trash with timestamp suffix (prevents collision)
+# Use -f to force trash files >5MB
+trash() {
+    local force=false
+    local max_size_kb=5120  # 5MB in KB
+
+    # Check for -f flag
+    if [[ "$1" == "-f" ]]; then
+        force=true
+        shift
+    fi
+
+    local ts=$(date +"%y%m%d-%H%M%S")
+    for f in "$@"; do
+        if [[ ! -e "$f" ]]; then
+            echo "trash: '$f' not found"
+            continue
+        fi
+
+        # Get size in KB (works for both files and dirs)
+        local size_kb=$(du -sk "$f" 2>/dev/null | cut -f1)
+
+        if [[ "$force" == false && "$size_kb" -gt "$max_size_kb" ]]; then
+            local size_mb=$((size_kb / 1024))
+            echo "trash: '$f' is ${size_mb}MB (>5MB). Use 'trash -f $f' to force."
+            continue
+        fi
+
+        local base=$(basename "$f")
+        mv -fv "$f" ~/.Trash/"${base}.${ts}"
+    done
+}
 bak() { cp -vr "$@" ".${@}.bak"; }      # Create backup with .bak suffix
 hide() { mv -v "$@" ".${@}"; }          # Hide file (prepend dot)
 
@@ -161,6 +192,32 @@ addali() {
     echo "🚀 Use '$alias_name' to run: $alias_command"
 
     source ~/.aliases.local 2>/dev/null
+}
+
+# -----------------------------------------------------------------------------
+# Prompt drafting
+# -----------------------------------------------------------------------------
+# p - Quick prompt drafting in nvim
+#   p          → new file: /tmp/prompts/prompt-YYMMDD-HHMMSS.md
+#   p -c       → continue editing the latest prompt file
+#   p --continue
+p() {
+    local prompts_dir="/tmp/prompts"
+    mkdir -p "$prompts_dir"
+
+    if [[ "$1" == "-c" || "$1" == "--continue" ]]; then
+        # Find the latest prompt file
+        local latest=$(ls -t "$prompts_dir"/prompt-*.md 2>/dev/null | head -1)
+        if [[ -z "$latest" ]]; then
+            echo "No existing prompt files found in $prompts_dir"
+            return 1
+        fi
+        nvim "$latest"
+    else
+        # Create new prompt file with timestamp
+        local timestamp=$(date +"%y%m%d-%H%M%S")
+        nvim "$prompts_dir/prompt-${timestamp}.md"
+    fi
 }
 
 # -----------------------------------------------------------------------------

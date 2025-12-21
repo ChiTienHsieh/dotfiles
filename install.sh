@@ -119,13 +119,13 @@ else
     echo "~/.secrets already exists, skipping."
 fi
 
-if [ ! -f "$HOME/.aliases.local" ]; then
-    cp "$DOTFILES_DIR/templates/.aliases.local.template" "$HOME/.aliases.local"
-    echo "Created ~/.aliases.local from template"
-    echo "  -> Add your machine-specific aliases here!"
-else
-    echo "~/.aliases.local already exists, skipping."
+# .aliases.local is symlinked (but gitignored) so CC can edit it in sandbox mode
+if [ ! -f "$DOTFILES_DIR/bash/.aliases.local" ]; then
+    cp "$DOTFILES_DIR/templates/.aliases.local.template" "$DOTFILES_DIR/bash/.aliases.local"
+    echo "Created bash/.aliases.local from template"
 fi
+backup_and_link "$DOTFILES_DIR/bash/.aliases.local" "$HOME/.aliases.local"
+echo "  -> Add your machine-specific aliases here!"
 echo ""
 
 # -----------------------------------------------------------------------------

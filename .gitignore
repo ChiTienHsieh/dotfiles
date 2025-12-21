@@ -7,5 +7,5 @@
 # AI chatroom (subagent working files)
 ai_chatroom/
 
-# Local overrides (these are copied from templates, not symlinked)
-# They live in ~/, not in this repo
+# Local overrides (machine-specific, not tracked)
+bash/.aliases.local
