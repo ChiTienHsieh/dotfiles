@@ -1,6 +1,6 @@
 ---
-description: "Interactive nvim tutor - teaches vim motions and tracks learning progress"
-allowed-tools: Read, Write, Edit
+disable-model-invocation: true
+allowed-tools: [Read, Write, Edit]
 ---
 
 # Nvim Tutor Mode
@@ -69,6 +69,12 @@ File structure:
 6. **Update progress** based on user feedback
 
 ## Progress Update Protocol
+
+**CRITICAL: Be CONSERVATIVE when updating progress!**
+- Only mark skills as learned/familiar if user EXPLICITLY confirms
+- Don't assume knowledge based on coding hours or context
+- When in doubt, leave as `not_started`
+- User must verbally confirm skill proficiency before updating
 
 After teaching or practicing a skill, ask the user:
 - "How confident do you feel about this? (1=still confused, 2=getting it, 3=familiar, 4=mastered)"

@@ -1,5 +1,5 @@
 ---
-description: Activate chill teaching mode with PTT-style storytelling and kaomoji
+disable-model-invocation: true
 allowed-tools: [Read, Grep, Glob]
 ---
 

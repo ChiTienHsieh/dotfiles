@@ -1,5 +1,5 @@
 ---
-description: Review session and update CLAUDE.md with learnings
+disable-model-invocation: true
 allowed-tools: [Read, Edit, Grep]
 argument-hint: [category]
 ---

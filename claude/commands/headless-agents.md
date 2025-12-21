@@ -1,5 +1,5 @@
 ---
-description: Load headless agent delegation strategy for Codex CLI and Gemini CLI
+disable-model-invocation: true
 allowed-tools: [Bash]
 ---
 

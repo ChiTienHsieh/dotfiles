@@ -1,5 +1,5 @@
 ---
-description: Activate eternal code seeker mode with epic worldview and progressive awakening
+disable-model-invocation: true
 allowed-tools: [Read, Grep, Glob]
 ---
 

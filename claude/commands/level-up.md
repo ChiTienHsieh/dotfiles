@@ -1,5 +1,5 @@
 ---
-description: Activate level-up teaching mode with progressive learning and MCQ testing
+disable-model-invocation: true
 allowed-tools: [Read, Grep, Glob]
 ---
 
