@@ -1,13 +1,14 @@
 {
-  "last_session": null,
-  "last_topic": { "category": null, "skill": null },
-  "total_sessions": 0,
+  "last_session": "2024-12-21",
+  "last_topic": { "category": "editing_basics", "skill": "d_dd_D" },
+  "total_sessions": 1,
+  "notes": "User knows basics: hjkl, w/b/e, $, gg/G, y/yy, {num}G. Uses jk/kj for ESC. Next: learn c (change operator).",
   "skills": {
     "basic_navigation": {
-      "h_j_k_l": { "status": "not_started", "practice_count": 0, "notes": "Basic cursor movement: left, down, up, right" },
-      "w_b_e": { "status": "not_started", "practice_count": 0, "notes": "Word navigation: next word, back word, end of word" },
-      "0_$_^": { "status": "not_started", "practice_count": 0, "notes": "Line navigation: start, end, first non-blank" },
-      "gg_G": { "status": "not_started", "practice_count": 0, "notes": "File navigation: top, bottom, line N" },
+      "h_j_k_l": { "status": "familiar", "practice_count": 50, "notes": "Basic cursor movement: left, down, up, right" },
+      "w_b_e": { "status": "familiar", "practice_count": 50, "notes": "Word navigation: next word, back word, end of word" },
+      "0_$_^": { "status": "familiar", "practice_count": 20, "notes": "Line navigation: start, end, first non-blank. User knows $" },
+      "gg_G": { "status": "familiar", "practice_count": 30, "notes": "File navigation: top, bottom, line N. User knows gg, G, {num}G" },
       "ctrl_d_u": { "status": "not_started", "practice_count": 0, "notes": "Half-page scroll: down, up" },
       "f_F_t_T": { "status": "not_started", "practice_count": 0, "notes": "Find char: forward to, backward to, till" },
       "percent_match": { "status": "not_started", "practice_count": 0, "notes": "Jump to matching bracket with %" }
@@ -17,8 +18,8 @@
       "o_O": { "status": "not_started", "practice_count": 0, "notes": "Open new line below/above" },
       "x_X": { "status": "not_started", "practice_count": 0, "notes": "Delete char under/before cursor" },
       "d_dd_D": { "status": "not_started", "practice_count": 0, "notes": "Delete operator, line, to end" },
-      "c_cc_C": { "status": "not_started", "practice_count": 0, "notes": "Change operator, line, to end" },
-      "y_yy_Y": { "status": "not_started", "practice_count": 0, "notes": "Yank (copy) operator, line" },
+      "c_cc_C": { "status": "familiar", "practice_count": 1, "notes": "Change operator. User gets it: c = d + insert mode" },
+      "y_yy_Y": { "status": "familiar", "practice_count": 30, "notes": "Yank (copy) operator, line" },
       "p_P": { "status": "not_started", "practice_count": 0, "notes": "Paste after/before cursor" },
       "u_ctrl_r": { "status": "not_started", "practice_count": 0, "notes": "Undo and redo" },
       "dot_repeat": { "status": "not_started", "practice_count": 0, "notes": "Repeat last change with ." }
@@ -55,7 +56,7 @@
       "m_marks": { "status": "not_started", "practice_count": 0, "notes": "Set marks with m{a-z}" },
       "backtick_quote": { "status": "not_started", "practice_count": 0, "notes": "Jump to mark exact/line" },
       "ctrl_o_ctrl_i": { "status": "not_started", "practice_count": 0, "notes": "Jump list navigation" },
-      "gd_gD": { "status": "not_started", "practice_count": 0, "notes": "Go to definition local/global" }
+      "gd_gD": { "status": "not_started", "practice_count": 0, "notes": "Go to definition local/global (nvim-LSP specific)" }
     },
     "windows_buffers": {
       "split_vsplit": { "status": "not_started", "practice_count": 0, "notes": ":sp and :vsp window splits" },
@@ -66,7 +67,14 @@
       "ex_commands": { "status": "not_started", "practice_count": 0, "notes": "Command-line mode basics" },
       "global_command": { "status": "not_started", "practice_count": 0, "notes": ":g/pattern/command" },
       "args_argdo": { "status": "not_started", "practice_count": 0, "notes": "Multi-file operations" },
-      "quickfix": { "status": "not_started", "practice_count": 0, "notes": "Quickfix list navigation" }
+      "quickfix": { "status": "not_started", "practice_count": 0, "notes": "Quickfix list navigation (nvim-LSP integration)" }
+    },
+    "nvim_specific": {
+      "lsp_basics": { "status": "not_started", "practice_count": 0, "notes": "LSP hover, diagnostics, code actions" },
+      "telescope": { "status": "not_started", "practice_count": 0, "notes": "Fuzzy finder for files, grep, etc." },
+      "treesitter": { "status": "not_started", "practice_count": 0, "notes": "Syntax-aware text objects and highlighting" },
+      "lazy_nvim": { "status": "not_started", "practice_count": 0, "notes": "Plugin manager - :Lazy commands" },
+      "which_key": { "status": "not_started", "practice_count": 0, "notes": "Keybinding discovery popup" }
     }
   }
 }

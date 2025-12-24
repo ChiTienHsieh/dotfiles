@@ -61,6 +61,13 @@ tmux source-file ~/.tmux.conf
 git submodule update --recursive
 ```
 
+## Nvim Config Details
+- Uses **LazyVim** as base distribution
+- Completion: **blink.cmp** (switched from nvim-cmp for performance)
+- AI: Copilot with ghost text (`zbirenbaum/copilot.lua`)
+- Gamification: triforce.nvim (requires `nvzone/volt` dependency)
+- Config location: `nvim/` submodule → separate repo (ChiTienHsieh/nvim-config)
+
 ## What NOT To Do
 
 - Don't commit secrets or API keys

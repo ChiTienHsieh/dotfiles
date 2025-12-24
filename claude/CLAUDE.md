@@ -4,6 +4,11 @@
 - Write instructions that make sense to a brand new CC instance
 - Include examples directly in the guideline when applicable
 
+## Machine Context
+- **Personal Mac**: This is a personal development machine, not production
+- Free to experiment, install bleeding-edge tools, break things
+- No need to be overly cautious about stability
+
 ## Terminology
 - "Claude Code" can be abbreviated as "CC"
 
@@ -52,6 +57,12 @@
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ```
 - Avoid yaml/code examples unless they're critical to the concept being taught - they're distracting and not descriptive. Code is just the last step that formalizes concepts into concrete instructions
+
+## Tool & Tech Recommendations
+- **Prefer bleeding-edge**: When recommending tools/tech, always suggest the fancy, cool, blazing fast option
+- User likes to test new tech and isn't afraid of newer/less mature tools
+- Fine with Rust binaries in plugins (believes Rust is the future)
+- Example: Recommended blink.cmp over nvim-cmp → user loved it
 
 ## Research Delegation
 - If need huge research to fill knowledge gaps: notify user (user will delegate outside Claude Code)
