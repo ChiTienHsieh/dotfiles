@@ -146,24 +146,24 @@ addali() {
     conflicted_names="$alias_name"
 
     while check_name_conflict "$alias_name"; do
-        echo "⚠️  '$alias_name' conflicts with an existing command/alias."
+        echo "(・_・;) '$alias_name' conflicts"
 
         if [ $llm_calls -ge $max_llm_calls ]; then
-            echo "❌ Reached max LLM calls. Please choose manually:"
-            read -p "Enter a different alias name: " alias_name
+            echo "(╯°□°)╯ Max LLM calls reached"
+            read -p "Enter name: " alias_name
             [ -z "$alias_name" ] && return 1
             continue
         fi
 
-        echo "🤖 Asking OpenAI for a suggestion..."
+        echo "(°ロ°) Asking OpenAI..."
         suggested_name=$(suggest_alternative_name "$original_name" "$conflicted_names")
         llm_calls=$((llm_calls + 1))
 
         if [ -z "$suggested_name" ]; then
-            echo "❌ Failed to get AI suggestion. Please enter manually:"
-            read -p "Enter a different alias name: " alias_name
+            echo "(´・ω・\`) AI failed"
+            read -p "Enter name: " alias_name
         else
-            echo "💡 OpenAI suggests: '$suggested_name'"
+            echo "(°▽°) Suggestion: '$suggested_name'"
             read -p "Accept? (y/n/manual): " choice
             case $choice in
                 y|Y) alias_name="$suggested_name" ;;
@@ -175,7 +175,7 @@ addali() {
         conflicted_names="$conflicted_names, $alias_name"
     done
 
-    echo "✅ '$alias_name' is available!"
+    echo "(・∀・) '$alias_name' available"
 
     read -p "Enter the command to alias: " alias_command
     [ -z "$alias_command" ] && echo "Command cannot be empty!" && return 1
@@ -186,12 +186,41 @@ addali() {
     echo "$full_alias" >> ~/.aliases.local
     eval "$full_alias"
 
-    echo ""
-    echo "🎉 Alias created!"
-    echo "📝 Added to ~/.aliases.local: $full_alias"
-    echo "🚀 Use '$alias_name' to run: $alias_command"
+    echo "(ﾉ◕ヮ◕)ﾉ $alias_name → $alias_command"
 
     source ~/.aliases.local 2>/dev/null
+}
+
+# addcd - Quick cd shortcut creator (simpler than addali)
+# Usage: navigate to a directory, run `addcd`, enter alias name
+addcd() {
+    local current_dir="$(pwd)"
+
+    read -p "Alias name to cd here ($current_dir): " alias_name
+
+    if [ -z "$alias_name" ]; then
+        echo "(´・ω・\`) Name required"
+        return 1
+    fi
+
+    # Check for conflicts
+    if check_name_conflict "$alias_name"; then
+        echo "(・_・;) '$alias_name' exists: $(type "$alias_name" 2>&1 | head -1)"
+        read -p "Different name: " alias_name
+        [ -z "$alias_name" ] && return 1
+
+        if check_name_conflict "$alias_name"; then
+            echo "(╯°□°)╯ '$alias_name' also taken"
+            return 1
+        fi
+    fi
+
+    local full_alias="alias $alias_name='cd $current_dir'"
+
+    echo "$full_alias" >> ~/.aliases.local
+    eval "$full_alias"
+
+    echo "(ﾉ◕ヮ◕)ﾉ $alias_name → $current_dir"
 }
 
 # -----------------------------------------------------------------------------
@@ -224,15 +253,15 @@ p() {
 # Claude Code MCP helpers
 # -----------------------------------------------------------------------------
 cldaddcontext7() {
-    echo "🔧 Adding Context7 MCP server to Claude Code..."
+    echo "(°ロ°) Adding Context7 MCP..."
     claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
-    echo "✅ Done! Use 'use context7' in prompts for latest docs"
+    echo "(ﾉ◕ヮ◕)ﾉ Use 'use context7' in prompts"
 }
 
 cldaddplaywright() {
-    echo "🔧 Adding Playwright MCP server to Claude Code..."
+    echo "(°ロ°) Adding Playwright MCP..."
     claude mcp add playwright npx @playwright/mcp@latest
-    echo "✅ Done! Say 'use playwright mcp to open browser to example.com'"
+    echo "(ﾉ◕ヮ◕)ﾉ Say 'use playwright mcp to open browser'"
 }
 
 # -----------------------------------------------------------------------------
