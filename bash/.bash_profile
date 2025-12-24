@@ -41,8 +41,7 @@ export PATH="$HOME/bin:$PATH"
 # -----------------------------------------------------------------------------
 # fzf is sourced in .bashrc (no need to duplicate here)
 
-# zoxide - smarter cd command
-eval "$(zoxide init bash --cmd cd)"
+# zoxide + custom cd wrapper in .bashrc (with fallback for CC sandbox)
 
 # -----------------------------------------------------------------------------
 # 5. Auto-generated sections (DO NOT add to dotfiles, let tools generate)
