@@ -1,50 +1,50 @@
 {
-  "theme": "tokyo-night",
-  "budget": {
-    "today": {
-      "amount": 70.0
-    }
-  },
-  "display": {
-    "style": "minimal",
-    "lines": [
-      {
-        "segments": {
-          "directory": {
-            "enabled": true,
-            "showBasename": true
-          },
-          "git": {
-            "enabled": true,
-            "showSha": false,
-            "showWorkingTree": false,
-            "showOperation": false,
-            "showTag": false,
-            "showTimeSinceCommit": false,
-            "showStashCount": false,
-            "showUpstream": false,
-            "showRepoName": false
-          },
-          "model": {
-            "enabled": true
-          },
-          "context": {
-            "enabled": true
-          },
-          "session": {
-            "enabled": true,
-            "type": "cost"
-          },
-          "today": {
-            "enabled": true,
-            "type": "cost"
-          },
-          "block": {
-            "enabled": true,
-            "type": "time"
-          }
+    "theme": "tokyo-night",
+    "budget": {
+        "today": {
+            "amount": 70.0
         }
-      }
-    ]
-  }
+    },
+    "display": {
+        "style": "minimal",
+        "lines": [
+            {
+                "segments": {
+                    "directory": {
+                        "enabled": true,
+                        "showBasename": true
+                    },
+                    "git": {
+                        "enabled": true,
+                        "showSha": false,
+                        "showWorkingTree": false,
+                        "showOperation": false,
+                        "showTag": false,
+                        "showTimeSinceCommit": false,
+                        "showStashCount": false,
+                        "showUpstream": false,
+                        "showRepoName": false
+                    },
+                    "model": {
+                        "enabled": true
+                    },
+                    "context": {
+                        "enabled": true
+                    },
+                    "session": {
+                        "enabled": false,
+                        "type": "cost"
+                    },
+                    "today": {
+                        "enabled": false,
+                        "type": "cost"
+                    },
+                    "block": {
+                        "enabled": false,
+                        "type": "time"
+                    }
+                }
+            }
+        ]
+    }
 }
