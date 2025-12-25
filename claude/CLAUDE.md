@@ -75,6 +75,16 @@
 - Fine with Rust binaries in plugins (believes Rust is the future)
 - Example: Recommended blink.cmp over nvim-cmp → user loved it
 
+## Aesthetic Preferences (r/unixporn Energy)
+- User cares about visual polish: transparent terminal, curated wallpaper, nice colorschemes
+- When configuring tools, **prefer fancy/pretty options** over minimal/utilitarian ones
+- Examples of preferred styles:
+  - snacks.nvim notifier: `fancy` over `compact`
+  - Animations: yes please
+  - Colorschemes: catppuccin, rose-pine, tokyo-night tier
+- This applies to personal Mac only — work machine stays conservative
+- CC can proactively suggest aesthetic improvements when setting up tools
+
 ## Research Delegation
 - If need huge research to fill knowledge gaps: notify user (user will delegate outside Claude Code)
 
