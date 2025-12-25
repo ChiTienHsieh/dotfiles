@@ -72,7 +72,7 @@ backup_and_hardlink() {
 # -----------------------------------------------------------------------------
 # Initialize submodules (for nvim config)
 # -----------------------------------------------------------------------------
-echo "[1/7] Initializing git submodules..."
+echo "[1/8] Initializing git submodules..."
 if [ -f "$DOTFILES_DIR/.gitmodules" ]; then
     git -C "$DOTFILES_DIR" submodule update --init --recursive
     echo "  Done!"
@@ -84,7 +84,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Bash configuration
 # -----------------------------------------------------------------------------
-echo "[2/7] Installing bash configuration..."
+echo "[2/8] Installing bash configuration..."
 backup_and_link "$DOTFILES_DIR/bash/.bash_profile" "$HOME/.bash_profile"
 backup_and_link "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
 backup_and_link "$DOTFILES_DIR/bash/.bash_prompt" "$HOME/.bash_prompt"
@@ -92,9 +92,16 @@ backup_and_link "$DOTFILES_DIR/bash/.aliases" "$HOME/.aliases"
 echo ""
 
 # -----------------------------------------------------------------------------
+# Zsh configuration
+# -----------------------------------------------------------------------------
+echo "[3/8] Installing zsh configuration..."
+backup_and_link "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
+echo ""
+
+# -----------------------------------------------------------------------------
 # Git configuration
 # -----------------------------------------------------------------------------
-echo "[3/7] Installing git configuration..."
+echo "[4/8] Installing git configuration..."
 backup_and_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
 backup_and_link "$DOTFILES_DIR/git/.config/git/ignore" "$HOME/.config/git/ignore"
 echo ""
@@ -102,21 +109,21 @@ echo ""
 # -----------------------------------------------------------------------------
 # Vim configuration
 # -----------------------------------------------------------------------------
-echo "[4/7] Installing vim configuration..."
+echo "[5/8] Installing vim configuration..."
 backup_and_link "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Tmux configuration
 # -----------------------------------------------------------------------------
-echo "[5/7] Installing tmux configuration..."
+echo "[6/8] Installing tmux configuration..."
 backup_and_link "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Other configurations
 # -----------------------------------------------------------------------------
-echo "[6/7] Installing other configurations..."
+echo "[7/8] Installing other configurations..."
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 
 # Nvim (if submodule exists)
@@ -128,7 +135,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Claude Code configuration
 # -----------------------------------------------------------------------------
-echo "[7/7] Installing Claude Code configuration..."
+echo "[8/8] Installing Claude Code configuration..."
 mkdir -p "$HOME/.claude/commands"
 
 # Main config files
@@ -186,7 +193,7 @@ fi
 echo "Next steps:"
 echo "  1. Edit ~/.secrets to add your API keys"
 echo "  2. Edit ~/.aliases.local for machine-specific shortcuts"
-echo "  3. Run: source ~/.bash_profile"
+echo "  3. Run: source ~/.zshrc (or source ~/.bash_profile for bash)"
 echo ""
 echo "Enjoy your new setup! (◕‿◕)"
 echo ""

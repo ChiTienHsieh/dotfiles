@@ -5,9 +5,20 @@
 - Include examples directly in the guideline when applicable
 
 ## Machine Context
-- **Personal Mac**: This is a personal development machine, not production
-- Free to experiment, install bleeding-edge tools, break things
+
+### This Mac (M1 Personal)
+- **Role**: Personal playground for learning and experimentation
+- **Policy**: Free to experiment, install bleeding-edge tools, break things
+- No serious production work here — just writing code and playing around
 - No need to be overly cautious about stability
+- **Terminal**: iTerm2 (starts login shells by default)
+- **Shell**: zsh (switched from Bash 3.2)
+
+### WSL Laptop (Work Machine)
+- **Role**: Work machine for actual job tasks
+- **Policy**: DO NOT experiment with fancy/risky things that could break workflow
+- Keep it stable and conservative
+- If user mentions WSL, assume it's the work laptop context
 
 ## Terminology
 - "Claude Code" can be abbreviated as "CC"

@@ -3,7 +3,15 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# 1. Source other config files
+# 1. Homebrew (MUST come first - other configs depend on homebrew binaries!)
+# -----------------------------------------------------------------------------
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
+PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+
+# -----------------------------------------------------------------------------
+# 2. Source other config files
 # -----------------------------------------------------------------------------
 # Source .bashrc (ensures non-login shells get same config)
 if [ -f ~/.bashrc ]; then
@@ -21,14 +29,6 @@ if [ -f ~/.bash_prompt ]; then
 fi
 
 # Note: .aliases is sourced in .bashrc (no need to duplicate here)
-
-# -----------------------------------------------------------------------------
-# 2. Homebrew
-# -----------------------------------------------------------------------------
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
-# GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
-PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
 
 # -----------------------------------------------------------------------------
 # 3. PATH additions
