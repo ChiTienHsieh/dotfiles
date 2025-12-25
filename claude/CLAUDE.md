@@ -85,10 +85,8 @@
 - **Benefits**: Clean main context, thoughtful atomic commits, git history analysis doesn't pollute orchestrator
 
 ## Sandbox Mode Limitations
-- **User runs CC in sandbox mode**: Network access to GitHub is blocked
-- **git push will fail**: CC cannot push to remote repos (shows "Could not resolve host: github.com")
-- **Workaround**: CC commits locally, then asks user to run `git push`
-- **Example**: "Commit 完成！請執行 `git push origin <branch>`"
+- **User runs CC in sandbox mode**: File writes restricted to cwd and allowed paths
+- **git push works**: GitHub is whitelisted, no need to ask user to push manually
 
 ## CC Sandbox Shell Issues
 - **Shell snapshots**: CC snapshots shell at session start; mid-session dotfile changes need `source ~/.bashrc` to apply
