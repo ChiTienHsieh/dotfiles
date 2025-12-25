@@ -74,6 +74,9 @@ bindkey '^[[B' history-search-forward   # Down arrow: search history
 # -----------------------------------------------------------------------------
 export EDITOR="nvim"
 
+# Suppress Node.js experimental warnings (CommonJS/ESM compat noise)
+export NODE_NO_WARNINGS=1
+
 # -----------------------------------------------------------------------------
 # 9. Prompt (clean, similar to bash prompt + RPROMPT)
 # -----------------------------------------------------------------------------

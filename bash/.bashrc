@@ -28,6 +28,9 @@ cd() {
 # Default editor
 export EDITOR="nvim"
 
+# Suppress Node.js experimental warnings (CommonJS/ESM compat noise)
+export NODE_NO_WARNINGS=1
+
 # Bun - fast JavaScript runtime
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
