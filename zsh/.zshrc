@@ -75,9 +75,26 @@ bindkey '^[[B' history-search-forward   # Down arrow: search history
 export EDITOR="nvim"
 
 # -----------------------------------------------------------------------------
-# 9. Prompt (starship - fast, cross-platform, pretty)
+# 9. Prompt (clean, similar to bash prompt + RPROMPT)
 # -----------------------------------------------------------------------------
-eval "$(starship init zsh)"
+zmodload zsh/datetime
+
+PROMPT='%F{51}Sprin%f %F{33}MacAir%f %F{207}%1~%f $ '
+
+# Command execution time tracking
+typeset -g __cmd_start=0
+
+preexec() { __cmd_start=$EPOCHREALTIME; }
+
+precmd() {
+    local dur_str=""
+    if (( __cmd_start > 0 )); then
+        local dur=$(( EPOCHREALTIME - __cmd_start ))
+        (( dur >= 1 )) && dur_str="%F{yellow}${dur%.*}s %f"
+        __cmd_start=0
+    fi
+    RPROMPT="${dur_str}%F{245}%*%f"
+}
 
 # -----------------------------------------------------------------------------
 # 10. Auto-generated sections (tools will add their init here)
