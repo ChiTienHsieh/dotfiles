@@ -90,6 +90,11 @@
 - **Workaround**: CC commits locally, then asks user to run `git push`
 - **Example**: "Commit 完成！請執行 `git push origin <branch>`"
 
+## CC Sandbox Shell Issues
+- **Shell snapshots**: CC snapshots shell at session start; mid-session dotfile changes need `source ~/.bashrc` to apply
+- **If a common command breaks**: ALL future CC sessions break too → fix ASAP or delegate to subagent immediately (token waste compounds)
+- **Fix pattern**: Wrapper functions with fallbacks (e.g., `cd()` checks `__zoxide_z` exists, else `builtin cd`)
+
 ## macOS Bash Configuration
 - **This Mac**: `~/.bashrc` is minimal; most config lives in `~/.bash_profile` and `~/.aliases`
 - **Why it matters**: Codex/Gemini may spawn non-login subshells that only read `~/.bashrc`

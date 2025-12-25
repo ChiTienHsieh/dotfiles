@@ -17,8 +17,13 @@ vim/       → vim fallback (.vimrc)
 tmux/      → tmux config (.tmux.conf)
 gh/        → GitHub CLI (.config/gh/config.yml)
 nvim/      → neovim config (git submodule)
+claude/    → Claude Code config (CLAUDE.md = user memory)
 templates/ → templates for secrets/local aliases (not symlinked directly)
 ```
+
+## CC User Memory Access
+- `~/.claude/CLAUDE.md` is symlinked to `./claude/CLAUDE.md`
+- **Edit `./claude/CLAUDE.md` directly** — no need to access outside sandbox
 
 ## Key Conventions
 
