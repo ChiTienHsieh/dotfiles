@@ -108,6 +108,16 @@
 ## Sandbox Mode Limitations
 - **User runs CC in sandbox mode**: File writes restricted to cwd and allowed paths
 - **git push works**: GitHub is whitelisted, no need to ask user to push manually
+- **Heredoc blocked**: Sandbox blocks temp file creation for heredocs (`$(cat <<'EOF'...)`)
+  - **Error**: `can't create temp file for here document: operation not permitted`
+  - **Workaround**: Use multiple `-m` flags for git commits instead:
+    ```bash
+    # Instead of heredoc:
+    git commit -m "Title" -m "Body paragraph" -m "🤖 Generated with..." -m "Co-Authored-By: ..."
+    ```
+- **pbcopy requires sandbox bypass**: Clipboard access is blocked in sandbox mode
+  - Use `dangerouslyDisableSandbox: true` when calling `pbcopy`
+  - Example: `pbcopy << 'EOF' ... EOF` needs the flag to work
 
 ## CC Sandbox Shell Issues
 - **Shell snapshots**: CC snapshots shell at session start; mid-session dotfile changes need `source ~/.bashrc` to apply
