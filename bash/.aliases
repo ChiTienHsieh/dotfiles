@@ -86,10 +86,14 @@ Find_files_bigger_than() {
 # -----------------------------------------------------------------------------
 # Config file shortcuts
 # -----------------------------------------------------------------------------
-alias viprofile="vi ~/.bash_profile"
-alias srprofile="source ~/.bash_profile"
-alias src="source ~/.bash_profile"      # Shorter version
+# Shell config shortcuts (zsh)
+alias vizsh="vi ~/.zshrc"
+alias srzsh="source ~/.zshrc"
+alias src="source ~/.zshrc"             # Shorter version
 alias vimrc="vi ~/.config/nvim/init.lua"
+
+# Legacy bash config (kept for reference, not actively used)
+alias viprofile="vi ~/.bash_profile"
 alias prompt="vi ~/.bash_prompt"
 
 # -----------------------------------------------------------------------------
