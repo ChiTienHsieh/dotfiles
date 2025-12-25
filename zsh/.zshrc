@@ -93,7 +93,7 @@ precmd() {
         (( dur >= 1 )) && dur_str="%F{yellow}${dur%.*}s %f"
         __cmd_start=0
     fi
-    RPROMPT="${dur_str}%F{245}%*%f"
+    RPROMPT="${dur_str}%F{245}%D{%H:%M}%f"
 }
 
 # -----------------------------------------------------------------------------
