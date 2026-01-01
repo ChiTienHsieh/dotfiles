@@ -144,14 +144,19 @@ backup_and_hardlink "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings
 backup_and_link "$DOTFILES_DIR/claude/claude-powerline.json" "$HOME/.claude/claude-powerline.json"
 backup_and_link "$DOTFILES_DIR/claude/nvim-progress.json" "$HOME/.claude/nvim-progress.json"
 
-# Directories (agents and hooks can be fully symlinked)
+# Directories (agents, hooks, skills can be fully symlinked)
 backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
+backup_and_link "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
 
 # Commands (individual files - directory has local state we don't track)
-for cmd in chill.md eternal-code-seeker.md headless-agents.md level-up.md nvim-tutor.md remember.md; do
+for cmd in chill.md eternal-code-seeker.md level-up.md nvim-tutor.md remember.md; do
     backup_and_link "$DOTFILES_DIR/claude/commands/$cmd" "$HOME/.claude/commands/$cmd"
 done
+
+# yolo-cc CLI tool
+mkdir -p "$HOME/.local/bin"
+backup_and_link "$DOTFILES_DIR/yolo-cc/bin/yolo-cc" "$HOME/.local/bin/yolo-cc"
 echo ""
 
 # -----------------------------------------------------------------------------

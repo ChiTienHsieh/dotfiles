@@ -1,0 +1,43 @@
+# YOLO-CC Docker Compose
+#
+# Usage:
+#   CLAUDE_CODE_OAUTH_TOKEN=xxx docker compose run base claude -p "prompt" --dangerously-skip-permissions
+#   CLAUDE_CODE_OAUTH_TOKEN=xxx docker compose --profile uv run uv claude -p "prompt" --dangerously-skip-permissions
+
+services:
+  base:
+    build:
+      context: ../images
+      dockerfile: base.Dockerfile
+    image: yolo-cc-base
+    volumes:
+      # Workspace - main content writable
+      - ${WORKSPACE:-.}:/workspace
+      # .git read-only - safety net for recovery
+      - ${WORKSPACE:-.}/.git:/workspace/.git:ro
+    environment:
+      # OAuth token passed from host - only exists in container memory at runtime
+      # Security note: Token can be revoked at claude.ai/settings if compromised
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+    # OrbStack: host.docker.internal works out of the box
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+
+  uv:
+    build:
+      context: ../images
+      dockerfile: uv.Dockerfile
+    image: yolo-cc-uv
+    extends:
+      service: base
+    profiles:
+      - uv
+
+  # Future profiles can be added here:
+  # npm:
+  #   profiles: ["npm"]
+  # playwright:
+  #   profiles: ["playwright"]
