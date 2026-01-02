@@ -50,6 +50,16 @@ log_warn() { echo -e "${YELLOW}[yolo-cc]${NC} $1" >&2; }
 log_error() { echo -e "${RED}[yolo-cc]${NC} $1" >&2; }
 log_success() { echo -e "${GREEN}[yolo-cc]${NC} $1" >&2; }
 
+truncate_prompt() {
+    local prompt="$1"
+    local max_len="${2:-50}"
+    if [ ${#prompt} -gt $max_len ]; then
+        echo "${prompt:0:$max_len}... [truncated, see log file]"
+    else
+        echo "$prompt"
+    fi
+}
+
 show_help() {
     cat << 'EOF'
 yolo-cc - Run Claude Code in isolated container
@@ -149,9 +159,14 @@ fi
 # Convert to absolute path
 WORKSPACE="$(cd "$WORKSPACE" && pwd)"
 
-# Check for .git
+# Check for .git (required for recovery)
 if [ ! -d "$WORKSPACE/.git" ]; then
-    log_warn "No .git directory found - recovery via git restore won't work"
+    log_error "No .git directory found"
+    echo "" >&2
+    echo "YOLO mode requires git for recovery. Initialize with:" >&2
+    echo "  cd $WORKSPACE" >&2
+    echo "  git init && git add -A && git commit -m 'init before yolo-cc'" >&2
+    exit 1
 fi
 
 # Check docker
@@ -164,6 +179,38 @@ if ! docker info &> /dev/null; then
     log_error "Docker daemon not running (is OrbStack running?)"
     exit 1
 fi
+
+# ============ Setup Logging ============
+
+# Create logs directory
+mkdir -p "$WORKSPACE/logs"
+
+# Ensure logs/ is in .gitignore
+GITIGNORE="$WORKSPACE/.gitignore"
+if [ ! -f "$GITIGNORE" ] || ! grep -q "^logs/$" "$GITIGNORE"; then
+    echo "logs/" >> "$GITIGNORE"
+fi
+
+# Create log file with timestamp
+TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+LOG_FILE="$WORKSPACE/logs/yolo-cc-$TIMESTAMP.log"
+
+# Write detailed info to log file
+{
+    echo "========================================"
+    echo "yolo-cc session: $TIMESTAMP"
+    echo "========================================"
+    echo ""
+    echo "Workspace: $WORKSPACE"
+    echo "Service: ${PROFILES[*]:-base}"
+    echo "Started: $(date)"
+    echo ""
+    echo "Full prompt:"
+    echo "----------------------------------------"
+    echo "$PROMPT"
+    echo "----------------------------------------"
+    echo ""
+} > "$LOG_FILE"
 
 # ============ Build Profile Args ============
 
@@ -179,7 +226,8 @@ done
 
 log_info "Workspace: $WORKSPACE"
 log_info "Service: $SERVICE"
-log_info "Prompt: $PROMPT"
+log_info "Prompt: $(truncate_prompt "$PROMPT")"
+log_info "Log: $LOG_FILE"
 echo "" >&2
 
 echo "================================================================" >&2
@@ -209,16 +257,24 @@ EXIT_CODE=$?
 # ============ Summary ============
 
 echo "" >&2
-log_info "Container exited with code: $EXIT_CODE"
+log_info "Exit code: $EXIT_CODE"
 
-if [ -d "$WORKSPACE/.git" ]; then
-    echo "" >&2
-    log_info "Changes summary:"
+# Log summary to file
+{
+    echo ""
+    echo "========================================"
+    echo "Session ended: $(date)"
+    echo "Exit code: $EXIT_CODE"
+    echo "========================================"
+    echo ""
+    echo "Git status:"
     cd "$WORKSPACE"
-    git status --short 2>/dev/null >&2 || true
-    echo "" >&2
-    log_info "To review: git diff"
-    log_info "To restore: git checkout . && git clean -fd"
-fi
+    git status --short 2>/dev/null || echo "(no changes)"
+} >> "$LOG_FILE"
+
+# Minimal stdout summary
+echo "" >&2
+log_info "Log: $LOG_FILE"
+log_info "Recovery: git checkout . && git clean -fd"
 
 exit $EXIT_CODE

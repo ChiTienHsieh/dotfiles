@@ -73,12 +73,25 @@ git checkout .      # Restore tracked files
 git clean -fd       # Remove untracked files
 ```
 
+## Testing
+
+```bash
+# Run e2e happy path test
+./test/e2e-happy-path.sh
+
+# Keep temp dir for inspection
+./test/e2e-happy-path.sh --keep
+```
+
+The test creates a temp workspace, runs yolo-cc with a simple math prompt, and verifies the result.
+
 ## Files
 
 ```
 yolo-cc/
 ├── bin/yolo-cc           # CLI entrypoint
-├── proxy/auth-proxy.ts   # API Gateway (bun)
+├── test/
+│   └── e2e-happy-path.sh # E2E test
 ├── compose/docker-compose.yml
 ├── images/
 │   ├── base.Dockerfile   # bun + CC
