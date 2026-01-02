@@ -92,7 +92,8 @@
 - When installing packages: briefly explain what each does
 - Systematic problem-solving over brute-force attempts
 - **SSOT (Single Source of Truth)**: When reading/writing docs, watch for redundancy across files. If found, discuss consolidation with user.
-- **Use `trash` instead of `rm`**: User has a `trash()` function that moves files to ~/.Trash with timestamp suffix. Safer than `rm` for small files. Never use `rm` directly - always `trash`.
+- **Use `trash` instead of `rm`**: User has a `trash()` function that moves files to ~/.Trash with timestamp suffix. Safer than `rm` for small files.
+  - **Exception for junk**: For large junk files (node_modules, build artifacts, cache dirs), use `rm -rf` directly. Don't pollute ~/.Trash with garbage.
 
 ## Git Workflow with Subagents
 - **When to delegate**: Staging area has multiple unrelated changes needing atomic commits
@@ -107,7 +108,7 @@
 
 ## Sandbox Mode Limitations
 - **User runs CC in sandbox mode**: File writes restricted to cwd and allowed paths
-- **git push works**: GitHub is whitelisted, no need to ask user to push manually
+- **git push needs sandbox bypass**: Despite GitHub being "whitelisted", `git push` fails with DNS resolution errors in sandbox mode. Use `dangerouslyDisableSandbox: true` for git push.
 - **Heredoc blocked**: Sandbox blocks temp file creation for heredocs (`$(cat <<'EOF'...)`)
   - **Error**: `can't create temp file for here document: operation not permitted`
   - **Workaround**: Use multiple `-m` flags for git commits instead:
@@ -143,6 +144,16 @@
   - Use `uv add <package>` to add dependencies (updates pyproject.toml + uv.lock)
   - Use `uv run <command>` to execute scripts with project dependencies
   - Example: `uv add weasyprint markdown && uv run python scripts/export.py`
+
+## JavaScript Package Manager Strategy
+- **Primary**: bun for all JS/TS projects (blazing fast, native bundler, good DX)
+- **Fallback**: npm only when bun has compatibility issues
+- **Why bun**: 10-100x faster installs, built-in bundler, native TypeScript support
+- **Sandbox note**: `bun install` requires `dangerouslyDisableSandbox: true` (writes to temp dirs)
+- **Commands mapping**:
+  - `npm install` → `bun install`
+  - `npm run dev` → `bun run dev`
+  - `npx <cmd>` → `bunx <cmd>`
 
 ## Obsidian Integration
 - When creating learning content: write markdown to `/Users/sprin/Documents/ObsidianVault/MDWrittenByClaude`

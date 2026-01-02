@@ -87,12 +87,15 @@ Find_files_bigger_than() {
 # Config file shortcuts
 # -----------------------------------------------------------------------------
 # Shell config shortcuts (zsh)
-alias vizsh="vi ~/.zshrc"
+alias zrc="vi ~/.zshrc"                 # Edit zshrc
+alias vizsh="vi ~/.zshrc"               # Alias for zrc
+alias viali="vi ~/.aliases"             # Edit aliases
 alias srzsh="source ~/.zshrc"
 alias src="source ~/.zshrc"             # Shorter version
 alias vimrc="vi ~/.config/nvim/init.lua"
 
 # Legacy bash config (kept for reference, not actively used)
+alias barc="vi ~/.bashrc"               # Edit bashrc
 alias viprofile="vi ~/.bash_profile"
 alias prompt="vi ~/.bash_prompt"
 
@@ -139,7 +142,7 @@ addali() {
     local llm_calls=0
     local max_llm_calls=5
 
-    read -p "Enter the alias name: " alias_name
+    read "alias_name?Enter the alias name: "
 
     if [ -z "$alias_name" ]; then
         echo "Alias name cannot be empty!"
@@ -154,7 +157,7 @@ addali() {
 
         if [ $llm_calls -ge $max_llm_calls ]; then
             echo "(╯°□°)╯ Max LLM calls reached"
-            read -p "Enter name: " alias_name
+            read "alias_name?Enter name: "
             [ -z "$alias_name" ] && return 1
             continue
         fi
@@ -165,14 +168,14 @@ addali() {
 
         if [ -z "$suggested_name" ]; then
             echo "(´・ω・\`) AI failed"
-            read -p "Enter name: " alias_name
+            read "alias_name?Enter name: "
         else
             echo "(°▽°) Suggestion: '$suggested_name'"
-            read -p "Accept? (y/n/manual): " choice
+            read "choice?Accept? (y/n/manual): "
             case $choice in
                 y|Y) alias_name="$suggested_name" ;;
                 n|N) conflicted_names="$conflicted_names, $alias_name"; continue ;;
-                *)   read -p "Enter your preferred name: " alias_name ;;
+                *)   read "alias_name?Enter your preferred name: " ;;
             esac
         fi
 
@@ -181,7 +184,7 @@ addali() {
 
     echo "(・∀・) '$alias_name' available"
 
-    read -p "Enter the command to alias: " alias_command
+    read "alias_command?Enter the command to alias: "
     [ -z "$alias_command" ] && echo "Command cannot be empty!" && return 1
 
     alias_command_escaped=$(echo "$alias_command" | sed "s/'/'\\\\''/g")
@@ -200,7 +203,7 @@ addali() {
 addcd() {
     local current_dir="$(pwd)"
 
-    read -p "Alias name to cd here ($current_dir): " alias_name
+    read "alias_name?Alias name to cd here ($current_dir): "
 
     if [ -z "$alias_name" ]; then
         echo "(´・ω・\`) Name required"
@@ -210,7 +213,7 @@ addcd() {
     # Check for conflicts
     if check_name_conflict "$alias_name"; then
         echo "(・_・;) '$alias_name' exists: $(type "$alias_name" 2>&1 | head -1)"
-        read -p "Different name: " alias_name
+        read "alias_name?Different name: "
         [ -z "$alias_name" ] && return 1
 
         if check_name_conflict "$alias_name"; then
