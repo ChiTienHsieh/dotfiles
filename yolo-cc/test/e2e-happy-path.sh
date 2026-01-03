@@ -98,7 +98,7 @@ log_pass "Git initialized"
 
 # ============ Run yolo-cc ============
 
-PROMPT="Calculate 13 * 14 and write ONLY the numeric result to a file named result.txt. No explanation, just the number."
+PROMPT="Calculate 13 * 14, write the result to result.txt, then print 'Done: <result>' to confirm."
 
 log_info "Running yolo-cc with math prompt..."
 echo ""
@@ -163,6 +163,14 @@ if [ -f "$TEST_DIR/.gitignore" ] && grep -q "^logs/$" "$TEST_DIR/.gitignore"; th
     log_pass "logs/ added to .gitignore"
 else
     log_warn "logs/ not in .gitignore"
+fi
+
+# Check container output captured in log
+LOG_FILE=$(ls -1 "$LOG_DIR"/yolo-cc-*.log 2>/dev/null | head -1)
+if [ -n "$LOG_FILE" ] && grep -q "Done.*182" "$LOG_FILE"; then
+    log_pass "Container output captured in log"
+else
+    log_warn "Container output not captured (may be expected if CC didn't print)"
 fi
 
 # ============ Summary ============

@@ -13,6 +13,7 @@
 #   --playwright  Include Playwright for browser automation [TODO]
 #   -w, --workspace PATH  Specify workspace directory (default: current dir)
 #   --build       Force rebuild images before running
+#   --shell       Open interactive shell instead of running claude
 #   -h, --help    Show this help message
 
 set -e
@@ -73,12 +74,14 @@ Flags:
   --playwright      Include Playwright [TODO]
   -w, --workspace   Workspace directory (default: current dir)
   --build           Force rebuild images
+  --shell           Open interactive shell (no prompt needed)
   -h, --help        Show this help
 
 Examples:
   yolo-cc "fix all TypeScript errors"
   yolo-cc --uv "create a FastAPI server with SQLAlchemy"
   yolo-cc -w ~/projects/myapp "refactor the auth module"
+  yolo-cc --shell                    # Debug: open shell in container
 
 Security:
   - OAuth token passed via env var (not persisted in container)
@@ -94,6 +97,7 @@ PROFILES=()
 WORKSPACE="$(pwd)"
 BUILD_FLAG=""
 PROMPT=""
+SHELL_MODE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -117,6 +121,10 @@ while [[ $# -gt 0 ]]; do
             BUILD_FLAG="--build"
             shift
             ;;
+        --shell)
+            SHELL_MODE=true
+            shift
+            ;;
         -h|--help)
             show_help
             exit 0
@@ -136,7 +144,7 @@ done
 
 # ============ Validation ============
 
-if [ -z "$PROMPT" ]; then
+if [ -z "$PROMPT" ] && [ "$SHELL_MODE" = false ]; then
     log_error "No prompt provided"
     show_help
     exit 1
@@ -203,12 +211,15 @@ LOG_FILE="$WORKSPACE/logs/yolo-cc-$TIMESTAMP.log"
     echo ""
     echo "Workspace: $WORKSPACE"
     echo "Service: ${PROFILES[*]:-base}"
+    echo "Mode: $([ "$SHELL_MODE" = true ] && echo "shell" || echo "prompt")"
     echo "Started: $(date)"
-    echo ""
-    echo "Full prompt:"
-    echo "----------------------------------------"
-    echo "$PROMPT"
-    echo "----------------------------------------"
+    if [ "$SHELL_MODE" = false ]; then
+        echo ""
+        echo "Full prompt:"
+        echo "----------------------------------------"
+        echo "$PROMPT"
+        echo "----------------------------------------"
+    fi
     echo ""
 } > "$LOG_FILE"
 
@@ -226,15 +237,21 @@ done
 
 log_info "Workspace: $WORKSPACE"
 log_info "Service: $SERVICE"
-log_info "Prompt: $(truncate_prompt "$PROMPT")"
+if [ "$SHELL_MODE" = true ]; then
+    log_info "Mode: interactive shell"
+else
+    log_info "Prompt: $(truncate_prompt "$PROMPT")"
+fi
 log_info "Log: $LOG_FILE"
 echo "" >&2
 
-echo "================================================================" >&2
-echo -e "${RED}  YOLO MODE: Claude will execute autonomously${NC}" >&2
-echo -e "${GREEN}  Recovery: git checkout . && git clean -fd${NC}" >&2
-echo "================================================================" >&2
-echo "" >&2
+if [ "$SHELL_MODE" = false ]; then
+    echo "================================================================" >&2
+    echo -e "${RED}  YOLO MODE: Claude will execute autonomously${NC}" >&2
+    echo -e "${GREEN}  Recovery: git checkout . && git clean -fd${NC}" >&2
+    echo "================================================================" >&2
+    echo "" >&2
+fi
 
 cd "$COMPOSE_DIR"
 
@@ -248,11 +265,47 @@ if [ -n "$BUILD_FLAG" ]; then
     docker compose $PROFILE_ARGS build
 fi
 
-# Run Claude Code in container
-docker compose $PROFILE_ARGS run --rm "$SERVICE" \
-    claude -p "$PROMPT" --dangerously-skip-permissions
+# Determine container command
+if [ "$SHELL_MODE" = true ]; then
+    CONTAINER_CMD="bash"
+else
+    CONTAINER_CMD="claude -p \"$PROMPT\" --dangerously-skip-permissions --output-format text"
+fi
 
-EXIT_CODE=$?
+if [ "$SHELL_MODE" = true ]; then
+    # Shell mode: use detached + attach for interactive TTY
+    CONTAINER_ID=$(docker compose $PROFILE_ARGS run -d "$SERVICE" bash)
+
+    log_info "Container: ${CONTAINER_ID:0:12}"
+    echo "Container ID: $CONTAINER_ID" >> "$LOG_FILE"
+    echo "" >&2
+    log_info "To exec: docker exec -it ${CONTAINER_ID:0:12} bash"
+    echo "" >&2
+
+    set +e
+    docker attach "$CONTAINER_ID"
+    set -e
+
+    # Wait and cleanup
+    docker wait "$CONTAINER_ID" > /dev/null 2>&1 || true
+    EXIT_CODE=$(docker inspect "$CONTAINER_ID" --format='{{.State.ExitCode}}' 2>/dev/null || echo "0")
+    docker rm "$CONTAINER_ID" > /dev/null 2>&1 || true
+else
+    # Prompt mode: run with output capture
+    {
+        echo ""
+        echo "========================================"
+        echo "Container output:"
+        echo "========================================"
+    } >> "$LOG_FILE"
+
+    set +e
+    # -T disables pseudo-TTY for better output capture
+    docker compose $PROFILE_ARGS run -T --rm "$SERVICE" \
+        bash -c "$CONTAINER_CMD" 2>&1 | tee -a "$LOG_FILE"
+    EXIT_CODE=${PIPESTATUS[0]}
+    set -e
+fi
 
 # ============ Summary ============
 
