@@ -54,6 +54,26 @@ yolo-cc --build "update dependencies"
 - Docker/OrbStack running
 - `yolo-cc` is available in PATH (symlinked to ~/.local/bin)
 
+## Important Gotchas
+
+### Sandbox Bypass Required
+When running from Claude Code in sandbox mode, you MUST use `dangerouslyDisableSandbox: true` to access OrbStack/Docker resources. The daemon check fails otherwise with "Docker daemon not running" even when OrbStack is running.
+
+### File Visibility
+**Container only sees files in the workspace directory (cwd).** Files outside the workspace are NOT accessible:
+- Plan files in `~/.claude/plans/` → NOT visible
+- Global configs in `~/.claude/` → NOT visible
+- Other project directories → NOT visible
+
+**Solution**: Copy any reference files (plans, configs, context docs) into the workspace before invoking yolo-cc:
+```bash
+# Copy plan file to workspace first
+cp ~/.claude/plans/my-plan.md ./ai_chatroom/plan.md
+
+# Then invoke yolo-cc with workspace-local path
+yolo-cc "Read plan at ./ai_chatroom/plan.md and implement it"
+```
+
 ## Available Flags
 
 ```
