@@ -82,7 +82,38 @@ yolo-cc "Read plan at ./ai_chatroom/plan.md and implement it"
 --playwright      Include Playwright [TODO]
 -w, --workspace   Workspace directory (default: cwd)
 --build           Force rebuild images
+
+Ralph Mode:
+--ralph                 Enable iterative execution
+--max-iterations N      Max iterations (default: 10)
+--completion-promise T  Promise phrase to signal completion
 ```
+
+## Ralph Mode (Iterative Execution)
+
+Ralph mode implements the [Ralph Wiggum technique](https://ghuntley.com/ralph/) - Claude runs in a loop, seeing its own previous work, until completion.
+
+```bash
+# Fix errors iteratively
+yolo-cc --ralph "fix all type errors" --completion-promise "ALL ERRORS FIXED"
+
+# Iterative improvement with limit
+yolo-cc --ralph --max-iterations 20 "improve test coverage to 80%"
+```
+
+### How It Works
+
+1. First iteration: Claude gets prompt via `-p`
+2. Subsequent iterations: Same prompt via `--continue` (Claude sees previous conversation)
+3. Exit when: `<promise>TEXT</promise>` detected OR max iterations reached
+
+### Best Practices for Ralph Mode
+
+- **Clear completion criteria**: Define what "done" means
+- **Verifiable promises**: Use promises Claude can objectively verify
+- **Set max iterations**: Always set a limit to prevent runaway loops
+- Good: `--completion-promise "ALL TESTS PASSING"` (verifiable)
+- Bad: `--completion-promise "CODE IS CLEAN"` (subjective)
 
 ## Prompt Guidelines
 

@@ -14,6 +14,9 @@
 #   -w, --workspace PATH  Specify workspace directory (default: current dir)
 #   --build       Force rebuild images before running
 #   --shell       Open interactive shell instead of running claude
+#   --ralph       Enable Ralph loop mode (iterative execution)
+#   --max-iterations N    Max iterations for ralph mode (default: 10)
+#   --completion-promise TEXT  Promise phrase to signal completion
 #   -h, --help    Show this help message
 
 set -e
@@ -69,19 +72,28 @@ Usage:
   yolo-cc [flags] "your prompt"
 
 Flags:
-  --uv              Include Python (uv) environment
-  --npm             Include Node.js (npm) environment [TODO]
-  --playwright      Include Playwright [TODO]
-  -w, --workspace   Workspace directory (default: current dir)
-  --build           Force rebuild images
-  --shell           Open interactive shell (no prompt needed)
-  -h, --help        Show this help
+  --uv                    Include Python (uv) environment
+  --npm                   Include Node.js (npm) environment [TODO]
+  --playwright            Include Playwright [TODO]
+  -w, --workspace         Workspace directory (default: current dir)
+  --build                 Force rebuild images
+  --shell                 Open interactive shell (no prompt needed)
+  -h, --help              Show this help
+
+Ralph Mode (iterative execution):
+  --ralph                 Enable Ralph loop mode
+  --max-iterations N      Max iterations (default: 10)
+  --completion-promise T  Promise phrase to signal completion
 
 Examples:
   yolo-cc "fix all TypeScript errors"
   yolo-cc --uv "create a FastAPI server with SQLAlchemy"
   yolo-cc -w ~/projects/myapp "refactor the auth module"
   yolo-cc --shell                    # Debug: open shell in container
+
+  # Ralph mode - iterative execution
+  yolo-cc --ralph "fix all type errors" --completion-promise "ALL ERRORS FIXED"
+  yolo-cc --ralph --max-iterations 20 "improve test coverage to 80%"
 
 Security:
   - OAuth token passed via env var (not persisted in container)
@@ -98,6 +110,9 @@ WORKSPACE="$(pwd)"
 BUILD_FLAG=""
 PROMPT=""
 SHELL_MODE=false
+RALPH_MODE=false
+MAX_ITERATIONS=10
+COMPLETION_PROMISE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -124,6 +139,18 @@ while [[ $# -gt 0 ]]; do
         --shell)
             SHELL_MODE=true
             shift
+            ;;
+        --ralph)
+            RALPH_MODE=true
+            shift
+            ;;
+        --max-iterations)
+            MAX_ITERATIONS="$2"
+            shift 2
+            ;;
+        --completion-promise)
+            COMPLETION_PROMISE="$2"
+            shift 2
             ;;
         -h|--help)
             show_help
@@ -203,6 +230,15 @@ fi
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="$WORKSPACE/logs/yolo-cc-$TIMESTAMP.log"
 
+# Determine mode string
+if [ "$SHELL_MODE" = true ]; then
+    MODE_STR="shell"
+elif [ "$RALPH_MODE" = true ]; then
+    MODE_STR="ralph (max: $MAX_ITERATIONS)"
+else
+    MODE_STR="single"
+fi
+
 # Write detailed info to log file
 {
     echo "========================================"
@@ -211,7 +247,11 @@ LOG_FILE="$WORKSPACE/logs/yolo-cc-$TIMESTAMP.log"
     echo ""
     echo "Workspace: $WORKSPACE"
     echo "Service: ${PROFILES[*]:-base}"
-    echo "Mode: $([ "$SHELL_MODE" = true ] && echo "shell" || echo "prompt")"
+    echo "Mode: $MODE_STR"
+    if [ "$RALPH_MODE" = true ]; then
+        echo "Max iterations: $MAX_ITERATIONS"
+        echo "Completion promise: ${COMPLETION_PROMISE:-none}"
+    fi
     echo "Started: $(date)"
     if [ "$SHELL_MODE" = false ]; then
         echo ""
@@ -239,6 +279,12 @@ log_info "Workspace: $WORKSPACE"
 log_info "Service: $SERVICE"
 if [ "$SHELL_MODE" = true ]; then
     log_info "Mode: interactive shell"
+elif [ "$RALPH_MODE" = true ]; then
+    log_info "Mode: ralph loop"
+    log_info "Max iterations: $MAX_ITERATIONS"
+    if [ -n "$COMPLETION_PROMISE" ]; then
+        log_info "Completion promise: $COMPLETION_PROMISE"
+    fi
 else
     log_info "Prompt: $(truncate_prompt "$PROMPT")"
 fi
@@ -246,10 +292,18 @@ log_info "Log: $LOG_FILE"
 echo "" >&2
 
 if [ "$SHELL_MODE" = false ]; then
-    echo "================================================================" >&2
-    echo -e "${RED}  YOLO MODE: Claude will execute autonomously${NC}" >&2
-    echo -e "${GREEN}  Recovery: git checkout . && git clean -fd${NC}" >&2
-    echo "================================================================" >&2
+    if [ "$RALPH_MODE" = true ]; then
+        echo "================================================================" >&2
+        echo -e "${RED}  RALPH MODE: Iterative autonomous execution${NC}" >&2
+        echo -e "${YELLOW}  Max iterations: $MAX_ITERATIONS${NC}" >&2
+        echo -e "${GREEN}  Recovery: git checkout . && git clean -fd${NC}" >&2
+        echo "================================================================" >&2
+    else
+        echo "================================================================" >&2
+        echo -e "${RED}  YOLO MODE: Claude will execute autonomously${NC}" >&2
+        echo -e "${GREEN}  Recovery: git checkout . && git clean -fd${NC}" >&2
+        echo "================================================================" >&2
+    fi
     echo "" >&2
 fi
 
@@ -268,6 +322,73 @@ fi
 # Determine container command
 if [ "$SHELL_MODE" = true ]; then
     CONTAINER_CMD="bash"
+elif [ "$RALPH_MODE" = true ]; then
+    # Generate ralph loop script to run inside container
+    # Escape special characters in prompt and promise for safe embedding
+    ESCAPED_PROMPT=$(printf '%s' "$PROMPT" | sed "s/'/'\\\\''/g")
+    ESCAPED_PROMISE=$(printf '%s' "$COMPLETION_PROMISE" | sed "s/'/'\\\\''/g")
+
+    CONTAINER_CMD="bash -c '
+MAX_ITER=$MAX_ITERATIONS
+PROMISE=\"$ESCAPED_PROMISE\"
+PROMPT=\"$ESCAPED_PROMPT\"
+
+# Add promise instruction if set
+if [ -n \"\$PROMISE\" ]; then
+    FULL_PROMPT=\"\$PROMPT
+
+To signal completion, you MUST output exactly: <promise>\$PROMISE</promise>
+ONLY output this when the statement is completely TRUE. Do NOT lie to exit.\"
+else
+    FULL_PROMPT=\"\$PROMPT\"
+fi
+
+echo \"🔄 Ralph loop starting (max: \$MAX_ITER iterations)\" >&2
+echo \"\" >&2
+
+for i in \$(seq 1 \$MAX_ITER); do
+    echo \"════════════════════════════════════════\" >&2
+    echo \"🔄 Ralph iteration \$i/\$MAX_ITER\" >&2
+    echo \"════════════════════════════════════════\" >&2
+
+    # Create temp file to capture output while still displaying it
+    TEMP_OUTPUT=\"/tmp/ralph-output-\$\$\"
+
+    if [ \$i -eq 1 ]; then
+        # First iteration: use -p flag
+        claude -p \"\$FULL_PROMPT\" --dangerously-skip-permissions --output-format text 2>&1 | tee \"\$TEMP_OUTPUT\"
+    else
+        # Subsequent iterations: use --continue with stdin
+        echo \"\$FULL_PROMPT\" | claude --continue --dangerously-skip-permissions --output-format text 2>&1 | tee \"\$TEMP_OUTPUT\"
+    fi
+
+    # Check for completion promise
+    if [ -n \"\$PROMISE\" ]; then
+        if grep -q \"<promise>\$PROMISE</promise>\" \"\$TEMP_OUTPUT\" 2>/dev/null; then
+            echo \"\" >&2
+            echo \"════════════════════════════════════════\" >&2
+            echo \"✅ Completion promise detected!\" >&2
+            echo \"   <promise>\$PROMISE</promise>\" >&2
+            echo \"════════════════════════════════════════\" >&2
+            rm -f \"\$TEMP_OUTPUT\"
+            exit 0
+        fi
+    fi
+
+    rm -f \"\$TEMP_OUTPUT\"
+
+    if [ \$i -lt \$MAX_ITER ]; then
+        echo \"\" >&2
+        echo \"⏳ No promise detected, continuing...\" >&2
+        echo \"\" >&2
+    fi
+done
+
+echo \"\" >&2
+echo \"════════════════════════════════════════\" >&2
+echo \"🛑 Max iterations (\$MAX_ITER) reached\" >&2
+echo \"════════════════════════════════════════\" >&2
+'"
 else
     CONTAINER_CMD="claude -p \"$PROMPT\" --dangerously-skip-permissions --output-format text"
 fi

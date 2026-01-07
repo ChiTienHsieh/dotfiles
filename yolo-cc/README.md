@@ -43,6 +43,39 @@ yolo-cc -w ~/projects/myapp "refactor auth module"
 yolo-cc --build "update dependencies"
 ```
 
+## Ralph Mode (Iterative Execution)
+
+Ralph mode enables iterative execution using the [Ralph Wiggum technique](https://ghuntley.com/ralph/). Claude runs in a loop, seeing its own previous work in files, until a completion promise is detected or max iterations reached.
+
+```bash
+# Basic ralph mode with completion promise
+yolo-cc --ralph "fix all type errors" --completion-promise "ALL ERRORS FIXED"
+
+# With iteration limit
+yolo-cc --ralph --max-iterations 20 "improve test coverage to 80%"
+
+# Combined with other flags
+yolo-cc --ralph --uv "create and test a FastAPI server" --completion-promise "TESTS PASSING"
+```
+
+### How Ralph Mode Works
+
+1. **First iteration**: Claude receives the prompt with `-p`
+2. **Subsequent iterations**: Same prompt fed via `--continue`
+3. **Self-reference**: Claude sees its previous work in files
+4. **Exit conditions**:
+   - `<promise>TEXT</promise>` detected in output
+   - Max iterations reached (default: 10)
+
+### Completion Promises
+
+To exit the loop, Claude must output:
+```
+<promise>YOUR_PROMISE_TEXT</promise>
+```
+
+The promise phrase must match exactly. Claude is instructed to only output the promise when the statement is truly complete.
+
 ## Setup
 
 1. **Set token**:
@@ -89,12 +122,13 @@ The test creates a temp workspace, runs yolo-cc with a simple math prompt, and v
 
 ```
 yolo-cc/
-├── bin/yolo-cc           # CLI entrypoint
+├── bin/yolo-cc              # CLI entrypoint
 ├── test/
-│   └── e2e-happy-path.sh # E2E test
+│   ├── e2e-happy-path.sh    # Basic E2E test
+│   └── e2e-ralph-mode.sh    # Ralph mode E2E test
 ├── compose/docker-compose.yml
 ├── images/
-│   ├── base.Dockerfile   # bun + CC
-│   └── uv.Dockerfile     # + Python (uv)
+│   ├── base.Dockerfile      # bun + CC
+│   └── uv.Dockerfile        # + Python (uv)
 └── README.md
 ```
