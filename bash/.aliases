@@ -257,6 +257,143 @@ p() {
 }
 
 # -----------------------------------------------------------------------------
+# Quick access - TODO & Notes
+# -----------------------------------------------------------------------------
+# a - Append to TODO.md (goes to end, insert mode)
+a() {
+    nvim "+normal G$" "+startinsert!" "/Users/sprin/Documents/ObsidianVault/TODO.md"
+}
+
+# todo - Open TODO.md in vi (normal mode)
+todo() {
+    vi "/Users/sprin/Documents/ObsidianVault/TODO.md"
+}
+
+# -----------------------------------------------------------------------------
+# Prompt preview & send
+# -----------------------------------------------------------------------------
+# pp - Preview latest prompt (head + tail with separator)
+pp() {
+    local prompts_dir="/tmp/prompts"
+
+    if [[ ! -d "$prompts_dir" ]]; then
+        echo "(´・ω・\`) $prompts_dir doesn't exist"
+        return 1
+    fi
+
+    # BSD find + stat (macOS compatible)
+    local latest=$(find "$prompts_dir" -maxdepth 1 -name 'prompt-*.md' -type f -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+
+    if [[ -z "$latest" ]]; then
+        echo "(´・ω・\`) No prompt files in $prompts_dir"
+        return 1
+    fi
+
+    local line_count=$(wc -l < "$latest" | tr -d ' ')
+
+    if [[ $line_count -le 20 ]]; then
+        # Short file - show whole thing
+        cat "$latest"
+    else
+        # Long file - head + tail
+        head -10 "$latest"
+        echo ""
+        echo "--- ... ($((line_count - 20)) lines omitted) ... ---"
+        echo ""
+        tail -10 "$latest"
+    fi
+    echo ""
+    echo "(Latest prompt: $latest | $line_count lines)"
+}
+
+# pc - Preview prompt, confirm, send to claude (interactive mode)
+pc() {
+    local prompts_dir="/tmp/prompts"
+
+    if [[ ! -d "$prompts_dir" ]]; then
+        echo "(´・ω・\`) $prompts_dir doesn't exist"
+        return 1
+    fi
+
+    local latest=$(find "$prompts_dir" -maxdepth 1 -name 'prompt-*.md' -type f -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+
+    if [[ -z "$latest" ]]; then
+        echo "(´・ω・\`) No prompt files in $prompts_dir"
+        return 1
+    fi
+
+    echo "=== PROMPT PREVIEW ==="
+    cat "$latest"
+    echo "=== END PREVIEW ==="
+    echo ""
+
+    read "confirm?Send to claude? (y/n/e to edit): "
+    case "$confirm" in
+        y|Y)
+            claude "$(cat "$latest")"
+            ;;
+        e|E)
+            nvim "$latest"
+            # After editing, ask again
+            read "confirm2?Send now? (y/n): "
+            [[ "$confirm2" == "y" || "$confirm2" == "Y" ]] && claude "$(cat "$latest")"
+            ;;
+        *)
+            echo "Cancelled"
+            ;;
+    esac
+}
+
+# -----------------------------------------------------------------------------
+# wheredef - Find where a function/alias is defined
+# -----------------------------------------------------------------------------
+wheredef() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        echo "Usage: wheredef <function_or_alias_name>"
+        return 1
+    fi
+
+    local files=(
+        "$HOME/.aliases"
+        "$HOME/.aliases.local"
+        "$HOME/.zshrc"
+        "$HOME/.bashrc"
+        "$HOME/.bash_profile"
+    )
+
+    for file in "${files[@]}"; do
+        [[ ! -f "$file" ]] && continue
+
+        # Search for function: name() { or name () {
+        local func_line=$(grep -n "^${name}()\|^${name} ()" "$file" 2>/dev/null | head -1)
+        if [[ -n "$func_line" ]]; then
+            local line_num=$(echo "$func_line" | cut -d: -f1)
+            echo "$file:$line_num"
+            echo ""
+            # Extract function body (from definition to closing brace at column 0)
+            sed -n "${line_num},/^}/p" "$file"
+            return 0
+        fi
+
+        # Search for alias: alias name='...'
+        local alias_line=$(grep -n "^alias ${name}=" "$file" 2>/dev/null | head -1)
+        if [[ -n "$alias_line" ]]; then
+            local line_num=$(echo "$alias_line" | cut -d: -f1)
+            echo "$file:$line_num"
+            echo ""
+            echo "$alias_line" | cut -d: -f2-
+            return 0
+        fi
+    done
+
+    # Not found in our config files - fall back to type
+    echo "(・_・;) Not found in shell configs"
+    echo ""
+    type "$name" 2>&1
+}
+
+# -----------------------------------------------------------------------------
 # Claude Code MCP helpers
 # -----------------------------------------------------------------------------
 cldaddcontext7() {
