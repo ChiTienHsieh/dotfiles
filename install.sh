@@ -72,7 +72,7 @@ backup_and_hardlink() {
 # -----------------------------------------------------------------------------
 # Initialize submodules (for nvim config)
 # -----------------------------------------------------------------------------
-echo "[1/8] Initializing git submodules..."
+echo "[1/9] Initializing git submodules..."
 if [ -f "$DOTFILES_DIR/.gitmodules" ]; then
     git -C "$DOTFILES_DIR" submodule update --init --recursive
     echo "  Done!"
@@ -84,7 +84,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Bash configuration
 # -----------------------------------------------------------------------------
-echo "[2/8] Installing bash configuration..."
+echo "[2/9] Installing bash configuration..."
 backup_and_link "$DOTFILES_DIR/bash/.bash_profile" "$HOME/.bash_profile"
 backup_and_link "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
 backup_and_link "$DOTFILES_DIR/bash/.bash_prompt" "$HOME/.bash_prompt"
@@ -94,14 +94,14 @@ echo ""
 # -----------------------------------------------------------------------------
 # Zsh configuration
 # -----------------------------------------------------------------------------
-echo "[3/8] Installing zsh configuration..."
+echo "[3/9] Installing zsh configuration..."
 backup_and_link "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Git configuration
 # -----------------------------------------------------------------------------
-echo "[4/8] Installing git configuration..."
+echo "[4/9] Installing git configuration..."
 backup_and_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
 backup_and_link "$DOTFILES_DIR/git/.config/git/ignore" "$HOME/.config/git/ignore"
 echo ""
@@ -109,21 +109,21 @@ echo ""
 # -----------------------------------------------------------------------------
 # Vim configuration
 # -----------------------------------------------------------------------------
-echo "[5/8] Installing vim configuration..."
+echo "[5/9] Installing vim configuration..."
 backup_and_link "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Tmux configuration
 # -----------------------------------------------------------------------------
-echo "[6/8] Installing tmux configuration..."
+echo "[6/9] Installing tmux configuration..."
 backup_and_link "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Other configurations
 # -----------------------------------------------------------------------------
-echo "[7/8] Installing other configurations..."
+echo "[7/9] Installing other configurations..."
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 
 # Nvim (if submodule exists)
@@ -135,7 +135,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Claude Code configuration
 # -----------------------------------------------------------------------------
-echo "[8/8] Installing Claude Code configuration..."
+echo "[8/9] Installing Claude Code configuration..."
 mkdir -p "$HOME/.claude/commands"
 
 # Main config files
@@ -157,6 +157,18 @@ done
 # yolo-cc CLI tool
 mkdir -p "$HOME/.local/bin"
 backup_and_link "$DOTFILES_DIR/yolo-cc/bin/yolo-cc" "$HOME/.local/bin/yolo-cc"
+echo ""
+
+# -----------------------------------------------------------------------------
+# Git hooks (for dotfiles repo itself)
+# -----------------------------------------------------------------------------
+echo "[9/9] Installing git hooks..."
+if [ -d "$DOTFILES_DIR/.git" ]; then
+    mkdir -p "$DOTFILES_DIR/.git/hooks"
+    backup_and_link "$DOTFILES_DIR/hooks/pre-commit" "$DOTFILES_DIR/.git/hooks/pre-commit"
+else
+    echo "  Not a git repo, skipping hooks."
+fi
 echo ""
 
 # -----------------------------------------------------------------------------

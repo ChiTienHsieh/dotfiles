@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+# =============================================================================
+# pre-commit hook - Run tests before commit
+# =============================================================================
+# Skip with: git commit --no-verify
+
+DOTFILES_DIR="$(git rev-parse --show-toplevel)"
+TEST_SCRIPT="$DOTFILES_DIR/test/test_aliases.sh"
+
+# Only run if test script exists
+if [[ ! -x "$TEST_SCRIPT" ]]; then
+    echo "⚠️  Test script not found, skipping..."
+    exit 0
+fi
+
+# Check if any shell config files are staged
+STAGED_FILES=$(git diff --cached --name-only)
+SHELL_FILES_PATTERN="bash/|\.aliases|\.bashrc|\.zshrc|\.bash_profile"
+
+if echo "$STAGED_FILES" | grep -qE "$SHELL_FILES_PATTERN"; then
+    echo "🧪 Running dotfiles tests..."
+    echo ""
+
+    if "$TEST_SCRIPT"; then
+        echo ""
+        echo "✅ Tests passed, proceeding with commit"
+        exit 0
+    else
+        echo ""
+        echo "❌ Tests failed, commit aborted"
+        echo "   Fix the issues or use 'git commit --no-verify' to skip"
+        exit 1
+    fi
+else
+    # No shell config changes, skip tests
+    exit 0
+fi
