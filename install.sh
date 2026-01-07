@@ -157,6 +157,15 @@ done
 # yolo-cc CLI tool
 mkdir -p "$HOME/.local/bin"
 backup_and_link "$DOTFILES_DIR/yolo-cc/bin/yolo-cc" "$HOME/.local/bin/yolo-cc"
+
+# Plugins (personal marketplace - requires manual install after)
+# The marketplace is at: $DOTFILES_DIR/claude/plugins/
+# After running install.sh, run these commands in Claude Code:
+#   /plugin marketplace add ~/dotfiles/claude/plugins
+#   /plugin install cth-plugins@cth-marketplace
+echo "  [!] Personal plugins require manual setup in Claude Code:"
+echo "      /plugin marketplace add ~/dotfiles/claude/plugins"
+echo "      /plugin install cth-plugins@cth-marketplace"
 echo ""
 
 # -----------------------------------------------------------------------------

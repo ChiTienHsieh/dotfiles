@@ -37,6 +37,8 @@ dotfiles/
 ├── templates/
 │   ├── .secrets.template      # API keys template (copy to ~/.secrets)
 │   └── .aliases.local.template  # Machine-specific aliases
+├── claude/
+│   └── plugins/         # Personal Claude Code plugins (local marketplace)
 ├── nvim/                # Neovim config (git submodule)
 ├── install.sh           # Installation script
 └── README.md
@@ -46,6 +48,11 @@ dotfiles/
 
 1. **Edit `~/.secrets`** - Add your API keys (this file is never committed)
 2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
+3. **Claude Code plugins** - Run these commands in Claude Code:
+   ```
+   /plugin marketplace add ~/dotfiles/claude/plugins
+   /plugin install cth-plugins@cth-marketplace
+   ```
 
 ## Files NOT Tracked
 

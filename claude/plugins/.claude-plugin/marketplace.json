@@ -1,0 +1,16 @@
+{
+  "name": "cth-marketplace",
+  "owner": {
+    "name": "CTH"
+  },
+  "metadata": {
+    "description": "Personal plugins for CTH's workflow"
+  },
+  "plugins": [
+    {
+      "name": "cth-plugins",
+      "source": "./cth-plugins",
+      "description": "Personal productivity tools (wife-pdf, etc.)"
+    }
+  ]
+}
