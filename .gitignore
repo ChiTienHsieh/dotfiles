@@ -9,3 +9,4 @@ ai_chatroom/
 
 # Local overrides (machine-specific, not tracked)
 bash/.aliases.local
+.claude/settings.local.json
