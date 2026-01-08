@@ -71,10 +71,12 @@ yolo-cc --ralph --uv "create and test a FastAPI server" --completion-promise "TE
 
 To exit the loop, Claude must output:
 ```
-<promise>YOUR_PROMISE_TEXT</promise>
+[[PROMISE: YOUR_PROMISE_TEXT]]
 ```
 
 The promise phrase must match exactly. Claude is instructed to only output the promise when the statement is truly complete.
+
+**Note:** We use `[[PROMISE: ...]]` instead of XML tags because Claude Code has issues parsing `<promise>` tags in prompts.
 
 ## Setup
 

@@ -105,7 +105,7 @@ yolo-cc --ralph --max-iterations 20 "improve test coverage to 80%"
 
 1. First iteration: Claude gets prompt via `-p`
 2. Subsequent iterations: Same prompt via `--continue` (Claude sees previous conversation)
-3. Exit when: `<promise>TEXT</promise>` detected OR max iterations reached
+3. Exit when: `[[PROMISE: TEXT]]` detected OR max iterations reached
 
 ### Best Practices for Ralph Mode
 

@@ -102,7 +102,7 @@ echo ""
 log_info "Test 1: Simple promise detection (single iteration)"
 echo ""
 
-PROMPT="Create a file called answer.txt containing the number 42. After creating the file, output exactly: <promise>FILE CREATED</promise>"
+PROMPT="Create a file called answer.txt containing the number 42. After creating the file, output exactly: [[PROMISE: FILE CREATED]]"
 
 # Run yolo-cc in ralph mode
 set +e

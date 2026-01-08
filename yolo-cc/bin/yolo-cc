@@ -85,6 +85,9 @@ Ralph Mode (iterative execution):
   --max-iterations N      Max iterations (default: 10)
   --completion-promise T  Promise phrase to signal completion
 
+Debug:
+  -v, --verbose           Show debug output (container cmd, timing)
+
 Examples:
   yolo-cc "fix all TypeScript errors"
   yolo-cc --uv "create a FastAPI server with SQLAlchemy"
@@ -113,6 +116,7 @@ SHELL_MODE=false
 RALPH_MODE=false
 MAX_ITERATIONS=10
 COMPLETION_PROMISE=""
+VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -151,6 +155,10 @@ while [[ $# -gt 0 ]]; do
         --completion-promise)
             COMPLETION_PROMISE="$2"
             shift 2
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
             ;;
         -h|--help)
             show_help
@@ -324,73 +332,108 @@ if [ "$SHELL_MODE" = true ]; then
     CONTAINER_CMD="bash"
 elif [ "$RALPH_MODE" = true ]; then
     # Generate ralph loop script to run inside container
-    # Escape special characters in prompt and promise for safe embedding
-    ESCAPED_PROMPT=$(printf '%s' "$PROMPT" | sed "s/'/'\\\\''/g")
-    ESCAPED_PROMISE=$(printf '%s' "$COMPLETION_PROMISE" | sed "s/'/'\\\\''/g")
+    # Write script to temp file to avoid multiline bash -c issues
+    RALPH_SCRIPT_FILE="/tmp/claude/ralph-script-$$.sh"
+    mkdir -p /tmp/claude
 
-    CONTAINER_CMD="bash -c '
-MAX_ITER=$MAX_ITERATIONS
-PROMISE=\"$ESCAPED_PROMISE\"
-PROMPT=\"$ESCAPED_PROMPT\"
+    cat > "$RALPH_SCRIPT_FILE" << 'RALPH_EOF'
+#!/bin/bash
+set -e
+
+MAX_ITER="$1"
+PROMISE="$2"
+shift 2
+PROMPT="$*"
 
 # Add promise instruction if set
-if [ -n \"\$PROMISE\" ]; then
-    FULL_PROMPT=\"\$PROMPT
+if [ -n "$PROMISE" ]; then
+    FULL_PROMPT="$PROMPT
 
-To signal completion, you MUST output exactly: <promise>\$PROMISE</promise>
-ONLY output this when the statement is completely TRUE. Do NOT lie to exit.\"
+To signal completion, you MUST output exactly: [[PROMISE: $PROMISE]]
+ONLY output this when the statement is completely TRUE. Do NOT lie to exit."
 else
-    FULL_PROMPT=\"\$PROMPT\"
+    FULL_PROMPT="$PROMPT"
 fi
 
-echo \"🔄 Ralph loop starting (max: \$MAX_ITER iterations)\" >&2
-echo \"\" >&2
+echo "🔄 Ralph loop starting (max: $MAX_ITER iterations)" >&2
+echo "" >&2
 
-for i in \$(seq 1 \$MAX_ITER); do
-    echo \"════════════════════════════════════════\" >&2
-    echo \"🔄 Ralph iteration \$i/\$MAX_ITER\" >&2
-    echo \"════════════════════════════════════════\" >&2
+for i in $(seq 1 $MAX_ITER); do
+    echo "════════════════════════════════════════" >&2
+    echo "🔄 Ralph iteration $i/$MAX_ITER" >&2
+    echo "════════════════════════════════════════" >&2
 
     # Create temp file to capture output while still displaying it
-    TEMP_OUTPUT=\"/tmp/ralph-output-\$\$\"
+    TEMP_OUTPUT="/tmp/ralph-output-$$"
 
-    if [ \$i -eq 1 ]; then
+    if [ $i -eq 1 ]; then
         # First iteration: use -p flag
-        claude -p \"\$FULL_PROMPT\" --dangerously-skip-permissions --output-format text 2>&1 | tee \"\$TEMP_OUTPUT\"
+        claude -p "$FULL_PROMPT" --dangerously-skip-permissions --output-format text 2>&1 | tee "$TEMP_OUTPUT"
     else
         # Subsequent iterations: use --continue with stdin
-        echo \"\$FULL_PROMPT\" | claude --continue --dangerously-skip-permissions --output-format text 2>&1 | tee \"\$TEMP_OUTPUT\"
+        echo "$FULL_PROMPT" | claude --continue --dangerously-skip-permissions --output-format text 2>&1 | tee "$TEMP_OUTPUT"
     fi
 
     # Check for completion promise
-    if [ -n \"\$PROMISE\" ]; then
-        if grep -q \"<promise>\$PROMISE</promise>\" \"\$TEMP_OUTPUT\" 2>/dev/null; then
-            echo \"\" >&2
-            echo \"════════════════════════════════════════\" >&2
-            echo \"✅ Completion promise detected!\" >&2
-            echo \"   <promise>\$PROMISE</promise>\" >&2
-            echo \"════════════════════════════════════════\" >&2
-            rm -f \"\$TEMP_OUTPUT\"
+    if [ -n "$PROMISE" ]; then
+        if grep -qF "[[PROMISE: $PROMISE]]" "$TEMP_OUTPUT" 2>/dev/null; then
+            echo "" >&2
+            echo "════════════════════════════════════════" >&2
+            echo "✅ Completion promise detected!" >&2
+            echo "   [[PROMISE: $PROMISE]]" >&2
+            echo "════════════════════════════════════════" >&2
+            rm -f "$TEMP_OUTPUT"
             exit 0
         fi
     fi
 
-    rm -f \"\$TEMP_OUTPUT\"
+    rm -f "$TEMP_OUTPUT"
 
-    if [ \$i -lt \$MAX_ITER ]; then
-        echo \"\" >&2
-        echo \"⏳ No promise detected, continuing...\" >&2
-        echo \"\" >&2
+    if [ $i -lt $MAX_ITER ]; then
+        echo "" >&2
+        echo "⏳ No promise detected, continuing..." >&2
+        echo "" >&2
     fi
 done
 
-echo \"\" >&2
-echo \"════════════════════════════════════════\" >&2
-echo \"🛑 Max iterations (\$MAX_ITER) reached\" >&2
-echo \"════════════════════════════════════════\" >&2
-'"
+echo "" >&2
+echo "════════════════════════════════════════" >&2
+echo "🛑 Max iterations ($MAX_ITER) reached" >&2
+echo "════════════════════════════════════════" >&2
+RALPH_EOF
+
+    chmod +x "$RALPH_SCRIPT_FILE"
+
+    # Escape prompt for shell argument passing
+    ESCAPED_PROMPT=$(printf '%s' "$PROMPT" | sed "s/'/'\\\\''/g")
+    ESCAPED_PROMISE=$(printf '%s' "$COMPLETION_PROMISE" | sed "s/'/'\\\\''/g")
+
+    CONTAINER_CMD="bash /workspace/.ralph-script.sh '$MAX_ITERATIONS' '$ESCAPED_PROMISE' '$ESCAPED_PROMPT'"
+
+    # We'll copy the script to workspace so it's accessible inside container
+    cp "$RALPH_SCRIPT_FILE" "$WORKSPACE/.ralph-script.sh"
+    rm "$RALPH_SCRIPT_FILE"
+
+    # Add cleanup trap to remove script after run
+    trap 'rm -f "$WORKSPACE/.ralph-script.sh" 2>/dev/null' EXIT
 else
     CONTAINER_CMD="claude -p \"$PROMPT\" --dangerously-skip-permissions --output-format text"
+fi
+
+# Verbose debug output
+if [ "$VERBOSE" = true ]; then
+    echo "" >&2
+    echo -e "${YELLOW}[verbose]${NC} ═══════════════════════════════════════" >&2
+    echo -e "${YELLOW}[verbose]${NC} Docker compose dir: $COMPOSE_DIR" >&2
+    echo -e "${YELLOW}[verbose]${NC} Profile args: ${PROFILE_ARGS:-none}" >&2
+    echo -e "${YELLOW}[verbose]${NC} Service: $SERVICE" >&2
+    if [ "$RALPH_MODE" = true ]; then
+        echo -e "${YELLOW}[verbose]${NC} Ralph mode: iterations=$MAX_ITERATIONS, promise='$COMPLETION_PROMISE'" >&2
+    fi
+    echo -e "${YELLOW}[verbose]${NC} Container command (truncated):" >&2
+    echo -e "${YELLOW}[verbose]${NC}   $(echo "$CONTAINER_CMD" | head -c 200)..." >&2
+    echo -e "${YELLOW}[verbose]${NC} ═══════════════════════════════════════" >&2
+    echo "" >&2
 fi
 
 if [ "$SHELL_MODE" = true ]; then
