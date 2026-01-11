@@ -223,3 +223,56 @@
   - ONLY read `*_summary_cld.txt` files (never full details unless necessary)
   - Main agent acts as pure orchestrator, preserving minimal context
 - **Use cases**: Research, analysis, implementation, testing, review, documentation
+
+## Subagent Token 節省策略（重要！）
+
+### 問題
+TaskOutput 會把 subagent 的完整輸出拉回 main agent context，浪費 token 且污染 context。
+即使你指示 subagent 「只回傳檔案路徑」，LLM 還是常常會附帶完整分析內容。
+
+### 解法：避開 TaskOutput，直接讀檔案
+
+**正確做法：**
+1. 派任務時用 `run_in_background: true`
+2. Subagent 把結果寫到 ai_chatroom 檔案（summary + detail）
+3. Main agent 用 Read 讀 summary 檔案
+4. **絕對不要用 TaskOutput** - 這會把所有內容拉回來
+
+**錯誤做法（help_mom_law 案例的慘痛教訓）：**
+```
+Task(run_in_background=True, ...)
+TaskOutput(task_id=xxx)  # ← 不要這樣！這把 30KB 拉回 main context
+```
+
+**正確做法：**
+```
+Task(run_in_background=True, prompt="...寫到 ai_chatroom/xxx_summary_cld.txt")
+# 等待適當時間後...
+Read("ai_chatroom/xxx_summary_cld.txt")  # ← 這樣！只讀需要的
+```
+
+### Subagent Prompt Template
+派任務給 subagent 時，明確指定輸出位置：
+
+```
+你的任務是 [描述]
+
+【輸出要求】
+1. 完整分析寫到：./ai_chatroom/{topic}/{task}_detail_cld.md
+2. 摘要（6-10句）寫到：./ai_chatroom/{topic}/{task}_summary_cld.txt
+3. 完成後只需回覆「已完成，檔案在 ai_chatroom/{topic}/」
+
+重要：不要在回覆中包含分析內容，只需確認檔案路徑。
+```
+
+### 等待時間指南
+Subagent 需要時間工作，太頻繁 check 浪費 tool calls。
+- **最短等待：3 分鐘** - 即使是簡單任務也至少等 3 分鐘
+- **中等任務：5 分鐘** - 一般研究、分析任務
+- **長任務：10 分鐘** - 大型研究、多檔案分析、複雜實作
+- **不要用 `sleep 15` 之類的短等待** - 這只會導致多次無謂的 check
+
+### 為什麼這很重要
+- help_mom_law 案例中，3 個 subagent 透過 TaskOutput 回傳共 ~90KB 內容
+- 這些內容 subagent 已經寫到檔案了，回傳是重複且浪費
+- 正確做法應該只需 ~400 chars（檔案路徑）
