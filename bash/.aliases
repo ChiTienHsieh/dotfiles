@@ -33,6 +33,7 @@ alias vi="nvim"
 alias tree="tree -I '__pycache__|*.pyc|node_modules|.git'"
 alias search="find . -name"
 alias rlp="realpath"
+alias rlf="realpath"                # rlf = readlink -f (same thing)
 alias t="type"                          # Check what a command is
 
 # macOS specific

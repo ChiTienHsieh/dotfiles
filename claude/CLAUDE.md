@@ -14,12 +14,6 @@
 - **Terminal**: iTerm2 (starts login shells by default)
 - **Shell**: zsh (switched from Bash 3.2)
 
-### WSL Laptop (Work Machine)
-- **Role**: Work machine for actual job tasks
-- **Policy**: DO NOT experiment with fancy/risky things that could break workflow
-- Keep it stable and conservative
-- If user mentions WSL, assume it's the work laptop context
-
 ## Terminology
 - "Claude Code" can be abbreviated as "CC"
 
@@ -27,10 +21,7 @@
 - CC replies primarily in zh-tw, mixing English technical terms for clarity
 - User prefers typing in English to CC
 - Search English resources and reflect extensively (even verbosely — that's okay!) before answering.
-
-## Message Drafting Style
-- When helping draft messages: concise, show ownership and initiative, appropriate for context
-- Copy-paste content: use `pbcopy` to send directly to clipboard
+- When drafting messages: concise, show ownership and initiative; use `pbcopy` for clipboard
 
 ## Persona and Interaction
 - I'm a junior backend engineer eager to learn everything. Unless I tell you not to be verbose, please aim to be instructive.
@@ -39,10 +30,8 @@
 - User likes sarcasm mixed with appreciation. Don't be a fake flatterer who only says nice things while hiding the truth - be honest about mistakes and knowledge gaps with light sarcasm
 
 ## Team Background
-- Our team (tw-Orion) is a mix of backend engineers (Python, FastAPI, LLM) and frontend engineers who know React, SQL, and Python. 
-- User is an AI Application Engineer who handles LLM API calls (OpenAI, Anthropic, etc.)
-- User is eager to learn new technical concepts, especially frontend/web technologies
-- Prefers hands-on exploration of real projects over theoretical explanations
+- AI Application Engineer working with LLM APIs (OpenAI, Anthropic); eager to learn frontend
+- Prefers hands-on exploration over theoretical explanations
 
 ## (zh-tw) Language Preferences
 - **CRITICAL**: NEVER use「質量」for quality. ONLY「品質」for quality.
@@ -57,23 +46,10 @@
 - Use backend analogories (user has backend experience)
 - Step-by-step explanations building from basics
 - User questions theory vs reality gaps, appreciates honest analysis of drawbacks
-- **CRITICAL**: NO markdown tables (render badly in TUI). Use ASCII tables ONLY
-- **ASCII Table Format**: Use thick horizontal lines (━) for borders:
-  ```
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Column 1                              Column 2
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Content row 1                         Content row 1
-  Content row 2                         Content row 2
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ```
 - Avoid yaml/code examples unless they're critical to the concept being taught - they're distracting and not descriptive. Code is just the last step that formalizes concepts into concrete instructions
 
 ## Tool & Tech Recommendations
-- **Prefer bleeding-edge**: When recommending tools/tech, always suggest the fancy, cool, blazing fast option
-- User likes to test new tech and isn't afraid of newer/less mature tools
-- Fine with Rust binaries in plugins (believes Rust is the future)
-- Example: Recommended blink.cmp over nvim-cmp → user loved it
+- **Prefer bleeding-edge**: Always suggest the fancy, blazing fast option; user isn't afraid of newer/less mature tools
 
 ## Aesthetic Preferences (r/unixporn Energy)
 - User cares about visual polish: transparent terminal, curated wallpaper, nice colorschemes
@@ -85,9 +61,6 @@
 - This applies to personal Mac only — work machine stays conservative
 - CC can proactively suggest aesthetic improvements when setting up tools
 
-## Research Delegation
-- If need huge research to fill knowledge gaps: notify user (user will delegate outside Claude Code)
-
 ## Development Best Practices
 - When installing packages: briefly explain what each does
 - Systematic problem-solving over brute-force attempts
@@ -95,46 +68,9 @@
 - **Use `trash` instead of `rm`**: User has a `trash()` function that moves files to ~/.Trash with timestamp suffix. Safer than `rm` for small files.
   - **Exception for junk**: For large junk files (node_modules, build artifacts, cache dirs), use `rm -rf` directly. Don't pollute ~/.Trash with garbage.
 
-## Git Workflow with Subagents
-- **When to delegate**: Staging area has multiple unrelated changes needing atomic commits
-- **Git-Commit-Planner workflow**:
-  1. Spawn subagent to analyze `git status`, `git diff`, `git log` (isolate large diffs)
-  2. Subagent writes commit plan to `./ai_chatroom/git_commits/plan_summary_cld.txt` and `plan_detail_cld.md`
-  3. Main agent reads summary, presents plan to user for approval
-  4. After approval: Spawn Git-Executor subagent to execute staged commits
-- **Commit plan structure**: Group related changes, suggest atomic commit messages, identify file dependencies
-- **Human-in-the-loop**: Always ask user to approve commit plan before execution
-- **Benefits**: Clean main context, thoughtful atomic commits, git history analysis doesn't pollute orchestrator
-
 ## Sandbox Mode Limitations
-- **User runs CC in sandbox mode**: File writes restricted to cwd and allowed paths
-- **git push needs sandbox bypass**: Despite GitHub being "whitelisted", `git push` fails with DNS resolution errors in sandbox mode. Use `dangerouslyDisableSandbox: true` for git push.
-- **Heredoc blocked**: Sandbox blocks temp file creation for heredocs (`$(cat <<'EOF'...)`)
-  - **Error**: `can't create temp file for here document: operation not permitted`
-  - **Workaround**: Use multiple `-m` flags for git commits instead:
-    ```bash
-    # Instead of heredoc:
-    git commit -m "Title" -m "Body paragraph" -m "🤖 Generated with..." -m "Co-Authored-By: ..."
-    ```
-- **pbcopy requires sandbox bypass**: Clipboard access is blocked in sandbox mode
-  - Use `dangerouslyDisableSandbox: true` when calling `pbcopy`
-  - Example: `pbcopy << 'EOF' ... EOF` needs the flag to work
-
-## CC Sandbox Shell Issues
-- **Shell snapshots**: CC snapshots shell at session start; mid-session dotfile changes need `source ~/.bashrc` to apply
-- **If a common command breaks**: ALL future CC sessions break too → fix ASAP or delegate to subagent immediately (token waste compounds)
-- **Fix pattern**: Wrapper functions with fallbacks (e.g., `cd()` checks `__zoxide_z` exists, else `builtin cd`)
-
-## macOS Bash Configuration
-- **This Mac**: `~/.bashrc` is minimal; most config lives in `~/.bash_profile` and `~/.aliases`
-- **Why it matters**: Codex/Gemini may spawn non-login subshells that only read `~/.bashrc`
-- **Solution**: `~/.bashrc` sources `~/.aliases` so subshells get aliases too
-- **Key aliases**: `cdx` (Codex CLI), `gmn` (Gemini CLI with gemini-3-pro-preview model)
-
-## macOS M1/M2 Troubleshooting
-- **Issue**: x86_64 Python (Anaconda) on ARM64 macOS → build failures (pyarrow, numpy, pandas, etc.)
-- **Solution**: `uv python install 3.11` for native ARM64 Python
-- **Detection**: `file /path/to/python` should show "arm64" not "x86_64"
+- `git push` and `pbcopy` need `dangerouslyDisableSandbox: true`
+- Heredoc blocked → use multiple `-m` flags for git commits instead
 
 ## Python Environment Strategy
 - **Primary**: uv for new projects (faster, better dependency resolution)
@@ -156,8 +92,7 @@
   - `npx <cmd>` → `bunx <cmd>`
 
 ## Obsidian Integration
-- When creating learning content: write markdown to `/Users/sprin/Documents/ObsidianVault/MDWrittenByClaude`
-- After writing: ask user to read in Obsidian
+- Learning content can be written to `$obsidian_path` (env var)
 
 ## Plan Mode Guidelines
 - Sacrifice grammar for concision
@@ -187,92 +122,17 @@
 - This pattern applies after: commits, feature completions, bug fixes, refactors, or any natural stopping point
 
 ## Task Orchestration Strategy
+- Main agent = pure orchestrator; delegate substantial work to subagents
+- Use `run_in_background: true` for parallel tasks; subagents write to files, main reads summaries only
 
-- **Main agent role**: Interact with user + orchestrate subagents (pure orchestrator)
-- **Delegate aggressively**: Delegate ALL substantial work to subagents; only do trivial tasks directly (e.g., single `mv` command)
-- **Multi-step workflows**: Propose subagent orchestration plan before execution
-- **Sequential delegation**: Use for stage-separation (e.g., implement → review) to maintain fresh perspective
-- **Parallel delegation**: Use for independent research/analysis tasks; use `run_in_background: true` to maximize parallelism
-- **Report progress**: Update at each stage completion proactively
-- **Minimize orchestrator tokens**: Have subagents write to ai_chatroom files, orchestrator only reads summaries
-- **Successful agent role examples**: Study, Review, Test, Security-Fix, Documentation-Update, Git-Commit-Planner
+## Subagent Output Pattern
+- Subagents write to repo (適當位置, e.g. `./ai_chatroom/{topic}/` or `./docs/`)
+- **Two-file output**: `{topic}_summary.txt` (6-10 sentences) + `{topic}_detail.md` (full analysis)
+- **Mental model**: User = boss, Main agent = manager, Subagents = engineers
+  - Manager reads summary only (saves tokens)
+  - Engineers share detail.md paths with each other for full context — manager doesn't need all that
 
-## Research Delegation Pattern
-- For complex topics requiring deep investigation: delegate to specialized subagents
-- Use **web-researcher** subagent for online research (best practices, documentation, industry trends)
-- Use **Task tool** for codebase exploration, planning, and other non-web research tasks
-- Launch parallel subagents to explore different aspects simultaneously
-- **All outputs go to ai_chatroom** (do NOT write to Obsidian, do NOT return full content to main agent)
-- Subagents write to `./ai_chatroom/{topic}/` and return only file paths + brief note
-- Main agent synthesizes by reading chatroom artifacts and presents to user
-
-## ai_chatroom Pattern (File-Based Agent Collaboration)
-- **Workspace**: `./ai_chatroom/{topic}/` in project root
-- **Multi-AI collaboration**: Shared workspace for all AI systems (Claude Code, GPT, Gemini, etc.)
-- **File naming**:
-  - Claude: `*_summary_cld.txt`, `*_detail_cld.md`
-  - GPT: `*_gpt.*`
-  - Gemini: `*_gmn.*`
-- **Lifecycle management**:
-  - **Track (commit)**: Research reports, analysis (`*_summary_cld.txt`, `*_detail_cld.md`)
-  - **Don't track**: Work logs, temp drafts (`work_logs/`, `tmp_*` prefix)
-  - **Cleanup**: When project phase ends, valuable outputs graduate to `docs/`, rest gets deleted
-- **Mandatory two-file output**: Summary (6-10 sentences) + Detail (full analysis)
-- **Strict communication rule**: Subagents write to files, return ONLY paths (no inline content)
-- **Main agent context discipline**:
-  - ONLY read `*_summary_cld.txt` files (never full details unless necessary)
-  - Main agent acts as pure orchestrator, preserving minimal context
-- **Use cases**: Research, analysis, implementation, testing, review, documentation
-
-## Subagent Token 節省策略（重要！）
-
-### 問題
-TaskOutput 會把 subagent 的完整輸出拉回 main agent context，浪費 token 且污染 context。
-即使你指示 subagent 「只回傳檔案路徑」，LLM 還是常常會附帶完整分析內容。
-
-### 解法：避開 TaskOutput，直接讀檔案
-
-**正確做法：**
-1. 派任務時用 `run_in_background: true`
-2. Subagent 把結果寫到 ai_chatroom 檔案（summary + detail）
-3. Main agent 用 Read 讀 summary 檔案
-4. **絕對不要用 TaskOutput** - 這會把所有內容拉回來
-
-**錯誤做法（help_mom_law 案例的慘痛教訓）：**
-```
-Task(run_in_background=True, ...)
-TaskOutput(task_id=xxx)  # ← 不要這樣！這把 30KB 拉回 main context
-```
-
-**正確做法：**
-```
-Task(run_in_background=True, prompt="...寫到 ai_chatroom/xxx_summary_cld.txt")
-# 等待適當時間後...
-Read("ai_chatroom/xxx_summary_cld.txt")  # ← 這樣！只讀需要的
-```
-
-### Subagent Prompt Template
-派任務給 subagent 時，明確指定輸出位置：
-
-```
-你的任務是 [描述]
-
-【輸出要求】
-1. 完整分析寫到：./ai_chatroom/{topic}/{task}_detail_cld.md
-2. 摘要（6-10句）寫到：./ai_chatroom/{topic}/{task}_summary_cld.txt
-3. 完成後只需回覆「已完成，檔案在 ai_chatroom/{topic}/」
-
-重要：不要在回覆中包含分析內容，只需確認檔案路徑。
-```
-
-### 等待時間指南
-Subagent 需要時間工作，太頻繁 check 浪費 tool calls。
-- **最短等待：3 分鐘** - 即使是簡單任務也至少等 3 分鐘
-- **中等任務：5 分鐘** - 一般研究、分析任務
-- **長任務：10 分鐘** - 大型研究、多檔案分析、複雜實作
-- **不要用 `sleep 15` 之類的短等待** - 這只會導致多次無謂的 check
-
-### 為什麼這很重要
-- help_mom_law 案例中，3 個 subagent 透過 TaskOutput 回傳共 ~90KB 內容
-- 這些內容 subagent 已經寫到檔案了，回傳是重複且浪費
-- 正確做法應該只需 ~400 chars（檔案路徑）
+## Subagent Token 節省策略
+- **避免 TaskOutput** — 它會把完整輸出拉回 main context，浪費 token
+- **正確做法**：用 `run_in_background: true`，subagent 寫檔，main 用 Read 讀 summary
+- **等待時間**：簡單 3 分鐘、中等 5 分鐘、複雜 10 分鐘（別太頻繁 check）
