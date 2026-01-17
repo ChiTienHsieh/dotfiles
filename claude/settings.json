@@ -1,75 +1,89 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "cleanupPeriodDays": 120,
-  "env": {},
-  "permissions": {
-    "allow": [
-      "Read(**)",
-      "Glob(**)",
-      "Grep(**)",
-      "WebSearch",
-      "Bash(ls:*)",
-      "Bash(grep:*)",
-      "Bash(cat:*)",
-      "Bash(head:*)",
-      "Bash(tail:*)",
-      "Bash(find:*)",
-      "Bash(file:*)",
-      "Bash(stat:*)",
-      "Bash(du:*)",
-      "Bash(df:*)",
-      "Bash(ps:*)",
-      "Bash(env)",
-      "Bash(which:*)",
-      "Bash(whereis:*)",
-      "Bash(type:*)",
-      "Bash(uname:*)",
-      "Bash(lsof:*)",
-      "Bash(wc:*)",
-      "Bash(tree:*)",
-      "Bash(pwd)",
-      "Bash(echo:*)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git show:*)",
-      "Bash(git blame:*)",
-      "Bash(git rev-parse:*)",
-      "Bash(git ls-files:*)",
-      "Bash(git ls-tree:*)",
-      "Bash(git stash list:*)",
-      "Bash(git remote -v)",
-      "Bash(git branch --list:*)",
-      "Bash(git config --get:*)",
-      "Bash(git config --list)"
-    ],
-    "deny": [
-      "SlashCommand",
-      "NotebookEdit",
-      "NotebookRead",
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(~/.aws/**)",
-      "Read(~/.ssh/**)"
-    ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "npx -y @owloops/claude-powerline@latest"
-  },
-  "sandbox": {
-    "enabled": true,
-    "autoAllowBashIfSandboxed": true,
-    "excludedCommands": [
-      "git",
-      "docker"
-    ]
-  },
-  "alwaysThinkingEnabled": true,
-  "feedbackSurveyState": {
-    "lastShownTime": 1754087621967
-  },
-  "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
-  }
+    "$schema": "https://json.schemastore.org/claude-code-settings.json",
+    "cleanupPeriodDays": 120,
+    "env": {},
+    "permissions": {
+        "allow": [
+            "Read(**)",
+            "Glob(**)",
+            "Grep(**)",
+            "WebSearch",
+            "Bash(ls:*)",
+            "Bash(grep:*)",
+            "Bash(cat:*)",
+            "Bash(head:*)",
+            "Bash(tail:*)",
+            "Bash(file:*)",
+            "Bash(stat:*)",
+            "Bash(du:*)",
+            "Bash(df:*)",
+            "Bash(ps:*)",
+            "Bash(env)",
+            "Bash(which:*)",
+            "Bash(whereis:*)",
+            "Bash(type:*)",
+            "Bash(uname:*)",
+            "Bash(lsof:*)",
+            "Bash(wc:*)",
+            "Bash(tree:*)",
+            "Bash(pwd)",
+            "Bash(echo:*)",
+            "Bash(git status:*)",
+            "Bash(git diff:*)",
+            "Bash(git log:*)",
+            "Bash(git show:*)",
+            "Bash(git blame:*)",
+            "Bash(git rev-parse:*)",
+            "Bash(git ls-files:*)",
+            "Bash(git ls-tree:*)",
+            "Bash(git stash list:*)",
+            "Bash(git remote -v)",
+            "Bash(git branch --list:*)",
+            "Bash(git config --get:*)",
+            "Bash(git config --list)"
+        ],
+        "deny": [
+            "SlashCommand",
+            "NotebookEdit",
+            "NotebookRead",
+            "Read(./.env)",
+            "Read(./.env.*)",
+            "Read(~/.aws/**)",
+            "Read(~/.ssh/**)"
+        ]
+    },
+    "model": "opus",
+    "statusLine": {
+        "type": "command",
+        "command": "npx -y @owloops/claude-powerline@latest"
+    },
+    "enabledPlugins": {
+        "frontend-design@claude-plugins-official": true,
+        "context7@claude-plugins-official": false,
+        "feature-dev@claude-plugins-official": true,
+        "code-review@claude-plugins-official": true,
+        "commit-commands@claude-plugins-official": true,
+        "typescript-lsp@claude-plugins-official": true,
+        "agent-sdk-dev@claude-plugins-official": true,
+        "ralph-wiggum@claude-plugins-official": false,
+        "pyright-lsp@claude-plugins-official": true,
+        "explanatory-output-style@claude-plugins-official": true,
+        "hookify@claude-plugins-official": false,
+        "learning-output-style@claude-plugins-official": true,
+        "plugin-dev@claude-plugins-official": true,
+        "cth-plugins@cth-marketplace": true,
+        "code-simplifier@claude-plugins-official": true
+    },
+    "sandbox": {
+        "enabled": true,
+        "autoAllowBashIfSandboxed": true,
+        "excludedCommands": [
+            "git",
+            "docker"
+        ]
+    },
+    "alwaysThinkingEnabled": true,
+    "feedbackSurveyState": {
+        "lastShownTime": 1754087621967
+    }
 }
