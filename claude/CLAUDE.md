@@ -13,6 +13,8 @@
 - No need to be overly cautious about stability
 - **Terminal**: iTerm2 (starts login shells by default)
 - **Shell**: zsh (switched from Bash 3.2)
+- **Container Runtime**: OrbStack (Docker Desktop removed)
+  - Docker CLI works via OrbStack (`~/.orbstack/bin/docker`)
 
 ## Terminology
 - "Claude Code" can be abbreviated as "CC"
