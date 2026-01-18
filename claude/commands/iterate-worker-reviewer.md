@@ -16,13 +16,18 @@ Worker (do task) → Reviewer (score & critique) → [if score < target] → Wor
 ## How to Use
 
 ### Arguments
-- `$ARGUMENTS` will contain: `[task description] [target quality score]`
-- Example: `/iterate-worker-reviewer "scrape and document the API" 10`
+- `$ARGUMENTS` will contain: `[task description] [target quality score] [max iterations]`
+- Example: `/iterate-worker-reviewer "scrape and document the API" 10 3`
+
+### Defaults
+- Target quality score: **9**/10
+- Max iterations: **5**
 
 ### If No Arguments Provided
 Ask user:
 1. What task should the Worker do?
 2. What's the target quality score? (default: 9)
+3. Max iterations? (default: 5)
 
 ## Execution Steps
 
@@ -62,14 +67,20 @@ Prompt the Reviewer with:
 
 ### Step 4: Iterate If Needed
 
-If Reviewer score < target:
+If Reviewer score < target AND iterations < max_iterations:
 1. Update todo list
 2. Spawn new Worker with:
    - Original task context
    - Reviewer's specific feedback
    - Items to fix
 3. Spawn Reviewer again
-4. Repeat until target reached
+4. Repeat until target reached OR max iterations hit
+
+**If max iterations reached without hitting target:**
+- Stop iterating
+- Report final score achieved
+- List remaining issues from last review
+- Let user decide whether to continue or accept current result
 
 ### Step 5: Report Completion
 
@@ -79,7 +90,9 @@ Final Summary:
 |-------|---------------|----------------|
 | 1     | Initial work  | X/10           |
 | 2     | Fixed A, B    | Y/10           |
-| ...   | ...           | target/10 ✓    |
+| ...   | ...           | Z/10           |
+
+Result: ✓ Target reached (Z/10) | ⚠ Max iterations (5) reached at Z/10
 ```
 
 ## Tips for Good Results
