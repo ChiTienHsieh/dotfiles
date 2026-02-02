@@ -13,8 +13,10 @@ services:
     volumes:
       # Workspace - main content writable
       - ${WORKSPACE:-.}:/workspace
-      # .git read-only - safety net for recovery
-      - ${WORKSPACE:-.}/.git:/workspace/.git:ro
+      # Container-only volumes for platform-specific binaries
+      # Prevents Linux node_modules from polluting macOS host (and vice versa)
+      - node_modules:/workspace/node_modules
+      - venv:/workspace/.venv
     environment:
       # OAuth token passed from host - only exists in container memory at runtime
       # Security note: Token can be revoked at claude.ai/settings if compromised
@@ -41,3 +43,7 @@ services:
   #   profiles: ["npm"]
   # playwright:
   #   profiles: ["playwright"]
+
+volumes:
+  node_modules:
+  venv:
