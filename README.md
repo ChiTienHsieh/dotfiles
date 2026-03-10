@@ -39,6 +39,8 @@ dotfiles/
 │   └── .aliases.local.template  # Machine-specific aliases
 ├── claude/
 │   └── plugins/         # Personal Claude Code plugins (local marketplace)
+├── codex/
+│   └── AGENTS.md        # Codex CLI instructions
 ├── nvim/                # Neovim config (git submodule)
 ├── install.sh           # Installation script
 └── README.md
@@ -53,6 +55,7 @@ dotfiles/
    /plugin marketplace add ~/dotfiles/claude/plugins
    /plugin install cth-plugins@cth-marketplace
    ```
+4. **Codex CLI** - `~/.codex/AGENTS.md` is symlinked from `~/dotfiles/codex/AGENTS.md`
 
 ## Files NOT Tracked
 
