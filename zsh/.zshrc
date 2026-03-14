@@ -68,7 +68,7 @@ SAVEHIST=10000
 # -----------------------------------------------------------------------------
 # 6. Completion system
 # -----------------------------------------------------------------------------
-autoload -Uz compinit && compinit
+autoload -Uz compinit && compinit -u
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'  # Case-insensitive completion
 zstyle ':completion:*' menu select                    # Menu-style completion
 
@@ -92,7 +92,7 @@ export NODE_NO_WARNINGS=1
 # -----------------------------------------------------------------------------
 zmodload zsh/datetime
 
-PROMPT='%F{51}Sprin%f %F{33}MacAir%f %F{207}%1~%f $ '
+PROMPT='%F{183}Shroom%f %F{33}MacAir%f %F{207}%1~%f $ '
 
 # Command execution time tracking
 typeset -g __cmd_start=0
