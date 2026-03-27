@@ -1,0 +1,54 @@
+# Ghostty config — Dracula (gu-log flavor)
+# Docs: https://ghostty.org/docs/config/reference
+
+# ── Font ──────────────────────────────────────
+font-family = Maple Mono NF
+font-size = 14
+font-thicken = true
+font-feature = cv01
+
+# CJK fallback — Noto Sans CJK TC for proper zh-TW glyphs
+font-codepoint-map = U+3000-U+303F,U+3100-U+312F,U+31A0-U+31BF=Noto Sans CJK TC
+font-codepoint-map = U+3400-U+4DBF,U+4E00-U+9FFF=Noto Sans CJK TC
+font-codepoint-map = U+F900-U+FAFF,U+FE30-U+FE4F=Noto Sans CJK TC
+font-codepoint-map = U+FF00-U+FFEF=Noto Sans CJK TC
+font-codepoint-map = U+20000-U+2A6DF,U+2A700-U+2B73F=Noto Sans CJK TC
+
+# ── Theme ─────────────────────────────────────
+# Built-in Dracula palette, with muted foreground from gu-log
+theme = Dracula
+foreground = #cecdda
+selection-background = #44475a
+selection-foreground = #cecdda
+cursor-color = #ff79c6
+
+# ── Window ────────────────────────────────────
+macos-titlebar-style = tabs
+window-padding-x = 8
+window-padding-y = 8
+window-padding-balance = true
+background-opacity = 0.92
+background-blur = 20
+
+# ── Cursor ────────────────────────────────────
+cursor-style = bar
+cursor-style-blink = true
+
+# ── macOS ─────────────────────────────────────
+# Left Option = Alt (for vim/zsh keybinds), Right Option = macOS input
+macos-option-as-alt = left
+macos-auto-secure-input = true
+
+# ── Mouse & Clipboard ────────────────────────
+copy-on-select = clipboard
+mouse-hide-while-typing = true
+right-click-action = paste
+
+# ── Shell Integration ────────────────────────
+shell-integration = detect
+shell-integration-features = cursor,sudo,title
+
+# ── QoL ───────────────────────────────────────
+confirm-close-surface = true
+scrollback-limit = 10000000
+link-url = true

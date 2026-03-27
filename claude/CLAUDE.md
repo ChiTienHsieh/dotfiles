@@ -1,3 +1,7 @@
+## System Constraints
+- **NO SUDO**: This user does NOT have sudo access. NEVER use `sudo` in any command.
+- Homebrew is installed at `$HOME/.homebrew` (not `/opt/homebrew`)
+
 ## Terminology
 - "Claude Code" can be abbreviated as "CC"
 

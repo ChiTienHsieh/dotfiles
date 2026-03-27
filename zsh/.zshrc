@@ -5,10 +5,10 @@
 # -----------------------------------------------------------------------------
 # 1. Homebrew (MUST come first - other configs depend on homebrew binaries!)
 # -----------------------------------------------------------------------------
-eval "$(/opt/homebrew/bin/brew shellenv)"
+eval "$($HOME/.homebrew/bin/brew shellenv)"
 
 # GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
-PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
 
 # -----------------------------------------------------------------------------
 # 2. PATH additions
@@ -87,6 +87,10 @@ export EDITOR="nvim"
 # Suppress Node.js experimental warnings (CommonJS/ESM compat noise)
 export NODE_NO_WARNINGS=1
 
+# Homebrew's openssl@3 is built from source (non-default prefix) so Node
+# doesn't trust system certs by default. Point it at Homebrew's CA bundle.
+export NODE_EXTRA_CA_CERTS="$HOMEBREW_PREFIX/etc/ca-certificates/cert.pem"
+
 # -----------------------------------------------------------------------------
 # 9. Prompt (clean, similar to bash prompt + RPROMPT)
 # -----------------------------------------------------------------------------
@@ -115,3 +119,6 @@ precmd() {
 # - conda init
 # - nvm init
 # - etc.
+
+# bun completions
+[ -s "/Users/shroom/.bun/_bun" ] && source "/Users/shroom/.bun/_bun"

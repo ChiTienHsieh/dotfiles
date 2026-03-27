@@ -32,3 +32,9 @@
 
 [merge]
     conflictstyle = diff3         # 衝突時顯示 base 版本，更容易理解
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
