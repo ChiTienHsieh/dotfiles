@@ -94,11 +94,7 @@ fi
 # ── Line 2 ──
 TOKENS_FMT=$(fmt_tokens "${CTX_TOKENS:-0}")
 CTX_CLR=$(pct_color "${CTX_PCT:-0}")
-BAR_F="" BAR_E=""
-_fn=$(( (${CTX_PCT:-0} + 8) / 16 )); [ "$_fn" -gt 6 ] && _fn=6; _en=$((6 - _fn))
-for ((i=0; i<_fn; i++)); do BAR_F+="▰"; done
-for ((i=0; i<_en; i++)); do BAR_E+="▱"; done
-L2="${CTX_CLR}◷${R} ${CTX_CLR}${BAR_F}${GRAY}${BAR_E}${R} ${CTX_CLR}${TOKENS_FMT}/${SIZE_FMT}${R} $(pct_dim "${CTX_PCT:-0}")(${CTX_PCT}%)${R}"
+L2="${CTX_CLR}◷${R} ${CTX_CLR}${TOKENS_FMT}/${SIZE_FMT}${R} $(pct_dim "${CTX_PCT:-0}")(${CTX_PCT}%)${R}"
 
 if [ "$FIVE_PCT" != "-1" ] && [ -n "$FIVE_PCT" ]; then
   FP=$(printf '%.0f' "$FIVE_PCT")
