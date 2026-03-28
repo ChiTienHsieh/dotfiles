@@ -100,7 +100,20 @@ export NODE_EXTRA_CA_CERTS="$HOMEBREW_PREFIX/etc/ca-certificates/cert.pem"
 # -----------------------------------------------------------------------------
 zmodload zsh/datetime
 
-PROMPT='%F{183}Shroom%f %F{33}MacAir%f %F{207}%1~%f $ '
+# User display name + color (fallback: %n in white)
+case $USER in
+    sprin)  _u='%F{117}Sprin%f' ;;
+    shroom) _u='%F{183}Shroom%f' ;;
+    *)      _u='%F{white}%n%f' ;;
+esac
+
+# Host display name + color (fallback: %m in white)
+case $(hostname -s) in
+    Sprin-MBA*) _h='%F{33}MacAir%f' ;;
+    *)       _h='%F{white}%m%f' ;;
+esac
+
+PROMPT="${_u} ${_h} %F{207}%1~%f \$ "
 
 # Command execution time tracking
 typeset -g __cmd_start=0
