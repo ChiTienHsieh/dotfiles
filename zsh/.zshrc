@@ -5,7 +5,11 @@
 # -----------------------------------------------------------------------------
 # 1. Homebrew (MUST come first - other configs depend on homebrew binaries!)
 # -----------------------------------------------------------------------------
-eval "$($HOME/.homebrew/bin/brew shellenv)"
+if [[ -x "$HOME/.homebrew/bin/brew" ]]; then
+  eval "$($HOME/.homebrew/bin/brew shellenv)"
+elif [[ -x "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 
 # GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
 PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
