@@ -10,22 +10,26 @@ Smart git sync: fetch, analyze, brief, recommend the best action, then execute.
 
 - `$ARGUMENTS` — optional branch name. If empty, use current branch.
 
+## Pre-loaded Context
+
+Branch: !`git branch --show-current`
+Status: !`git status --short`
+Ahead/Behind: !`git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null`
+Stash: !`git stash list`
+Recent local: !`git log --oneline -5 HEAD`
+Branches: !`git branch -vv`
+Submodules: !`git submodule status 2>/dev/null`
+
 ## Execution Flow
 
-### Phase 1: Gather Info
+### Phase 1: Fetch & Refresh
 
-Run these git commands (use Bash tool, parallel where possible):
+Run `git fetch --all --prune`, then re-check ahead/behind count (the pre-loaded context was before fetch):
 
 ```
 git fetch --all --prune
-git branch --show-current
-git status --short
-git stash list
-git log --oneline -5 HEAD
-git log --oneline -10 @{upstream}..@{u} 2>/dev/null  # incoming commits
-git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null  # ahead/behind
-git branch -vv  # all local branches + tracking status
-git submodule status 2>/dev/null  # submodule state (if any)
+git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null
+git log --oneline -10 HEAD..@{upstream}  # incoming commits after fetch
 ```
 
 If `$ARGUMENTS` is provided and differs from current branch, check that branch instead.
