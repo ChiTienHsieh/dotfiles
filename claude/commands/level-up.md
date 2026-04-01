@@ -1,6 +1,5 @@
 ---
-disable-model-invocation: true
-allowed-tools: [Read, Grep, Glob]
+allowed-tools: [Read, Grep, Glob, Agent, TaskCreate, TaskUpdate, TaskList, WebSearch, WebFetch]
 ---
 
 # level-up.md

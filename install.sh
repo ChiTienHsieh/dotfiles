@@ -152,7 +152,7 @@ backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
 backup_and_link "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
 
 # Commands (individual files - directory has local state we don't track)
-for cmd in chill.md eternal-code-seeker.md level-up.md nvim-tutor.md remember.md; do
+for cmd in chill.md eternal-code-seeker.md gsync.md level-up.md nvim-tutor.md remember.md wrap.md; do
     backup_and_link "$DOTFILES_DIR/claude/commands/$cmd" "$HOME/.claude/commands/$cmd"
 done
 
