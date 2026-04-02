@@ -22,6 +22,12 @@ The git state is already pre-loaded above. In parallel, gather:
 
 1. **Tasks**: Use TaskList to check for any incomplete tasks
 2. **Memory check**: Reflect on the conversation — was there anything the user said to remember, any feedback given, any decisions made that should be saved to memory?
+3. **Docs check**: If this repo has user-facing documentation (README, CLAUDE.md, docs/, etc.), consider whether this session's changes warrant a doc update. Examples:
+   - New feature added but not reflected in README
+   - Config or setup steps changed but docs still show old way
+   - New commands/agents/tools added without documentation
+   - Architecture changed in a way that affects onboarding
+   Skip this check for repos without meaningful docs (e.g., scratch projects, single-script repos).
 
 ### Step 2: Build Checklist
 
@@ -45,6 +51,11 @@ Present a checklist of findings. Only show sections that have actionable items �
 - [ ] Consider saving: <thing learned this session>
 - [x] Nothing notable to remember
 
+### Docs
+- [ ] README/CLAUDE.md should mention <new thing>
+- [ ] docs/ needs update for <changed behavior>
+- [x] Docs are up to date (or repo has no meaningful docs)
+
 ### Session Summary
 <2-3 sentence summary of what was accomplished this session>
 ```
@@ -61,10 +72,11 @@ If there are actionable items, use **AskUserQuestion** to offer:
   - "Commit + push 這些 changes" (if uncommitted + unpushed)
   - "Commit changes (don't push yet)" (if uncommitted, in sync with remote)
   - "Save memory: <specific thing>" (if something worth remembering)
+  - "Update docs: <specific file>" (if docs need updating)
   - "Run /gsync to sync" (if behind remote or complex state)
   - "All good, 收工" (always include as escape hatch)
 
-**Priority order for recommendation**: commit > push > memory > nothing. Uncommitted changes are the most at-risk (not in git history yet), then unpushed commits.
+**Priority order for recommendation**: docs > commit > push > memory > nothing. Docs come first because they should be included in the same commit as the code changes. Uncommitted changes are the most at-risk (not in git history yet), then unpushed commits.
 
 If everything is clean (working tree clean, in sync with remote, no tasks, no memories): just print the summary and a short "All clear, 收工!" — no AskUserQuestion needed.
 
