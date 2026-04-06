@@ -14,11 +14,18 @@ fi
 # GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
 PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
 
+# Python 3.13 (unversioned python3/pip3 symlinks)
+export PATH="$HOMEBREW_PREFIX/opt/python@3.13/libexec/bin:$PATH"
+
 # -----------------------------------------------------------------------------
 # 2. PATH additions
 # -----------------------------------------------------------------------------
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/bin:$PATH"
+
+# Google Cloud SDK
+export CLOUDSDK_PYTHON="$HOMEBREW_PREFIX/bin/python3.13"
+export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$PATH"
 
 # Bun - fast JavaScript runtime
 export BUN_INSTALL="$HOME/.bun"

@@ -10,3 +10,6 @@ ai_chatroom/
 # Local overrides (machine-specific, not tracked)
 *.local
 .claude/settings.local.json
+
+# Auto-downloaded plugin skills
+claude/skills/
