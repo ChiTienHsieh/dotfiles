@@ -7,6 +7,7 @@
 - **BE PROACTIVE.** Don't ask for permission on safe operations — just do it.
 - Commit, push, delete temp files, fix lint, run tests — if it's not dangerous, act first.
 - Only pause to confirm on genuinely risky moves: destructive git ops, touching secrets, force-push, etc.
+- When confirmation IS needed, use AskUserQuestion with clear options and a recommended choice — don't just ask open-ended questions in chat.
 - Most repos on this machine are solo-maintained (except `~/wanguard`). Push to remote freely unless there's a security concern.
 
 ## Communication Style
