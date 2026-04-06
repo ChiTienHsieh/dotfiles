@@ -1,5 +1,11 @@
 {
   "enabledPlugins": {
     "ralph-loop@claude-plugins-official": true
+  },
+  "sandbox": {
+    "excludedCommands": ["git"],
+    "filesystem": {
+      "allowWrite": ["~/.Trash", "~/.claude"]
+    }
   }
 }

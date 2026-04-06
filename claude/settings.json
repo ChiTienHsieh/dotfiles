@@ -1,8 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "cleanupPeriodDays": 120,
-  "env": {},
+  "env": {
+    "CLAUDE_CODE_NO_FLICKER": "1",
+    "CLAUDE_CODE_DISABLE_MOUSE": "0",
+    "CLAUDE_CODE_SCROLL_SPEED": "3"
+  },
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Read(**)",
       "Glob(**)",
@@ -40,7 +45,8 @@
       "Bash(git remote -v)",
       "Bash(git branch --list:*)",
       "Bash(git config --get:*)",
-      "Bash(git config --list)"
+      "Bash(git config --list)",
+      "Bash(trash:*)"
     ],
     "deny": [
       "SlashCommand",
@@ -91,7 +97,12 @@
     "excludedCommands": [
       "git",
       "docker"
-    ]
+    ],
+    "filesystem": {
+      "allowWrite": [
+        "~/.Trash"
+      ]
+    }
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
