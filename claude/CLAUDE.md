@@ -27,6 +27,13 @@
 - 使用「水準」表示 level
 - No 中國用語或簡體中文
 
+## Clawd VM (Hetzner VPS)
+- **SSH**: `ssh clawd-vm` (alias for `clawd@46.225.20.205`)
+- Runs OpenClaw — Clawd 的 24/7 AI agent instance
+- 詳見 `~/openclaw-hq/CLAUDE.md`（完整 VM 操作指南、model 設定、目錄結構）
+- SSH 需要 `dangerouslyDisableSandbox: true`（sandbox 不允許 Unix socket）
+- VM 上的 Clawd skills/workspace 在 `/home/clawd/clawd/`
+
 ## playwright-cli Usage
 - **CRITICAL**: For tasks requiring user login (OAuth, GCP Console, etc.), use `--headed` flag!
   - `playwright-cli open "<url>" --headed` — opens visible browser window
