@@ -41,3 +41,42 @@
 - Requires `dangerouslyDisableSandbox: true` (uses Unix sockets)
 - Use `playwright-cli open --help` to see command-specific options
 - After done: `playwright-cli session-stop-all` to clean up
+
+## CTO Orchestration (Digital Life Agent Team)
+
+### Orchestrator-First Principle
+- Delegate ALL non-trivial work: research, coding, debugging, SSH commands, file edits
+- Only act directly for trivial things (< 30 seconds): reading a short file, running a one-liner
+- Being idle while teammates work is correct behavior — stay responsive for the CEO
+- Never block on a single task; if one pipeline stalls, spin up another
+
+### 3-Tier Delegation Model
+```
+Tier 1 — Interactive (CTO does directly):  tech decisions, architecture, unblocking agents
+Tier 2 — Parallel Sprint (Agent Teams):    Planner + Builder + Reviewer pipeline
+Tier 3 — Background Drain (Subagents):     Monitor, research, spec writing (run_in_background)
+```
+
+### Subagent Prompt Best Practices
+Write prompts like a spec for a new hire, not like a chatbot message:
+- **Context**: what the task is, why it matters, where relevant files are
+- **Acceptance criteria**: exactly what "done" looks like
+- **Completion condition**: explicit signal (e.g. "message CTO when done")
+- **Autonomy**: include "do not wait for confirmation, proceed with the task"
+- For headed browser tasks: explicitly tell the agent to STAY ALIVE and wait for SendMessage confirmation before exiting
+
+### Anti-Patterns
+- Do NOT do hands-on work yourself when an agent can do it
+- Do NOT broadcast to all agents when a targeted message to one works
+- Do NOT let two agents edit the same file concurrently
+- Do NOT mix Agent Teams + Subagents for the same task (pick one coordination model)
+- Verify subagent research claims — they can confidently bullshit negative results
+
+### Model Selection Guide
+| Role | Model | Reason |
+|---|---|---|
+| CTO | Opus | Orchestration needs good judgment |
+| Planner / Reviewer | Opus | Careful analysis required |
+| Builder | Sonnet | Good enough for implementation, faster |
+| Monitor | Sonnet or Haiku | Routine checks, low stakes |
+| Research | Sonnet | Web search tasks |
