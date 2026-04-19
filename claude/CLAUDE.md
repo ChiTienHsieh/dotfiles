@@ -10,6 +10,7 @@
 - **Highest priority: user comprehension.** Verbose > unclear. The user has explicitly said: 「too many english terms. whenever an english terms show up, briefly explain it, and mainly use zh-tw terms. too hard to keep up.」「plz speak CLEAR, EASY-to-UNDERSTAND zh-tw. DO NOT invent new spelling or saying.」 — these are non-negotiable.
 - **English vocab usage**: Before generating any zh-tw output containing English words, **lazy-Read** `~/.claude/user-en-vocab.md` and check each English word:
   - In **OK list** → use freely
+  - In **NATIVE-ZH list** → use the zh-tw equivalent directly, no wrap needed (e.g., 「火焰圖」not 「火焰圖 (flame graph)」)
   - In **BILINGUAL list** → first occurrence in this session: write 「中文 (English)」; later occurrences: English alone OK
   - In **REJECT list** → must use the Format column ("中文翻譯 (English original)") every time
   - Not in any list → DEFAULT: 「中文翻譯 (English original)」 every time
@@ -19,10 +20,11 @@
   - On user complaint signal (wtf is X / what is X / X 是什麼 / DO NOT use X) → immediately Edit the file to add to REJECT, even mid-conversation
   - On consideration to promote a term → ALWAYS use AskUserQuestion to confirm first; never auto-promote on observed usage alone
 - Acceptable English-only content inside a zh-tw reply: code, commands, file paths, error messages, tool names, short technical idioms ("LGTM", "WIP", "TL;DR").
-- NOT acceptable: (a) writing whole paragraphs in English, (b) inventing new English framework names ("Rule Anatomy", "writer vs agent", "Tier 1/2/3" — use zh-tw names), (c) violating the vocab tracker rules above.
+- NOT acceptable: (a) writing whole paragraphs in English, (b) inventing new English framework names ("Rule Anatomy", "writer vs agent", "Tier 1/2/3" — use zh-tw names), (c) violating the vocab tracker rules above, (d) **Compulsive Recap** — 做完一件事後又開 `## 選哪個？` / `## 總結` 再講一次剛說過的。原則：能用一句話收尾就別開表格。短訊息 (<500 字) 禁止開 recap section。長訊息最多一個 summary 句，不要連開表格 + 決策樹 + bullet 三層。
 - **CRITICAL**: NEVER use「質量」for quality. ONLY「品質」. 使用「水準」表示 level.
 - **zh-tw native > zh-cn / 翻譯腔 / 自造詞**：當有多種中文寫法時，always 選 zh-tw native 用法。
-  - 拒絕 zh-cn 用語跟簡體中文。
+  - 拒絕 zh-cn 用語（例：反模式 → 寫「不好的寫法 / 要避免的寫法」；信息 → 資訊；網絡 → 網路；優化 → 最佳化 / 調校；視頻 → 影片；屏幕 → 螢幕；文件夾 → 資料夾；默認 → 預設；接口 → 介面；內存 → 記憶體；硬盤 → 硬碟；保存 → 儲存 / 存檔；用戶 → 使用者）
+  - 拒絕簡體中文。
   - 拒絕由英文直譯造的怪詞（例：「完封」「落地」當 commit 用、「收工」「拍板」「上路」「收斂」當「結束」用）。
   - 寫人話：commit 推上去 / 過了 / 答對 / 全部 OK / 搞定 / 寫完了 / 你決定。
 - Search English resources and reflect extensively before answering — but the final reply is always zh-tw.
