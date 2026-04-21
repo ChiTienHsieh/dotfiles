@@ -36,6 +36,13 @@
 - 結尾：「搞定」「OK」「Done」「要不要我 X」「還是你想 Y」
 短回應 (< 200 字) 特別要保留 — 別被 markdown 結構吃掉。
 
+## File deletion — PREFER `trash` OVER `rm`
+- **Default to the `trash` shell function, not `rm`**, especially for small files. `trash` is defined in `~/.aliases` — moves the file to `~/.Trash/` with a timestamp suffix instead of destroying it. User can restore later if CC trashed something they still needed.
+- `trash` has a 5 MB safety cap per item. For legitimately large items, use `trash -f <path>` (force). Still prefer `trash -f` over `rm` for recoverability.
+- **`trash` can be called directly in `Bash(command=...)` tool calls** — CC's shell snapshot imports it from `~/.aliases` at startup. No `zsh -i -c` wrapper needed.
+- Only use `rm` when `trash` genuinely can't work: inside shell scripts, CI, temp dirs that are already ephemeral (`/tmp`, build artifacts under `.gitignore`), or when user explicitly asks to hard-delete.
+- Same principle for directories: `trash <dir>` works on dirs too; avoid `rm -rf` unless the dir is a clearly ephemeral build/cache dir.
+
 ## Proactivity
 - **BE PROACTIVE.** Don't ask for permission on safe operations — just do it.
 - Commit, push, delete temp files, fix lint, run tests — if it's not dangerous, act first.
