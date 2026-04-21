@@ -18,9 +18,9 @@ if [ -f ~/.bashrc ]; then
     source ~/.bashrc
 fi
 
-# Source secrets (API keys, tokens - NEVER commit this file!)
-if [ -f ~/.secrets ]; then
-    source ~/.secrets
+# Source secrets (~/.secrets/ is a dir of per-provider *.sh files — NEVER commit!)
+if [ -f ~/.secrets/index.sh ]; then
+    source ~/.secrets/index.sh
 fi
 
 # Source prompt configuration

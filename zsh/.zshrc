@@ -47,8 +47,8 @@ ulimit -n 10240
 # -----------------------------------------------------------------------------
 # 3. Source other config files
 # -----------------------------------------------------------------------------
-# Secrets (API keys, tokens - NEVER commit this file!)
-[ -f ~/.secrets ] && source ~/.secrets
+# Secrets (~/.secrets/ is a dir of per-provider *.sh files — NEVER commit!)
+[ -f ~/.secrets/index.sh ] && source ~/.secrets/index.sh
 
 # Aliases (shared with bash)
 [ -f ~/.aliases ] && source ~/.aliases
