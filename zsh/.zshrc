@@ -11,6 +11,10 @@ elif [[ -x "/opt/homebrew/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+# Cask apps go to ~/Applications/ (user-level, no sudo needed).
+# Without this, casks default to /Applications/ and fail on sudo prompts.
+export HOMEBREW_CASK_OPTS="--appdir=$HOME/Applications"
+
 # GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
 PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
 
@@ -30,6 +34,15 @@ export PATH="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin:$PATH"
 # Bun - fast JavaScript runtime
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# -----------------------------------------------------------------------------
+# 2.5 Resource limits
+# -----------------------------------------------------------------------------
+# Raise open-file descriptor soft limit. macOS defaults via launchctl to 256,
+# which trips ENFILE/EMFILE on Astro/Vite builds, pnpm, and Claude Code CLI
+# with many worktrees. Hard limit (kern.maxfilesperproc) is 61440 so 10240 is
+# safe and non-sudo. See ~/.claude/projects/-Users-shroom-gu-log for context.
+ulimit -n 10240
 
 # -----------------------------------------------------------------------------
 # 3. Source other config files
