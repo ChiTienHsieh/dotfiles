@@ -116,11 +116,11 @@ esac
 
 # Host display name + color (fallback: %m in white)
 case $(hostname -s) in
-    Sprin-MBA*) _h='%F{33}MacAir%f' ;;
+    Sprin-MBA*) _h='%F{111}MacAir%f' ;;
     *)       _h='%F{white}%m%f' ;;
 esac
 
-PROMPT="${_u} ${_h} %F{207}%1~%f \$ "
+PROMPT="${_u} ${_h} %F{180}%1~%f \$ "
 
 # Command execution time tracking
 typeset -g __cmd_start=0
