@@ -8,11 +8,12 @@ Reflect on the current session and surface anything that should be handled befor
 
 ## Pre-loaded Context
 
-Git status: !`git status --short`
-Ahead/Behind: !`git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null`
-Stash: !`git stash list`
-Recent commits: !`git log --oneline -5`
-Branch: !`git branch --show-current`
+In-git-repo?: !`git rev-parse --is-inside-work-tree 2>/dev/null || echo "(not a git repo — skip all git sections below)"`
+Git status: !`git status --short 2>/dev/null || echo "(n/a)"`
+Ahead/Behind: !`git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null || echo "(no upstream tracked)"`
+Stash: !`git stash list 2>/dev/null || echo "(n/a)"`
+Recent commits: !`git log --oneline -5 2>/dev/null || echo "(n/a)"`
+Branch: !`git branch --show-current 2>/dev/null || echo "(n/a)"`
 
 ## Execution Flow
 
@@ -32,6 +33,8 @@ The git state is already pre-loaded above. In parallel, gather:
 ### Step 2: Build Checklist
 
 Present a checklist of findings. Only show sections that have actionable items — skip clean sections entirely.
+
+If `In-git-repo?` pre-loaded as `(not a git repo ...)`, **omit the Git section entirely** (no "working tree clean" line — it just doesn't apply). Same for the docs/memory sections if there's nothing meaningful to check.
 
 ```
 ## Wrap-up: <repo-name> (<branch>)
