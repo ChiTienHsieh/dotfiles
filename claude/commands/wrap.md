@@ -38,17 +38,16 @@ If docs need updating, **do it now** before committing — docs should ship with
 - Stage the doc changes alongside any pending code changes
 - This ensures the commit is complete and self-contained
 
-### Step 2.5: Check Satellite Repos
+### Step 2.5: 檢查相關 repo
 
-Some files edited during a session live outside the current repo but are tracked elsewhere. **Always check these satellite repos for uncommitted changes:**
+有些檔案不在目前的 repo 裡，但透過 symlink 被其他 repo 追蹤。**每次 wrap 都要檢查這些 repo 有沒有未 commit 的改動：**
 
-- **`~/dotfiles`** — tracks `~/.claude/CLAUDE.md` (symlink), `~/.zshrc`, `~/.aliases`, etc. Any edit to these files dirties this repo.
+- **`~/dotfiles`** — 追蹤 `~/.claude/CLAUDE.md`（symlink）、`~/.zshrc`、`~/.aliases` 等。改了這些檔案就會弄髒這個 repo。
 
-For each satellite repo with uncommitted changes related to this session's work:
-1. `cd` into it, review the diff
-2. Commit with a descriptive message
-3. Push to remote
-4. Report in the wrap-up summary
+如果有相關改動：
+1. `cd` 進去，看 diff
+2. Commit + push
+3. 寫進 wrap 報告裡
 
 ### Step 3: Auto-Execute Safe Actions
 
