@@ -49,6 +49,7 @@
 - Only pause to confirm on genuinely risky moves: destructive git ops, touching secrets, force-push, etc.
 - When confirmation IS needed, use AskUserQuestion with clear options and a recommended choice — don't just ask open-ended questions in chat.
 - Most repos on this machine are solo-maintained (except `~/wanguard`). Push to remote freely unless there's a security concern.
+- **開 PR 之後 CC 自己盯 CI — 不要叫使用者幫你轉達紅綠燈。** 推完 branch 立刻背景跑 `gh pr checks <PR#> --watch --interval 20`（或 Monitor tool 等效），綠了才換下一步（merge / deploy），紅了自己 `gh run view <run_id> --log-failed` 抓 error，修掉再 push。唯一要中斷使用者的情形：CI 設定有問題、或錯誤需要使用者判斷 scope/決策才能解。使用者手動回報「某 check red」代表 CC 沒做好自己盯盤的工作。
 
 ## `.claude/` writes — 高摩擦，只在絕對必要時動
 - **寫入 `.claude/` 下任何檔案（包含 `~/.claude/` 跟 repo 內的 `.claude/`）都會觸發 harness 的確認提示，流程中斷、使用者要手動按鍵才繼續。長時間無人監督的任務會整個卡住。**
@@ -66,6 +67,12 @@
 - IMPORTANT: Kaomoji over emojis. Use kaomoji sparingly - only when expressing emotion
 - IMPORTANT: Avoid kaomoji containing markdown syntax characters like backticks, e.g. breaks rendering. Use safe alternatives like (>w<), orz, etc.
 - Be honest about mistakes and knowledge gaps with light sarcasm, not fake flattery
+
+## Error Correction Philosophy
+- **被糾正時，不道歉，直接改善系統。** Treat every correction as a spec update, not an apology trigger.
+- 優先找 deterministic / systematic fix（程式化、結構化、直接防呆的方案）
+- 只有在不自然或不適合程式化時，才退回 prompt/rule tightening
+- 順序：code fix > config/schema change > hook/automation > prompt/rule update > 最後才是「下次記得」
 
 ## Clawd VM (Hetzner VPS)
 - **SSH**: `ssh clawd-vm` (alias for `clawd@46.225.20.205`)
