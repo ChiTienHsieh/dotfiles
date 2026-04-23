@@ -1,10 +1,10 @@
 ---
-allowed-tools: [Bash, Agent, AskUserQuestion, Read, Grep, Glob, TaskList]
+allowed-tools: [Bash, Agent, AskUserQuestion, Read, Write, Edit, Grep, Glob, TaskList]
 ---
 
-# wrap — Session Wrap-up Check
+# wrap — Session Wrap-up & Ship
 
-Reflect on the current session and surface anything that should be handled before leaving.
+Wrap up = document properly, then commit + push. Not just a checklist — actually finish the job.
 
 ## Pre-loaded Context
 
@@ -17,7 +17,7 @@ Branch: !`git branch --show-current 2>/dev/null || echo "(n/a)"`
 
 ## Execution Flow
 
-### Step 1: Gather Remaining State
+### Step 1: Gather & Assess
 
 The git state is already pre-loaded above. In parallel, gather:
 
@@ -30,61 +30,64 @@ The git state is already pre-loaded above. In parallel, gather:
    - Architecture changed in a way that affects onboarding
    Skip this check for repos without meaningful docs (e.g., scratch projects, single-script repos).
 
-### Step 2: Build Checklist
+### Step 2: Fix Docs First
 
-Present a checklist of findings. Only show sections that have actionable items — skip clean sections entirely.
+If docs need updating, **do it now** before committing — docs should ship with the code, not as a follow-up.
 
-If `In-git-repo?` pre-loaded as `(not a git repo ...)`, **omit the Git section entirely** (no "working tree clean" line — it just doesn't apply). Same for the docs/memory sections if there's nothing meaningful to check.
+- Update README, CLAUDE.md, or other relevant docs
+- Stage the doc changes alongside any pending code changes
+- This ensures the commit is complete and self-contained
+
+### Step 3: Auto-Execute Safe Actions
+
+**Wrap up is about finishing, not asking permission for obvious things.** Execute these directly without asking:
+
+#### Auto-execute (just do it):
+- **Commit uncommitted changes** — draft a good commit message, stage relevant files, commit
+- **Push to remote** — if ahead by any number of commits, push
+- **Commit + push** — if both uncommitted changes and unpushed commits exist, do both
+- **Save memory** — if something worth remembering came up, save it
+- **Drop stale stashes** — if stashes are clearly from this session's work that's already committed
+
+#### Stop and ask (use AskUserQuestion):
+- **Conflicts or diverged state** — run /gsync instead
+- **Behind remote** — need to pull first, might conflict
+- **Ambiguous uncommitted changes** — files that might be WIP vs. ready to ship
+- **Multiple repos touched** — confirm which ones to push
+- **Sensitive files detected** — .env, credentials, secrets in diff
+
+### Step 4: Report
+
+After executing, present a compact result. Only show sections with content — skip clean sections.
+
+If `In-git-repo?` pre-loaded as `(not a git repo ...)`, **omit the Git section entirely**.
 
 ```
 ## Wrap-up: <repo-name> (<branch>)
 
-### Git
-- [ ] N uncommitted changes (list files)
-- [ ] N unpushed commits — `git push` needed
-- [ ] N stashes sitting around
-- [x] Working tree clean ← only if actually clean, as a reassurance
+### Done
+- [x] Committed: "<commit message>" (N files)
+- [x] Pushed N commits to origin/<branch>
+- [x] Updated README with <what>
+- [x] Saved memory: <what>
 
-### Tasks
+### Needs Attention
 - [ ] "task description" — still in progress
-- [ ] "task description" — not started
-- [x] All tasks completed ← only if true
-
-### Memory
-- [ ] Consider saving: <thing learned this session>
-- [x] Nothing notable to remember
-
-### Docs
-- [ ] README/CLAUDE.md should mention <new thing>
-- [ ] docs/ needs update for <changed behavior>
-- [x] Docs are up to date (or repo has no meaningful docs)
+- [ ] Stash from 3 days ago — drop or apply?
 
 ### Session Summary
 <2-3 sentence summary of what was accomplished this session>
 ```
 
-**IMPORTANT**: Unpushed commits are an actionable item. If ahead of remote by any number of commits, surface it clearly.
+If everything was already clean before wrap: just print the summary and "All clear, 收工!"
 
-### Step 3: Offer Actions
+### Squash Suggestion
 
-If there are actionable items, use **AskUserQuestion** to offer:
-
-- First option = the single most useful action, marked "(Recommended)"
-- Options should be concrete, e.g.:
-  - "Push N commits to remote" (if ahead — this is almost always the recommended action at wrap-up)
-  - "Commit + push 這些 changes" (if uncommitted + unpushed)
-  - "Commit changes (don't push yet)" (if uncommitted, in sync with remote)
-  - "Save memory: <specific thing>" (if something worth remembering)
-  - "Update docs: <specific file>" (if docs need updating)
-  - "Run /gsync to sync" (if behind remote or complex state)
-  - "All good, 收工" (always include as escape hatch)
-
-**Priority order for recommendation**: docs > commit > push > memory > nothing. Docs come first because they should be included in the same commit as the code changes. Uncommitted changes are the most at-risk (not in git history yet), then unpushed commits.
-
-If everything is clean (working tree clean, in sync with remote, no tasks, no memories): just print the summary and a short "All clear, 收工!" — no AskUserQuestion needed.
+If there are **3+ unpushed commits** before pushing, check if they look squashable (e.g., "fix typo", "wip", "fixup", multiple small changes to same files). If so, offer to squash before pushing — but don't block on it. Frame as: "你有 N 個 unpushed commits，看起來可以 squash，要不要？" with options to squash or push as-is.
 
 ## Style
 
-- Be concise. This is a quick pre-exit check, not a retrospective.
+- Be concise. This is a quick wrap-up, not a retrospective.
 - Use the project's communication style (zh-tw + English technical terms).
-- Checklist format is key — scannable at a glance.
+- Bias toward action. The user called /wrap because they want to be done — help them be done.
+- Checklist format for the report — scannable at a glance.

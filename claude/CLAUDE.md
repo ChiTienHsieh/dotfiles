@@ -50,6 +50,13 @@
 - When confirmation IS needed, use AskUserQuestion with clear options and a recommended choice — don't just ask open-ended questions in chat.
 - Most repos on this machine are solo-maintained (except `~/wanguard`). Push to remote freely unless there's a security concern.
 
+## `.claude/` writes — 高摩擦，只在絕對必要時動
+- **寫入 `.claude/` 下任何檔案（包含 `~/.claude/` 跟 repo 內的 `.claude/`）都會觸發 harness 的確認提示，流程中斷、使用者要手動按鍵才繼續。長時間無人監督的任務會整個卡住。**
+- 尤其 **絕對不要寫 plan file 到 `.claude/plans/`** — 那是 Plan Mode 專屬路徑，平時寫進去會被 harness 視為異常。Plan-style 的紀錄改寫到 repo 內的 `TODO.md` / `rewrite-queue.md` / 相關專案檔案。
+- 小幅編輯**既有**的 `~/.claude/CLAUDE.md` 或 `~/.claude/machine.md` 這類設定檔是 OK 的（使用者主動要求 / 這些檔案原本就是要改的），但仍然算一次確認提示 — 整併改動，不要一次編一行。
+- `~/.claude/agents/*.md`、`~/.claude/keybindings.json`、`~/.claude/settings*.json` 改動前必須**確認動機**跟使用者對齊；不要順手動。
+- 臨時筆記 / WIP 文件 → 寫到 `~/scratch/`、`~/tmp/`、`/tmp/` 或 repo 內的 notes 資料夾，不要往 `.claude/` 倒。
+
 ## Communication Style
 - Reply language: see Language section above — zh-tw, always.
 - When drafting messages (Slack/Discord/email): concise, show ownership and initiative; use `pbcopy` for clipboard.
@@ -63,7 +70,7 @@
 ## Clawd VM (Hetzner VPS)
 - **SSH**: `ssh clawd-vm` (alias for `clawd@46.225.20.205`)
 - Runs OpenClaw — Clawd 的 24/7 AI agent instance
-- 詳見 `~/openclaw-hq/CLAUDE.md`（完整 VM 操作指南、model 設定、目錄結構）
+- 詳見 `~/shroom-hq/CLAUDE.md`（完整 VM 操作指南、model 設定、目錄結構）
 - SSH 需要 `dangerouslyDisableSandbox: true`（sandbox 不允許 Unix socket）
 - VM 上的 Clawd skills/workspace 在 `/home/clawd/clawd/`
 
