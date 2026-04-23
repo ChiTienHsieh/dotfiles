@@ -38,6 +38,18 @@ If docs need updating, **do it now** before committing — docs should ship with
 - Stage the doc changes alongside any pending code changes
 - This ensures the commit is complete and self-contained
 
+### Step 2.5: Check Satellite Repos
+
+Some files edited during a session live outside the current repo but are tracked elsewhere. **Always check these satellite repos for uncommitted changes:**
+
+- **`~/dotfiles`** — tracks `~/.claude/CLAUDE.md` (symlink), `~/.zshrc`, `~/.aliases`, etc. Any edit to these files dirties this repo.
+
+For each satellite repo with uncommitted changes related to this session's work:
+1. `cd` into it, review the diff
+2. Commit with a descriptive message
+3. Push to remote
+4. Report in the wrap-up summary
+
 ### Step 3: Auto-Execute Safe Actions
 
 **Wrap up is about finishing, not asking permission for obvious things.** Execute these directly without asking:
