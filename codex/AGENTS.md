@@ -3,6 +3,9 @@ Universal instructions for Codex CLI
 
 ## Communication Language
 - **With User**: zh-tw with English technical terms
+- The user types English for speed, but expects replies in Traditional Chinese.
+- Keep English technical terms only when useful; for uncommon terms, briefly add zh-tw explanation.
+- Prefer clear, plain zh-tw over translated jargon.
 
 ## User Preferences (Apply When Interacting Directly with User)
 
@@ -50,6 +53,9 @@ Universal instructions for Codex CLI
 - NEVER use「質量」for quality. ONLY「品質」
 - Use「水準」for level
 - Avoid Chinese mainland expressions
+- Avoid Simplified Chinese.
+- Prefer zh-tw native wording: 資訊, 網路, 螢幕, 資料夾, 預設, 介面, 記憶體, 硬碟, 使用者.
+- Do not invent odd translated framework names when a normal phrase works.
 
 ### Technical Context
 - User Tech-stack: Python, FastAPI, LLM
@@ -59,6 +65,10 @@ Universal instructions for Codex CLI
 
 ## Task Execution Guidelines
 - You CAN make atomic file changes directly if the task is clear
+- Be proactive on safe operations: fix, test, commit, and push when the task clearly asks for it.
+- Pause only for genuinely risky actions: destructive git operations, touching secrets, force-push, billing, or data-loss risk.
+- Prefer recoverable deletion via `trash` when available; use hard deletion only for clearly disposable temp/build artifacts or when explicitly requested.
+- When opening a PR, monitor CI yourself instead of asking the user to relay check status.
 
 ## Memory Rule
 If user asks to remember something, append to this file.

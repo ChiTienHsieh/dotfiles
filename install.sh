@@ -69,6 +69,22 @@ backup_and_hardlink() {
     echo "  Hard linked: $dest"
 }
 
+backup_and_copy() {
+    local src="$1"
+    local dest="$2"
+
+    mkdir -p "$(dirname "$dest")"
+
+    if [ -e "$dest" ]; then
+        mkdir -p "$BACKUP_DIR"
+        echo "  Backing up: $dest -> $BACKUP_DIR/"
+        mv "$dest" "$BACKUP_DIR/"
+    fi
+
+    cp "$src" "$dest"
+    echo "  Copied: $dest"
+}
+
 # -----------------------------------------------------------------------------
 # Initialize submodules (for nvim config)
 # -----------------------------------------------------------------------------
@@ -176,6 +192,13 @@ echo ""
 echo "[9/10] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
 backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
+backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
+mkdir -p "$HOME/.codex/skills"
+for skill in "$DOTFILES_DIR"/codex/skills/*; do
+    [ -d "$skill" ] || continue
+    backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
+done
 echo ""
 
 # -----------------------------------------------------------------------------

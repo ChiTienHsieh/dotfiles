@@ -1,0 +1,136 @@
+---
+name: "source-command-iterate-worker-reviewer"
+description: "Run the migrated source command `iterate-worker-reviewer`."
+---
+
+# source-command-iterate-worker-reviewer
+
+Use this skill when the user asks to run the migrated source command `iterate-worker-reviewer`.
+
+## Command Template
+
+# Worker-Reviewer-Iteration Pattern
+
+Execute a quality-driven iteration loop using Opus subagents.
+
+## Pattern Overview
+
+```
+Worker (do task) → Reviewer (score & critique) → [if score < target] → Worker' (fix issues) → ...
+```
+
+## How to Use
+
+### Arguments
+- `the user-provided request text` will contain: `[task description] [target quality score] [max iterations]`
+- Example: `$source-command-iterate-worker-reviewer "scrape and document the API" 10 3`
+
+### Defaults
+- Target quality score: **9**/10
+- Max iterations: **5**
+
+### If No Arguments Provided
+Ask user:
+1. What task should the Worker do?
+2. What's the target quality score? (default: 9)
+3. Max iterations? (default: 5)
+
+## Execution Steps
+
+### Step 1: Initialize Todo List
+
+```
+the task plan tool:
+- [ ] Worker Round 1: [task]
+- [ ] Reviewer Round 1: Score & critique
+- [ ] (pending iterations as needed)
+```
+
+### Step 2: Spawn Worker
+
+Use the available subagent mechanism with an appropriate specialist:
+
+```
+Prompt the Worker with:
+- Clear task description
+- Expected output format
+- Output file path(s)
+- Quality expectations
+```
+
+### Step 3: Spawn Reviewer
+
+Use the available subagent mechanism with an appropriate specialist:
+
+```
+Prompt the Reviewer with:
+- Files to review
+- Checklist of quality criteria
+- Score format: X/10
+- Specific feedback for improvements
+- Output: review_report.md or similar
+```
+
+### Step 4: Iterate If Needed
+
+If Reviewer score < target AND iterations < max_iterations:
+1. Update todo list
+2. Spawn new Worker with:
+   - Original task context
+   - Reviewer's specific feedback
+   - Items to fix
+3. Spawn Reviewer again
+4. Repeat until target reached OR max iterations hit
+
+**If max iterations reached without hitting target:**
+- Stop iterating
+- Report final score achieved
+- List remaining issues from last review
+- Let user decide whether to continue or accept current result
+
+### Step 5: Report Completion
+
+```
+Final Summary:
+| Round | Worker Action | Reviewer Score |
+|-------|---------------|----------------|
+| 1     | Initial work  | X/10           |
+| 2     | Fixed A, B    | Y/10           |
+| ...   | ...           | Z/10           |
+
+Result: ✓ Target reached (Z/10) | ⚠ Max iterations (5) reached at Z/10
+```
+
+## Tips for Good Results
+
+### Worker Prompts Should Include:
+- Concrete deliverables (file paths)
+- Format requirements
+- Context from previous rounds (if iterating)
+
+### Reviewer Prompts Should Include:
+- Clear scoring rubric
+- "Be strict" instruction
+- Specific items to check
+- Request for actionable feedback (not vague)
+
+### Common Quality Criteria:
+- Completeness (nothing missing)
+- Accuracy (correct information)
+- Format (proper structure, no placeholders)
+- Polish (no typos, consistent style)
+
+## Example Invocation
+
+User: `$source-command-iterate-worker-reviewer "document the codebase architecture" 10`
+
+Codex Response:
+1. Create todo list
+2. Spawn Worker to analyze and document architecture
+3. Spawn Reviewer to check completeness, accuracy
+4. If < 10, iterate with specific fixes
+5. Report final result
+
+---
+
+**Note**: This pattern is token-intensive but produces high-quality results. Use for important deliverables where quality matters.
