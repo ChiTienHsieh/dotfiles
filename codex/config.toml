@@ -1,6 +1,9 @@
 model = "gpt-5.5"
 model_reasoning_effort = "high"
 service_tier = "fast"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+approvals_reviewer = "auto_review"
 
 [plugins."browser-use@openai-bundled"]
 enabled = true
