@@ -1,6 +1,6 @@
 ---
 name: headless-agents
-description: Delegate tasks to headless AI agents (Codex CLI, Gemini CLI). Use when you need web research with citations, complex multi-file refactoring, or want to parallelize work across multiple AI systems. Codex excels at research (--search), Gemini is faster for quick generation.
+description: "Use to delegate research, refactors, generation, or parallel work to headless AI agents such as Codex CLI or Gemini CLI."
 allowed-tools: Bash
 ---
 
