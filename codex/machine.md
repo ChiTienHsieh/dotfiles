@@ -11,5 +11,5 @@
 - repo 可以用 `.md-zh-tw-policy` 調整或關閉規則；例如 `enabled=false` 可關閉整個 repo 的檢查。
 - repo 可以用 `.md-zh-tw-ignore` 排除路徑，語法接近 `.gitignore`。
 - 單檔可以加 `<!-- md-zh-tw: ignore -->` opt out。
-- 專案術語可以放進 `.md-zh-tw-allow`，一行一個 English term。
+- 全域術語可以放進 `~/.config/git/md-zh-tw-allow` 或 `~/.md-zh-tw-allow`，一行一個 English term；repo-local `.md-zh-tw-allow` 仍可補專案專屬詞。
 - 若某個 repo 自己設定 local `core.hooksPath`，它會蓋掉 global hook；這種 repo 需要在自己的 hook 裡手動呼叫同一支 checker。

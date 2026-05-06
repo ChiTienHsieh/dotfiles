@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { execFileSync } from "node:child_process";
 
 const DEFAULT_THRESHOLD = 0.8;
@@ -190,14 +191,25 @@ function isIgnored(file, rules) {
   return ignored;
 }
 
-function loadAllowedTerms(repoRoot) {
-  const allowed = new Set(DEFAULT_ALLOWED_TERMS);
-  const text = readIfExists(path.join(repoRoot, ".md-zh-tw-allow"));
+function addAllowedTermsFromFile(allowed, file) {
+  const text = readIfExists(file);
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line.startsWith("#")) continue;
     allowed.add(normalizeTerm(line));
   }
+}
+
+function loadAllowedTerms(repoRoot) {
+  const allowed = new Set(DEFAULT_ALLOWED_TERMS);
+  const globalAllowFiles = [
+    path.join(os.homedir(), ".config", "git", "md-zh-tw-allow"),
+    path.join(os.homedir(), ".md-zh-tw-allow"),
+  ];
+  for (const file of globalAllowFiles) {
+    addAllowedTermsFromFile(allowed, file);
+  }
+  addAllowedTermsFromFile(allowed, path.join(repoRoot, ".md-zh-tw-allow"));
   return allowed;
 }
 
