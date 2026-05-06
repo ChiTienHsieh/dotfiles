@@ -111,6 +111,7 @@ echo ""
 # Zsh configuration
 # -----------------------------------------------------------------------------
 echo "[3/10] Installing zsh configuration..."
+backup_and_link "$DOTFILES_DIR/zsh/.zshenv" "$HOME/.zshenv"
 backup_and_link "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 echo ""
 
