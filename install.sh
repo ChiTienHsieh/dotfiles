@@ -120,6 +120,7 @@ echo ""
 echo "[4/10] Installing git configuration..."
 backup_and_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
 backup_and_link "$DOTFILES_DIR/git/.config/git/ignore" "$HOME/.config/git/ignore"
+backup_and_link "$DOTFILES_DIR/git/.config/git/hooks" "$HOME/.config/git/hooks"
 echo ""
 
 # -----------------------------------------------------------------------------

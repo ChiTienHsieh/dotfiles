@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+# Global pre-commit dispatcher.
+#
+# This hook runs for every repo through core.hooksPath. It enforces the
+# user-wide Markdown zh-tw default, then chains a repo-local
+# .git/hooks/pre-commit if one exists.
+
+set -eu
+
+HOOK_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+CHECKER="$HOOK_DIR/lib/check-md-zh-tw-ratio.mjs"
+
+if [ -x "$CHECKER" ]; then
+    if command -v node >/dev/null 2>&1; then
+        node "$CHECKER"
+    else
+        echo "⚠️  node not found; skipping Markdown zh-tw ratio check"
+    fi
+fi
+
+GIT_DIR=$(git rev-parse --absolute-git-dir 2>/dev/null || true)
+LEGACY_HOOK=""
+if [ -n "$GIT_DIR" ]; then
+    LEGACY_HOOK="$GIT_DIR/hooks/pre-commit"
+fi
+if [ -n "$LEGACY_HOOK" ] && [ -x "$LEGACY_HOOK" ]; then
+    # Avoid self-recursion when a repo points .git/hooks/pre-commit back here.
+    if [ "$LEGACY_HOOK" != "$0" ] && [ "$LEGACY_HOOK" != "$HOOK_DIR/pre-commit" ]; then
+        "$LEGACY_HOOK"
+    fi
+fi
