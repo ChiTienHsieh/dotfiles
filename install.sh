@@ -194,6 +194,11 @@ echo "[9/10] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
 backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
 backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
+if [ ! -e "$HOME/.codex/machine.md" ]; then
+    backup_and_copy "$DOTFILES_DIR/codex/machine.md" "$HOME/.codex/machine.md"
+else
+    echo "  ~/.codex/machine.md already exists, skipping machine notes bootstrap"
+fi
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
 mkdir -p "$HOME/.codex/skills"
 for skill in "$DOTFILES_DIR"/codex/skills/*; do
