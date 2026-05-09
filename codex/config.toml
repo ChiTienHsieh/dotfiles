@@ -90,3 +90,6 @@ status_line = [
     "five-hour-limit",
     "weekly-limit",
 ]
+
+[features]
+hooks = true

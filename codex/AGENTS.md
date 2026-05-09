@@ -60,6 +60,9 @@ Universal instructions for Codex CLI
 - Prefer zh-tw native wording: 資訊, 網路, 螢幕, 資料夾, 預設, 介面, 記憶體, 硬碟, 使用者.
 - Do not invent odd translated framework names when a normal phrase works.
 - Avoid using「很像」as a comparison phrase in replies; prefer「就好像」when a simile helps.
+- User-facing communication MUST be zh-tw by default, even when the user writes English.
+- All Markdown prose files (`*.md`) authored or rewritten for this user should be zh-tw by default, including OpenSpec artifacts and specs. Preserve reserved or standard English terms where translating would reduce clarity, especially RFC/OpenSpec keywords like MUST, SHALL, SHOULD, MAY, NOT, Requirement, Scenario, GIVEN, WHEN, THEN, AND; and technical terms like git, GitHub, API, CLI, token, branch protection, ruleset, workflow, CI/CD, PR, commit, push, merge, auto-merge, Vercel, Codex, Claude, OpenSpec.
+- Do not translate code identifiers, file paths, command names, config keys, model IDs, permission labels, or exact UI labels unless the task explicitly asks for a localized user-facing artifact.
 
 ### Technical Context
 - User Tech-stack: Python, FastAPI, LLM
