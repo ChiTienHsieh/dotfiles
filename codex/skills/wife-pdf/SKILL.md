@@ -43,12 +43,14 @@ description: Create a plain zh-TW, non-technical family-facing PDF with Typst wh
 如果 PDF 是給手機閱讀，排版優先順序是「整塊好讀」高於「少一頁」：
 
 - 把手機 PDF 當成一組直式 slides，而不是連續文章；每一頁都應該能單獨被讀懂。
+- 但不要過度矯正成「一個小 section 一頁」。如果多個區塊能放在同一頁，而且仍然舒服閱讀，就應該合併。
 - 不要讓新頁面從上一頁 section 的尾巴開始。若一個 section 會跨頁，拆成多個有明確標題的 page group，例如 `必到時間｜晚餐與大秀`、`必到時間｜其他表演`。
 - 不要讓同一個 card、block、section 或餐廳/活動資訊卡被分割到上下兩頁。
 - 如果一個區塊放不下目前頁面，就讓它整塊移到下一頁。
 - 優先使用短卡片、短段落與清楚 heading，避免靠讀者縮放來補救版面。
-- 對於資訊密集內容，寧可拆成多張完整卡片，也不要做成一張過長卡片後被切頁。
+- 對於資訊密集內容，寧可拆成多張完整卡片，也不要做成一張過長卡片後被切頁；但短卡片太多時，可以合併成摘要卡，保留所有資訊並降低重複卡片外框造成的浪費。
 - 產出前必須檢查 PDF 頁面截圖，確認沒有 block 被頁面邊界切開，也沒有無標題的 section continuation page。
+- 視覺檢查要同時抓兩種錯：太擠與太空。若頁面底部留白接近半頁，先判斷能否和同主題相鄰內容合併。
 
 Typst card/block 預設應該避免跨頁：
 
@@ -172,10 +174,10 @@ Timeline block：
 1. 先理解要傳達的內容、讀者背景、決策目的。
 2. 把技術內容改寫成 plain zh-TW。
 3. 建立 `.md` 草稿，讓內容容易修改。
-4. 建立 `.typ`，使用本 skill 的 template patterns；手機版應先規劃每一頁的 page group，而不是讓長文自然流頁。
+4. 建立 `.typ`，使用本 skill 的 template patterns；手機版應先規劃每一頁的 page group，而不是讓長文自然流頁，也不是把每個小 heading 都硬切一頁。
 5. 執行 `typst compile filename.typ` 產生 PDF。
 6. 將 PDF render 成頁面截圖，至少抽查手機版主要章節；資訊密集文件要逐頁檢查。
-7. 檢查 PDF：字型、換頁、表格、kaomoji 是否有方塊或截斷，並確認沒有 card、block、section 被切到下一頁；每一頁上方應有清楚標題。
+7. 檢查 PDF：字型、換頁、表格、kaomoji 是否有方塊或截斷，並確認沒有 card、block、section 被切到下一頁；每一頁上方應有清楚標題，且同主題可合併頁面不應留下大片空白。
 8. 修正 `.md` 與 `.typ`，保持兩者內容同步。
 
 ## 常見章節
