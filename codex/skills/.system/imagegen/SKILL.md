@@ -1,11 +1,17 @@
 ---
 name: "imagegen"
-description: "Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, mockups, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, or derive visual variants from references, and the output should be a bitmap asset rather than repo-native code or vector. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the visual directly in HTML/CSS/canvas."
+description: "Generate or edit raster images when the task benefits from AI-created bitmap visuals such as photos, illustrations, textures, sprites, UI mockups, wireframes, labeled hero assets, text-in-image concepts, or transparent-background cutouts. Use when Codex should create a brand-new image, transform an existing image, derive visual variants from references, or render short exact text/labels/arrows as part of a bitmap asset. Do not use when the task is better handled by editing existing SVG/vector/code-native assets, extending an established icon or logo system, or building the final editable visual directly in HTML/CSS/canvas."
 ---
 
 # Image Generation Skill
 
 Generates or edits images for the current project (for example website assets, game assets, UI mockups, product mockups, wireframes, logo design, photorealistic images, or infographics).
+
+## Current model capability note
+
+The current GPT image generation path is good enough to try first for **short, exact text inside images**, especially labels, arrows, UI mockup copy, concept screens, annotated hero images, badges, and simple diagram text. Do not avoid `image_gen` solely because the requested bitmap includes text.
+
+Still validate text accuracy after generation. For long passages, dense production UI, copy that must remain editable/localizable, or text that needs accessibility semantics, build the final version in HTML/CSS/SVG/canvas and use image generation only for visual exploration or background art.
 
 ## Top-level modes and rules
 
@@ -55,13 +61,16 @@ Local post-processing helper:
 
 ## When to use
 - Generate a new image (concept art, product shot, cover, website hero)
+- Generate a bitmap UI mockup, wireframe, app screen concept, or landing-page visual that includes short exact copy
+- Generate an image where labels, handwritten notes, arrows, badges, or callouts should be part of the image itself
 - Generate a new image using one or more reference images for style, composition, or mood
 - Edit an existing image (inpainting, lighting or weather transformations, background replacement, object removal, compositing, transparent background)
 - Produce many assets or variants for one task
 
 ## When not to use
 - Extending or matching an existing SVG/vector icon set, logo system, or illustration library inside the repo
-- Creating simple shapes, diagrams, wireframes, or icons that are better produced directly in SVG, HTML/CSS, or canvas
+- Creating simple shapes, diagrams, wireframes, or icons that need deterministic geometry or editable code-native output
+- Rendering long-form UI text, production localization, accessible content, or dense layouts that should remain selectable/editable in HTML/CSS/SVG/canvas
 - Making a small project-local asset edit when the source file already exists in an editable native format
 - Any task where the user clearly wants deterministic code-native output instead of a generated bitmap
 
@@ -97,6 +106,7 @@ Assume the user wants a new image unless they clearly ask to change an existing 
 3. Decide whether the output is preview-only or meant to be consumed by the current project.
 4. Decide the execution strategy: single asset vs repeated built-in calls vs CLI `generate-batch`.
 5. Collect inputs up front: prompt(s), exact text (verbatim), constraints/avoid list, and any input images.
+   - For text-in-image requests, preserve the user's exact text verbatim, keep it short where possible, specify placement and hierarchy, and explicitly ask for no extra words, no misspellings, and no watermark.
 6. For every input image, label its role explicitly:
    - reference image
    - edit target
@@ -108,7 +118,7 @@ Assume the user wants a new image unless they clearly ask to change an existing 
    - If the user's prompt is generic, add tasteful augmentation only when it materially improves output quality.
 10. Use the built-in `image_gen` tool by default.
 11. For transparent-output requests, follow the transparent image guidance below: generate with built-in `image_gen` on a flat chroma-key background, copy the selected output into the workspace or `tmp/imagegen/`, run the installed `$CODEX_HOME/skills/.system/imagegen/scripts/remove_chroma_key.py` helper, and validate the alpha result before using it. If this path looks unsuitable or fails, ask before switching to CLI `gpt-image-1.5`.
-12. Inspect outputs and validate: subject, style, composition, text accuracy, and invariants/avoid items.
+12. Inspect outputs and validate: subject, style, composition, text accuracy, and invariants/avoid items. If text is wrong but the image direction is good, iterate once with a focused prompt that repeats only the exact text and placement corrections.
 13. Iterate with a single targeted change, then re-check.
 14. For preview-only work, render the image inline; the underlying file may remain at the default `$CODEX_HOME/generated_images/...` path.
 15. For project-bound work, move or copy the selected artifact into the workspace and update any consuming code or references. Never leave a project-referenced asset only at the default `$CODEX_HOME/generated_images/...` path.
