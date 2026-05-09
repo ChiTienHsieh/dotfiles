@@ -80,28 +80,28 @@ If docs need updating, **do it now** before committing — docs should ship with
 
 ### Step 4: Report
 
-After executing, present a compact result. Only show sections with content — skip clean sections.
+After executing, present a compact result in zh-tw. Only show sections with content — skip clean sections.
 
 If `In-git-repo?` pre-loaded as `(not a git repo ...)`, **omit the Git section entirely**.
 
 ```
-## Wrap-up: <repo-name> (<branch>)
+## Wrap-up：<repo-name>（<branch>）
 
-### Done
-- [x] Committed: "<commit message>" (N files)
-- [x] Pushed N commits to origin/<branch>
-- [x] Updated README with <what>
-- [x] Saved memory: <what>
+### 完成
+- [x] 已 commit：「<commit message>」（N 個檔案）
+- [x] 已 push N 個 commit 到 origin/<branch>
+- [x] 已更新 README：<what>
+- [x] 已儲存 memory：<what>
 
-### Needs Attention
-- [ ] "task description" — still in progress
-- [ ] Stash from 3 days ago — drop or apply?
+### 需要注意
+- [ ] 「task description」— 仍在進行中
+- [ ] 3 天前的 stash — 要 drop 還是 apply？
 
-### Session Summary
-<2-3 sentence summary of what was accomplished this session>
+### 本次摘要
+<用 2-3 句 zh-tw 摘要本次完成的工作>
 ```
 
-If everything was already clean before wrap: just print the summary and "All clear, 收工!"
+If everything was already clean before wrap: just print the zh-tw summary and "都乾淨，收工。"
 
 ### Squash Suggestion
 
@@ -111,5 +111,6 @@ If there are **3+ unpushed commits** before pushing, check if they look squashab
 
 - Be concise. This is a quick wrap-up, not a retrospective.
 - Use the project's communication style (zh-tw + English technical terms).
+- The wrap-up ending message and final report MUST be in zh-tw by default, including section titles, checklist items, and the clean-ending sentence. Keep commit messages, file paths, branch names, and exact command/config names in English.
 - Bias toward action. The user called /wrap because they want to be done — help them be done.
 - Checklist format for the report — scannable at a glance.
