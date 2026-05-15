@@ -5,7 +5,7 @@ description: Create a plain zh-TW, non-technical family-facing PDF with Typst wh
 
 # Wife-Friendly PDF Generator
 
-產生給家人閱讀的 PDF：清楚、溫暖、決策導向，而且避免把技術細節直接丟到讀者臉上。主要使用 Typst，並優先支援 Traditional Chinese (zh-TW) 與 macOS 的 PingFang TC 字型。
+產生給家人閱讀的 PDF：清楚、溫暖、決策導向，而且避免把技術細節直接丟到讀者臉上。主要使用 Typst，並優先支援 Traditional Chinese (zh-TW)。macOS 優先用 PingFang TC；Linux / VM 環境要加入 Noto Sans CJK TC fallback。
 
 ## 使用時機
 
@@ -94,8 +94,8 @@ Typst card/block 預設應該避免跨頁：
 ## Typst 基礎樣板
 
 ```typst
-// Font settings - PingFang TC for zh-TW
-#set text(font: ("PingFang TC", "Heiti TC"), size: 11pt, lang: "zh")
+// Font settings - PingFang TC on macOS, Noto Sans CJK TC on Linux/VM
+#set text(font: ("PingFang TC", "Heiti TC", "Noto Sans CJK TC", "Noto Sans CJK"), size: 11pt, lang: "zh")
 #set page(margin: (x: 2cm, y: 1.8cm))
 #set par(leading: 0.7em, justify: true)
 
@@ -176,9 +176,10 @@ Timeline block：
 3. 建立 `.md` 草稿，讓內容容易修改。
 4. 建立 `.typ`，使用本 skill 的 template patterns；手機版應先規劃每一頁的 page group，而不是讓長文自然流頁，也不是把每個小 heading 都硬切一頁。
 5. 執行 `typst compile filename.typ` 產生 PDF。
-6. 將 PDF render 成頁面截圖，至少抽查手機版主要章節；資訊密集文件要逐頁檢查。
-7. 檢查 PDF：字型、換頁、表格、kaomoji 是否有方塊或截斷，並確認沒有 card、block、section 被切到下一頁；每一頁上方應有清楚標題，且同主題可合併頁面不應留下大片空白。
-8. 修正 `.md` 與 `.typ`，保持兩者內容同步。
+6. 在目標維護環境也編譯一次；若是 Linux / VM，確認有 `fonts-noto-cjk` 或等效 CJK 字型，避免中文字 fallback 出問題。
+7. 將 PDF render 成頁面截圖，至少抽查手機版主要章節；資訊密集文件要逐頁檢查。
+8. 檢查 PDF：字型、換頁、表格、kaomoji 是否有方塊或截斷，並確認沒有 card、block、section 被切到下一頁；每一頁上方應有清楚標題，且同主題可合併頁面不應留下大片空白。
+9. 修正 `.md` 與 `.typ`，保持兩者內容同步。
 
 ## 常見章節
 
