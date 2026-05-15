@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 /Users/shroom/dotfiles/codex/hooks/stop_dirty_worktree.py",
+            "timeout": 10,
+            "statusMessage": "Tracking git worktree"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 /Users/shroom/dotfiles/codex/hooks/stop_dirty_worktree.py",
+            "timeout": 10,
+            "statusMessage": "Checking git worktree"
+          }
+        ]
+      }
+    ]
+  }
+}
