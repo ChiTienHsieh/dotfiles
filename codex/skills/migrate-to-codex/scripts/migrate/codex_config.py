@@ -54,7 +54,7 @@ def convert_settings(scope: ScopePaths) -> ConversionResult:
         enabled_mcp_servers=enabled_mcp_servers,
         disabled_mcp_servers=disabled_mcp_servers,
         mcp_servers=mcp_servers,
-        codex_hooks_enabled=has_convertible_hooks(scope.source),
+        hooks_enabled=has_convertible_hooks(scope.source),
     )
     if not config_toml.strip():
         return ConversionResult()
@@ -76,7 +76,7 @@ def render_codex_config(
     enabled_mcp_servers: tuple[str, ...],
     disabled_mcp_servers: frozenset[str],
     mcp_servers: tuple[tuple[str, dict[str, object]], ...],
-    codex_hooks_enabled: bool,
+    hooks_enabled: bool,
 ) -> str:
     document: dict[str, TomlValue] = {}
     if model:
@@ -96,8 +96,8 @@ def render_codex_config(
             for server_name, server_config in mcp_servers
         }
 
-    if codex_hooks_enabled:
-        document["features"] = {"codex_hooks": True}
+    if hooks_enabled:
+        document["features"] = {"hooks": True}
 
     if document:
         document = {"personality": DEFAULT_CODEX_PERSONALITY, **document}

@@ -183,7 +183,7 @@ class ClaudeHooks:
     def report_detail(self) -> str:
         runtime_caveats = (
             "Rewritten for Codex hooks; review behavior before relying on it. "
-            "Codex hooks require `[features].codex_hooks = true`, only execute "
+            "Codex hooks require `[features].hooks = true`, only execute "
             "`command` handlers, skip `async` / `prompt` / `agent` handlers, ignore "
             "`matcher` for `UserPromptSubmit` and `Stop`, and `PreToolUse` / "
             "`PostToolUse` currently run for shell commands only."
