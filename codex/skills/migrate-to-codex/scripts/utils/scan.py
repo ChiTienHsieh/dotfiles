@@ -10,10 +10,10 @@ def should_skip_inventory_child(child: Path) -> bool:
 
 def command_file_inventory(
     source_root: Path,
-    command_file_sources: Sequence[tuple[Path, str, str]],
+    command_file_sources: Sequence[tuple[Path, str]],
 ) -> tuple[tuple[str, tuple[str, ...]], ...]:
     inventory: list[tuple[str, tuple[str, ...]]] = []
-    for relative_root, _name_prefix, provider in command_file_sources:
+    for relative_root, provider in command_file_sources:
         absolute_root = source_root / relative_root
         if not absolute_root.exists():
             continue
@@ -44,7 +44,7 @@ def render_named_inventory(
 def render_scope_inventory(
     source_root: Path,
     instruction_source_candidates: Sequence[Path],
-    command_file_sources: Sequence[tuple[Path, str, str]],
+    command_file_sources: Sequence[tuple[Path, str]],
     skill_source_roots: Sequence[Path],
     agent_source_roots: Sequence[Path],
     iter_skill_files: Callable[[Path], Sequence[Path]],

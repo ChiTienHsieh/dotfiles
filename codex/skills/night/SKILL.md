@@ -1,11 +1,11 @@
 ---
-name: "source-command-night"
-description: "Run the migrated source command `night`."
+name: "night"
+description: "Run the `night` workflow when the user is going to sleep and wants Codex to finish remaining work, check dirty worktrees, commit and push safe progress, then report what was done in zh-tw."
 ---
 
-# source-command-night
+# night
 
-Use this skill when the user asks to run the migrated source command `night`.
+Use this skill when the user asks to run `night`, says night night, or wants Codex to keep working and close things down while they are away.
 
 ## Command Template
 
@@ -24,6 +24,7 @@ When this skill runs, inspect the current task list and gather git state with:
 ```bash
 git branch --show-current 2>/dev/null || echo "(n/a)"
 git status --short 2>/dev/null || echo "(n/a)"
+/usr/bin/python3 /Users/shroom/dotfiles/codex/hooks/stop_dirty_worktree.py --dirty-report --cwd "$PWD" 2>/dev/null || echo "(dirty report unavailable)"
 ```
 
 ## Execution Flow
@@ -50,7 +51,8 @@ git status --short 2>/dev/null || echo "(n/a)"
 
 1. **目前的 repo** — 有改動就 commit + push
 2. **相關 repo**（例如 `~/dotfiles` 追蹤 `~/.codex/` 的 symlink 來源）— 也要檢查有沒有被弄髒，有的話一起 commit + push
-3. **多個 repo 都有改動** — 每個都推，不用問
+3. **本 session touched repos** — 使用 dirty report 盤點 `PostToolUse` 已追蹤到的 git roots；這是刻意取代 blocking `Stop` hook 的收尾檢查
+4. **多個 repo 都有改動** — 每個都推，不用問
 
 只有以下情況**不推**：
 - 含密碼 / secrets 的檔案在 diff 裡
@@ -59,7 +61,7 @@ git status --short 2>/dev/null || echo "(n/a)"
 
 ### Step 3: 跑 wrap skill
 
-所有能做的都做完之後，使用 `$source-command-wrap` 的流程，讓它處理：
+所有能做的都做完之後，使用 `$wrap` 的流程，讓它處理：
 - commit 未 commit 的改動
 - push 到 remote
 - 儲存 memory

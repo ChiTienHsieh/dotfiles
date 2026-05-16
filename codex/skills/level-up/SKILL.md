@@ -1,11 +1,11 @@
 ---
-name: "source-command-level-up"
-description: "Run the migrated source command `level-up`."
+name: "level-up"
+description: "Run the `level-up` workflow when the user asks for level-up coaching, staged questions, or guided progression through a topic."
 ---
 
-# source-command-level-up
+# level-up
 
-Use this skill when the user asks to run the migrated source command `level-up`.
+Use this skill when the user asks to run `level-up`.
 
 ## Command Template
 

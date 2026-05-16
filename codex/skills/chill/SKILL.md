@@ -1,11 +1,11 @@
 ---
-name: "source-command-chill"
-description: "Run the migrated source command `chill`."
+name: "chill"
+description: "Run the `chill` workflow when the user wants proofreading, vibe checks, softer wording, or a more relaxed response style."
 ---
 
-# source-command-chill
+# chill
 
-Use this skill when the user asks to run the migrated source command `chill`.
+Use this skill when the user asks to run `chill`.
 
 ## Command Template
 

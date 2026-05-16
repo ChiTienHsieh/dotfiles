@@ -1,11 +1,11 @@
 ---
-name: "source-command-iterate-worker-reviewer"
-description: "Run the migrated source command `iterate-worker-reviewer`."
+name: "iterate-worker-reviewer"
+description: "Run the `iterate-worker-reviewer` workflow when the user wants iterative implementation with separate worker and reviewer passes."
 ---
 
-# source-command-iterate-worker-reviewer
+# iterate-worker-reviewer
 
-Use this skill when the user asks to run the migrated source command `iterate-worker-reviewer`.
+Use this skill when the user asks to run `iterate-worker-reviewer`.
 
 ## Command Template
 
@@ -23,7 +23,7 @@ Worker (do task) → Reviewer (score & critique) → [if score < target] → Wor
 
 ### Arguments
 - `the user-provided request text` will contain: `[task description] [target quality score] [max iterations]`
-- Example: `$source-command-iterate-worker-reviewer "scrape and document the API" 10 3`
+- Example: `$iterate-worker-reviewer "scrape and document the API" 10 3`
 
 ### Defaults
 - Target quality score: **9**/10
@@ -122,7 +122,7 @@ Result: ✓ Target reached (Z/10) | ⚠ Max iterations (5) reached at Z/10
 
 ## Example Invocation
 
-User: `$source-command-iterate-worker-reviewer "document the codebase architecture" 10`
+User: `$iterate-worker-reviewer "document the codebase architecture" 10`
 
 Codex Response:
 1. Create todo list

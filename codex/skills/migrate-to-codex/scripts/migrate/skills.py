@@ -36,7 +36,7 @@ from utils.util import slugify_name
 
 
 COMMAND_FILE_SOURCES = (
-    (Path(".claude") / "commands", "source-command", "source command"),
+    (Path(".claude") / "commands", "Claude command"),
 )
 
 SKILL_SOURCE_ROOTS = (
@@ -111,11 +111,10 @@ def convert_skill_files(source_root: Path) -> ConversionResult:
 
 def convert_command_skills(source_root: Path) -> ConversionResult:
     result = ConversionResult()
-    for command_source_root, name_prefix, provider in COMMAND_FILE_SOURCES:
+    for command_source_root, provider in COMMAND_FILE_SOURCES:
         result.add(
             convert_markdown_command_files(
                 source_root / command_source_root,
-                name_prefix,
                 provider,
             )
         )
@@ -263,7 +262,6 @@ def skill_report_item(
 
 def convert_markdown_command_files(
     source_root: Path,
-    name_prefix: str,
     provider: str,
 ) -> ConversionResult:
     result = ConversionResult()
@@ -273,7 +271,6 @@ def convert_markdown_command_files(
         artifact, report_item = convert_command_file(
             source_root,
             source_file,
-            name_prefix,
             provider,
         )
         result.artifacts.append(artifact)
@@ -285,15 +282,14 @@ def convert_markdown_command_files(
 def convert_command_file(
     source_root: Path,
     source_file: Path,
-    name_prefix: str,
     provider: str,
 ) -> tuple[PlannedArtifact, MigrationReportItem]:
     document = ParsedDocument.from_file(source_file)
     source_name = "-".join(source_file.relative_to(source_root).with_suffix("").parts)
-    name = slugify_name(f"{name_prefix}-{source_name}")
+    name = slugify_name(source_name)
     description = document.frontmatter.optional_string("description")
     if not description:
-        description = f"Run the migrated {provider} `{source_name}`."
+        description = f"Run the `{source_name}` workflow migrated from a {provider}."
     unsupported_fields = unsupported_frontmatter_fields(
         document.frontmatter.to_dict(),
         ("description",),
@@ -334,8 +330,7 @@ def render_command_skill(
     return format_frontmatter(
         codex_skill_frontmatter(name, description),
         f"# {name}\n\n"
-        "Use this skill when the user asks to run the migrated "
-        f"{provider} `{source_name}`.\n\n"
+        f"Use this skill when the user asks to run `{source_name}`.\n\n"
         "## Command Template\n\n"
         f"{template_body}\n\n"
         f"{format_manual_migration_block(manual_notes)}\n",

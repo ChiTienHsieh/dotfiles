@@ -1,11 +1,11 @@
 ---
-name: "source-command-nvim-tutor"
-description: "Run the migrated source command `nvim-tutor`."
+name: "nvim-tutor"
+description: "Run the `nvim-tutor` workflow when the user wants Neovim tutoring, practice, or guided editing drills."
 ---
 
-# source-command-nvim-tutor
+# nvim-tutor
 
-Use this skill when the user asks to run the migrated source command `nvim-tutor`.
+Use this skill when the user asks to run `nvim-tutor`.
 
 ## Command Template
 

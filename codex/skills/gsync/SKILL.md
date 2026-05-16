@@ -1,11 +1,11 @@
 ---
-name: "source-command-gsync"
-description: "Run the migrated source command `gsync`."
+name: "gsync"
+description: "Run the `gsync` workflow when the user wants git sync help, including branch status, upstream divergence, pull/rebase safety, and push readiness."
 ---
 
-# source-command-gsync
+# gsync
 
-Use this skill when the user asks to run the migrated source command `gsync`.
+Use this skill when the user asks to run `gsync`.
 
 ## Command Template
 

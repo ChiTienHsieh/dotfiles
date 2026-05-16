@@ -1,11 +1,11 @@
 ---
-name: "source-command-eternal-code-seeker"
-description: "Run the migrated source command `eternal-code-seeker`."
+name: "eternal-code-seeker"
+description: "Run the `eternal-code-seeker` workflow when the user wants persistent code search, investigation, or deep codebase spelunking."
 ---
 
-# source-command-eternal-code-seeker
+# eternal-code-seeker
 
-Use this skill when the user asks to run the migrated source command `eternal-code-seeker`.
+Use this skill when the user asks to run `eternal-code-seeker`.
 
 ## Command Template
 

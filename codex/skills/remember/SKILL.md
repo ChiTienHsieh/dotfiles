@@ -1,11 +1,11 @@
 ---
-name: "source-command-remember"
-description: "Run the migrated source command `remember`."
+name: "remember"
+description: "Run the `remember` workflow when the user explicitly asks Codex to remember, save, update, or forget durable guidance."
 ---
 
-# source-command-remember
+# remember
 
-Use this skill when the user asks to run the migrated source command `remember`.
+Use this skill when the user asks to run `remember`.
 
 ## Command Template
 

@@ -1,11 +1,11 @@
 ---
-name: "source-command-wrap"
-description: "Run the migrated source command `wrap`."
+name: "wrap"
+description: "Run the `wrap` workflow when the user asks to wrap up, ship the current work, check dirty worktrees, commit, push, save useful memory, and produce a concise zh-tw session summary."
 ---
 
-# source-command-wrap
+# wrap
 
-Use this skill when the user asks to run the migrated source command `wrap`.
+Use this skill when the user asks to run `wrap` or wants to wrap up the current session.
 
 ## Command Template
 
@@ -24,6 +24,7 @@ git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null || echo "(no up
 git stash list 2>/dev/null || echo "(n/a)"
 git log --oneline -5 2>/dev/null || echo "(n/a)"
 git branch --show-current 2>/dev/null || echo "(n/a)"
+/usr/bin/python3 /Users/shroom/dotfiles/codex/hooks/stop_dirty_worktree.py --dirty-report --cwd "$PWD" 2>/dev/null || echo "(dirty report unavailable)"
 ```
 
 ## Execution Flow
@@ -54,6 +55,7 @@ If docs need updating, **do it now** before committing — docs should ship with
 有些檔案不在目前的 repo 裡，但透過 symlink 被其他 repo 追蹤。**每次 wrap 都要檢查這些 repo 有沒有未 commit 的改動：**
 
 - **`~/dotfiles`** — 追蹤 `~/.codex/AGENTS.md`（symlink）、`~/.zshrc`、`~/.aliases` 等。改了這些檔案就會弄髒這個 repo。
+- **本 session touched repos** — 使用 dirty report 盤點 `PostToolUse` 已追蹤到的 git roots；這取代 blocking `Stop` hook，不要重新啟用 `Stop` dirty check。
 
 如果有相關改動：
 1. `cd` 進去，看 diff

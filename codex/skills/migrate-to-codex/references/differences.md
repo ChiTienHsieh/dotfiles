@@ -18,7 +18,7 @@ Docs last checked: 2026-04-20. If today's date is later, re-open the official Co
 
 | Source | Codex | Migration behavior | Caveat |
 | --- | --- | --- | --- |
-| `.claude/commands/*.md` | `.agents/skills/source-command-<name>/SKILL.md` | Converted to one-file Codex skills | Slash-command invocation, `argument-hint`, `allowed-tools`, `$ARGUMENTS`, shell-output interpolation, and file-reference expansion are preserved as manual-review text. |
+| `.claude/commands/*.md` | `.agents/skills/<name>/SKILL.md` | Converted to one-file Codex skills | Slash-command invocation, `argument-hint`, `allowed-tools`, `$ARGUMENTS`, shell-output interpolation, and file-reference expansion are preserved as manual-review text. |
 | Command files with runtime expansion | One-file Codex skills plus `manual_fix_required` rows | Preserved as prompt text | Argument placeholders, shell-output interpolation, automatic file expansion, model/agent routing, and executable hook behavior have different runtime behavior and must be checked manually. |
 
 ## Skills

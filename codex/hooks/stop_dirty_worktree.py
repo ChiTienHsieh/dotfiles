@@ -7,6 +7,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 from json import JSONDecodeError
 from pathlib import Path
 
@@ -71,6 +72,71 @@ def save_tracked_roots(session_id: object, roots: set[Path]) -> None:
         )
     except OSError:
         return
+
+
+def recent_track_paths(hours: float = 12) -> list[Path]:
+    try:
+        paths = list(TRACK_DIR.glob("*.json"))
+    except OSError:
+        return []
+
+    cutoff = time.time() - (hours * 60 * 60)
+    recent: list[Path] = []
+    for path in paths:
+        try:
+            if path.stat().st_mtime >= cutoff:
+                recent.append(path)
+        except OSError:
+            continue
+    return sorted(recent, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+def load_roots_from_track_path(path: Path) -> set[Path]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, JSONDecodeError):
+        return set()
+    roots = data.get("roots") if isinstance(data, dict) else None
+    if not isinstance(roots, list):
+        return set()
+    return {Path(root) for root in roots if isinstance(root, str) and root}
+
+
+def dirty_roots_for(roots: set[Path]) -> list[tuple[Path, list[str]]]:
+    dirty_roots: list[tuple[Path, list[str]]] = []
+    for root in sorted(roots):
+        status_proc = run_git(root, "status", "--porcelain=v1", "--untracked-files=normal")
+        if status_proc.returncode != 0:
+            continue
+        status_lines = [line for line in status_proc.stdout.splitlines() if line.strip()]
+        if status_lines:
+            dirty_roots.append((root, status_lines))
+    return dirty_roots
+
+
+def print_dirty_report(cwd: Path, recent_hours: float = 12) -> int:
+    roots: set[Path] = set()
+    cwd_root = git_root_for_path(cwd)
+    if cwd_root:
+        roots.add(cwd_root)
+
+    for path in recent_track_paths(recent_hours):
+        roots.update(load_roots_from_track_path(path))
+
+    dirty_roots = dirty_roots_for(roots)
+    if not dirty_roots:
+        print("Dirty worktree check: clean.")
+        return 0
+
+    print("Dirty worktree check: dirty repositories found.")
+    for root, status_lines in dirty_roots:
+        print(f"\nRepository: {root}")
+        for line in status_lines[:30]:
+            print(line)
+        omitted = len(status_lines) - 30
+        if omitted > 0:
+            print(f"... and {omitted} more path(s)")
+    return 0
 
 
 def absolute_paths_in(value: object) -> set[Path]:
@@ -183,14 +249,7 @@ def main() -> int:
     if cwd_root:
         roots.add(cwd_root)
 
-    dirty_roots: list[tuple[Path, list[str]]] = []
-    for root in sorted(roots):
-        status_proc = run_git(root, "status", "--porcelain=v1", "--untracked-files=normal")
-        if status_proc.returncode != 0:
-            continue
-        status_lines = [line for line in status_proc.stdout.splitlines() if line.strip()]
-        if status_lines:
-            dirty_roots.append((root, status_lines))
+    dirty_roots = dirty_roots_for(roots)
 
     if not dirty_roots:
         return emit({"continue": True})
@@ -222,4 +281,19 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if "--dirty-report" in sys.argv:
+        cwd = Path.cwd()
+        if "--cwd" in sys.argv:
+            try:
+                cwd = Path(sys.argv[sys.argv.index("--cwd") + 1]).expanduser()
+            except IndexError:
+                pass
+        recent_hours = 12.0
+        if "--recent-hours" in sys.argv:
+            try:
+                recent_hours = float(sys.argv[sys.argv.index("--recent-hours") + 1])
+            except (IndexError, ValueError):
+                pass
+        raise SystemExit(print_dirty_report(cwd, recent_hours))
+
     raise SystemExit(main())
