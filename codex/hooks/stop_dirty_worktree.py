@@ -139,6 +139,17 @@ def already_offered_cleanup(message: str | None) -> bool:
     return mentions_dirty and offers_escape_hatch and offers_cleanup
 
 
+def looks_like_level_up_checkpoint(message: str | None) -> bool:
+    if not message:
+        return False
+
+    return (
+        "Level " in message
+        and "**問題:" in message
+        and all(marker in message for marker in ("A)", "B)", "C)", "D)"))
+    )
+
+
 def emit(payload: dict[str, object]) -> int:
     print(json.dumps(payload, ensure_ascii=False))
     return 0
@@ -161,6 +172,9 @@ def main() -> int:
         return emit({"continue": True})
 
     if already_offered_cleanup(payload.get("last_assistant_message")):
+        return emit({"continue": True})
+
+    if looks_like_level_up_checkpoint(payload.get("last_assistant_message")):
         return emit({"continue": True})
 
     roots = load_tracked_roots(payload.get("session_id"))
