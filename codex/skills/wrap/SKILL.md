@@ -24,7 +24,7 @@ git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null || echo "(no up
 git stash list 2>/dev/null || echo "(n/a)"
 git log --oneline -5 2>/dev/null || echo "(n/a)"
 git branch --show-current 2>/dev/null || echo "(n/a)"
-/usr/bin/python3 /Users/shroom/dotfiles/codex/hooks/stop_dirty_worktree.py --dirty-report --cwd "$PWD" 2>/dev/null || echo "(dirty report unavailable)"
+/usr/bin/python3 "$HOME/dotfiles/codex/hooks/stop_dirty_worktree.py" --dirty-report --cwd "$PWD" 2>/dev/null || echo "(dirty report unavailable)"
 ```
 
 ## Execution Flow
