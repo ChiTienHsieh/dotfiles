@@ -1,104 +1,108 @@
 ---
 name: craft-goal
-description: Craft a reliable `/goal` handoff prompt for another Codex session. Use when the user wants help writing, shrinking, validating, or preparing a `/goal` prompt, especially when the task needs clarification, research, a task spec file, side-effect boundaries, or a quick smoke test before handoff.
+description: 協助撰寫、縮短、驗證、整理可交給下一個 Codex session 執行的 `/goal` prompt。當使用者要寫 `/goal`、準備 handoff prompt、把模糊任務整理成可執行 goal、需要 clarification、research、task spec file、side-effect boundary、或 quick smoke test 時使用。
 metadata:
   short-description: Craft reliable /goal handoff prompts
 ---
 
 # Craft Goal
 
-Use this skill to turn a rough task idea into a `/goal` prompt that another Codex can execute without immediately falling over.
+使用這個 skill，把一個粗略任務想法整理成下一個 Codex 可以可靠執行的 `/goal` prompt。目標不是寫漂亮 prompt，而是做出能交棒、能驗證、風險邊界清楚的 handoff。
 
-## Core Workflow
+使用者預設用 zh-tw proofread，所以除非使用者明確要求英文，**輸出給使用者的 brief 與 `/goal` prompt 都預設用繁體中文**。保留必要 English technical terms，例如 `/goal`、Codex、GitHub、VM、SSH、API、CLI、token、commit、push、branch、file path、command、config key、model ID、UI label。
 
-1. **Clarify the task**
-   - Identify the desired outcome, target environment, required tools, and completion criteria.
-   - Ask concise questions only when the missing detail changes the work, risk, or naming.
-   - Resolve naming and scope decisions before drafting the final `/goal`.
+## 核心流程
 
-2. **Separate brief from spec**
-   - Keep the actual `/goal` prompt under the app limit, currently 4000 characters.
-   - If the task is complex, write a tracked task spec file in the relevant repo, then make `/goal` reference that file.
-   - Use an ignored temp file only for scratch drafts; use a tracked file when the next Codex must read it reliably.
+1. **釐清任務**
+   - 找出使用者真正要的 outcome、target environment、需要的 tools、完成標準。
+   - 只有在缺失資訊會改變 scope、risk、命名、或實作方式時才問問題。
+   - 先定好命名、topic、target path、side-effect boundary，再產生 final `/goal`。
 
-3. **Define side effects**
-   - State what local files may be read or edited.
-   - State what external systems may be changed, such as VM config, Telegram, GitHub, Vercel, or browser state.
-   - Explicitly forbid destructive, permission-sensitive, billing, credential, or broad-scope changes unless the user approves them.
-   - Include whether the next Codex may commit or push.
+2. **區分短 prompt 與詳細 spec**
+   - 實際貼進 `/goal` 的 prompt 必須低於 app 限制，目前是 4000 characters。
+   - 如果任務複雜，先在相關 repo 寫一份 tracked task spec file，再讓 `/goal` 引用該檔案。
+   - ignored temp file 只能當 scratch draft；如果下一個 Codex 必須讀到，請放在 tracked file。
 
-4. **Do a quick feasibility check**
-   - Inspect repo paths, relevant docs, commands, installed tools, or existing config enough to avoid a first-step failure.
-   - If the prompt references a file, verify the file exists and is tracked when appropriate.
-   - If the next Codex needs a local working tree, check `git status` and mention expected cleanliness or dirty state.
-   - Do not run expensive, destructive, or high-risk checks just to make the prompt look complete.
+3. **定義 side effects**
+   - 明確寫出下一個 Codex 可以讀或改哪些 local files。
+   - 明確寫出可能會改哪些 external systems，例如 VM config、Telegram、GitHub、Vercel、browser state。
+   - 明確禁止 destructive、permission-sensitive、billing、credential、或 broad-scope changes，除非使用者另外批准。
+   - 寫清楚下一個 Codex 是否可以 commit / push。預設不要 commit / push，除非使用者要求。
 
-5. **Draft the output**
-   - Provide a short zh-tw brief for the user when helpful.
-   - Provide the final `/goal` prompt in a code block.
-   - Prefer imperative instructions, exact names, exact paths, and a concrete deliverable checklist.
-   - Remove vague words such as "maybe" after decisions are made.
+4. **做快速 feasibility check**
+   - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免下一個 Codex 第一步就失敗。
+   - 如果 `/goal` 會引用檔案，確認檔案存在；需要跨 session 使用時，確認它是 tracked。
+   - 如果下一個 Codex 會在本地 worktree 工作，先看 `git status`，並在 prompt 或 brief 裡說清楚預期狀態。
+   - 不要為了讓 prompt 看起來完整，而跑昂貴、破壞性、或高風險檢查。
 
-## `/goal` Prompt Shape
+5. **產出結果**
+   - 給使用者一段簡短 zh-tw brief，方便快速 proofread。
+   - 用 code block 提供 final `/goal` prompt。
+   - `/goal` prompt 預設也用 zh-tw；只有 exact names、paths、commands、config snippets、tool names 保持原文。
+   - 使用 imperative instructions、exact names、exact paths、明確 deliverable checklist。
+   - 決策定案後，移除 `maybe`、`probably`、`I think` 這類模糊字眼。
 
-Use this structure when possible:
+## `/goal` Prompt 建議結構
+
+可優先用這個形狀：
 
 ```text
-Use <tools/capabilities>.
+使用 <tools/capabilities>。
 
-Follow <tracked task spec path> if present.
+請依照 <tracked task spec path> 執行。
 
 Goal:
-<one concrete outcome>
+<一句話描述具體 outcome>
 
 Context:
-- <only the context the next Codex needs>
+- <只放下一個 Codex 必須知道的背景>
 
 Instructions:
-1. Inspect current state first.
-2. Make only the allowed changes.
-3. Ask before <risky actions>.
-4. Verify with <specific smoke test>.
-5. Report <specific deliverables>.
+1. 先 inspect current state。
+2. 只做 allowed changes。
+3. 在 <risky actions> 前先問使用者。
+4. 用 <specific smoke test> 驗證。
+5. 回報 <specific deliverables>。
 
 Local side effects:
 - May edit: <paths>
 - Must not edit: <paths>
-- Do not commit/push unless explicitly asked.
+- 不要 commit / push，除非使用者明確要求。
 ```
 
 ## Task Spec File Guidance
 
-Create a task spec file when:
+出現以下情況時，建立 task spec file：
 
-- The `/goal` prompt would exceed 4000 characters.
-- The task has many steps, safety rules, or external systems.
-- The next Codex needs exact config snippets, topic lists, command formats, or verification criteria.
-- The task should be auditable later.
+- `/goal` prompt 會超過 4000 characters。
+- 任務有很多步驟、安全規則、或 external systems。
+- 下一個 Codex 需要 exact config snippets、topic lists、command formats、verification criteria。
+- 任務之後需要 audit trail。
 
-Choose the file location by repo convention:
+依 repo 慣例選檔案位置：
 
-- `runbook/` for operational setup, VM changes, config changes, and incident-style handoff.
-- `studies/` for conceptual research or analysis.
-- Existing project docs/spec folders when the repo already has a clear convention.
-- Do not invent new top-level directories when the repo has explicit structure rules.
+- `runbook/`：operational setup、VM changes、config changes、incident-style handoff。
+- `studies/`：conceptual research 或 analysis。
+- repo 已有明確 docs/spec 目錄時，沿用既有慣例。
+- 不要在已有結構規則的 repo 裡自行發明新的 top-level directory。
 
 ## Smoke Test Examples
 
-- Check `git status --short`.
-- Confirm referenced files exist with `test -f` or `rg --files`.
-- Confirm a command exists with `command -v`.
-- Run a narrow syntax check or targeted test if it is fast and safe.
-- For external systems, inspect current state before writing instructions that assume names, IDs, branches, or resources.
+- `git status --short`
+- 用 `test -f` 或 `rg --files` 確認 referenced files 存在。
+- 用 `command -v` 確認 required command 存在。
+- 如果快速且安全，跑 narrow syntax check 或 targeted test。
+- 對 external systems，先 inspect current state，再寫需要 names、IDs、branches、resources 的指令。
 
 ## Final Response Checklist
 
-Before handing the prompt to the user, make sure it includes:
+交給使用者前，確認包含：
 
-- The chosen task name/scope.
-- The short `/goal` prompt, under 4000 characters.
-- Any tracked task spec path, if used.
-- Local side effects and external side effects.
-- Ask-first boundaries.
-- Verification steps.
-- Final report expectations.
+- task name / scope。
+- 短版 `/goal` prompt，低於 4000 characters。
+- 如果使用 tracked task spec file，提供該 path。
+- local side effects 與 external side effects。
+- ask-first boundaries。
+- verification steps。
+- final report expectations。
+- zh-tw brief，讓使用者可以快速 proofread。
