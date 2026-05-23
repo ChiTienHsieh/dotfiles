@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML Artifacts"
+  short_description: "Create useful single-file HTML artifacts"
+  default_prompt: "Use $html-artifacts to create a self-contained HTML artifact for this plan, review, report, prototype, diagram, or editor."
