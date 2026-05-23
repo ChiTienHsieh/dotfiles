@@ -31,6 +31,11 @@ metadata:
 
 4. **做快速 feasibility check**
    - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免下一個 Codex 第一步就失敗。
+   - 如果 `/goal` 依賴特定 CLI、plugin、connector、skill、browser automation、或其他工具，確認它不只是「應該存在」，而是當下真的可見且可用。
+   - 對 CLI 工具，至少檢查 command path 與版本；如果使用者要求 latest/up-to-date，確認版本是否符合當下可用資訊或明確標註未驗證。
+   - 對 Playwright CLI、`agent-browser` 這類會被下一個 Codex 直接操作的工具，做最低成本 smoke test，例如確認 exact CLI 的 `--version` 與 relevant help command 可執行；若任務依賴 standalone browser，確認可用的啟動方式或把待驗證項寫進 handoff。
+   - 不要混淆不同 browser automation surface：Playwright CLI、`agent-browser` CLI、MCP browser tools、以及 in-app browser skill 是不同能力；handoff 必須寫 exact tool name，並驗證同一個 tool。
+   - 對 skill/plugin 依賴，確認 skill/plugin 在 Codex 當前可見路徑或 tool discovery 裡可見；不要只確認 repo tree 有檔案。
    - 如果 `/goal` 會引用檔案，確認檔案存在；需要跨 session 使用時，確認它是 tracked。
    - 如果下一個 Codex 會在本地 worktree 工作，先看 `git status`，並在 prompt 或 brief 裡說清楚預期狀態。
    - 不要為了讓 prompt 看起來完整，而跑昂貴、破壞性、或高風險檢查。
@@ -90,7 +95,8 @@ Local side effects:
 
 - `git status --short`
 - 用 `test -f` 或 `rg --files` 確認 referenced files 存在。
-- 用 `command -v` 確認 required command 存在。
+- 用 `command -v <tool>` 確認 required command 存在，並用 `<tool> --version` 或等價指令確認可執行。
+- 若 `/goal` 指定 Playwright CLI 或 `agent-browser`，檢查 exact CLI path、version、relevant help command，並確認對應 skill/plugin 在 Codex 可見；不要用另一個 browser tool 的存在替代這項檢查。
 - 如果快速且安全，跑 narrow syntax check 或 targeted test。
 - 對 external systems，先 inspect current state，再寫需要 names、IDs、branches、resources 的指令。
 
@@ -104,5 +110,6 @@ Local side effects:
 - local side effects 與 external side effects。
 - ask-first boundaries。
 - verification steps。
+- 已完成或明確列出的 CLI/skill/plugin availability checks 與 smoke tests。
 - final report expectations。
 - zh-tw brief，讓使用者可以快速 proofread。
