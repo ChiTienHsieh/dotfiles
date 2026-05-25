@@ -14,7 +14,7 @@ description: Create a plain zh-TW, non-technical family-facing PDF with Typst wh
 - 使用者要求「create a PDF for my wife」、「wife-friendly summary」、「export to wife PDF」、「wife-approved PDF」。
 - 使用者需要把技術、職涯、財務或家庭決策整理成非技術讀者能理解的文件。
 - 使用者提到 wife、spouse、family，或明確要求 plain zh-TW summary。
-- 輸出需要是 `.md`、`.typ`、`.pdf` 三件組，方便之後修改與重新編譯。
+- 輸出需要是 `.typ` 與 `.pdf`，方便之後修改與重新編譯。
 
 ## 核心原則
 
@@ -74,7 +74,7 @@ Typst card/block 預設應該避免跨頁：
 
 ### Kaomoji
 
-可以少量使用 kaomoji 增加溫度，但只使用 PingFang TC 渲染穩定的字元。先讀 `references/kaomoji-guide.md`，不要使用容易變方塊的字元。
+一頁 PDF 至少放一個 kaomoji 增加溫度；多頁文件可視內容自然少量使用，不必每頁硬塞。但只使用 PingFang TC 渲染穩定的字元。先讀 `references/kaomoji-guide.md`，不要使用容易變方塊的字元。
 
 安全清單：
 
@@ -173,13 +173,12 @@ Timeline block：
 
 1. 先理解要傳達的內容、讀者背景、決策目的。
 2. 把技術內容改寫成 plain zh-TW。
-3. 建立 `.md` 草稿，讓內容容易修改。
-4. 建立 `.typ`，使用本 skill 的 template patterns；手機版應先規劃每一頁的 page group，而不是讓長文自然流頁，也不是把每個小 heading 都硬切一頁。
-5. 執行 `typst compile filename.typ` 產生 PDF。
-6. 在目標維護環境也編譯一次；若是 Linux / VM，確認有 `fonts-noto-cjk` 或等效 CJK 字型，避免中文字 fallback 出問題。
-7. 將 PDF render 成頁面截圖，至少抽查手機版主要章節；資訊密集文件要逐頁檢查。
-8. 檢查 PDF：字型、換頁、表格、kaomoji 是否有方塊或截斷，並確認沒有 card、block、section 被切到下一頁；每一頁上方應有清楚標題，且同主題可合併頁面不應留下大片空白。
-9. 修正 `.md` 與 `.typ`，保持兩者內容同步。
+3. 建立 `.typ`，使用本 skill 的 template patterns；手機版應先規劃每一頁的 page group，而不是讓長文自然流頁，也不是把每個小 heading 都硬切一頁。
+4. 執行 `typst compile filename.typ` 產生 PDF。
+5. 在目標維護環境也編譯一次；若是 Linux / VM，確認有 `fonts-noto-cjk` 或等效 CJK 字型，避免中文字 fallback 出問題。
+6. 將 PDF render 成頁面截圖，至少抽查手機版主要章節；資訊密集文件要逐頁檢查。
+7. 檢查 PDF：字型、換頁、表格、kaomoji 是否有方塊或截斷，並確認沒有 card、block、section 被切到下一頁；每一頁上方應有清楚標題，且同主題可合併頁面不應留下大片空白。
+8. 修正 `.typ` 並重新編譯 PDF。
 
 ## 常見章節
 
@@ -208,9 +207,8 @@ Timeline block：
 
 ## 輸出檔案
 
-通常產生三個檔案：
+通常產生兩個檔案：
 
-- `.md`：plain markdown，方便閱讀與修改。
 - `.typ`：Typst source，用於排版與 PDF 編譯。
 - `.pdf`：最終輸出。
 
