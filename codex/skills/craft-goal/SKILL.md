@@ -1,8 +1,6 @@
 ---
 name: craft-goal
 description: 協助撰寫、縮短、驗證、整理可交給下一個 Codex session 執行的 `/goal` prompt。當使用者要寫 `/goal`、準備 handoff prompt、把模糊任務整理成可執行 goal、需要 clarification、research、task spec file、side-effect boundary、或 quick smoke test 時使用。
-metadata:
-  short-description: Craft reliable /goal handoff prompts
 ---
 
 # Craft Goal
@@ -40,7 +38,15 @@ metadata:
    - 如果下一個 Codex 會在本地 worktree 工作，先看 `git status`，並在 prompt 或 brief 裡說清楚預期狀態。
    - 不要為了讓 prompt 看起來完整，而跑昂貴、破壞性、或高風險檢查。
 
-5. **產出結果**
+5. **做 adversarial review gate**
+   - 若任務涉及 external systems、commit / push、SSH / VM、GitHub、Vercel、browser automation、多 repo、多 agent handoff、credentials、billing、data-loss risk，或需要 task spec file，交付前先做 adversarial review。
+   - 可以開 subagent 時，傳給 reviewer 的資料只包含 raw artifacts：使用者原始需求摘要、draft `/goal`、task spec path 或必要 excerpt。
+   - 不要把自己的診斷、預期答案、懷疑問題、打算採用的修法傳給 reviewer；review 的價值來自獨立挑錯，不是附和。
+   - 要求 reviewer 專門找 ambiguous scope、unsafe side effects、missing ask-first boundary、unverifiable success criteria、tool/path assumptions、以及 prompt 是否超過 4000 characters。
+   - 若沒有 subagent 工具或任務明顯 low-risk，改做 self-adversarial pass，並在 brief 裡說明未開 subagent 的原因。
+   - 對 review findings 要明確處置：接受並修改、拒絕並說明理由，或列為下一個 Codex 必須先確認的 open question。
+
+6. **產出結果**
    - 給使用者一段簡短 zh-tw brief，方便快速 proofread。
    - 用 code block 提供 final `/goal` prompt。
    - `/goal` prompt 預設也用 zh-tw；只有 exact names、paths、commands、config snippets、tool names 保持原文。
@@ -111,5 +117,6 @@ Local side effects:
 - ask-first boundaries。
 - verification steps。
 - 已完成或明確列出的 CLI/skill/plugin availability checks 與 smoke tests。
+- adversarial review disposition：若有跑 review，列出 accepted / rejected findings；若沒跑，簡短說明原因。
 - final report expectations。
 - zh-tw brief，讓使用者可以快速 proofread。

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Craft Goal"
+  short_description: "Craft reliable /goal handoff prompts"
+  default_prompt: "Use $craft-goal to turn this task into a concise, verified /goal handoff prompt."
