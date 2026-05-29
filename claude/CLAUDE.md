@@ -1,4 +1,10 @@
 @~/.claude/machine.md
+@~/dotfiles/codex/AGENTS.md
+
+## Claude-Specific Overrides
+- Shared user preferences, communication style, and language rules live in `~/dotfiles/codex/AGENTS.md`.
+- Keep this file focused on Claude-specific behavior, local Claude Code operations, and narrower overrides.
+- Do not duplicate shared cross-agent rules here unless Claude needs a stricter version.
 
 ## Terminology
 - "Claude Code" can be abbreviated as "CC"

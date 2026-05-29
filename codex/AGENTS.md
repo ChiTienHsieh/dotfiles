@@ -1,10 +1,16 @@
 # AGENTS.md - Codex CLI Configuration
 Universal instructions for Codex CLI
 
+## User Instruction SSOT
+- This file is the user-level SSOT (single source of truth; 唯一主要來源) for all agents on this computer.
+- Other user-level agent memory files, such as Claude's `CLAUDE.md`, should reference this file instead of duplicating shared user preferences.
+- Tool-specific files may add narrower operational rules, but shared language, style, and user preference rules belong here first.
+
 ## Communication Language
 - **With User**: zh-tw with English technical terms
 - The user types English for speed, but expects replies in Traditional Chinese.
 - Keep English technical terms only when useful; for uncommon terms, briefly add zh-tw explanation.
+- When using uncommon, regional, cultural, or technical terms, explain them inline with parentheses or choose a more local/plain alternative.
 - Prefer clear, plain zh-tw over translated jargon.
 
 ## User Preferences (Apply When Interacting Directly with User)
