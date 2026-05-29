@@ -200,7 +200,13 @@ if [ ! -e "$HOME/.codex/machine.md" ]; then
 else
     echo "  ~/.codex/machine.md already exists, skipping machine notes bootstrap"
 fi
+backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
+mkdir -p "$HOME/.codex/rules"
+for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
+    [ -f "$rule" ] || continue
+    backup_and_link "$rule" "$HOME/.codex/rules/$(basename "$rule")"
+done
 mkdir -p "$HOME/.codex/skills"
 for skill in "$DOTFILES_DIR"/codex/skills/*; do
     [ -d "$skill" ] || continue
