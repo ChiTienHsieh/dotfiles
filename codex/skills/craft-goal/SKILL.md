@@ -20,12 +20,17 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 Codex ses
    - 實際貼進 `/goal` 的 prompt 必須低於 app 限制，目前是 4000 characters。
    - 如果任務複雜，先在相關 repo 寫一份 tracked task spec file，再讓 `/goal` 引用該檔案。
    - ignored temp file 只能當 scratch draft；如果下一個 Codex 必須讀到，請放在 tracked file。
+   - **有 task spec file 時，`/goal` prompt 應極短，只負責指向 spec file 與補充少量 launch-time instruction。** 不要把 spec 摘要、任務清單、side-effect boundary、verification checklist 再複製一遍到 prompt；那些內容應留在 spec 裡。
+   - **`/goal` prompt 是一次性 chat text，預設不要寫進 repo，也不要建立 temporary prompt artifact file。** 不要建立 `goal-prompt.md`、`prompt.md`、scratch prompt file、不要把 prompt 放在 spec 檔開頭，也不要把 prompt commit 進 git history，除非使用者明確要求保存 prompt 本身。
+   - 如果使用者說「我只想 review spec」，final response 只給 spec path 和 chat 裡的短 prompt；不要新增 prompt file 讓使用者或下一個 Codex 讀兩次。
 
 3. **定義 side effects**
    - 明確寫出下一個 Codex 可以讀或改哪些 local files。
    - 明確寫出可能會改哪些 external systems，例如 VM config、Telegram、GitHub、Vercel、browser state。
    - 明確禁止 destructive、permission-sensitive、billing、credential、或 broad-scope changes，除非使用者另外批准。
    - 寫清楚下一個 Codex 是否可以 commit / push。預設不要 commit / push，除非使用者要求。
+   - 如果使用者要求「完成後備份」或「讓下一個 Codex 好 review」，可以在 spec 裡允許下一個 Codex 在驗證通過、確認沒有 secrets/private data/unrelated changes 後 commit + push。
+   - **不要建立或 commit 一次性 prompt 檔、scratch draft、review notes、或僅為溝通方便建立的臨時 artifact。** 若使用者沒有明確要求保存這些檔案，連 temp prompt artifact file 都不要建立；若不小心 commit/push 了這類檔案，優先移除或 amend；是否改寫 remote history 依使用者要求與風險決定。
 
 4. **做快速 feasibility check**
    - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免下一個 Codex 第一步就失敗。
@@ -45,6 +50,8 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 Codex ses
    - 要求 reviewer 專門找 ambiguous scope、unsafe side effects、missing ask-first boundary、unverifiable success criteria、tool/path assumptions、以及 prompt 是否超過 4000 characters。
    - 若沒有 subagent 工具或任務明顯 low-risk，改做 self-adversarial pass，並在 brief 裡說明未開 subagent 的原因。
    - 對 review findings 要明確處置：接受並修改、拒絕並說明理由，或列為下一個 Codex 必須先確認的 open question。
+   - 如果使用者明確要求 reviewer subagent review spec，review 對象應是 **目前最終 spec file**，不是過期 draft prompt。若 review 後又大幅改寫 spec，必須重新 review 或明確說明改動很小、不影響 review 結論。
+   - reviewer 結論若提到已修的 blocking finding，要本地確認檔案真的包含該修正，再告訴使用者「可 review」。
 
 6. **產出結果**
    - 給使用者一段簡短 zh-tw brief，方便快速 proofread。
@@ -52,10 +59,15 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 Codex ses
    - `/goal` prompt 預設也用 zh-tw；只有 exact names、paths、commands、config snippets、tool names 保持原文。
    - 使用 imperative instructions、exact names、exact paths、明確 deliverable checklist。
    - 決策定案後，移除 `maybe`、`probably`、`I think` 這類模糊字眼。
+   - 若已有 task spec file，final `/goal` prompt 優先使用一行 pointer 格式，例如：「請在 `<repo>` 依照 `<spec path>` 完成所有任務；<commit/push policy>；完成後回報 <deliverables>。」詳細任務不要重複貼在 prompt。
+   - final response 要明確分開：
+     - **給使用者 review 的檔案**：通常只列 spec path。
+     - **要貼進 `/goal` 的文字**：放在 chat code block。
+     - **已 commit/push 的狀態**：如果有，列 commit hash 與 worktree state。
 
 ## `/goal` Prompt 建議結構
 
-可優先用這個形狀：
+若沒有 task spec file，可優先用這個形狀：
 
 ```text
 使用 <tools/capabilities>。
@@ -81,6 +93,18 @@ Local side effects:
 - 不要 commit / push，除非使用者明確要求。
 ```
 
+若已建立 tracked task spec file，`/goal` prompt 應改用極短 pointer，不要重複 spec：
+
+```text
+請在 `<repo path>` 依照 `<tracked spec path>` 完成所有任務；<commit/push policy>；完成後回報 <final deliverables>。
+```
+
+範例：
+
+```text
+請在 `/Users/sprin/Desktop/CodeForge/games/phantom-opera` 依照 `docs/2026-05-31-live-playtest-backlog-goal.md` 完成所有任務；驗證通過且確認沒有敏感資訊後 commit + push，完成後回報改了哪些檔案、commit hash 與驗證結果。
+```
+
 ## Task Spec File Guidance
 
 出現以下情況時，建立 task spec file：
@@ -96,6 +120,8 @@ Local side effects:
 - `studies/`：conceptual research 或 analysis。
 - repo 已有明確 docs/spec 目錄時，沿用既有慣例。
 - 不要在已有結構規則的 repo 裡自行發明新的 top-level directory。
+- spec file 只放下一個 Codex 必須讀的 durable instruction。不要在 spec file 內嵌「這段貼進 `/goal`」的 prompt；那是 launch-time chat text，不是 spec 內容。
+- spec file 要讓使用者容易 review：標題清楚、段落短、使用「問題 / 要做到 / 驗證」這種穩定結構；不要把 reviewer process、draft prompt 歷史、或 agent 自我辯解寫進去。
 
 ## Smoke Test Examples
 
