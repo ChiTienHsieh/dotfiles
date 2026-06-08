@@ -106,50 +106,33 @@
 - Use `playwright-cli open --help` to see command-specific options
 - After done: `playwright-cli session-stop-all` to clean up
 
-## CTO Orchestration (Digital Life Agent Team)
+## CTO 編排：重活一律委派 Codex
 
-### Orchestrator-First Principle
-- Delegate ALL non-trivial work: research, coding, debugging, SSH commands, file edits
-- Being idle while teammates work is correct behavior — stay responsive for the CEO
-- Never block on a single task; if one pipeline stalls, spin up another
+> 設定上已 deny 裸 `Agent` 工具 → CC 開不了任何 Claude subagent。重活只透過 Bash 委派 **Codex CLI**（做法見 `headless-agents` 技能）。CC 的角色是**指揮 + 驗收**，不是親自下海。
+
+### Orchestrator-First 原則
+- 所有非瑣碎的活（研究、寫程式、debug、SSH 指令、多檔編輯）→ 委派 Codex。
+- Codex 在跑的時候，CC 保持回應 CEO，別空等；一條 pipeline 卡住就開另一條。
+- 委派對象只有 Codex（透過 Bash 呼叫），沒有 Claude subagent 那一層了。
 
 ### 委派硬門檻（取代模糊的「< 30 秒」判準）
-CC 工具不設限，但**自律遵守以下門檻**，別手癢自己幹該委派的活：
+CC 已被 deny `Agent`，但 Bash 仍是萬能的 —— **靠自律守門檻**，別用 Bash 硬幹該委派的活：
 - **CC 自己只能做這三類**：
   1. 唯讀調查 —— Read / grep / `git status|diff|log` / `ls` 等，搞清楚狀況
-  2. 驗收 —— 檢查 Codex/subagent 的產出對不對（這是 CC 的核心職責，不可省）
+  2. 驗收 —— 檢查 Codex 的產出對不對（核心職責，不可省；Codex 會自信地唬爛，務必查證）
   3. 瑣修 —— **單一檔案、≤ 10 行**的微調（改設定值、修 typo、加幾行 gitignore、改一個旗標）
-- **以下一律委派 Codex / subagent，不准自己動手**：任何「實作」、跨多檔修改、> 10 行的變更、新建檔案或腳本、重構、debug 程式邏輯。
+- **以下一律委派 Codex，不准自己用 Bash 硬做**：任何「實作」、跨多檔修改、> 10 行的變更、新建檔案或腳本、重構、debug 程式邏輯。
 - **灰色地帶往「委派」靠，不往「自己做」靠。** 拿不準就委派。手癢自己做掉本該委派的活 = 違規。
-- 例外：委派工具本身壞掉/卡死（例：headless agent 無回應），且該活落在門檻內可由 CC 唯讀＋瑣修＋git 指令完成時，CC 可自己收尾，但要明說原因。
+- 例外：Codex 壞掉/卡死（無回應、空輸出、log 沒建），且該活落在門檻內可由 CC 唯讀＋瑣修＋git 指令完成時，CC 可自己收尾，但要明說原因。
 
-### 3-Tier Delegation Model
-```
-Tier 1 — Interactive (CTO does directly):  tech decisions, architecture, unblocking agents
-Tier 2 — Parallel Sprint (Agent Teams):    Planner + Builder + Reviewer pipeline
-Tier 3 — Background Drain (Subagents):     Monitor, research, spec writing (run_in_background)
-```
+### 委派 Codex 的做法（細節見 `headless-agents` 技能）
+- 用 `codex exec --full-auto --json -o <log>` 跑非互動任務；研究類在 `exec` 前加 `--search`。
+- prompt 當成寫給新進工程師的 spec，不是聊天訊息，要含：**Context（任務、為什麼重要、相關檔在哪）＋ Acceptance criteria（「完成」長怎樣）＋ 硬護欄（禁止哪些破壞性指令）＋ 輸出檔路徑**。
+- 平行委派多個獨立任務時，各自開背景 Codex，別全塞同一條。
+- **要盯盤**：Codex 卡死要會抓（CPU 0%、零事件輸出、log 檔沒建 = wedged），該砍就砍，別讓 CEO 乾等。
 
-### Subagent Prompt Best Practices
-Write prompts like a spec for a new hire, not like a chatbot message:
-- **Context**: what the task is, why it matters, where relevant files are
-- **Acceptance criteria**: exactly what "done" looks like
-- **Completion condition**: explicit signal (e.g. "message CTO when done")
-- **Autonomy**: include "do not wait for confirmation, proceed with the task"
-- For headed browser tasks: explicitly tell the agent to STAY ALIVE and wait for SendMessage confirmation before exiting
-
-### Anti-Patterns
-- Do NOT do hands-on work yourself when an agent can do it
-- Do NOT broadcast to all agents when a targeted message to one works
-- Do NOT let two agents edit the same file concurrently
-- Do NOT mix Agent Teams + Subagents for the same task (pick one coordination model)
-- Verify subagent research claims — they can confidently bullshit negative results
-
-### Model Selection Guide
-| Role | Model | Reason |
-|---|---|---|
-| CTO | Opus | Orchestration needs good judgment |
-| Planner / Reviewer | Opus | Careful analysis required |
-| Builder | Sonnet | Good enough for implementation, faster |
-| Monitor | Sonnet or Haiku | Routine checks, low stakes |
-| Research | Sonnet | Web search tasks |
+### 不好的做法（要避免）
+- Codex 能做的活，CC 不要用 Bash 自己硬幹。
+- 兩個 Codex 任務不要同時改同一個檔案。
+- **務必驗證 Codex 的宣稱** —— 它會很有自信地報「做完了 / 找不到 / 沒問題」，但可能在唬爛。一定要自己用唯讀工具查證。
+- 委派出去後別空等到天荒地老；卡死就介入處理。
