@@ -1,0 +1,54 @@
+# Allow only fixed read-only observation modes for clawd-vm.
+prefix_rule(
+    pattern=["/Users/sprin/.codex/bin/clawd-vm-observe", "summary"],
+    decision="allow",
+    justification="Fixed read-only clawd-vm summary wrapper; rejects arbitrary remote commands.",
+    match=["/Users/sprin/.codex/bin/clawd-vm-observe summary"],
+)
+
+prefix_rule(
+    pattern=["/Users/sprin/.codex/bin/clawd-vm-observe", "uptime"],
+    decision="allow",
+    justification="Fixed read-only clawd-vm uptime wrapper; rejects arbitrary remote commands.",
+    match=["/Users/sprin/.codex/bin/clawd-vm-observe uptime"],
+)
+
+prefix_rule(
+    pattern=["/Users/sprin/.codex/bin/clawd-vm-observe", "os"],
+    decision="allow",
+    justification="Fixed read-only clawd-vm OS wrapper; rejects arbitrary remote commands.",
+    match=["/Users/sprin/.codex/bin/clawd-vm-observe os"],
+)
+
+prefix_rule(
+    pattern=["/Users/sprin/.codex/bin/clawd-vm-observe", "memory"],
+    decision="allow",
+    justification="Fixed read-only clawd-vm memory wrapper; rejects arbitrary remote commands.",
+    match=["/Users/sprin/.codex/bin/clawd-vm-observe memory"],
+)
+
+prefix_rule(
+    pattern=["/Users/sprin/.codex/bin/clawd-vm-observe", "disk"],
+    decision="allow",
+    justification="Fixed read-only clawd-vm disk wrapper; rejects arbitrary remote commands.",
+    match=["/Users/sprin/.codex/bin/clawd-vm-observe disk"],
+)
+
+prefix_rule(
+    pattern=["/Users/sprin/.codex/bin/clawd-vm-observe", "processes"],
+    decision="allow",
+    justification="Fixed read-only clawd-vm process-list wrapper; rejects arbitrary remote commands.",
+    match=["/Users/sprin/.codex/bin/clawd-vm-observe processes"],
+)
+
+# Raw SSH into clawd-vm is intentionally not auto-allowed by this file. Use the
+# wrapper above for routine read-only machine observations.
+prefix_rule(
+    pattern=["ssh", "clawd-vm"],
+    decision="prompt",
+    justification="Raw clawd-vm SSH can run arbitrary remote commands; use clawd-vm-observe for read-only machine info.",
+    match=[
+        "ssh clawd-vm",
+        "ssh clawd-vm uptime",
+    ],
+)

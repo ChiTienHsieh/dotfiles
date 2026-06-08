@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: clawd-vm-observe <summary|uptime|os|memory|disk|processes>
+
+Runs fixed, read-only observation commands on clawd-vm.
+USAGE
+}
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+mode="$1"
+
+case "$mode" in
+  summary)
+    remote_command="printf '== identity ==\n'; hostname; whoami; printf '\n== uptime ==\n'; uptime; printf '\n== os ==\n'; uname -a; printf '\n== memory ==\n'; free -h; printf '\n== disk ==\n'; df -h -x tmpfs -x devtmpfs"
+    ;;
+  uptime)
+    remote_command="uptime"
+    ;;
+  os)
+    remote_command="uname -a"
+    ;;
+  memory)
+    remote_command="free -h"
+    ;;
+  disk)
+    remote_command="df -h -x tmpfs -x devtmpfs"
+    ;;
+  processes)
+    remote_command="ps -eo pid,ppid,user,stat,comm --sort=comm | head -n 80"
+    ;;
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
+
+exec ssh \
+  -o BatchMode=yes \
+  -o ForwardAgent=no \
+  -o ClearAllForwardings=yes \
+  -o PermitLocalCommand=no \
+  clawd-vm \
+  "$remote_command"
