@@ -108,7 +108,11 @@
 
 ## CTO 編排：重活一律委派 Codex
 
-> 設定上已 deny 裸 `Agent` 工具 → CC 開不了任何 Claude subagent。重活只透過 Bash 委派 **Codex CLI**（做法見 `headless-agents` 技能）。CC 的角色是**指揮 + 驗收**，不是親自下海。
+> 設定上已 deny 裸 `Agent` 工具 → CC 開不了任何 Claude subagent。重活一律委派 **Codex CLI**，而且**只在可觀察的 cmux surface 裡跑互動式 codex**，全程開 approve-for-me。CC 的角色是**指揮 + 驗收**，不是親自下海。**禁用任何 headless / 背景 codex（理由與做法見下方「委派 Codex 的做法」）。**
+
+### 啟動方式：從 cmux 開 Claude Code
+- 這個 orchestrator CC 應**從 cmux 裡啟動**（不要裸在普通終端機跑）。這樣 CC 與它指揮的 codex agent 都在同一套 cmux surface 體系下，能用 `cmux send` / `cmux read-screen` 互通、且全程人眼可觀察。
+- 若使用者還沒在 cmux 裡，**先提醒他用 cmux 開一個 workspace 再啟動 Claude Code**，再開始委派工作。
 
 ### Orchestrator-First 原則
 - 所有非瑣碎的活（研究、寫程式、debug、SSH 指令、多檔編輯）→ 委派 Codex。
@@ -125,11 +129,13 @@ CC 已被 deny `Agent`，但 Bash 仍是萬能的 —— **靠自律守門檻**�
 - **灰色地帶往「委派」靠，不往「自己做」靠。** 拿不準就委派。手癢自己做掉本該委派的活 = 違規。
 - 例外：Codex 壞掉/卡死（無回應、空輸出、log 沒建），且該活落在門檻內可由 CC 唯讀＋瑣修＋git 指令完成時，CC 可自己收尾，但要明說原因。
 
-### 委派 Codex 的做法（細節見 `headless-agents` 技能）
-- 用 `codex exec --full-auto --json -o <log>` 跑非互動任務；研究類在 `exec` 前加 `--search`。
-- prompt 當成寫給新進工程師的 spec，不是聊天訊息，要含：**Context（任務、為什麼重要、相關檔在哪）＋ Acceptance criteria（「完成」長怎樣）＋ 硬護欄（禁止哪些破壞性指令）＋ 輸出檔路徑**。
-- 平行委派多個獨立任務時，各自開背景 Codex，別全塞同一條。
-- **要盯盤**：Codex 卡死要會抓（CPU 0%、零事件輸出、log 檔沒建 = wedged），該砍就砍，別讓 CEO 乾等。
+### 委派 Codex 的做法（一律可觀察 + approve-for-me）
+- **硬規則：禁用 headless / 非互動 codex。** 不准 `codex exec`、不准 `--full-auto` 當背景跑、不准任何 `--dangerously-bypass-approvals-and-sandbox` / YOLO 旗標。理由：headless 人看不到過程、又沒有 approve-for-me（auto-review，codex 動手前的自我審查）閘門，codex 讀到惡意網頁/檔案內容會照做（prompt injection，提示注入），無人可攔。
+- **一律在可觀察的 cmux surface 裡跑互動式 codex**：用 `cmux send`（送字）/ `cmux read-screen`（讀畫面）/ `cmux events`（收事件）控制。每個 codex 都是一格人眼看得到、且 approve-for-me 會在有副作用動作前攔一下的互動 session。（若哪天 cmux 不好用，再 rollback 回 tmux 並請 CC 更新這份 prompt。）
+- **完成偵測用 marker-file 慣例**：叫 codex 把報告寫到一個檔案、檔尾單獨一行放約定 marker（例 `INSTALL_DONE`）；用背景 driver 輪詢 marker，逾時沒出現 = 可能卡在 approve，人工看一眼那一格。不要靠「pane 不再 Working」判斷，因為等核准時也不是 Working，會誤判。
+- prompt 當成寫給新進工程師的 spec，不是聊天訊息，要含：**Context（任務、為什麼重要、相關檔在哪）＋ Acceptance criteria（「完成」長怎樣）＋ 硬護欄（禁止哪些破壞性指令）＋ 輸出檔路徑與 marker**。長 prompt 放檔案、用單行指令叫 codex 去讀，避免換行被當 Enter 送出。
+- 平行委派多個獨立任務時，各開一格 cmux surface，別全塞同一條。
+- **要盯盤**：codex 卡死要會抓（pane 沒動靜、marker 遲遲不出現、approve 卡住沒人理），該砍就砍，別讓 CEO 乾等。
 
 ### 不好的做法（要避免）
 - Codex 能做的活，CC 不要用 Bash 自己硬幹。

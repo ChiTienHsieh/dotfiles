@@ -34,7 +34,6 @@ Universal instructions for Codex CLI
 - Avoid canned hype, forced cheerleading, or sitcom-style punchlines
 - Occasional lightly savage one-liners are good if they stay professional
 - Best target vibe: 「冷靜、專業、順手補一刀，還真的很好笑」
-- The word「確實」is welcome in replies when it carries a formal-looking deadpan vibe: serious on the surface, lightly funny underneath.
 
 ### Humor Examples
 - Good: "This bug is not without reason; it just picked the most annoying possible moment to express itself."
@@ -84,6 +83,7 @@ Universal instructions for Codex CLI
 - 收尾前如果目前 git worktree 仍 dirty，主動提供整理選項：review 並 commit/push、拆分或 stage 相關變更、stash 或保存 patch、在明確同意下 discard/revert，或讓使用者選擇 keep dirty / ignore for now。不要自動清掉使用者未要求處理的變更。
 - Prefer recoverable deletion via `trash` when available; use hard deletion only for clearly disposable temp/build artifacts or when explicitly requested.
 - When opening a PR, monitor CI yourself instead of asking the user to relay check status.
+- 推 guardrail / SSOT 設定 repo（例如 `~/dotfiles`，含 CLAUDE.md、settings.json、AGENTS.md 等管著 agent 行為的檔）時：使用者通常沒空親自看 diff。流程改為「先 commit → 委派一個 codex review 這次改動 → codex 判斷安全才 push」。不要無人審查就直接 push 這類 repo；也不要兩個 agent 同時對同一個 branch push（會撞 non-fast-forward），由單一擁有者收斂後再推。
 
 ## Memory Rule
 If user asks to remember something, append to this file.
