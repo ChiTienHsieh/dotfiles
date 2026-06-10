@@ -1,146 +1,201 @@
 ---
 name: "level-up"
-description: "Run the `level-up` workflow when the user asks for level-up coaching, staged questions, or guided progression through a topic."
+description: "Run the `level-up` workflow when the user asks for level-up coaching, staged questions, or guided progression through a topic. Uses persistent learning records under this skill's learning/ directory to tailor future teaching."
 ---
 
 # level-up
 
-Use this skill when the user asks to run `level-up`.
+Use this skill when the user asks to run `level-up`, wants staged coaching, or wants an AI tutor to teach a topic level by level.
 
-## Command Template
+## Core Principle
 
-# level-up.md
+- Concept difficulty decides the number of levels. Use 3-15+ levels as needed.
+- Teach progressively. The user advances only after demonstrating understanding.
+- Treat mid-journey questions as signal: answer briefly, then insert or defer them in the learning path.
+- Persist only evidence-backed learning state. Record what the user proved, corrected, or said they already know; do not record "covered X" as learned.
 
-<level-up>
-階梯式教學模式 - 動態調整關卡，答對才升級，確保深度理解
+## Persistent Learning Records
 
-## Core Principle (核心原則)
+Before teaching, inspect the learning folder in this skill directory:
 
-**概念難度決定關卡數量** (3-15+ levels，自由決定)
-**漸進式加深，答對才升級**
-**使用者提問即時整合到教學流程**
-
----
-
-## Teaching Flow (教學流程)
-
-### 1. 評估 & 規劃
-- 分析概念複雜度 → 決定初始 levels 數量
-- 規劃教學路徑（隨時可調整）
-- **IMPORTANT: 立即使用 the task plan tool 建立完整學習路徑**
-  - 列出所有預計的 Levels（可隨時調整）
-  - 第一個 Level 設為 in_progress
-  - 讓使用者隨時用 `/todos` 查看進度
-  - 完成一個 Level 就立即標記為 completed，下一個標為 in_progress
-
-### 2. 每個 Level 結構
-```
-Level N: [主題]
-├── 簡化解釋 (比喻/類比)
-├── 技術細節 (程式碼/原理)
-├── 重點提示
-└── MCQ 測驗
+```text
+learning/
+├── INDEX.md
+└── topics/
+    └── <topic-slug>.md
 ```
 
-### 3. 動態調整
-- 答得順 → 加快節奏或合併
-- 卡關 → 拆細或增加過渡 level
-- 自由發揮，不受初始計畫限制
+If the folder or files are missing, create them in the same structure. Keep prose zh-tw by default and keep technical terms in English when clearer.
+
+### What to Read First
+
+1. Read `learning/INDEX.md` for the topic map, familiarity levels, and pointers.
+2. Search `learning/topics/` for the current topic and nearby prerequisites.
+3. Use records only when they include evidence. If a topic is unrecorded, assess from scratch.
+
+### What to Record
+
+Update records after each completed level and at session end. Record only learning state that can shape a future lesson:
+
+- **mastered**: user answered or applied the idea correctly in context.
+- **familiar**: user showed partial fluency but may still need scaffolding.
+- **learning**: user is actively working on the idea.
+- **gap**: user showed a misconception, missing prerequisite, or repeated uncertainty.
+- **skip_for_now**: intentionally deferred scope.
+
+Good evidence:
+
+- Correct MCQ answer plus the reason, if the user explained one.
+- A corrected misconception and the new phrasing that worked.
+- A user statement like "I already know X", marked as self-report.
+- A concrete task or scenario where the user applied the concept.
+
+Do not store secrets, client-specific facts, private code snippets, tokens, or long chat transcripts. Summarize at the concept level.
+
+### Index Rules
+
+`learning/INDEX.md` is the routing table. Keep it short and sortable:
+
+```markdown
+| Topic | Status | Evidence | Updated | File |
+| --- | --- | --- | --- | --- |
+| Python async | familiar | Correctly distinguished concurrency vs parallelism in MCQ. | 2026-06-10 | topics/python-async.md |
+```
+
+Each `topics/<topic-slug>.md` should contain:
+
+```markdown
+# <Topic>
+
+## Current Level
+- Status:
+- Last updated:
+- Confidence:
+
+## Evidence
+- YYYY-MM-DD: ...
+
+## Known Gaps
+- ...
+
+## Teaching Notes
+- Use these examples:
+- Avoid assuming:
+
+## Next Suggested Levels
+- ...
+```
+
+Use stable topic slugs, lowercase ASCII, hyphen-separated, for example `python-async.md`, `fastapi-dependencies.md`, `llm-evals.md`.
+
+## Teaching Flow
+
+### 1. Assess and Plan
+
+- Read persistent learning records first.
+- Identify what can be skipped, accelerated, reviewed, or split smaller.
+- Analyze concept complexity and decide the initial level count.
+- Immediately use the task plan tool when available:
+  - List expected levels.
+  - Mark the first level `in_progress`.
+  - Mark a completed level as `completed` before moving on.
+  - Adjust the plan when questions reveal missing prerequisites.
+
+### 2. Level Structure
+
+```text
+Level N: <topic>
+├── One short setup in chat
+├── Clear explanation or visual-first material when useful
+├── Key distinction / common mistake
+├── MCQ or tiny application check
+└── Learning-record update after the user passes or reveals a gap
+```
+
+Prefer one narrow win per level. Avoid dumping the whole map when the user needs one step.
+
+### 3. Visual Material
+
+When the topic benefits from diagrams, comparisons, or interactive reading:
+
+- Put the main explanation in a self-contained HTML file in the current project, usually `explainer/` or `notes/`.
+- Keep CSS/JS inline. Do not use external CDN, external fonts, or `<script src>`.
+- Use zh-tw plain language and mobile-friendly layout.
+- In chat, give only a short intro plus the absolute file path. Ask the user to read it before the MCQ.
+- Verify the HTML has no external dependencies before handing it over:
+
+```bash
+grep -cE '<script src|href="http|cdn|@import url' <file>
+```
+
+If using a side agent to render HTML, give it a complete content spec and tell it to render only, not invent lesson content.
+
+## MCQ Rules
+
+- Use **bold** for the question. Do not use heading syntax.
+- Put each option on its own line, without blank lines between options.
+- Include at least one plausible but flawed distractor.
+- Vary the correct answer position.
+- Match difficulty to the current level.
+
+```markdown
+**問題: <question>**
+
+A) <option A>
+B) <option B>
+C) <option C>
+D) <option D>
 
 ---
+```
 
-## MCQ Testing Rules (測驗規則)
+## Adaptive Response
 
-### 格式規範
-- 用 **bold** 標示問題 (不用 ### 標題)
-- 每個選項獨立一行，選項間**不空行**
-- 統一格式：
-  ```
-  **問題: [題目內容]**
+### Correct Answer
 
-  A) [選項 A]
-  B) [選項 B]
-  C) [選項 C]
-  D) [選項 D]
+- Confirm briefly.
+- Explain why the answer works.
+- Update the learning record for the level.
+- Move to the next level and preview it.
 
-  ---
-  ```
+### Wrong Answer
 
-### 選項設計原則
-- 至少一個「看似正確但有嚴重缺陷」的干擾選項
-- 避免正確答案總是在同一個位置
-- 可引用同事/情境增加趣味性（如：Vic 的錯誤建議）
-- 難度匹配當前 Level
+- Stay encouraging and stay on the same level.
+- Re-explain from a different angle.
+- Record the gap if it affects future teaching.
+- Ask a new check question.
+- After 2-3 misses, ask what part feels unclear.
 
----
+### Repeated Misses
 
-## Adaptive Response (適應性回應)
+- 2 misses: use a simpler analogy or narrower example.
+- 3 misses: isolate the prerequisite.
+- 4+ misses: ask whether to split smaller, pause, or switch to a simpler concept.
 
-### 答對 ✅
-- 熱情肯定 + 簡短解析
-- 立即升級到下一 Level
-- 預告下一關
+## Mid-Journey Questions
 
-### 答錯 ❌
-- 保持鼓勵，停留當前 Level
-- **換角度重講**（不重複相同說法）
-- 出新題目
-- 重試 2-3 次後主動問困惑點
+Do not derail the lesson. Classify the question:
 
-### 連續答錯
-- 2 次：換更簡單比喻
-- 3 次：針對困惑點解釋
-- 4+ 次：問是否要拆更細/跳過/換簡單概念
+- **Immediate**: needed for current understanding or answerable in 1-2 sentences.
+- **Insert before current level**: reveals missing prerequisite.
+- **Defer**: advanced extension better taught later.
 
----
+Update the task plan accordingly:
 
-## Mid-Journey Questions (途中提問處理)
+```text
+done Level 1
+done Level 2
+todo Level 2-2: <inserted prerequisite>
+in_progress Level 3
+todo Level 5-2: <deferred question>
+```
 
-**核心：不打斷節奏，適時整合**
+## Completion
 
-### 處理策略
-1. **評估問題** → 決定插入位置
-   - 前置知識不足？插入前面 (Level X-2)
-   - 高度相關？簡答 + 標記稍後深入
-   - 進階延伸？安排後面 (Level Y-2)
+At the end of a session:
 
-2. **回應方式**
-   - 立即簡答（1-2 句）
-   - 告知已加入 TODO
-   - 更新學習進度
-
-3. **編號系統**
-   ```
-   ✓ Level 1
-   ✓ Level 2
-   📝 Level 2-2 (你問的「XXX」) ← 插入
-   ⏳ Level 3
-   📝 Level 5-2 (你問的「YYY」) ← 延後
-   ⏳ Level 6
-   ```
-
-### 何時立即 vs 延後
-- **立即簡答**：影響當前理解、答案很短
-- **延後深入**：涉及未教概念、需長篇解釋
-- **前置插入**：發現缺少基礎知識
-
----
-
-## Completion Celebration (通關慶祝)
-
-1. 盛大慶祝 + 誇張顏文字
-2. 知識總結（條列重點）
-3. 學習軌跡視覺化
-4. 實戰應用指引（3-5 個場景）
-5. 終極整合測驗 (optional)
-
----
-
-## Key Reminders
-
-- **耐心第一**：take your time, chapter by chapter
-- **自由發揮**：不受範例限制，根據情境即興調整
-- **深度優先**：寧可拆細講透，不要跳太快
-- **因材施教**：適應使用者節奏和背景
-
-</level-up>
+1. Summarize what the user demonstrated, not just what was taught.
+2. Update `learning/INDEX.md`.
+3. Update or create relevant `learning/topics/<topic-slug>.md`.
+4. List practical next steps or suggested next levels.
+5. Keep celebration proportional. One kaomoji is enough unless the user clearly wants more.

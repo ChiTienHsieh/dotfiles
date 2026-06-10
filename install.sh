@@ -168,6 +168,7 @@ backup_and_link "$DOTFILES_DIR/claude/nvim-progress.json" "$HOME/.claude/nvim-pr
 backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
 backup_and_link "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
+backup_and_link "$DOTFILES_DIR/codex/skills/level-up" "$HOME/.claude/skills/level-up"
 
 # Commands (individual files - directory has local state we don't track)
 for cmd in chill.md eternal-code-seeker.md gsync.md level-up.md nvim-tutor.md remember.md wrap.md; do
