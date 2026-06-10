@@ -1,5 +1,7 @@
 # cmux-orchestrator — Claude Code 調度站
 
+> 正式 skill 版本在 `~/dotfiles/skills/cmux-orchestrator/`，並由 `install.sh` symlink 到 Claude Code 與 Codex CLI 的 skill 目錄。這個舊資料夾先保留，因為 `scratch/` 仍作為任務暫存區使用。
+
 ## 這是什麼
 這個資料夾是 orchestrator Claude Code（主控 CC）的家。orchestrator CC 跑在 cmux 的一個 surface；每隻被委派的 codex 各自開一個 cmux surface，可在 cmux app 直接觀察。它的工作：看設定、調設定、指揮多個 codex agent 平行幹活，並在使用者想進迴路時回報。
 

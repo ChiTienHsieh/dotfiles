@@ -169,6 +169,10 @@ backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
 backup_and_link "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
 backup_and_link "$DOTFILES_DIR/codex/skills/level-up" "$HOME/.claude/skills/level-up"
+for skill in "$DOTFILES_DIR"/skills/*; do
+    [ -d "$skill" ] || continue
+    backup_and_link "$skill" "$HOME/.claude/skills/$(basename "$skill")"
+done
 
 # Commands (individual files - directory has local state we don't track)
 for cmd in chill.md eternal-code-seeker.md gsync.md level-up.md nvim-tutor.md remember.md wrap.md; do
@@ -211,6 +215,11 @@ done
 mkdir -p "$HOME/.codex/skills"
 for skill in "$DOTFILES_DIR"/codex/skills/*; do
     [ -d "$skill" ] || continue
+    backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
+done
+for skill in "$DOTFILES_DIR"/skills/*; do
+    [ -d "$skill" ] || continue
+    backup_and_link "$skill" "$HOME/.agents/skills/$(basename "$skill")"
     backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
 done
 echo ""

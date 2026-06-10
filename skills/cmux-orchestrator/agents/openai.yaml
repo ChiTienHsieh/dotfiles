@@ -1,0 +1,4 @@
+interface:
+  display_name: "cmux Orchestrator"
+  short_description: "用 cmux 安全調度多個互動式 Codex agent"
+  default_prompt: "使用 cmux-orchestrator skill 規劃並委派多個 Codex agent。"
