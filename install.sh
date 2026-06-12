@@ -47,28 +47,6 @@ backup_and_link() {
     echo "  Linked: $dest -> $src"
 }
 
-# Hard link version (for files that don't work well with symlinks, e.g. settings.json)
-backup_and_hardlink() {
-    local src="$1"
-    local dest="$2"
-
-    mkdir -p "$(dirname "$dest")"
-
-    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up: $dest -> $BACKUP_DIR/"
-        mv "$dest" "$BACKUP_DIR/"
-    fi
-
-    if [ -L "$dest" ]; then
-        rm "$dest"
-    fi
-
-    # Create hard link (same inode, works around symlink detection issues)
-    ln -f "$src" "$dest"
-    echo "  Hard linked: $dest"
-}
-
 backup_and_copy() {
     local src="$1"
     local dest="$2"
@@ -235,7 +213,13 @@ ensure_real_dir "$HOME/.claude/skills"
 
 # Main config files
 backup_and_link "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
-backup_and_hardlink "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"  # Hard link to avoid CC symlink bug
+# settings.json is intentionally NOT linked: ~/.claude/settings.json stays an
+# independent file the user edits freely; the repo copy is just a seed/reference.
+# (Hard links break silently on atomic writes; symlinks hit a CC bug.)
+if [ ! -e "$HOME/.claude/settings.json" ]; then
+    cp "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
+    echo "  Seeded: $HOME/.claude/settings.json"
+fi
 backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
 backup_and_link "$DOTFILES_DIR/claude/claude-powerline.json" "$HOME/.claude/claude-powerline.json"
 backup_and_link "$DOTFILES_DIR/claude/nvim-progress.json" "$HOME/.claude/nvim-progress.json"

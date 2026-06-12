@@ -54,9 +54,7 @@
     ],
     "deny": [
       "Agent",
-      "SlashCommand",
       "NotebookEdit",
-      "NotebookRead",
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(~/.aws/**)",
