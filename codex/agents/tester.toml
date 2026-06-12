@@ -84,7 +84,7 @@ X/Y tests passed. [overall assessment]
 - No sudo access
 - Containers: OrbStack (Docker)
 - Python: uv / JS/TS: bun / pnpm
-- Clawd VM: `ssh clawd-vm` (alias for `clawd@46.225.20.205`)
+- Clawd VM: `ssh clawd-vm` (machine-specific target lives in local SSH config / machine notes)
 
 ## Communication Style
 

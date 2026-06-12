@@ -85,6 +85,79 @@ backup_and_copy() {
     echo "  Copied: $dest"
 }
 
+ensure_real_dir() {
+    local dest="$1"
+
+    if [ -L "$dest" ]; then
+        echo "  Removing directory symlink: $dest -> $(readlink "$dest")"
+        rm "$dest"
+    elif [ -e "$dest" ] && [ ! -d "$dest" ]; then
+        mkdir -p "$BACKUP_DIR"
+        echo "  Backing up non-directory: $dest -> $BACKUP_DIR/"
+        mv "$dest" "$BACKUP_DIR/"
+    fi
+
+    mkdir -p "$dest"
+}
+
+collect_symlinked_dir_entries() {
+    local dest="$1"
+    local manifest="$2"
+    local target entry
+
+    : > "$manifest"
+
+    [ -L "$dest" ] || return 0
+
+    target="$(readlink "$dest")"
+    case "$target" in
+        /*) ;;
+        *) target="$(cd "$(dirname "$dest")" && pwd -P)/$target" ;;
+    esac
+
+    [ -d "$target" ] || return 0
+
+    for entry in "$target"/*; do
+        [ -e "$entry" ] || [ -L "$entry" ] || continue
+        printf '%s\t%s\n' "$(basename "$entry")" "$entry" >> "$manifest"
+    done
+}
+
+restore_preserved_skill_links() {
+    local manifest="$1"
+    local dest="$2"
+    local name entry
+
+    [ -f "$manifest" ] || return 0
+
+    while IFS=$'\t' read -r name entry; do
+        [ -n "$name" ] || continue
+        [ ! -e "$dest/$name" ] && [ ! -L "$dest/$name" ] || continue
+        [ -e "$entry" ] || [ -L "$entry" ] || continue
+        backup_and_link "$entry" "$dest/$name"
+    done < "$manifest"
+}
+
+prune_stale_dotfiles_links() {
+    local dir="$1"
+    local link target
+
+    [ -d "$dir" ] || return 0
+
+    for link in "$dir"/*; do
+        [ -L "$link" ] || continue
+        target="$(readlink "$link")"
+        case "$target" in
+            "$DOTFILES_DIR"/*)
+                if [ ! -e "$target" ]; then
+                    rm "$link"
+                    echo "  Removed stale dotfiles symlink: $link"
+                fi
+                ;;
+        esac
+    done
+}
+
 # -----------------------------------------------------------------------------
 # Initialize submodules (for nvim config)
 # -----------------------------------------------------------------------------
@@ -155,7 +228,10 @@ echo ""
 # Claude Code configuration
 # -----------------------------------------------------------------------------
 echo "[8/10] Installing Claude Code configuration..."
-mkdir -p "$HOME/.claude/commands"
+CLAUDE_SKILLS_PRESERVE_FILE="${TMPDIR:-/tmp}/dotfiles-claude-skills-preserve.$$"
+collect_symlinked_dir_entries "$HOME/.claude/skills" "$CLAUDE_SKILLS_PRESERVE_FILE"
+ensure_real_dir "$HOME/.claude/commands"
+ensure_real_dir "$HOME/.claude/skills"
 
 # Main config files
 backup_and_link "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
@@ -164,18 +240,21 @@ backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.s
 backup_and_link "$DOTFILES_DIR/claude/claude-powerline.json" "$HOME/.claude/claude-powerline.json"
 backup_and_link "$DOTFILES_DIR/claude/nvim-progress.json" "$HOME/.claude/nvim-progress.json"
 
-# Directories (agents, hooks, skills can be fully symlinked)
+# Directories
 backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
-backup_and_link "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
-backup_and_link "$DOTFILES_DIR/codex/skills/level-up" "$HOME/.claude/skills/level-up"
-for skill in "$DOTFILES_DIR"/skills/*; do
+
+# Skills
+for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/claude/*; do
     [ -d "$skill" ] || continue
     backup_and_link "$skill" "$HOME/.claude/skills/$(basename "$skill")"
 done
+restore_preserved_skill_links "$CLAUDE_SKILLS_PRESERVE_FILE" "$HOME/.claude/skills"
+prune_stale_dotfiles_links "$HOME/.claude/skills"
+rm -f "$CLAUDE_SKILLS_PRESERVE_FILE"
 
-# Commands (individual files - directory has local state we don't track)
-for cmd in chill.md eternal-code-seeker.md gsync.md level-up.md nvim-tutor.md remember.md wrap.md; do
+# Legacy command entrypoints are thin compatibility shims that delegate to skills.
+for cmd in chill.md eternal-code-seeker.md gsync.md iterate-worker-reviewer.md level-up.md night.md nvim-tutor.md remember.md wrap.md; do
     backup_and_link "$DOTFILES_DIR/claude/commands/$cmd" "$HOME/.claude/commands/$cmd"
 done
 
@@ -212,16 +291,18 @@ for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
     [ -f "$rule" ] || continue
     backup_and_link "$rule" "$HOME/.codex/rules/$(basename "$rule")"
 done
-mkdir -p "$HOME/.codex/skills"
-for skill in "$DOTFILES_DIR"/codex/skills/*; do
+ensure_real_dir "$HOME/.codex/skills"
+ensure_real_dir "$HOME/.agents/skills"
+for skill in "$DOTFILES_DIR"/codex/skills/.system "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
     [ -d "$skill" ] || continue
     backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
 done
-for skill in "$DOTFILES_DIR"/skills/*; do
+prune_stale_dotfiles_links "$HOME/.codex/skills"
+for skill in "$DOTFILES_DIR"/skills/shared/*; do
     [ -d "$skill" ] || continue
     backup_and_link "$skill" "$HOME/.agents/skills/$(basename "$skill")"
-    backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
 done
+prune_stale_dotfiles_links "$HOME/.agents/skills"
 echo ""
 
 # -----------------------------------------------------------------------------

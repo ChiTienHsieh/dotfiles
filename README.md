@@ -41,9 +41,11 @@ dotfiles/
 │   └── plugins/         # Personal Claude Code plugins (local marketplace)
 ├── codex/
 │   ├── AGENTS.md        # Codex CLI instructions
-│   └── skills/          # Public Codex skills
+│   └── skills/.system/  # Bundled/system-managed Codex skills
 ├── skills/
-│   └── cmux-orchestrator/  # Shared Claude Code + Codex skills
+│   ├── shared/          # User-authored skills installed for Claude Code + Codex
+│   ├── codex/           # User-authored Codex-only skills
+│   └── claude/          # User-authored Claude Code-only skills
 ├── nvim/                # Neovim config (git submodule)
 ├── install.sh           # Installation script
 └── README.md
@@ -58,7 +60,7 @@ dotfiles/
    /plugin marketplace add ~/dotfiles/claude/plugins
    /plugin install cth-plugins@cth-marketplace
    ```
-4. **Codex CLI** - `~/.codex/AGENTS.md` is symlinked from `~/dotfiles/codex/`; shared skills are symlinked into `~/.agents/skills/` and legacy `~/.codex/skills/`
+4. **Skills** - `skills/shared/` is installed into Claude Code, Codex, and `.agents`; `skills/codex/` and `skills/claude/` are installed only into their matching tools
 
 ## Files NOT Tracked
 

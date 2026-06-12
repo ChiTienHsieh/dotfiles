@@ -92,11 +92,11 @@
 - 順序：code fix > config/schema change > hook/automation > prompt/rule update > 最後才是「下次記得」
 
 ## Clawd VM (Hetzner VPS)
-- **SSH**: `ssh clawd-vm` (alias for `clawd@46.225.20.205`)
+- **SSH**: `ssh clawd-vm` (machine-specific target lives in local SSH config / machine notes)
 - Runs OpenClaw — Clawd 的 24/7 AI agent instance
 - 詳見 `~/shroom-hq/CLAUDE.md`（完整 VM 操作指南、model 設定、目錄結構）
 - SSH 需要 `dangerouslyDisableSandbox: true`（sandbox 不允許 Unix socket）
-- VM 上的 Clawd skills/workspace 在 `/home/clawd/clawd/`
+- VM 上的 Clawd skills/workspace path 屬於 machine-specific 設定，放在 local machine notes / VM 操作指南，不放 public dotfiles。
 
 ## playwright-cli Usage
 - **CRITICAL**: For tasks requiring user login (OAuth, GCP Console, etc.), use `--headed` flag!
