@@ -46,9 +46,14 @@
       "Bash(git branch --list:*)",
       "Bash(git config --get:*)",
       "Bash(git config --list)",
-      "Bash(trash:*)"
+      "Bash(trash:*)",
+      "Bash(cmux read-screen:*)",
+      "Bash(cmux tree:*)",
+      "Bash(cmux list-pane-surfaces:*)",
+      "Bash(cmux events:*)"
     ],
     "deny": [
+      "Agent",
       "SlashCommand",
       "NotebookEdit",
       "NotebookRead",
