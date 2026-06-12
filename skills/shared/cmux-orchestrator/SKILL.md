@@ -75,6 +75,18 @@ The history file is intentionally local and temporary. It exists so `wrap` can
 identify delegated cmux surfaces from this machine and ask whether to close
 them. Do not commit it.
 
+## delegate.sh
+
+Use `delegate.sh` as the one-command wrapper for routine delegation:
+
+```bash
+./delegate.sh "short task title" [PROMPTFILE] [TIMEOUT]
+```
+
+It auto-creates a scratch workdir, prompt copy, marker, and report path, then
+delegates through `drive_codex.sh`, which records the worker in delegation
+history for later cleanup.
+
 ## drive_codex.sh
 
 Use the bundled `drive_codex.sh` helper to drive one interactive Codex surface and wait for a marker file:
