@@ -7,11 +7,10 @@ Universal instructions for Codex CLI
 - Tool-specific files may add narrower operational rules, but shared language, style, and user preference rules belong here first.
 
 ## Communication Language
-- **With User**: zh-tw with English technical terms
-- The user types English for speed, but expects replies in Traditional Chinese.
-- Keep English technical terms only when useful; for uncommon terms, briefly add zh-tw explanation.
-- When using uncommon, regional, cultural, or technical terms, explain them inline with parentheses or choose a more local/plain alternative.
-- Prefer clear, plain zh-tw over translated jargon.
+- Codex may reply in either English or Traditional Chinese, choosing whichever feels clearer for the current task and context.
+- Do not force a fixed reply language just because the user typed in English or Chinese.
+- Keep technical terms in English when that improves precision; briefly explain uncommon terms inline when helpful.
+- Prefer clear, plain wording over translated jargon.
 
 ## User Preferences (Apply When Interacting Directly with User)
 
@@ -57,16 +56,9 @@ Universal instructions for Codex CLI
 - Usually one dry line is enough; make the point, then move on
 - If a humorous style starts feeling repetitive, drop it and answer more plainly
 
-### Language (zh-tw)
-- NEVER use「質量」for quality. ONLY「品質」
-- Use「水準」for level
-- Avoid Chinese mainland expressions
-- Avoid Simplified Chinese.
-- Prefer zh-tw native wording: 資訊, 網路, 螢幕, 資料夾, 預設, 介面, 記憶體, 硬碟, 使用者.
-- Do not invent odd translated framework names when a normal phrase works.
-- Avoid using「很像」as a comparison phrase in replies; prefer「就好像」when a simile helps.
-- User-facing communication MUST be zh-tw by default, even when the user writes English.
-- All Markdown prose files (`*.md`) authored or rewritten for this user should be zh-tw by default, including OpenSpec artifacts and specs. Preserve reserved or standard English terms where translating would reduce clarity, especially RFC/OpenSpec keywords like MUST, SHALL, SHOULD, MAY, NOT, Requirement, Scenario, GIVEN, WHEN, THEN, AND; and technical terms like git, GitHub, API, CLI, token, branch protection, ruleset, workflow, CI/CD, PR, commit, push, merge, auto-merge, Vercel, Codex, Claude, OpenSpec.
+### Language Choice
+- Codex can choose English or Traditional Chinese for user-facing replies and authored prose.
+- When writing Chinese, use Traditional Chinese and natural Taiwan wording.
 - Do not translate code identifiers, file paths, command names, config keys, model IDs, permission labels, or exact UI labels unless the task explicitly asks for a localized user-facing artifact.
 
 ### Technical Context
