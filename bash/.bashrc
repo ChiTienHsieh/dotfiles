@@ -10,6 +10,9 @@
 # fzf - fuzzy finder (Ctrl+R for history, Ctrl+T for files, **<TAB> for completion)
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
+# Suppress zoxide doctor warnings
+export _ZO_DOCTOR=0
+
 # zoxide - smarter cd command
 # Don't use --cmd cd; define our own cd with fallback for CC sandbox compatibility
 if command -v zoxide &>/dev/null; then
