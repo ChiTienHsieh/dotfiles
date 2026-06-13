@@ -80,6 +80,26 @@ Do not delegate vague busywork. Every delegated thread needs:
 - no commit/push/publish unless explicitly allowed
 - source of truth, especially when dirty/stale worktrees exist
 
+## Delegation return loop
+
+Delegation is not fire-and-forget. If this thread creates or continues another Codex thread, this thread owns the follow-up until the delegated work is either completed, intentionally left running with a clear owner, or explicitly blocked.
+
+Required loop:
+
+1. Record the delegated `threadId`, title/purpose, expected output, and source thread.
+2. Put a return instruction in the delegated prompt:
+   - include the source thread id when known
+   - ask the worker to send a concise completion message back to the source thread if thread tools are available
+   - ask the worker to leave a short final answer with `safe to push`, `needs fix`, `blocked`, or equivalent verdict
+3. Poll with `read_thread` after delegation instead of waiting for the user to report that it finished.
+4. If the worker completes, read its final answer, act on the verdict, and archive the worker thread when it is no longer needed.
+5. If the worker is still running when this turn must end, say explicitly:
+   - which delegated thread is still running
+   - what it is expected to return
+   - when/how this Chief of Staff thread will check it again
+
+Never make the user act as the message bus between delegated Codex threads. If a review worker finishes and this thread misses it, that is a Chief of Staff failure, not a user task.
+
 ## Repo safety checks
 
 Before making claims about repo state:
