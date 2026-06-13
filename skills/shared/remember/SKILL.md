@@ -5,139 +5,114 @@ description: "Run the `remember` workflow when the user explicitly asks Codex to
 
 # remember
 
-Use this skill when the user asks to run `remember`.
+Use this skill when the user explicitly asks Codex to remember, save, update, or forget durable guidance.
 
-## Command Template
+## Purpose
 
-# Memory Update Command
+Route durable knowledge to the right memory or documentation layer. Do not blindly append to `AGENTS.md`; that file is for normative, always-loaded instructions only.
 
-Your task is to review this conversation session and decide what's worth remembering long-term by updating AGENTS.md files.
+Always get explicit confirmation before every write, replacement, or removal.
 
-## Step 1: Analyze the Conversation
+## Step 1: Identify Candidate Memories
 
-Scan the entire conversation history for:
+Review the conversation for durable items that may help future agents. Skip temporary/session details, one-off task state, trivial facts, and anything already documented in the right place.
 
-**Personal-level insights** (→ `~/.codex/AGENTS.md`):
-- New preferences or habits discovered about the user
-- Communication style adjustments that worked well
-- General workflows or approaches the user prefers
-- Learning style insights
-- Tool preferences (e.g., "prefers uv over conda")
+For each candidate, ask:
+- Would a fresh agent benefit from this later?
+- Is it a durable pattern, preference, workflow, or finding?
+- Is it specific and actionable enough to record?
+- Must this be always loaded for every future agent?
 
-**Project-level insights** (→ `./AGENTS.md` in project root):
-- Tech stack decisions
-- Architecture choices and reasoning
-- Code patterns or conventions established
-- Known issues, gotchas, or workarounds discovered
-- Project-specific workflows
-- Important dependencies or configurations
+If the answer to "must this be always loaded" is no, do not put it in `AGENTS.md`; route it to lazy notes, project docs, or skip it.
 
-**Skip these**:
-- Temporary context (one-off tasks)
-- Trivial details that won't matter in future sessions
-- Information already well-documented elsewhere
-- Session-specific references (e.g., "Option 8 we discussed")
+## Step 2: Classify by Layer
 
-## Step 2: Quality Filter
+Choose the narrowest correct owning layer:
 
-For each potential memory, ask:
-- Would a fresh Codex session benefit from knowing this?
-- Is this a pattern or just a one-time thing?
-- Would forgetting this cause repeated explanations?
-- Is this specific and actionable enough?
+1. **Normative always-loaded instructions/preferences/workflows**
+   - Use `~/dotfiles/codex/AGENTS.md` (repo path `codex/AGENTS.md`) for user-level rules every future agent should obey.
+   - Use `./AGENTS.md` for project-scoped rules that should always load only in that project.
+2. **Investigated quirks, dead ends, version-pinned findings, reference notes, research summaries**
+   - Use lazy notes such as `codex/notes/*.md` or the relevant project docs/notes file.
+   - Example: Codex CLI quirks belong in `codex/notes/codex-cli.md`, not `codex/AGENTS.md`.
+3. **Tool-specific or skill-specific operational rules**
+   - Use the relevant tool, skill, or project instruction file only when it is clearly the owning file.
+4. **Codex-native memory**
+   - Use only when the user explicitly asks to update native Codex memory.
+   - Do not make this the default route.
+5. **Claude-only project memory**
+   - Use only when the user explicitly asks for Claude-specific memory.
+6. **Temporary/session details**
+   - Skip.
 
-If NO to most → don't record it.
+If the requested target is outside the current sandbox, unavailable, or high-friction, explain the safest next step instead of silently writing somewhere else.
 
-## Step 3: Present Proposals
+## Step 3: Check for Duplicates and Bloat
 
-For each memory worth recording, present in this format:
+Before proposing any `AGENTS.md` change:
+- Read the target file and check whether similar content already exists.
+- Check whether the information really belongs in always-loaded instructions.
+- Prefer lazy notes for quirks, dead ends, version-pinned findings, reference notes, and research summaries.
+- Keep entries concise and self-contained.
 
-```
+For non-`AGENTS.md` targets, still check nearby existing notes/docs to avoid duplicates.
+
+## Step 4: Present Proposals
+
+For each proposed memory, show:
+
+````markdown
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ### Proposed Entry [Number]
 
-**Target File**: [~/.codex/AGENTS.md | ./AGENTS.md]
-**Category**: [e.g., Tech Stack | Preferences | Workflows | Known Issues]
+**Target Layer**: [Normative always-loaded | Lazy notes | Tool/skill/project instructions | Codex-native memory | Claude-only memory | Skip]
+**Target File**: [path or "none"]
+**Category**: [Preferences | Workflow | Quirk | Dead End | Version-Pinned Finding | Reference Note | Tool Rule | Project Rule | Other]
 
 **Proposed Content**:
 ```markdown
-[The actual markdown content to add]
+[The exact content to add, replace, or remove]
 ```
 
-**Why Remember This**: [Brief justification]
+**Why This Target Is Correct**: [Brief routing justification, including whether it must be always loaded]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+````
 
-## Step 4: Get User Confirmation
+Then ask for confirmation:
 
-After presenting all proposals, ask:
-```
+```text
 要更新這些記憶嗎？
 
 選項：
-- Y: 全部加入
+- Y: 全部執行
 - n: 取消所有
-- [1,3,5]: 只加入指定編號
+- [1,3,5]: 只執行指定編號
 - edit: 我想修改內容
 ```
 
-## Step 5: Update Files
+## Step 5: Write Only After Confirmation
 
-Once confirmed:
-1. Read the target AGENTS.md file(s) to check current structure
-2. Find the appropriate section to add the new content
-   - If section doesn't exist, create it
-   - If similar content exists, note it and ask user before overwriting
-3. Use the Edit tool to update the file(s)
-4. Confirm completion with file path and line numbers
+After confirmation:
+1. Re-read the owning target file before editing.
+2. Apply only the confirmed additions, replacements, or removals.
+3. Preserve existing structure and avoid unrelated cleanup.
+4. Report the changed file path and line number when possible.
+
+## Forget and Update Requests
+
+For "forget" or "update" requests:
+1. Locate the existing entry in the owning layer.
+2. Propose the exact removal or replacement.
+3. Explain why that layer owns the entry.
+4. Get confirmation.
+5. Edit only the owning layer.
+
+If no matching entry is found, say so and list the locations checked.
 
 ## Writing Guidelines
 
-**DO**:
-- Write concise, actionable entries
-- Use consistent markdown formatting
-- Make entries self-contained (no session references)
-- Be specific: "Use `uv` for Python dependency management" > "User likes modern tools"
-- Include brief context when needed
-
-**DON'T**:
-- Write long paragraphs (use bullet points)
-- Include temporary information
-- Reference "this session" or "today" (use dates if needed: [2025-11-15])
-- Duplicate information already in AGENTS.md
-
-## Example Output Structure
-
-```
-我分析了這次對話，發現 3 個值得記住的內容：
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-### Proposed Entry 1
-
-**Target File**: ./AGENTS.md
-**Category**: Tech Stack
-
-**Proposed Content**:
-```markdown
-## Tech Stack
-- Backend: FastAPI 0.104+
-- Database: PostgreSQL 14+ with SQLAlchemy 2.0
-- Testing: pytest with pytest-asyncio
-```
-
-**Why Remember This**: Established the core technology choices for this project. Will guide all future implementation decisions.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[... more proposals ...]
-
-要更新這些記憶嗎？[Y/n/edit/1,2,3]
-```
-
----
-
-## Important Notes
-
-- **Quality over Quantity**: Better to record 2 high-quality insights than 10 trivial ones
-- **User Control**: Always get confirmation before updating files
-- **Transparency**: Show exactly what will be added to which file
-- **Context-Independent**: Write for a future Codex session that hasn't seen this conversation
+- Write concise, actionable entries.
+- Use consistent markdown formatting.
+- Make entries context-independent; avoid "this session" or relative dates.
+- Keep path, command, config key, and model identifiers literal.
+- Do not store secrets, tokens, private keys, or machine-specific host details in shared memory.
