@@ -77,5 +77,10 @@ Universal instructions for Codex CLI
 - When opening a PR, monitor CI yourself instead of asking the user to relay check status.
 - 推 guardrail / SSOT 設定 repo（例如 `~/dotfiles`，含 CLAUDE.md、settings.json、AGENTS.md 等管著 agent 行為的檔）時：使用者通常沒空親自看 diff。流程改為「先 commit → 委派一個 codex review 這次改動 → codex 判斷安全才 push」。不要無人審查就直接 push 這類 repo；也不要兩個 agent 同時對同一個 branch push（會撞 non-fast-forward），由單一擁有者收斂後再推。
 
+## Known Codex CLI Limitations
+- 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。
+- 不要浪費時間盲試 `tui.collapse_tool_calls`、`tui.fold_tool_calls`、`tui.tool_calls_default_collapsed` 這類看起來合理但未記載的 key；目前可用的 `[tui]` 設定主要是 notifications、animations、show_tooltips、alternate_screen、status_line、terminal_title、theme、keymap 等。
+- `hide_agent_reasoning = true` 只會壓掉 reasoning 類資訊，不等於收合 tool calls。若使用者再次問這件事，除非明確要求查最新版本，直接告知目前記錄是不支援。
+
 ## Memory Rule
 If user asks to remember something, append to this file.
