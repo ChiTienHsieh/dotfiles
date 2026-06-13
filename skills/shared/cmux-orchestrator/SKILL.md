@@ -50,11 +50,25 @@ cmux new-surface --type terminal
 ```
 
 Use `cmux new-surface --type terminal` for new workers. `drive_codex.sh`
-pins new worker surfaces to the workspace that currently contains the
-launcher's surface, even if the launcher was moved after startup. Avoid
+pins new worker surfaces to the resolved controller workspace. Avoid
 window/workspace creation commands unless explicitly requested by the user.
 
 In the cmux app, use the left sidebar to inspect worker surfaces directly.
+
+## Controller Workspace Targeting
+
+When Claude Code is the controller, export
+`CMUX_ORCH_WORKSPACE=<real controller workspace id>` before calling
+`drive_codex.sh`, or otherwise pass it through to the helper. Claude Code's
+Bash tool may run in a helper surface whose `$CMUX_SURFACE_ID` belongs to a
+different workspace than the visible Claude Code agent TUI, so automatic
+lookup from `$CMUX_SURFACE_ID` can target the helper workspace instead of the
+workspace the user is watching.
+
+The controller can learn its real workspace from the user or from the
+`◀ active` marker in `cmux tree` when the user is focused on the controller
+workspace. Codex-as-controller does not need this override because its shell
+surface is its controller surface.
 
 ## Delegation History
 
