@@ -7,6 +7,9 @@
 # AI chatroom (subagent working files)
 ai_chatroom/
 
+# Generated run artifacts
+output/
+
 # Local overrides (machine-specific, not tracked)
 *.local
 .claude/settings.local.json
