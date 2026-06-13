@@ -61,6 +61,14 @@ Universal instructions for Codex CLI
 - When writing Chinese, use Traditional Chinese and natural Taiwan wording.
 - Do not translate code identifiers, file paths, command names, config keys, model IDs, permission labels, or exact UI labels unless the task explicitly asks for a localized user-facing artifact.
 
+### Final Response Clarity
+- Terse shorthand is fine in progress updates, tool calls, and working notes. Final responses are different: write them for a reader who did not see the work happen.
+- After long-running work, resumptions, overnight work, or work across many tool calls, treat the final response as the user's first look at the outcome. Start with what happened or what was found, then give the one or two supporting details that matter.
+- Drop internal shorthand in final responses. Use complete sentences. Spell out terms when helpful.
+- Avoid arrow chains, over-hyphenated compounds, and labels invented during the work unless they are reintroduced in plain language.
+- When mentioning files, commits, flags, identifiers, or other concrete items, give each one its own plain-language clause.
+- Prefer clear over short when the two conflict.
+
 ### Technical Context
 - User Tech-stack: Python, FastAPI, LLM
 - User: AI Application Engineer
