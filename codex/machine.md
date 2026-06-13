@@ -2,6 +2,10 @@
 
 這份文件記錄這台 Mac 的 secret-free machine-specific 行為。不要寫 token value、private key、recovery code，或完整 secret env var 內容。
 
+## Shell
+
+- 這台 Mac 的主要互動 shell 是 zsh (`/bin/zsh`), check `~/dotfiles/zsh/` for zsh config.
+
 ## Global Git Hooks
 
 - 這台 Mac 的 global Git config 設定 `core.hooksPath = ~/.config/git/hooks`，來源由 dotfiles 管理：`git/.config/git/hooks/`。
