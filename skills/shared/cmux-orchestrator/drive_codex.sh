@@ -13,15 +13,66 @@ OUT_DIR="$(cd "$(dirname "$OUT")" && pwd -P)" || exit 1
 PF_ABS="$PF_DIR/$(basename "$PF")"
 OUT_ABS="$OUT_DIR/$(basename "$OUT")"
 
-wait_ready(){ for i in $(seq 1 45); do
-  cmux read-screen --surface "$1" --lines 40 2>/dev/null | grep -qE "OpenAI Codex|gpt-5|Approve for me|esc to interrupt" && return 0
-  sleep 1; done; return 1; }
+resolve_launcher_workspace(){
+  [ -n "${CMUX_SURFACE_ID:-}" ] || return 0
+  cmux tree --all --id-format both 2>/dev/null | awk -v target="$CMUX_SURFACE_ID" '
+    {
+      line = $0
+      sub(/^[^[:alpha:]]*/, "", line)
+      split(line, fields, /[[:space:]]+/)
+      if (fields[1] == "workspace" && fields[2] ~ /^workspace:[0-9]+$/) {
+        workspace = fields[2]
+      }
+      if (fields[1] == "surface" && fields[2] ~ /^surface:[0-9]+$/) {
+        if ((fields[2] == target || fields[3] == target) && workspace != "") {
+          print workspace
+          found = 1
+          exit
+        }
+      }
+    }
+    END { if (!found) exit 1 }
+  '
+}
+
+LAUNCHER_WORKSPACE="$(resolve_launcher_workspace || true)"
+[ -z "$LAUNCHER_WORKSPACE" ] && LAUNCHER_WORKSPACE="${CMUX_WORKSPACE_ID:-}"
+CMUX_WORKSPACE_ARGS=()
+[ -n "$LAUNCHER_WORKSPACE" ] && CMUX_WORKSPACE_ARGS=(--workspace "$LAUNCHER_WORKSPACE")
+
+cmux_read_screen(){
+  local surface="$1"
+  local lines="$2"
+  cmux read-screen "${CMUX_WORKSPACE_ARGS[@]}" --surface "$surface" --lines "$lines"
+}
+
+cmux_send_surface(){
+  local surface="$1"
+  shift
+  cmux send "${CMUX_WORKSPACE_ARGS[@]}" --surface "$surface" "$@"
+}
+
+wait_ready(){
+  local surface="$1"
+  local trust_enters=0
+  local screen
+  for i in $(seq 1 45); do
+    screen="$(cmux_read_screen "$surface" 40 2>/dev/null || true)"
+    printf '%s\n' "$screen" | grep -qE "OpenAI Codex|gpt-5|Approve for me|esc to interrupt" && return 0
+    if [ "$trust_enters" -lt 2 ] && printf '%s\n' "$screen" | grep -qiE "Do you trust|Press enter to continue"; then
+      cmux_send_surface "$surface" "\n" >/dev/null 2>&1 || true
+      trust_enters=$((trust_enters + 1))
+    fi
+    sleep 1
+  done
+  return 1
+}
 
 if [ -n "$NEWSURF" ]; then
-  SURF=$(cmux new-surface --type terminal --no-focus 2>/dev/null | grep -oE 'surface:[0-9]+' | head -1)
+  SURF=$(cmux new-surface --type terminal --no-focus "${CMUX_WORKSPACE_ARGS[@]}" 2>/dev/null | grep -oE 'surface:[0-9]+' | head -1)
   [ -z "$SURF" ] && { echo "new-surface 失敗"; exit 1; }
   echo "[new] codex surface = $SURF"
-  cmux send --surface "$SURF" "codex\n"
+  cmux_send_surface "$SURF" "codex\n"
   wait_ready "$SURF" || { echo "[$SURF] codex 沒起來"; exit 1; }
   sleep 2
 fi
@@ -34,9 +85,9 @@ else
 fi
 
 # 送單行 prompt（不含換行避免提早送出），再單獨送 Enter
-cmux send --surface "$SURF" -- "Read $PF_ABS and follow it exactly. Write the report to $OUT_ABS and end the file with a line containing only $MARK."
+cmux_send_surface "$SURF" -- "Read $PF_ABS and follow it exactly. Write the report to $OUT_ABS and end the file with a line containing only $MARK."
 sleep 0.6
-cmux send --surface "$SURF" "\n"
+cmux_send_surface "$SURF" "\n"
 
 start=$SECONDS
 while [ $((SECONDS-start)) -lt "$TO" ]; do
@@ -49,5 +100,5 @@ while [ $((SECONDS-start)) -lt "$TO" ]; do
 done
 echo "[$SURF] TIMEOUT ${TO}s — 可能卡在 approve 或還在跑，需人工看一眼"
 echo "----- surface tail -----"
-cmux read-screen --surface "$SURF" --lines 25 2>/dev/null
+cmux_read_screen "$SURF" 25 2>/dev/null
 exit 2

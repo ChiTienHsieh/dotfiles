@@ -49,8 +49,10 @@ cmux send --surface surface:N "\n"
 cmux new-surface --type terminal
 ```
 
-Use `cmux new-surface --type terminal` for new workers. Avoid window/workspace
-creation commands unless explicitly requested by the user.
+Use `cmux new-surface --type terminal` for new workers. `drive_codex.sh`
+pins new worker surfaces to the workspace that currently contains the
+launcher's surface, even if the launcher was moved after startup. Avoid
+window/workspace creation commands unless explicitly requested by the user.
 
 In the cmux app, use the left sidebar to inspect worker surfaces directly.
 
@@ -104,6 +106,9 @@ Use the bundled `drive_codex.sh` helper to drive one interactive Codex surface a
 
 The helper sends the prompt as one line, sends Enter separately, polls `OUTFILE` for `MARKER`, and prints the report tail when complete.
 It also records the delegated surface in the local delegation history file.
+When launching Codex in a new surface, the helper auto-accepts Codex's
+directory-trust prompt because this orchestrator only launches Codex in
+user-owned repositories.
 
 ## Marker-File Convention
 
