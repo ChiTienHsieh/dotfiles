@@ -78,6 +78,77 @@ ensure_real_dir() {
     mkdir -p "$dest"
 }
 
+configure_codex_cmux_permissions() {
+    local config="$1"
+    local cmux_socket_root="$HOME/.local/state/cmux"
+
+    /usr/bin/python3 - "$config" "$cmux_socket_root" <<'PY'
+from pathlib import Path
+import json
+import re
+import sys
+
+path = Path(sys.argv[1])
+socket_root = sys.argv[2]
+text = path.read_text()
+
+# Keep the checked-in config portable; materialize the per-user cmux socket
+# path only in the installed ~/.codex/config.toml copy.
+lines = text.splitlines()
+filtered = []
+skip = False
+for line in lines:
+    if re.match(r"^\[permissions\.workspace-cmux(?:\.network)?\]$", line):
+        skip = True
+        continue
+    if skip and re.match(r"^\[.*\]$", line):
+        skip = False
+    if not skip:
+        filtered.append(line)
+text = "\n".join(filtered).rstrip() + "\n"
+
+if re.search(r"^default_permissions\s*=", text, flags=re.MULTILINE):
+    text = re.sub(
+        r"^default_permissions\s*=.*$",
+        'default_permissions = "workspace-cmux"',
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+else:
+    marker = re.search(r"^approvals_reviewer\s*=.*$", text, flags=re.MULTILINE)
+    if marker:
+        insert_at = marker.end()
+        text = text[:insert_at] + '\ndefault_permissions = "workspace-cmux"' + text[insert_at:]
+    else:
+        text = 'default_permissions = "workspace-cmux"\n' + text
+
+features = re.search(r"^\[features\]\n(?P<body>(?:^[^\[].*\n?)*)", text, flags=re.MULTILINE)
+if features:
+    body = features.group("body")
+    if not re.search(r"^network_proxy\s*=", body, flags=re.MULTILINE):
+        insert_at = features.start("body")
+        text = text[:insert_at] + "network_proxy = true\n" + text[insert_at:]
+else:
+    text = text.rstrip() + "\n\n[features]\nnetwork_proxy = true\n"
+
+block = f"""
+[permissions.workspace-cmux]
+description = "Workspace-write with cmux Unix socket access for local orchestration."
+extends = ":workspace"
+
+[permissions.workspace-cmux.network]
+enabled = true
+mode = "limited"
+unix_sockets = {{ {json.dumps(socket_root)} = "allow" }}
+"""
+
+path.write_text(text.rstrip() + "\n" + block)
+PY
+
+    echo "  Configured Codex cmux socket access: $cmux_socket_root"
+}
+
 collect_symlinked_dir_entries() {
     local dest="$1"
     local manifest="$2"
@@ -263,6 +334,7 @@ echo "[9/10] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
 backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
 backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
+configure_codex_cmux_permissions "$HOME/.codex/config.toml"
 if [ ! -e "$HOME/.codex/machine.md" ]; then
     backup_and_copy "$DOTFILES_DIR/codex/machine.md" "$HOME/.codex/machine.md"
 else
