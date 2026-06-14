@@ -49,6 +49,7 @@ Universal instructions for Codex CLI
 - Prefer recoverable deletion via `trash` when available; use hard deletion only for clearly disposable temp/build artifacts or when explicitly requested.
 - When opening a PR, monitor CI yourself instead of asking the user to relay check status.
 - 推 guardrail / SSOT 設定 repo（例如 `~/dotfiles`，含 CLAUDE.md、settings.json、AGENTS.md 等管著 agent 行為的檔）時：使用者通常沒空親自看 diff。流程改為「先 commit → 委派一個 codex review 這次改動 → codex 判斷安全才 push」。不要無人審查就直接 push 這類 repo；也不要兩個 agent 同時對同一個 branch push（會撞 non-fast-forward），由單一擁有者收斂後再推。
+- 對 `~/dotfiles` 這類 guardrail / SSOT 改動，使用者已明確授權非互動式 `codex review` 檢查相關 commit 或 unpushed diff。Codex MUST 自己執行 review，MUST NOT 把 review approval 丟回給使用者；只有在已嘗試一般/升權路徑後仍被阻擋、或缺少登入/auth 時，才回報阻塞。
 
 ## Memory Routing
 - Remembered content must be routed by layer, not blindly appended here.
