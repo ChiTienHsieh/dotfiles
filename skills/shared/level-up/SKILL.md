@@ -13,6 +13,18 @@ Use this skill when the user asks to run `level-up`, wants staged coaching, or w
 - Teach progressively. The user advances only after demonstrating understanding.
 - Treat mid-journey questions as signal: answer briefly, then insert or defer them in the learning path.
 - Persist only evidence-backed learning state. Record what the user proved, corrected, or said they already know; do not record "covered X" as learned.
+- **Engagement is a requirement, not decoration.** The real competitor for the learner's attention is YouTube Shorts / Instagram Reels. If a level reads like documentation, the user switches tabs and abandons learning. Content must be more fun than the feed. See "Engagement-First Teaching" below.
+
+## Engagement-First Teaching (compete with the attention economy)
+
+A level is only useful if the user actually reads it instead of doom-scrolling. Optimize for "I can't stop reading," not "technically complete." This is non-negotiable for users who explicitly ask for it (check learning records / memory).
+
+- **Carry the knowledge ON the analogy, not beside it.** Do NOT write a serious technical explanation and then bolt on a cute metaphor as garnish. Invert it: the analogy *is* the explanation. The learner should absorb the real concept by following the silly story, and only at the end map it back to the technical term in one short line.
+- **Silly and vivid beats accurate-but-flat.** A ridiculous, concrete, scene-like metaphor wins over a correct dry paragraph. If a section sounds like a manual, rewrite it as a scene with characters doing something.
+- **Minimize "serious mode" blocks.** Keep raw technical prose down to short anchor callouts (one line: "this is called X"). The bulk of each section should be the analogy/story. A good ratio is most-analogy, little-jargon.
+- **Use a frame the learner actually lived.** Pick a game / show / hobby the user genuinely knows — verify era and exact terms (web-search if unsure) rather than guessing. A wrong-era or unfamiliar reference kills immersion. Record which framing landed in the user's learning file so the next session reuses it.
+- **Reward + momentum.** Lean into game feel (XP bars, level-ups, NPC dialogue, loot) so finishing a level feels like progress, not homework.
+- **Per-user intensity is tunable.** Some users want maximum silliness; others want a lighter touch. Default to playful; dial to the user's stated preference in their learning record.
 
 ## Persistent Learning Records
 
