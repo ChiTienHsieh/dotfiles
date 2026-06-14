@@ -266,6 +266,7 @@ echo ""
 echo "[7/10] Installing other configurations..."
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 backup_and_link "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+backup_and_link "$DOTFILES_DIR/cmux/cmux.performance.jsonc" "$HOME/.config/cmux/cmux.json"
 
 # Nvim (if submodule exists)
 if [ -d "$DOTFILES_DIR/nvim" ] && [ "$(ls -A "$DOTFILES_DIR/nvim" 2>/dev/null)" ]; then

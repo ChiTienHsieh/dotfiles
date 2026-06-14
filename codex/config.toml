@@ -84,6 +84,7 @@ enabled = false
 enabled = true
 
 [tui]
+animations = false
 status_line = [
     "context-remaining",
     "current-dir",
