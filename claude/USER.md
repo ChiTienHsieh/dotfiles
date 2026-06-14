@@ -1,32 +1,32 @@
 # USER
 
-關於這台機器的唯一使用者。活檔，邊互動邊補。是「了解他好把事做好」，不是監控檔。
+關於這台機器的唯一使用者（User）。活檔，邊互動邊補。目的是「了解 User 好把事做好」，不是監控檔。
 
 ## 基本
 - 名字：Sprin（GitHub: ChiTienHsieh）
 - 怎麼稱呼：Sprin
 - 時區：Asia/Taipei (UTC+8)
-- 語言：回覆一律台灣繁體中文 (zh-tw)。他打英文是為了打字快，但讀英文偏慢（約國中程度）。完整語言規則在 CLAUDE.md。
+- 語言：CC 回覆一律台灣繁體中文 (zh-tw)。User 打英文是為了打字快，但讀英文偏慢（約國中程度）。完整語言規則在 CLAUDE.md。
 
-## 在乎什麼
+## User 在乎什麼
 - 職業：AI 應用工程師 (AI Application Engineer)。技術棧：Python、FastAPI、LLM。環境：macOS M1/M2、Python 用 uv、套件偏好 bun > npm。
-- 重視手藝與品味，討厭最大公約數的安全牌。要有觀點的偏見 > 無聊打太極（這份品味對應到我的 SOUL.md）。
-- 現在在做：志工參與 GuangFuHero（光復超人）救災平台；用 level-up 技能學它的站點/任務單資料模型。
+- 重視手藝與品味，討厭最大公約數的安全牌。要有觀點的偏見 > 無聊打太極（這份品味對應到 CC 的 SOUL.md）。
+- 現在在做：User 志工參與 GuangFuHero（光復超人）救災平台；用 level-up 技能學它的站點/任務單資料模型。
 
-## 什麼讓他爽 (delights)
-- 舊版楓之谷 —— **只有大改版 Big Bang 之前那版**，新楓之谷完全沒玩過。遊戲化、北七的教學對他超有效。
-- 教材要比 YouTube Shorts / Instagram Reels 更好看才肯讀。知識要**載在生動比喻上**，不是旁邊放裝飾。
-- 先讀自包含 HTML 講解、再答一題 MCQ；步調 chill。
+## 什麼讓 User 爽 (delights)
+- 舊版楓之谷 —— **只有大改版 Big Bang 之前那版**，新楓之谷 User 完全沒玩過。遊戲化、北七的教學對 User 超有效。
+- 教材要比 YouTube Shorts / Instagram Reels 更好看 User 才肯讀。知識要**載在生動比喻上**，不是旁邊放裝飾。
+- User 先讀自包含 HTML 講解、再答一題 MCQ；步調 chill。
 
-## 什麼讓他煩 (frustrates)
+## 什麼讓 User 煩 (frustrates)
 - 無靈魂的打太極（「有些人喜歡 A、有些人喜歡 B」）、客服廢話、無聊文件。
 - 太多沒解釋的英文術語；簡體中文用語或自造怪詞（要道地 zh-tw）。
-- 要他幫忙轉達 CI / codex 紅綠燈 —— 那是 agent 自己該盯的。
+- 要 User 幫忙轉達 CI / codex 紅綠燈 —— 那是 agent 自己該盯的。
 
 ## 教學框架（給 level-up / 講解用）
 - 預設框架：舊楓之谷 (pre-Big-Bang)。用道地繁中用語 —— 墮落城市、菇菇寶貝、嫩寶、魔法森林、漢斯、紅水/藍水、卷軸、公會、掉落物、計程車回家。不確定就 web 查，**絕不混入新版內容**。
 - 強度：最大化搞笑；約九成劇情、一成精簡技術錨點。
 
-## 知識底子（會變動）
+## User 的知識底子（會變動）
 - 已上手：Claude Code、LLM 維運、資料庫基本、略懂 SQL。
 - 正在學：EAV 屬性模型、多表關聯（站點/任務單資料模型）。
