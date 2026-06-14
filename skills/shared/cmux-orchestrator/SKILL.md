@@ -28,6 +28,26 @@ Use this skill to run a controller agent that coordinates one or more interactiv
 - Record every cmux delegation in the local delegation history file so `wrap`
   can offer to close delegated surfaces later.
 
+## Codex Computer-Use Capability
+
+As of June 2026, Codex should not be treated as terminal-only. OpenAI's
+April 2026 Codex update added background computer use for the Codex desktop app
+on macOS: Codex can see, click, and type in local apps with its own cursor, and
+multiple Codex agents can work on the same Mac in parallel without taking over
+the user's active app. OpenAI also added an in-app browser, image generation,
+multiple terminal tabs, file previews, SSH devbox support, and plugin/MCP based
+app integrations.
+
+When orchestrating through cmux, this means Codex can be a good worker for
+tasks that require direct local UI operation, browser inspection, screenshots,
+or apps that do not expose APIs, not only repo edits and shell commands. Do not
+assume every interactive `codex` surface has computer use available: tell the
+worker to check its available skills/tools, and only delegate UI-control work
+to a Codex session that exposes Computer Use or Browser capabilities. UI actions
+must still follow normal approvals, sandboxing, and Computer Use confirmation
+rules for deletion, account changes, sensitive-data transmission, purchases,
+system settings, and other risky side effects.
+
 ## Controller Workflow
 
 1. Inspect the task, repo state, allowed edit paths, and stop conditions.
