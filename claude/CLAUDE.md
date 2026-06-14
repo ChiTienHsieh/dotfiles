@@ -1,4 +1,5 @@
 @SOUL.md
+@USER.md
 @~/.claude/machine.md
 @~/dotfiles/codex/AGENTS.md
 

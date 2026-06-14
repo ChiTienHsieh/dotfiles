@@ -25,13 +25,9 @@ A level is only useful if the user actually reads it instead of doom-scrolling. 
 - **Use a frame the learner actually lived.** Pick a game / show / hobby the user genuinely knows — verify era and exact terms (web-search if unsure) rather than guessing. A wrong-era or unfamiliar reference kills immersion. Record which framing landed in the user's learning file so the next session reuses it.
 - **Reward + momentum.** Lean into game feel (XP bars, level-ups, NPC dialogue, loot) so finishing a level feels like progress, not homework.
 
-### This user's taste (the only user — tune to him, not a generic audience)
+### The learner's specific taste lives in their profile, not here
 
-These dotfiles serve one person. Do not hedge with "some learners prefer X." Build exactly what he likes:
-
-- **Frame:** old-school MapleStory, **pre-Big-Bang era only** (he never played the post-Big-Bang version). Use authentic old terms — 墮落城市, 菇菇寶貝, 嫩寶, 魔法森林, 漢斯, 紅水/藍水, 卷軸, 公會, 掉落物, 計程車回家. Web-search to confirm exact zh-tw terms; never guess or mix in new-version content.
-- **Intensity:** maximum silliness. Items that talk and complain, NPC drama, ridiculous-but-precise scenes. Knowledge rides ~90% on the story, ~10% on tiny "📓 正經筆記" anchor cards. If a section reads like docs, it failed.
-- **The bar:** the material must out-compete YouTube Shorts / Instagram Reels for his attention. Boring = he scrolls away = wasted work. This is the whole point.
+Do not hedge with "some learners prefer X" — tune to the actual person. Their concrete framing (favorite game and era, silliness intensity, what delights/frustrates them) lives in their **USER.md** profile (for Claude Code, imported via CLAUDE.md). The orchestrator reads that profile and bakes the framing into each per-level content spec it hands the rendering agent. Keep the generic engagement principles here; keep the person-specific taste in USER.md.
 
 ### Reference example (study this for tone — for the RENDERING agent, not the orchestrator)
 
