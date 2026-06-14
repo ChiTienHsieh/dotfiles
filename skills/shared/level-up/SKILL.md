@@ -24,7 +24,25 @@ A level is only useful if the user actually reads it instead of doom-scrolling. 
 - **Minimize "serious mode" blocks.** Keep raw technical prose down to short anchor callouts (one line: "this is called X"). The bulk of each section should be the analogy/story. A good ratio is most-analogy, little-jargon.
 - **Use a frame the learner actually lived.** Pick a game / show / hobby the user genuinely knows — verify era and exact terms (web-search if unsure) rather than guessing. A wrong-era or unfamiliar reference kills immersion. Record which framing landed in the user's learning file so the next session reuses it.
 - **Reward + momentum.** Lean into game feel (XP bars, level-ups, NPC dialogue, loot) so finishing a level feels like progress, not homework.
-- **Per-user intensity is tunable.** Some users want maximum silliness; others want a lighter touch. Default to playful; dial to the user's stated preference in their learning record.
+
+### This user's taste (the only user — tune to him, not a generic audience)
+
+These dotfiles serve one person. Do not hedge with "some learners prefer X." Build exactly what he likes:
+
+- **Frame:** old-school MapleStory, **pre-Big-Bang era only** (he never played the post-Big-Bang version). Use authentic old terms — 墮落城市, 菇菇寶貝, 嫩寶, 魔法森林, 漢斯, 紅水/藍水, 卷軸, 公會, 掉落物, 計程車回家. Web-search to confirm exact zh-tw terms; never guess or mix in new-version content.
+- **Intensity:** maximum silliness. Items that talk and complain, NPC drama, ridiculous-but-precise scenes. Knowledge rides ~90% on the story, ~10% on tiny "📓 正經筆記" anchor cards. If a section reads like docs, it failed.
+- **The bar:** the material must out-compete YouTube Shorts / Instagram Reels for his attention. Boring = he scrolls away = wasted work. This is the whole point.
+
+### Reference example (study this for tone — for the RENDERING agent, not the orchestrator)
+
+`examples/level2-eav.html` in this skill directory is the gold-standard for tone, ratio, and layout. The rendering agent (the side Codex that builds the HTML) should open and study it before rendering a new level so the style stays consistent. The orchestrator does NOT need to read it — that wastes tokens; just point the renderer at it.
+
+### Delegating HTML rendering to a side agent
+
+When a side agent (e.g. Codex) renders the HTML:
+
+- The orchestrator writes the full per-level content spec in zh-tw (orchestrator is better at the user's zh-tw voice); the side agent only renders, never invents lesson content.
+- Tell the side agent to **read this `level-up` skill** (for the Engagement-First principles + this user's taste) **and study `examples/level2-eav.html`** before rendering. That way the style standard lives here once, instead of being re-pasted into every delegation prompt — saving the orchestrator's tokens.
 
 ## Persistent Learning Records
 
