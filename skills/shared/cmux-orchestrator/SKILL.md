@@ -28,6 +28,50 @@ Use this skill to run a controller agent that coordinates one or more interactiv
 - Record every cmux delegation in the local delegation history file so `wrap`
   can offer to close delegated surfaces later.
 
+## Sandbox Escalation for System Commands
+
+Some commands genuinely cannot run inside a worker's sandbox, and no allowlist
+tweak will ever fix them. On macOS the Seatbelt sandbox (used by Codex) refuses
+to `exec` setuid-root, SIP-protected binaries: `/bin/ps` is
+`-rwsr-xr-x ... restricted`, so a sandboxed `ps` fails with `execvp ...
+Operation not permitted` (no Seatbelt-denial line is even logged). `sysctl`
+reads are denied too. No `sandbox_permissions` value (`disk-full-read-access`,
+etc.) helps — verified empirically. The same applies to a freshly built binary
+that internally shells out to `ps`/`sysctl` (e.g. a system-sensing CLI): the
+child inherits the sandbox and the inner `exec` of `ps` still fails. The ONLY
+way to run these is OUTSIDE the sandbox.
+
+So when you delegate a command the worker's sandbox will block — process/system
+introspection (`ps`, `sysctl`, `vm_stat`), or running a local binary that does
+so — explicitly instruct the worker in the prompt to request **un-sandboxed
+execution** via the normal on-request escalation, with safe, honest framing:
+state that the command is a safe read-only system query, or a non-destructive
+local binary in a trusted project, so the reviewer (`auto_review`) can approve
+it. This is verified to work: workers self-test this way and `auto_review`
+approves non-destructive reads/test runs in trusted projects.
+
+This is NOT the same as weakening the sandbox or bypassing guardrails (still
+forbidden, see Safety Rules). Escalation keeps approvals in force — the reviewer
+still decides per command. Never instruct a worker to use
+`--dangerously-bypass-approvals-and-sandbox`, to set `sandbox_mode =
+"danger-full-access"` globally, or to edit config to disable the sandbox.
+`approval_policy = "on-request"` + `auto_review` is the recommended setup and
+already supports this; the only missing piece is telling the worker to actually
+escalate instead of giving up. As controller (Claude Code runs unsandboxed for
+cmux/system calls), independently re-verify any result the worker produced via
+escalation.
+
+## Completion Watching Without Foreground Long-Polling
+
+Do not block the controller in a foreground poll loop waiting for a worker's
+marker — it burns the controller's context and stalls other pipelines. Instead
+run the marker-file watcher as a background job that exits when the marker
+appears (e.g. a `run_in_background` poll, or a watcher that consumes
+`cmux events`), so the controller is freed and gets notified on completion.
+When re-using one report file across rounds, give each round a distinct marker
+(e.g. `GU_R2_DONE`, `GU_R3_DONE`) and match on the file tail, so a stale marker
+from an earlier round does not trip the new watcher.
+
 ## Codex Computer-Use Capability
 
 As of June 2026, Codex should not be treated as terminal-only. OpenAI's
