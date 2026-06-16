@@ -4,6 +4,8 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| LLM 應用核心能力 | familiar | 自述已熟 agent/context window/三種 API/Python 基本/基礎 SQL，及「不信單一 agent」前提；教學跳過。 | 2026-06-17 | topics/llm-app-foundations.md |
+| AgentFlow 專案商業邏輯 | learning | 剛開課；MAP「路標非證據」已能複述(familiar)；pipeline/角色/腳本仍待教。 | 2026-06-17 | topics/agentflow-repo.md |
 
 ## Status Labels
 
