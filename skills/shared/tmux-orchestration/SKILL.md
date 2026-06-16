@@ -23,10 +23,10 @@ Use this skill when a task should run in an interactive terminal agent that rema
 For a Claude writer or reviewer session, start Claude Code interactively inside tmux:
 
 ```bash
-tmux new-session -d -s SESSION_NAME -c /path/to/worktree 'claude --model opus --permission-mode acceptEdits --allowedTools Read,Write,Edit,MultiEdit'
+tmux new-session -d -s SESSION_NAME -c /path/to/worktree 'claude --model opus --permission-mode auto --allowedTools Read,Write,Edit,MultiEdit'
 ```
 
-Adjust model and allowed tools only when the task requires it. Do not use bypass or danger flags.
+Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. Adjust model and allowed tools only when the task requires it. Do not use bypass or danger flags.
 
 After launch, observe the pane:
 
@@ -36,12 +36,13 @@ tmux capture-pane -pt SESSION_NAME -S -80
 
 ## Claude Auto Mode
 
-Before sending substantial work to Claude Code in tmux, try to switch Claude Code into auto mode:
+Before sending substantial work to Claude Code in tmux, confirm Claude Code is in auto mode:
 
-1. Send `Shift+Tab` up to three times.
-2. Capture the pane after each attempt when possible.
-3. Confirm the bottom-left TUI indicator shows auto mode or a similar automatic-running state.
-4. If the indicator cannot be confirmed, continue with normal accept-edits mode and mention the limitation in the next update.
+1. Prefer launching with `--permission-mode auto`.
+2. Capture the pane and check the bottom-left TUI indicator.
+3. If it is not in auto mode, send `Shift+Tab` up to three times.
+4. Capture the pane after each attempt when possible.
+5. If auto mode still cannot be confirmed, continue only if the task remains safe and mention the limitation in the next update.
 
 Use tmux key sending for this when available:
 
