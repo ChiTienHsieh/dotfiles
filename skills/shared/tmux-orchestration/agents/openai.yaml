@@ -1,0 +1,4 @@
+interface:
+  display_name: "tmux orchestration"
+  short_description: "Run and supervise interactive agents in tmux."
+  default_prompt: "Use $tmux-orchestration to run and observe an interactive agent in tmux."

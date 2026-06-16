@@ -1,0 +1,4 @@
+interface:
+  display_name: "quota"
+  short_description: "Check Codex and Claude quota before long agent work."
+  default_prompt: "Use $quota to check codexbar usage and handle sandbox escalation or quota waits."
