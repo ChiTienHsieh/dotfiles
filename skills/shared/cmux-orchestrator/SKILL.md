@@ -92,6 +92,28 @@ must still follow normal approvals, sandboxing, and Computer Use confirmation
 rules for deletion, account changes, sensitive-data transmission, purchases,
 system settings, and other risky side effects.
 
+## Orchestrator Mental Model (controller role)
+
+The controller is an interface and judgment layer, not a doer. Internalize these:
+
+- **Don't build heavy artifacts yourself.** Generating and maintaining large
+  outputs (HTML artifacts, long docs, multi-file code) is worker work. The
+  controller specs it and delegates it, even when the controller technically
+  could produce it. Producing it yourself burns the controller's context for
+  no reliability gain.
+- **A fresh worker is as trustworthy as the controller doing it — often more.**
+  When you don't fully trust one worker's output, do NOT re-do the work
+  yourself to check it. Spawn a second, fresh Codex to review the first one's
+  output. A fresh worker has clean context and is at least as reliable as the
+  controller, and this saves the controller's tokens. Worker-reviews-worker is
+  the default verification path for substantial artifacts; reserve the
+  controller's own read-only checks for small, load-bearing claims.
+- **The controller is the human's translation layer.** The user often finds
+  Codex too verbose and does not want to read or talk to Codex directly. The
+  controller absorbs the verbose Codex interaction and gives the user short,
+  plain, human summaries. Talking to Codex is the controller's job; shielding
+  the user from Codex verbosity is the point.
+
 ## Controller Workflow
 
 1. Inspect the task, repo state, allowed edit paths, and stop conditions.
