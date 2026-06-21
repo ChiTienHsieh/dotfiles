@@ -5,17 +5,19 @@ description: "Use when checking Codex, Claude Code, or related AI CLI usage limi
 
 # Quota
 
-Use this skill to check and react to AI CLI quota before starting or continuing long-running work. The local source of truth is `codexbar usage`.
+Use this skill to check and react to AI CLI quota before starting or continuing long-running work. The local source of truth is CodexBar CLI usage output.
 
 ## Quick Check
 
-Run usage from bash and allow up to 60 seconds for the result to appear:
+Run the CLI-backed quota check from bash and allow up to 60 seconds for the result to appear:
 
 ```bash
-codexbar usage
+codexbar usage --provider both --source cli
 ```
 
-If the command is still running, keep waiting until at least 60 seconds have elapsed before deciding it is hung. If `codexbar usage` is important to the task and fails due to sandboxing, keychain access, GUI/session access, networking, or another likely environment restriction, rerun it outside the sandbox with escalation and again allow up to 60 seconds for the result.
+This avoids CodexBar's browser-cookie import path, which can trigger macOS Keychain prompts for browser Safe Storage items and block non-interactive agents. Use plain `codexbar usage` only when browser/dashboard-derived fields are specifically needed.
+
+If the command is still running, keep waiting until at least 60 seconds have elapsed before deciding it is hung. If the CLI-backed command is important to the task and fails due to sandboxing, local state access, networking, or another likely environment restriction, rerun it outside the sandbox with escalation and again allow up to 60 seconds for the result.
 
 ## What To Report
 
@@ -33,9 +35,9 @@ Avoid dumping the entire raw table unless the user asks.
 
 When Codex or Claude Code quota is exhausted:
 
-1. Read the reset or resume time from `codexbar usage`.
+1. Read the reset or resume time from `codexbar usage --provider both --source cli`.
 2. Sleep until that time, adding a small buffer when reasonable.
-3. Re-run `codexbar usage` after waking.
+3. Re-run `codexbar usage --provider both --source cli` after waking.
 4. Continue the interrupted work if quota has resumed.
 5. If the reset time is unclear, report the blocker instead of guessing.
 
@@ -52,4 +54,4 @@ For very long sleeps, keep the command/session recoverable and avoid holding loc
 
 - Never print secrets, tokens, auth cookies, or raw credential material from quota tools.
 - Do not modify account settings, billing, plans, or subscriptions.
-- Do not ask the user to manually check quota when `codexbar usage` is available and can be run safely.
+- Do not ask the user to manually check quota when CodexBar quota output is available and can be run safely.
