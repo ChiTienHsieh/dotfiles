@@ -108,6 +108,8 @@ The controller is an interface and judgment layer, not a doer. Internalize these
   controller, and this saves the controller's tokens. Worker-reviews-worker is
   the default verification path for substantial artifacts; reserve the
   controller's own read-only checks for small, load-bearing claims.
+- **For guardrail, prompt, and skill reviews, follow the reviewer-routing SSOT.**
+  User-level `~/.codex/AGENTS.md` defines the current reviewer policy.
 - **The controller is the human's translation layer.** The user often finds
   Codex too verbose and does not want to read or talk to Codex directly. The
   controller absorbs the verbose Codex interaction and gives the user short,

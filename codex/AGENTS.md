@@ -46,12 +46,12 @@ Universal instructions for Codex CLI
 - Be proactive on safe operations: fix, test, commit, and push when the task clearly asks for it.
 - Pause only for genuinely risky actions: destructive git operations, touching secrets, force-push, billing, or data-loss risk.
 - When a safe, relevant command fails or appears blocked by sandboxing, permissions, keychain access, macOS services, or network restrictions, retry it outside the sandbox with an appropriate escalation request before giving up. Do not escalate destructive, secret-touching, billing, data-loss, or otherwise risky commands without explicit approval.
-- `codexbar usage` can take a while to load. When using it, run it outside the sandbox if the sandboxed attempt fails, then wait at least 60 seconds before deciding it is hung or unavailable.
+- `codexbar usage` can take a while to load (often ~30 seconds). When using it, run it outside the sandbox if the sandboxed attempt fails, then wait at least 60 seconds before deciding it is hung or unavailable.
 - 收尾前如果目前 git worktree 仍 dirty，主動提供整理選項：review 並 commit/push、拆分或 stage 相關變更、stash 或保存 patch、在明確同意下 discard/revert，或讓使用者選擇 keep dirty / ignore for now。不要自動清掉使用者未要求處理的變更。
 - Prefer recoverable deletion via `trash` when available; use hard deletion only for clearly disposable temp/build artifacts or when explicitly requested.
 - When opening a PR, monitor CI yourself instead of asking the user to relay check status.
-- 推 guardrail / SSOT 設定 repo（例如 `~/dotfiles`，含 CLAUDE.md、settings.json、AGENTS.md 等管著 agent 行為的檔）時：使用者通常沒空親自看 diff。流程改為「先 commit → 委派一個 codex review 這次改動 → codex 判斷安全才 push」。不要無人審查就直接 push 這類 repo；也不要兩個 agent 同時對同一個 branch push（會撞 non-fast-forward），由單一擁有者收斂後再推。
-- 對 `~/dotfiles` 這類 guardrail / SSOT 改動，使用者已明確授權非互動式 `codex review` 檢查相關 commit 或 unpushed diff。Codex MUST 自己執行 review，MUST NOT 把 review approval 丟回給使用者；只有在已嘗試一般/升權路徑後仍被阻擋、或缺少登入/auth 時，才回報阻塞。
+- 推 guardrail / SSOT 設定 repo（例如 `~/dotfiles`，含 CLAUDE.md、settings.json、AGENTS.md 等管著 agent 行為的檔）時，先 commit，再跑 `codexbar usage` 選 reviewer：預設用 Codex（`codex review` 或 cmux Codex worker），只有 Codex quota/auth/tooling 不適合或使用者明講時才改用 Claude Code。使用者已授權非互動式 review；Codex MUST 自己執行被選中的 review，review 無 blocking issue 才 push，且由單一擁有者收斂避免 non-fast-forward。
+- 對 prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric 這類行為規則改動，安全 review 之外再加一個「simplify review」視角：請 reviewer 專門找是否把一次事故寫成過窄規則、是否過度工程化、是否能用更少更通用且不易過期的說法。Simplify reviewer 的任務不是加更多條款，而是回報 Keep / Simplify / Drop；只有 blocking safety issue 或明顯更簡潔的 general rule 才要求修改。
 
 ## Memory Routing
 - Remembered content must be routed by layer, not blindly appended here.

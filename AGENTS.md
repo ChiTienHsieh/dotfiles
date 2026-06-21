@@ -33,8 +33,9 @@ templates/ → templates for secrets/local aliases (not symlinked directly)
 - Agents touching this dotfiles repo SHALL work autonomously through review, commit, and push to `origin` when the requested change is safe and the intent is clear.
 - Do not stop with local-only or unpushed changes after making a safe educated choice. Leaving dotfiles changes unpushed forces the next agent to reconstruct context from scratch.
 - Before pushing, verify the content is safe and appropriate for a public dotfiles repo: no secrets, no private keys, no tokens, no machine-specific host details, and no accidental local-only paths.
-- For guardrail / SSOT changes, use the repo safety flow: make the change, review the diff, commit, get an independent Codex review when available, then push only if the review finds no blocking issue.
+- For guardrail / SSOT changes, follow the detailed reviewer-routing SSOT in `codex/AGENTS.md`.
 - For this dotfiles repo's guardrail / SSOT changes, the user explicitly authorizes non-interactive `codex review` of the relevant commit or unpushed diff. Codex MUST run that review itself and MUST NOT ask the user to approve the review step unless the review command remains blocked after trying the normal approved/escalated path or authentication is missing.
+- For prompt, skill, AGENTS, CLAUDE.md, playbook, or review-rubric changes, also follow `codex/AGENTS.md` for the simplify-review lens.
 - Stop and ask the user only for security concerns, destructive actions, force-push/reset/discard decisions, billing or data-loss risk, or product/design choices where the correct tradeoff cannot be inferred from existing instructions.
 - If push is rejected or CI/checks fail, investigate and resolve safe issues yourself. Ask only when resolution requires one of the stop conditions above.
 
