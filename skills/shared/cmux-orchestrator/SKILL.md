@@ -135,6 +135,22 @@ cmux send --surface surface:N "\n"
 cmux new-surface --type terminal
 ```
 
+`surface:N` refs are resolved in the current cmux context and can be
+ambiguous across workspaces. When inspecting or driving a surface outside the
+controller's active workspace, always include the full target:
+
+```bash
+cmux read-screen --window window:N --workspace workspace:N --surface surface:N --lines 80
+cmux send --window window:N --workspace workspace:N --surface surface:N -- "text\n"
+```
+
+If `cmux read-screen` or `cmux send` says `Surface is not a terminal` for a
+surface that `cmux tree --all` labels `[terminal]`, first retry with explicit
+`--window` and `--workspace`. Do not assume it is a sandbox or permission
+problem until the fully targeted command fails the same way. This exact failure
+can happen when the controller is in another workspace and `surface:N` resolves
+against the wrong context.
+
 Use `cmux new-surface --type terminal` for new workers. `drive_codex.sh`
 pins new worker surfaces to the resolved controller workspace. Avoid
 window/workspace creation commands unless explicitly requested by the user.
