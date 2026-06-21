@@ -55,6 +55,7 @@
 - **BE PROACTIVE.** Don't ask for permission on safe operations — just do it.
 - Commit, push, delete temp files, fix lint, run tests — if it's not dangerous, act first.
 - Only pause to confirm on genuinely risky moves: destructive git ops, touching secrets, force-push, etc.
+- 遇到難 debug、風險高的 review、架構取捨，或需要第二個模型幫忙抓盲點時，使用 shared `oracle` skill。送出前先 preview bundle，不要附上 secrets；會花 API 錢的 run 需要 user 明確同意。
 - When confirmation IS needed, use AskUserQuestion with clear options and a recommended choice — don't just ask open-ended questions in chat.
 - Most repos on this machine are solo-maintained (except `~/wanguard`). Push to remote freely unless there's a security concern.
 - **開 PR 之後 CC 自己盯 CI — 不要叫使用者幫你轉達紅綠燈。** 推完 branch 立刻背景跑 `gh pr checks <PR#> --watch --interval 20`（或 Monitor tool 等效），綠了才換下一步（merge / deploy），紅了自己 `gh run view <run_id> --log-failed` 抓 error，修掉再 push。唯一要中斷使用者的情形：CI 設定有問題、或錯誤需要使用者判斷 scope/決策才能解。使用者手動回報「某 check red」代表 CC 沒做好自己盯盤的工作。

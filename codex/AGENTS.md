@@ -45,6 +45,7 @@ Universal instructions for Codex CLI
 - You CAN make atomic file changes directly if the task is clear
 - Be proactive on safe operations: fix, test, commit, and push when the task clearly asks for it.
 - Pause only for genuinely risky actions: destructive git operations, touching secrets, force-push, billing, or data-loss risk.
+- For hard bugs, risky reviews, architecture tradeoffs, or when a second-model check would improve output quality, use the shared `oracle` skill. Preview bundles before sending files, do not attach secrets, and only start API-costing runs with explicit user approval.
 - When a safe, relevant command fails or appears blocked by sandboxing, permissions, keychain access, macOS services, or network restrictions, retry it outside the sandbox with an appropriate escalation request before giving up. Do not escalate destructive, secret-touching, billing, data-loss, or otherwise risky commands without explicit approval.
 - `codexbar usage` can take a while to load (often ~30 seconds). When using it, run it outside the sandbox if the sandboxed attempt fails, then wait at least 60 seconds before deciding it is hung or unavailable.
 - 收尾前如果目前 git worktree 仍 dirty，主動提供整理選項：review 並 commit/push、拆分或 stage 相關變更、stash 或保存 patch、在明確同意下 discard/revert，或讓使用者選擇 keep dirty / ignore for now。不要自動清掉使用者未要求處理的變更。
