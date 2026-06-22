@@ -10,7 +10,7 @@ Use this skill to run a controller agent that coordinates one or more interactiv
 ## When To Use
 
 - Use for multi-agent orchestration, parallel research, implementation handoff, or review loops where each worker should remain visible in cmux.
-- Use when a Claude Code or Codex controller needs to start, observe, or resume multiple Codex agents without using headless `codex exec`.
+- Use when a Claude Code or Codex controller needs to start, observe, or resume multiple Codex agents without delegating implementation through file-mutating headless `codex exec`.
 - Use when task completion should be detected by marker files instead of terminal visual state.
 - Do not use for a small single-agent edit where normal Codex work in the current session is enough.
 
@@ -19,7 +19,7 @@ Use this skill to run a controller agent that coordinates one or more interactiv
 - Use cmux surfaces plus interactive Codex CLI with normal approvals or auto-review.
 - Delegate workers to new cmux surfaces by default. Do not create a new cmux window
   or workspace unless the user specifically asks for that.
-- Never delegate with `codex exec`.
+- Never delegate file-mutating work with `codex exec` (a `workspace-write` sandbox or higher); that must run on an observable interactive Codex surface. Read-only headless Codex is the only exception: `codex review`, and `codex exec --sandbox read-only` for research/debug when credential paths are denied and network is off.
 - Never use YOLO, bypass, or danger flags, including `--dangerously-bypass-approvals-and-sandbox`.
 - Do not ask workers to weaken sandboxing, disable approvals, edit secrets, or bypass guardrails.
 - Keep long prompts in files and send one-line instructions that point Codex at those files.

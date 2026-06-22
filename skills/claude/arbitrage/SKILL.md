@@ -11,8 +11,10 @@ design intent, verification, diff review, and git ownership; Codex does the
 bulk implementation work.
 
 On this machine, implementation is delegated through `cmux-orchestrator`, not
-headless `codex exec`. The user wants observable Codex TUI sessions that can be
-watched, interrupted, nudged, or switched to `/fast` manually.
+file-mutating headless `codex exec`. The user wants observable Codex TUI
+sessions that can be watched, interrupted, nudged, or switched to `/fast`
+manually. (Read-only headless Codex is fine for the controller's own
+verification or research — see the Dispatch Protocol note.)
 
 ## When To Use
 
@@ -40,7 +42,10 @@ watched, interrupted, nudged, or switched to `/fast` manually.
 
 ## Dispatch Protocol
 
-Use `cmux-orchestrator` for delegation. Do not use headless `codex exec`.
+Use `cmux-orchestrator` for delegation. Do not delegate file-mutating work via
+headless `codex exec`. Read-only headless Codex is allowed for the controller's
+own verification or research: `codex review`, and `codex exec --sandbox
+read-only` when credential paths are denied and the network is off.
 
 1. Inspect the repo state, dirty files, stop conditions, and relevant docs.
 2. Write a worker prompt file in an ignored scratch directory. Include:
