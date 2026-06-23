@@ -70,8 +70,8 @@ Prefer an event-based watcher: subscribe to `cmux events` in the background and
 wake the controller on the worker's Codex stop event, then verify the worker's
 report marker. The real event stream is `cmux events`; useful flags include
 `--name`, `--category`, `--after`, `--after-seq`, `--cursor-file`,
-`--reconnect`, `--limit`, `--no-ack`, `--no-heartbeat`, and
-`--no-heartbeats`. For Codex turn completion, start with:
+`--reconnect`, `--limit`, `--no-ack`, and `--no-heartbeat`. For Codex turn
+completion, start with:
 
 ```bash
 cmux events --name agent.hook.Stop --no-ack --no-heartbeat --reconnect
