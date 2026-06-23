@@ -9,6 +9,15 @@
 - `hide_agent_reasoning = true` 只會壓掉 reasoning 類資訊，不等於收合 tool calls。若使用者再次問這件事，除非明確要求查最新版本，直接告知目前記錄是不支援。
 - 截至 2026-06-14、目前 installed Codex CLI 接受 `tui.animations = false`（已用 `codex --strict-config -c tui.animations=false --help` 驗證）。這可以降低 TUI spinner/animation 對 cmux terminal renderer 的壓力，但不等於收合 tool calls，也不會阻止大量 tool output 造成 redraw。
 
+## TUI 終端機標題 `tui.terminal_title`（可自訂，2026-06-23、`codex 0.142.0` 驗證）
+
+- Codex **會**主動設終端機標題（tmux 讀作 pane_title），預設 item 是 `activity, project-name`，所以閒置時看起來就是工作目錄名、像「不會動」。它不是不支援，是預設沒放動態 item。
+- `[tui].terminal_title` 吃一個 **item 識別碼字串陣列**，例：`terminal_title = ["run-state", "thread-title"]`。已用臨時 `CODEX_HOME` 寫測試 config + `codex doctor` 驗證：`title source` 會從 `default` 變 `configured`、`title items` 反映設定值。
+- 合法 item 識別碼（從 0.142.0 binary strings 挖出，kebab-case）：`project-name`、`current-dir`、`run-state`、`thread-title`、`git-branch`、`context-remaining`、`context-used`、`five-hour-limit`、`weekly-limit`、`codex-version`、`used-tokens`、`total-input-tokens`、`total-output-tokens`、`thread-id`、`fast-mode`、`model-with-reasoning`、`reasoning`、`task-progress`；另有 `activity`（預設值用、像 spinner 的動態活動指示）。寫到未知 item 會報 `terminal title configuration contains unknown item identifiers`。
+- 驗證/除錯指令：`codex doctor` 會印 `title source / title items`；`CODEX_HOME=<暫存目錄> codex doctor` 可在不動正式設定下試 config。
+- 多 pane（orchestrator）場景推薦 `["run-state", "thread-title"]`：閒置/工作中狀態 + 自訂 session 名，pane 好分辨又看得出 liveness。設定在啟動時載入，**改完要重開 codex** 才生效。
+- 對照：Claude Code 的終端機標題**不可挑 item**（格式自動：spinner + session/dir 名），只能用環境變數 `CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1` 整個關掉；想塞自訂狀態文字得繞 hook 的 `terminalSequence` 或 SessionStart hook 的 `sessionTitle`。
+
 ## cmux socket access in Codex sandbox
 
 - 截至 2026-06-13、`codex-cli 0.139.0`，讓 sandboxed Codex command 連到 cmux Unix socket 需要 custom permission profile，而不是只加 `sandbox_workspace_write.writable_roots`。

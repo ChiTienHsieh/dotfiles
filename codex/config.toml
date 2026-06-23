@@ -85,6 +85,7 @@ enabled = true
 
 [tui]
 animations = false
+terminal_title = ["run-state", "thread-title"]
 status_line = [
     "context-remaining",
     "current-dir",
