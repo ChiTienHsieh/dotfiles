@@ -37,7 +37,7 @@ if [ -z "$SLUG" ]; then
 fi
 
 BASE_SLUG="$SLUG"
-WORKROOT="$HOME/dotfiles/cmux-orchestrator/scratch"
+WORKROOT="$HOME/scratch/cmux-delegations"
 WORKDIR="$WORKROOT/$SLUG"
 N=2
 

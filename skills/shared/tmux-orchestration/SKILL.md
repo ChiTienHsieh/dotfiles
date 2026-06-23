@@ -93,3 +93,14 @@ tmux kill-session -t SESSION_NAME
 ```
 
 If killing a tmux session needs escalation, request it. Do not close other user sessions just to make the tmux list tidy.
+
+## Delegation Lessons (shared, maintained)
+
+Before delegating or supervising a worker, read the shared lessons index:
+
+`~/dotfiles/skills/shared/delegation-lessons/MEMORY.md`
+
+It is a small index. Open ONLY the topic file relevant to the current delegation;
+do not read every topic each turn. After the delegation finishes, if you learned a
+durable lesson, update the relevant topic file and ensure the index has a one-line
+entry. Distill into reusable rules — do not append raw logs or one-off incident detail.

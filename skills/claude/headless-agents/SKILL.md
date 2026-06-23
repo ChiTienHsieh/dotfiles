@@ -25,7 +25,7 @@ surface instead (see Mode Awareness).
   **writes files** or needs to be watched/interrupted, do NOT delegate it
   headlessly here. Route it to an observable interactive surface, picking the
   skill that matches the current environment:
-  - running under **cmux** → use the `cmux-orchestrator` skill
+  - running under **cmux** → use the `cmux-orchestration` skill
   - running under **tmux** → use the `tmux-orchestration` skill
 - Rule of thumb:
   - read-only + no network → headless is fine (the safe default).
@@ -93,7 +93,7 @@ codex --search exec -s read-only --skip-git-repo-check \
 
 Mutating work must run where a human can watch and interrupt. Do not run
 `codex exec -s workspace-write` (or higher) from this skill. Instead use the
-`cmux-orchestrator` skill (under cmux) or the `tmux-orchestration` skill (under
+`cmux-orchestration` skill (under cmux) or the `tmux-orchestration` skill (under
 tmux), based on the current environment.
 
 ### Key Flags (0.141)

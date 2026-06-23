@@ -39,7 +39,7 @@ headless 唯讀模式則放行（headed codex 會拖慢 cmux，唯讀研究硬�
 
 ## 機制 & 收尾
 
-- 委派機制細節（marker-file 慣例、`drive_codex.sh` / `delegate.sh` 用法、cmux 指令）見 `cmux-orchestrator` skill；判斷與路由原則見 `arbitrage` skill。
+- 委派機制細節（marker-file 慣例、`drive_codex.sh` / `delegate.sh` 用法、cmux 指令）見 `cmux-orchestration` skill；判斷與路由原則見 `arbitrage` skill。
 - 委派完成後的 surface 清理由 `wrap` skill 處理。
 
 ## 不好的做法（要避免）

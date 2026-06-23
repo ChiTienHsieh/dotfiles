@@ -187,6 +187,13 @@ restore_preserved_skill_links() {
     done < "$manifest"
 }
 
+is_linkable_skill_dir() {
+    local skill="$1"
+
+    [ -d "$skill" ] || return 1
+    [ -f "$skill/SKILL.md" ] || [ "$(basename "$skill")" = ".system" ]
+}
+
 prune_stale_dotfiles_links() {
     local dir="$1"
     local link target
@@ -302,7 +309,7 @@ backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
 
 # Skills
 for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/claude/*; do
-    [ -d "$skill" ] || continue
+    is_linkable_skill_dir "$skill" || continue
     backup_and_link "$skill" "$HOME/.claude/skills/$(basename "$skill")"
 done
 restore_preserved_skill_links "$CLAUDE_SKILLS_PRESERVE_FILE" "$HOME/.claude/skills"
@@ -351,12 +358,12 @@ done
 ensure_real_dir "$HOME/.codex/skills"
 ensure_real_dir "$HOME/.agents/skills"
 for skill in "$DOTFILES_DIR"/codex/skills/.system "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
-    [ -d "$skill" ] || continue
+    is_linkable_skill_dir "$skill" || continue
     backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
 done
 prune_stale_dotfiles_links "$HOME/.codex/skills"
 for skill in "$DOTFILES_DIR"/skills/shared/*; do
-    [ -d "$skill" ] || continue
+    is_linkable_skill_dir "$skill" || continue
     backup_and_link "$skill" "$HOME/.agents/skills/$(basename "$skill")"
 done
 prune_stale_dotfiles_links "$HOME/.agents/skills"

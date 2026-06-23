@@ -1,9 +1,9 @@
 ---
-name: cmux-orchestrator
-description: "Use when orchestrating or delegating work to multiple Codex agents through cmux surfaces, especially when a Claude Code or Codex controller needs safe multi-agent coordination, marker-file completion detection, or the drive_codex.sh helper."
+name: cmux-orchestration
+description: "Use when orchestrating or delegating work to multiple Codex agents through cmux surfaces, especially when a Claude Code or Codex controller needs safe multi-agent coordination, event-based completion detection, marker-file completion fallback, or the drive_codex.sh helper."
 ---
 
-# cmux Orchestrator
+# cmux Orchestration
 
 Use this skill to run a controller agent that coordinates one or more interactive Codex agents in separate cmux surfaces. Keep the controller focused on task design, read-only inspection, verification, and small fixes; delegate implementation, cross-file edits, and debugging to Codex surfaces.
 
@@ -11,7 +11,7 @@ Use this skill to run a controller agent that coordinates one or more interactiv
 
 - Use for multi-agent orchestration, parallel research, implementation handoff, or review loops where each worker should remain visible in cmux.
 - Use when a Claude Code or Codex controller needs to start, observe, or resume multiple Codex agents without delegating implementation through file-mutating headless `codex exec`.
-- Use when task completion should be detected by marker files instead of terminal visual state.
+- Use when task completion should be detected by cmux events or marker files instead of terminal visual state.
 - Do not use for a small single-agent edit where normal Codex work in the current session is enough.
 
 ## Safety Rules
@@ -25,6 +25,7 @@ Use this skill to run a controller agent that coordinates one or more interactiv
 - Keep long prompts in files and send one-line instructions that point Codex at those files.
 - Verify worker claims with read-only checks before accepting results.
 - Store task prompts, logs, and handoff reports in an ignored scratch directory unless the user explicitly asks for tracked artifacts.
+- Dotfiles is a public guardrail source of truth: keep task logs and handoffs out of the repo, and ensure guardrail diffs are human-reviewed before push.
 - Record every cmux delegation in the local delegation history file so `wrap`
   can offer to close delegated surfaces later.
 
@@ -64,13 +65,24 @@ escalation.
 ## Completion Watching Without Foreground Long-Polling
 
 Do not block the controller in a foreground poll loop waiting for a worker's
-marker — it burns the controller's context and stalls other pipelines. Instead
-run the marker-file watcher as a background job that exits when the marker
-appears (e.g. a `run_in_background` poll, or a watcher that consumes
-`cmux events`), so the controller is freed and gets notified on completion.
-When re-using one report file across rounds, give each round a distinct marker
-(e.g. `GU_R2_DONE`, `GU_R3_DONE`) and match on the file tail, so a stale marker
-from an earlier round does not trip the new watcher.
+completion — it burns the controller's context and stalls other pipelines.
+Prefer an event-based watcher: subscribe to `cmux events` in the background and
+wake the controller on the worker's Codex stop event, then verify the worker's
+report marker. The real event stream is `cmux events`; useful flags include
+`--name`, `--category`, `--after`, `--after-seq`, `--cursor-file`,
+`--reconnect`, `--limit`, `--no-ack`, `--no-heartbeat`, and
+`--no-heartbeats`. For Codex turn completion, start with:
+
+```bash
+cmux events --name agent.hook.Stop --no-ack --no-heartbeat --reconnect
+```
+
+Filter the NDJSON yourself for the expected `workspace_id`, `source`, and any
+available payload correlation such as `session_id`. There is no real
+`--surface-id`, `--workspace-id`, `turn-complete`, `surface-idle`, or
+`agent-idle` event filter. If exact worker correlation is uncertain, or the
+event stream is unavailable, falls behind its replay window, or hits a slow
+consumer condition, fall back to marker-file polling in a background job.
 
 ## Codex Computer-Use Capability
 
@@ -123,7 +135,7 @@ The controller is an interface and judgment layer, not a doer. Internalize these
 3. Start one new cmux surface per worker, or reuse an existing surface when appropriate. Stay in the current cmux window/workspace unless the user explicitly asks for a new one.
 4. Record the delegated surface with `scripts/delegation_history.sh record`.
 5. Send each worker a one-line prompt that tells it to read its prompt file.
-6. Poll the marker file, not the cmux visual "Working" state.
+6. Prefer a background `cmux events` watcher for completion wakeups, then verify the marker file; use marker polling as fallback, not cmux visual "Working" state.
 7. Read each worker report, verify important claims, resolve conflicts, and produce the final synthesis.
 
 ## cmux Commands
@@ -230,10 +242,23 @@ user-owned repositories.
 
 ## Marker-File Convention
 
-Do not infer completion from a surface no longer showing "Working"; approval pauses and waiting states can look idle. Require every worker to write a report file and end the file with a single marker line:
+Do not infer completion from a surface no longer showing "Working"; approval pauses and waiting states can look idle. Even when an event watcher wakes the controller, require every worker to write a report file and end the file with a single marker line:
 
 ```text
 WORKER_DONE
 ```
 
 Use distinct markers for distinct workers when multiple agents run in parallel. If the marker does not appear before timeout, inspect the relevant cmux surface manually; the worker may be waiting for approval or blocked.
+
+Marker-file polling is the fallback when events are not reliable enough for exact worker completion. `agent.hook.Stop` is workspace-scoped rather than surface-scoped, notification events can be suppressed, replay is bounded, and slow consumers can be disconnected, so the marker remains the final completion contract.
+
+## Delegation Lessons (shared, maintained)
+
+Before delegating or supervising a worker, read the shared lessons index:
+
+`~/dotfiles/skills/shared/delegation-lessons/MEMORY.md`
+
+It is a small index. Open ONLY the topic file relevant to the current delegation;
+do not read every topic each turn. After the delegation finishes, if you learned a
+durable lesson, update the relevant topic file and ensure the index has a one-line
+entry. Distill into reusable rules — do not append raw logs or one-off incident detail.
