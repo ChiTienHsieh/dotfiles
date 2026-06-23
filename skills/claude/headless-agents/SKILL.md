@@ -12,64 +12,116 @@ Claude Code can delegate tasks to headless AI agents:
 - **Codex CLI** (OpenAI) - Strong at research with `--search`, complex refactoring
 - **Gemini CLI** (Google) - Fast execution, good for quick generation
 
+Headless means fire-and-forget: no human watches it run. That is only safe when
+the blast radius is near zero, so the default here is **read-only**. Anything
+that mutates files headlessly is the risky part — route it to an observable
+surface instead (see Mode Awareness).
+
+## Mode Awareness (read this first)
+
+- This skill is for **normal Claude Code sessions** doing cheap, read-only,
+  fire-and-forget headless work.
+- If running as the **orchestrator persona** (`cldo`), or any time the work
+  **writes files** or needs to be watched/interrupted, do NOT delegate it
+  headlessly here. Route it to an observable interactive surface, picking the
+  skill that matches the current environment:
+  - running under **cmux** → use the `cmux-orchestrator` skill
+  - running under **tmux** → use the `tmux-orchestration` skill
+- Rule of thumb:
+  - read-only + no network → headless is fine (the safe default).
+  - read-only + network (`--search`) → headless is OK **only over trusted
+    inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
+    web work to a cmux/tmux surface instead.
+  - mutating (writes files) → **always** an observable cmux/tmux surface, never
+    headless.
+
 ## When to Use Which
 
 ```
 Task Type                           Codex              Gemini
 --------------------------------------------------------------------
 Web research + analysis             --search flag      Limited
-Multi-file refactoring              Best choice        Okay
+Multi-file refactoring              cmux/tmux surface  cmux/tmux surface
 Quick code generation               Slower             Fast (Flash)
 Image/multimodal analysis           -i/--image         Native support
-Complex debugging                   Thorough           Surface level
+Complex debugging (read-only)       Thorough           Surface level
 ```
 
-## Codex CLI Commands
+## Codex CLI Commands (codex 0.141 syntax)
 
-### Research Task
+### Research / debug — read-only, no network (default)
+
 ```bash
-OUTPUT_LOG="./ai_chatroom/{topic}/codex_task_log_cdx.jsonl"
-codex --search exec --full-auto --json \
-  -o "$OUTPUT_LOG" \
+OUTPUT="./ai_chatroom/{topic}/research_cdx.md"
+mkdir -p "$(dirname "$OUTPUT")"   # codex -o does NOT create missing parent dirs
+codex exec -s read-only --skip-git-repo-check \
+  -o "$OUTPUT" \
   "Task description...
-
-  OUTPUT to ./ai_chatroom/{topic}/:
-  - {task}_detail_cdx.md
-  - {task}_summary_cdx.txt"
+   Summarize findings into your final message (it is captured to the -o file)."
 ```
 
-### Implementation Task
+- `-s read-only` cannot modify ANY files.
+- `-o <FILE>` is written by the Codex harness, not by a model command, so it
+  works fine under `read-only` — this is how you capture results without giving
+  the agent write access.
+- No `--search` here, so the sandbox blocks network. That network-off default is
+  the real protection: even if the agent reads something sensitive, it cannot
+  exfiltrate it to an arbitrary host.
+
+### Web research — `--search` opt-in (network ON, higher risk)
+
+Only add `--search` when the task genuinely needs the live web:
+
 ```bash
-# Step 1: Check git status first
-git status
-
-# Step 2: Run Codex
-OUTPUT_LOG="./ai_chatroom/{topic}/codex_impl_log_cdx.jsonl"
-codex exec --full-auto --json \
-  -o "$OUTPUT_LOG" \
-  "Task description..."
-
-# Step 3: Review changes
-git status && git diff
+# NOTE: --search is a TOP-LEVEL flag — it goes BEFORE the `exec` subcommand.
+# `codex exec --search ...` is rejected as an unexpected argument.
+OUT="./ai_chatroom/{topic}/websearch_cdx.md"
+mkdir -p "$(dirname "$OUT")"   # codex -o does NOT create missing parent dirs
+codex --search exec -s read-only --skip-git-repo-check \
+  -o "$OUT" \
+  "Web research task..."
 ```
 
-### Key Flags
-- `--full-auto` = `--sandbox workspace-write -a on-failure`
-- `--search` = Enable web search (place BEFORE exec!)
-- `--json` = JSONL event output
-- `-o <FILE>` = Final message output file
-- `-i, --image <FILE>` = Attach image(s)
-- `-C <DIR>` = Working directory
+- Network ON turns "can read" into "can exfiltrate to anywhere", and opens
+  prompt-injection / SSRF paths if the agent reads untrusted content (random
+  repos, web pages, dependencies). See the orchestrator persona's reasoning.
+- Use it only over trusted inputs, and treat the result as if anything readable
+  on the machine could have left it. For heavier or less-trusted web work, prefer
+  an observable cmux/tmux surface so a human can watch.
 
-### Sandbox Modes
-- `read-only`: Cannot modify ANY files
-- `workspace-write`: Can write to workspace (use for most tasks)
+### Implementation / multi-file edits (mutating) — do NOT do headlessly
+
+Mutating work must run where a human can watch and interrupt. Do not run
+`codex exec -s workspace-write` (or higher) from this skill. Instead use the
+`cmux-orchestrator` skill (under cmux) or the `tmux-orchestration` skill (under
+tmux), based on the current environment.
+
+### Key Flags (0.141)
+
+- `-s, --sandbox <read-only|workspace-write|danger-full-access>` = sandbox policy
+- `--search` = enable live web search (turns network ON). Top-level flag: write
+  `codex --search exec ...`, NOT `codex exec --search ...`.
+- `--json` = JSONL event output
+- `-o, --output-last-message <FILE>` = final message output (works under read-only)
+- `-i, --image <FILE>` = attach image(s)
+- `-C, --cd <DIR>` = working directory root
+- `--skip-git-repo-check` = allow running outside a Git repo
+- Removed in 0.141: `--full-auto` (old alias for workspace-write). Set the
+  sandbox explicitly with `-s` instead. Never use `--dangerously-bypass-*`.
 
 ## Gemini CLI Commands
 
-### Basic Headless
+Gemini is NOT inherently read-only. Under a permissive approval mode
+(`--yolo`, `--approval-mode=auto_edit`/`yolo`) or in a trusted folder, its
+edit/write tools can mutate the workspace. To use it safely headless, treat it
+like Codex: drive it with a `-p` prompt and capture text via stdout redirect,
+and do NOT enable yolo / auto-edit approval modes. Anything that should change
+files goes to a cmux/tmux surface, not a headless Gemini run.
+
+### Basic Headless (read-only usage)
 ```bash
-# Using alias (gmn = gemini --model gemini-3-pro-preview)
+# gmn is an alias for `gemini`. Do not pass --yolo / --approval-mode=auto_edit
+# for headless read-only work.
 gmn -p "Task description" --output-format json --quiet > output.json
 ```
 
@@ -84,17 +136,13 @@ cat source.py | gmn -p "Analyze this code" --quiet > analysis.md
 - `--output-format <text|json>`: Output format
 - `--quiet, -q`: Suppress spinners (essential for headless)
 
-### Limitation
-Gemini CLI cannot write files directly - must redirect stdout.
-
 ## File-Based Communication (ai_chatroom)
 
 ```
 ./ai_chatroom/{topic}/
-├── codex_research_summary_cdx.txt    # Codex summary
-├── codex_research_detail_cdx.md      # Codex details
-├── gemini_analysis_gmn.md            # Gemini output
-└── README_cld.md                     # CC executive summary
+├── research_cdx.md         # Codex research output (via -o)
+├── gemini_analysis_gmn.md  # Gemini output
+└── README_cld.md           # CC executive summary
 ```
 
 ### File Naming Convention
@@ -110,24 +158,6 @@ Gemini CLI cannot write files directly - must redirect stdout.
 
 - Minimum: 4 minutes (240000ms)
 - Research tasks: 10+ minutes (600000ms)
-- Complex implementation: 10-15 minutes
-
-## Workflow Example
-
-```bash
-# 1. Create workspace
-mkdir -p ./ai_chatroom/feature-x/
-
-# 2. Delegate research to Codex
-codex --search exec --full-auto --json \
-  -o "./ai_chatroom/feature-x/research_log_cdx.jsonl" \
-  "Research best practices for X. Write to ./ai_chatroom/feature-x/"
-
-# 3. Delegate quick task to Gemini (parallel)
-gmn -p "Generate boilerplate for X" --quiet > ./ai_chatroom/feature-x/boilerplate_gmn.md
-
-# 4. Read summaries, synthesize, present to user
-```
 
 ## Configuration Files
 
