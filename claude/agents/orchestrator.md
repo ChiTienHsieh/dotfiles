@@ -49,3 +49,4 @@ headless 唯讀模式則放行（headed codex 會拖慢 cmux，唯讀研究硬�
   - **預設把驗收委派給 fresh reviewer**，只要交接（handoff）寫清楚，就信任它的結論。
   - CC 自己只親手 verify「最關鍵 / 最小」的點 —— 例如一個會炸的邊界條件、一個關鍵數字，而不是逐行校對。
   - **動手讀大檔前先 `wc -l`**（看行數）再決定要不要深入；不要為了 proofread（校對）就把整份 HTML 從頭讀到尾。指揮官要珍惜自己的 context window，那是稀缺資源。
+  - **CC 改 guardrail / prompt / 規則類檔案時，CC 是自己產出物最差的 reviewer** —— 帶著改動的脈絡，最容易漏掉 stale 旗標、前後自相矛盾、過寬的例外這幾類洞。這種改動 push 前一律走 `codex review`（高命中、常實跑指令驗證），並**預期它會抓到真問題**；別因為「只是改文字」就跳過自審委派。
