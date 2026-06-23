@@ -14,5 +14,8 @@ output/
 *.local
 .claude/settings.local.json
 
+# Claude Code worktrees (created locally, never version-controlled)
+.claude/worktrees/
+
 # Auto-downloaded plugin skills
 claude/skills/
