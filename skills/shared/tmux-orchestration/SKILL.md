@@ -10,7 +10,7 @@ Use this skill when a task should run in an interactive terminal agent that rema
 ## Core Rules
 
 - Use tmux when zellij is unavailable, unreliable, or not requested.
-- Keep each substantial worker in its own named tmux session.
+- Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session, and do NOT start a new cmux session, for this co-review case.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
@@ -33,6 +33,18 @@ After launch, observe the pane:
 ```bash
 tmux capture-pane -pt SESSION_NAME -S -80
 ```
+
+## Spawning a worker beside you (same window — preferred for co-review)
+
+When the user wants a Codex/Claude worker to review or brainstorm *with* the orchestrator, split a new pane in the orchestrator's current session instead of opening a new session:
+
+```bash
+# -h = split left/right; target the orchestrator's own session/window
+worker_pane="$(tmux split-window -h -P -F '#{pane_id}' -t SESSION_NAME -c /path/to/repo 'codex --sandbox read-only')"
+tmux capture-pane -pt "$worker_pane" -S -80
+```
+
+Both panes then live in one window, side-by-side, so the user can watch the worker and the orchestrator together. Do not open a separate tmux session or a new cmux session for this co-review case.
 
 ## Claude Auto Mode
 
@@ -68,9 +80,10 @@ tmux send-keys -t SESSION_NAME Enter
 
 ## Observation Cadence
 
-- For short tasks, check every 30-90 seconds.
+- Default to PATIENT polling. Once a worker is mid-run on a multi-minute task (a review loop, a build, a long Codex turn), check at intervals of at least 5 minutes. Polling every 30-90 seconds is micromanaging — it wastes controller turns and reads as creepy to the user. Reserve sub-minute checks for genuinely short tasks or when actively waiting on an approval/error prompt.
 - For user-requested patient Claude Code work, check every 10 minutes unless there is an obvious prompt/approval wait.
 - If the user says the work can take an hour, do not interrupt early just because the TUI is quiet.
+- When capturing, read the FULL new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
 - Use pane captures, local file status, and expected artifacts to decide whether progress is real.
 - If the worker is waiting for approval, erroring, or stuck at a prompt, intervene.
 
