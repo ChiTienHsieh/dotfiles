@@ -67,6 +67,7 @@ Some terminals map `Shift+Tab` differently. If `BTab` does not work, proceed wit
 - Put long prompts in a scratch file.
 - Paste or send one concise instruction that tells the worker to read that file.
 - Send Enter separately.
+- Send the prompt as ONE line — no embedded newlines or blank lines. `tmux send-keys` turns every newline in the argument into an Enter, so a multi-line prompt submits in fragments; on a Codex TUI this can crash the turn (`turn/start failed`) and drop it to a bare shell. Build the whole instruction on a single line, then send Enter as its own call.
 - If the prompt appears pasted but not submitted, send Enter again after checking the pane.
 
 Example:
