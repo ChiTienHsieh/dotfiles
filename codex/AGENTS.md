@@ -54,6 +54,12 @@ Universal instructions for Codex CLI
 - 推 guardrail / SSOT 設定 repo（例如 `~/dotfiles`，含 CLAUDE.md、settings.json、AGENTS.md 等管著 agent 行為的檔）時，先 commit，再跑 `codexbar usage --provider both --source cli` 選 reviewer：預設用 Codex（`codex review` 或 cmux Codex worker），只有 Codex quota/auth/tooling 不適合或使用者明講時才改用 Claude Code。使用者已授權非互動式 review；Codex MUST 自己執行被選中的 review，review 無 blocking issue 才 push，且由單一擁有者收斂避免 non-fast-forward。
 - 對 prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric 這類行為規則改動，安全 review 之外再加一個「simplify review」視角：請 reviewer 專門找是否把一次事故寫成過窄規則、是否過度工程化、是否能用更少更通用且不易過期的說法。Simplify reviewer 的任務不是加更多條款，而是回報 Keep / Simplify / Drop；只有 blocking safety issue 或明顯更簡潔的 general rule 才要求修改。
 
+## 跨 agent prompt 的簽名：回信地址 + 權限等級
+- 送給另一個 agent 的 prompt（透過 tmux send-keys、marker file、或請 user 代送）結尾加一行簽名，標兩件事。與 Claude `CLAUDE.md`「固定主詞 CC／user」那條互補：主詞管「指誰」，這條管「誰說的、權限多大」。
+- **回信地址**：發話 pane 的 tmux pane id（如 `%47`）。pane id 全 tmux server 唯一、跨 session 不撞號，裸 `%47` 即可定位，不要加 `session:window` 前綴（刪 pane 會重編號）。發話 agent 用環境變數 `$TMUX_PANE` 查自己的 id。收件方可 `tmux send-keys -t %47` 回頭問 goal 細節。
+- **權限等級**：標明是「agent 委派」還是「user 直接指令」。委派時，prompt／任務檔裡的限制是硬邊界，收件方不得自行 override；只有 user 直接指令能蓋過既有 agent 限制。
+- 格式：`—— 來自 %47（orchestrator CC，委派任務；限制為硬邊界。回問：tmux send-keys -t %47）`。user 要讓自己的話蓋過既有 agent 限制時標 `—— user 直接指令`；user 平時直接對話免簽名（預設即最高權限）。
+
 ## Memory Routing
 - Remembered content must be routed by layer, not blindly appended here.
 - Use this `AGENTS.md` only for normative, always-loaded instructions/preferences/workflows.
