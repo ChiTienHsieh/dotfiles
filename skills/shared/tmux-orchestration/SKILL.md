@@ -5,7 +5,7 @@ description: "Use when running, supervising, or delegating work to interactive a
 
 # tmux Orchestration
 
-Use this skill when a task should run in an interactive terminal agent that remains visible and inspectable. Prefer it for Claude Code writer sessions, long-running Codex/Claude work, quota-aware overnight jobs, and any request where the user explicitly asks to use tmux.
+Run a task in an interactive terminal agent that stays visible and inspectable — Claude/Codex writer sessions, long-running or quota-aware overnight work.
 
 ## Core Rules
 
@@ -14,9 +14,7 @@ Use this skill when a task should run in an interactive terminal agent that rema
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
-- If tmux commands fail with sandbox or permission errors, retry with escalation.
 - Do not kill unrelated tmux sessions. Only close sessions created for the current task or explicitly named by the user.
-- Keep the user updated in short language during long waits.
 
 ## Starting Claude Code
 
@@ -44,7 +42,7 @@ worker_pane="$(tmux split-window -h -P -F '#{pane_id}' -t SESSION_NAME -c /path/
 tmux capture-pane -pt "$worker_pane" -S -80
 ```
 
-Both panes then live in one window, side-by-side, so the user can watch the worker and the orchestrator together. Do not open a separate tmux session or a new cmux session for this co-review case.
+Both panes then live in one window, side-by-side, so the user can watch the worker and the orchestrator together.
 
 ## Claude Auto Mode
 
@@ -80,11 +78,11 @@ tmux send-keys -t SESSION_NAME Enter
 
 ## Observation Cadence
 
-- Default to PATIENT polling. Once a worker is mid-run on a multi-minute task (a review loop, a build, a long Codex turn), check at intervals of at least 5 minutes. Polling every 30-90 seconds is micromanaging — it wastes controller turns and reads as creepy to the user. Reserve sub-minute checks for genuinely short tasks or when actively waiting on an approval/error prompt.
+- Choose the right mechanism FIRST: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to JUDGE quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free.
+- When you DO poll, default to PATIENT polling. Once a worker is mid-run on a multi-minute task (a review loop, a build, a long Codex turn), check at intervals of at least 5 minutes. Polling every 30-90 seconds is micromanaging — it wastes controller turns and reads as creepy to the user. Reserve sub-minute checks for genuinely short tasks or when actively waiting on an approval/error prompt.
 - For user-requested patient Claude Code work, check every 10 minutes unless there is an obvious prompt/approval wait.
 - If the user says the work can take an hour, do not interrupt early just because the TUI is quiet.
 - When capturing, read the FULL new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
-- Use pane captures, local file status, and expected artifacts to decide whether progress is real.
 - If the worker is waiting for approval, erroring, or stuck at a prompt, intervene.
 
 ## Completion
@@ -105,7 +103,7 @@ When the worker is no longer needed:
 tmux kill-session -t SESSION_NAME
 ```
 
-If killing a tmux session needs escalation, request it. Do not close other user sessions just to make the tmux list tidy.
+If killing a tmux session needs escalation, request it.
 
 ## Delegation Lessons (shared, maintained)
 
