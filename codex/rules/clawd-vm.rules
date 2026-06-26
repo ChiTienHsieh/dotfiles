@@ -41,14 +41,22 @@ prefix_rule(
     match=["/Users/sprin/.codex/bin/clawd-vm-observe processes"],
 )
 
-# Raw SSH into clawd-vm is intentionally not auto-allowed by this file. Use the
-# wrapper above for routine read-only machine observations.
+# Allow SSH access to clawd-vm through the Codex-only ssh wrapper. This is
+# intentionally scoped to the local SSH alias; other SSH targets still need
+# their own approval path.
 prefix_rule(
     pattern=["ssh", "clawd-vm"],
     decision="prompt",
-    justification="Raw clawd-vm SSH can run arbitrary remote commands; use clawd-vm-observe for read-only machine info.",
+    justification="Raw clawd-vm SSH can run arbitrary remote commands; use clawd-vm-observe for fixed read-only observations.",
     match=[
         "ssh clawd-vm",
         "ssh clawd-vm uptime",
     ],
+)
+
+network_rule(
+    host="clawd-vm",
+    protocol="socks5_tcp",
+    decision="allow",
+    justification="Allow Codex-managed SOCKS SSH access to clawd-vm.",
 )

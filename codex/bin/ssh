@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+host=""
+expect_option_value=0
+for arg in "$@"; do
+    if [ "$expect_option_value" -eq 1 ]; then
+        expect_option_value=0
+        continue
+    fi
+
+    case "$arg" in
+        -b|-c|-D|-E|-e|-F|-I|-i|-J|-L|-l|-m|-O|-o|-p|-Q|-R|-S|-W|-w)
+            expect_option_value=1
+            ;;
+        -*)
+            ;;
+        *)
+            host="$arg"
+            break
+            ;;
+    esac
+done
+
+if [ "$host" = "clawd-vm" ]; then
+    proxy="${ALL_PROXY:-${all_proxy:-}}"
+    case "$proxy" in
+        socks5h://*|socks5://*)
+            proxy="${proxy#socks5h://}"
+            proxy="${proxy#socks5://}"
+            proxy="${proxy%%/*}"
+            case "$proxy" in
+                ""|*[!A-Za-z0-9._:-]*)
+                    exec /usr/bin/ssh "$@"
+                    ;;
+            esac
+            exec /usr/bin/ssh -o "ProxyCommand=nc -X 5 -x $proxy %h %p" "$@"
+            ;;
+    esac
+fi
+
+exec /usr/bin/ssh "$@"

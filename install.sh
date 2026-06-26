@@ -81,8 +81,10 @@ ensure_real_dir() {
 configure_codex_cmux_permissions() {
     local config="$1"
     local cmux_socket_root="$HOME/.local/state/cmux"
+    local tmux_socket_private="/private/tmp/tmux-$(id -u)/default"
+    local tmux_socket_tmp="/tmp/tmux-$(id -u)/default"
 
-    /usr/bin/python3 - "$config" "$cmux_socket_root" <<'PY'
+    /usr/bin/python3 - "$config" "$cmux_socket_root" "$tmux_socket_private" "$tmux_socket_tmp" <<'PY'
 from pathlib import Path
 import json
 import re
@@ -90,6 +92,8 @@ import sys
 
 path = Path(sys.argv[1])
 socket_root = sys.argv[2]
+tmux_socket_private = sys.argv[3]
+tmux_socket_tmp = sys.argv[4]
 text = path.read_text()
 
 # Keep the checked-in config portable; materialize the per-user cmux socket
@@ -98,7 +102,7 @@ lines = text.splitlines()
 filtered = []
 skip = False
 for line in lines:
-    if re.match(r"^\[permissions\.workspace-cmux(?:\.network)?\]$", line):
+    if re.match(r"^\[permissions\.workspace-(?:cmux|local-vm|sprin)(?:\.network)?\]$", line):
         skip = True
         continue
     if skip and re.match(r"^\[.*\]$", line):
@@ -110,7 +114,7 @@ text = "\n".join(filtered).rstrip() + "\n"
 if re.search(r"^default_permissions\s*=", text, flags=re.MULTILINE):
     text = re.sub(
         r"^default_permissions\s*=.*$",
-        'default_permissions = "workspace-cmux"',
+        'default_permissions = "workspace-sprin"',
         text,
         count=1,
         flags=re.MULTILINE,
@@ -119,9 +123,9 @@ else:
     marker = re.search(r"^approvals_reviewer\s*=.*$", text, flags=re.MULTILINE)
     if marker:
         insert_at = marker.end()
-        text = text[:insert_at] + '\ndefault_permissions = "workspace-cmux"' + text[insert_at:]
+        text = text[:insert_at] + '\ndefault_permissions = "workspace-sprin"' + text[insert_at:]
     else:
-        text = 'default_permissions = "workspace-cmux"\n' + text
+        text = 'default_permissions = "workspace-sprin"\n' + text
 
 features = re.search(r"^\[features\]\n(?P<body>(?:^[^\[].*\n?)*)", text, flags=re.MULTILINE)
 if features:
@@ -133,20 +137,21 @@ else:
     text = text.rstrip() + "\n\n[features]\nnetwork_proxy = true\n"
 
 block = f"""
-[permissions.workspace-cmux]
-description = "Workspace-write with cmux Unix socket access for local orchestration."
+[permissions.workspace-sprin]
+description = "Workspace-write with cmux/tmux sockets and clawd-vm SSH access."
 extends = ":workspace"
 
-[permissions.workspace-cmux.network]
+[permissions.workspace-sprin.network]
 enabled = true
 mode = "limited"
-unix_sockets = {{ {json.dumps(socket_root)} = "allow" }}
+domains = {{ "clawd-vm" = "allow" }}
+unix_sockets = {{ {json.dumps(socket_root)} = "allow", {json.dumps(tmux_socket_private)} = "allow", {json.dumps(tmux_socket_tmp)} = "allow" }}
 """
 
 path.write_text(text.rstrip() + "\n" + block)
 PY
 
-    echo "  Configured Codex cmux socket access: $cmux_socket_root"
+    echo "  Configured Codex local socket access: $cmux_socket_root, $tmux_socket_private"
 }
 
 collect_symlinked_dir_entries() {
