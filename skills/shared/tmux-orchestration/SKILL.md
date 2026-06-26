@@ -26,6 +26,8 @@ tmux new-session -d -s SESSION_NAME -c /path/to/worktree 'claude --model opus --
 
 Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. Adjust model and allowed tools only when the task requires it. Do not use bypass or danger flags.
 
+For sessions meant to live a long time, prefer the crash-proof **cushion pattern** in "Reviving a dead session" below (launch a shell, run the agent as its child) — a launch with `claude` as the pane root dies, and takes the whole session with it, the instant claude exits.
+
 After launch, observe the pane:
 
 ```bash
@@ -105,6 +107,30 @@ tmux kill-session -t SESSION_NAME
 ```
 
 If killing a tmux session needs escalation, request it.
+
+## Reviving a dead session
+
+A tmux session is destroyed the moment its last pane's **root** process exits. Launching `claude` as the pane root (`tmux new-session ... 'claude ...'`) means any claude exit — crash, `/quit`, double Ctrl-C, an errored turn — takes the whole session with it. A pane whose root is a shell survives its child dying.
+
+**Cushion pattern (crash-proof; prefer for long-lived agents):** make a shell the pane root, then run the agent as its child. When the agent dies you drop back to the shell, the session survives, and the error stays on screen.
+
+```bash
+tmux new-session -d -s SESSION_NAME -c /path/to/repo      # shell is the pane root
+tmux send-keys -t SESSION_NAME 'claude --resume <uuid>'   # agent runs as a child
+tmux send-keys -t SESSION_NAME Enter
+```
+
+The shell can die but the transcript outlives it. To revive a dead Claude session:
+
+1. Look under `~/.claude/projects/` — each session's cwd maps to one encoded subdir there. Don't reconstruct the exact name (the encoding mangles both `/` and `.`); list the dirs, sort by mtime, and let the fingerprint in step 2 confirm.
+2. Identify the right transcript by **content fingerprint**, not filename (filenames are UUIDs): `grep -l '<distinctive phrase from the session>' *.jsonl`. Each line also carries a `"cwd"` field you can grep to confirm the project.
+3. Revive with the cushion pattern above, running `claude --resume <uuid>` inside the shell.
+
+Decision rules:
+- **attach vs resume:** still in `tmux ls` → `tmux attach` (process alive, no state lost). Gone from the list → `claude --resume` (process dead, rebuild from transcript). They are not interchangeable.
+- **Never `--resume` the same uuid from two panes** — the two claude instances fight over one session and can evict each other.
+- **Decide whether to revive at all:** if the session's output already landed (committed, pushed, file written), the dead shell is irrelevant — read the artifact and skip the revive. Only revive when useful context is stranded in memory.
+- Retrofitting the cushion onto an already-running session is impossible without killing and re-resuming it. Do not churn healthy, attached sessions for it; let the cushion apply on their next revive.
 
 ## Delegation Lessons (shared, maintained)
 
