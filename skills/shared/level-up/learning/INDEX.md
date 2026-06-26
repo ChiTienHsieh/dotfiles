@@ -6,6 +6,9 @@
 | --- | --- | --- | --- | --- |
 | LLM 應用核心能力 | familiar | 自述已熟 agent/context window/三種 API/Python 基本/基礎 SQL，及「不信單一 agent」前提；教學跳過。 | 2026-06-17 | topics/llm-app-foundations.md |
 | AgentFlow 專案商業邏輯 | learning | 剛開課；MAP「路標非證據」已能複述(familiar)；pipeline/角色/腳本仍待教。 | 2026-06-17 | topics/agentflow-repo.md |
+| Dedup Schema Design | learning | 用 Vainglory 好友/公會類比。已答對 per-row vs per-pair 顆粒度。L1 進行中。 | 2026-06-23 | topics/dedup-schema.md |
+| Vercel 部署 | familiar→mastered | 楓之谷存檔+公告欄類比(A2)。4/4 MCQ 全對，主動用 ground truth 糾正教學者假設。懂 immutable/alias/promote/rollback。 | 2026-06-25 | topics/vercel-deploy.md |
+| Codex log churn / SSD endurance (#28224) | mastered | 罐頭工廠生產線類比(A3)。7/7 MCQ 全對。目標=練 GitHub issue/PR 求職。自己查真實 fork diff、抓出缺 opt-in 逃生門。 | 2026-06-26 | topics/codex-log-churn.md |
 
 ## Status Labels
 

@@ -93,6 +93,9 @@ Each `topics/<topic-slug>.md` should contain:
 ```markdown
 # <Topic>
 
+## Learner Goal
+- Why the user wants this topic (the concrete outcome they stated in Level 0). Drives level ordering and the per-level lens.
+
 ## Current Level
 - Status:
 - Last updated:
@@ -113,6 +116,72 @@ Each `topics/<topic-slug>.md` should contain:
 ```
 
 Use stable topic slugs, lowercase ASCII, hyphen-separated, for example `python-async.md`, `fastapi-dependencies.md`, `llm-evals.md`.
+
+## Level 0: Analogy & Depth Selection (互動起手式)
+
+Before planning ANY levels, run Level 0. This is a mandatory interactive checkpoint — AI does NOT start teaching until the user chooses.
+
+### The Goal: Build a Strong Mental Model
+
+In the AI era, memorizing facts is worthless — AI can look them up faster. What matters is having a **mental model** that lets you:
+
+- **Predict** what should happen before you see it
+- **Transfer** the pattern to new situations AI hasn't told you about
+- **Judge** whether AI's output makes sense or is hallucinated garbage
+
+A good analogy isn't decoration — it IS the mental model. When the user finishes, they should be able to reason about the topic using the analogy's intuition, even in scenarios they've never seen.
+
+### Why Level 0 Matters
+
+Picking the wrong analogy = a weak mental model that doesn't transfer. AI must think carefully:
+
+- **Shape of the topic**: Is it dynamic/static? Accumulative/resettable? Coordination/independent? Time-sensitive/permanent?
+- **Carrying capacity**: Which analogy can "carry" the ENTIRE topic, not just L1? If an analogy only works for the first 2 levels, it's a bad pick — the mental model will be incomplete.
+- **User's proven frames**: Check USER.md for analogies that already landed with this user. Prefer those unless the topic genuinely doesn't fit.
+
+### Elicit the Learner's Goal (motivation lens)
+
+The same topic taught toward different goals should produce different lessons. "Understand WAL" for a DBA, for an SSD-endurance debugger, and for someone trying to look hireable in a GitHub thread are three different courses. Before locking the level map, ask the user **why they want this** — the concrete outcome they're chasing, not just the topic name.
+
+- **Ask, don't assume.** Pose one short open question in the Level 0 prompt, e.g. "順便說一下：你學這個是想達成什麼？(看懂某段對話 / 修某個 bug / 面試 / 純好奇 / 想被某社群看見…)". Offer a few example answers so it's easy to reply, but keep it open-ended.
+- **Let the goal reshape the map.** Use the answer to reorder, add, or drop levels, and to pick a recurring **lens** — a per-level callout that ties each concept back to the user's goal (e.g. a "🎯 recruiter view" line showing how this exact technical move signals competence to maintainers).
+- **The goal can override defaults.** A stated goal outranks the generic "solid mental model" default — chase what the user actually wants, even if it means going deeper on one branch and skipping another.
+- **Record it.** Save the stated goal in the topic's learning file so future sessions stay aimed at it.
+- If the user gives no goal or says "just teach me", fall back to the standard mental-model framing — do not block on it.
+
+### Level 0 Output Format
+
+AI presents:
+
+0. **One goal question** (open-ended, with a few example answers) — what outcome the user is chasing. Weave its answer into the level map and the per-level lens.
+
+1. **3 Analogy Options** — each with:
+   - A one-line pitch (why this frame fits this topic)
+   - "Carrying forecast" — which concepts it handles well, and where it might strain
+   - Example mapping: one core concept → one scene from this analogy
+
+2. **Depth Options** — numbered (1/2/3) so user can answer like "A2" or "B1":
+   - 1) 輕鬆速成 — core mental model only; enough to predict the happy path and recognize when you're out of scope
+   - 2) 紮實打底 — solid mental model; can predict common cases, handle typical edge cases, and know where the model breaks down
+   - 3) 深挖細節 — comprehensive mental model; can reason about tricky trade-offs, explain "why not X", and extend the model to new scenarios
+
+Then WAIT for user to choose. Do not assume. Do not proceed.
+
+### Analogy Selection Discipline
+
+- **Prefer proven frames** from user's profile (USER.md) — they're already validated.
+- **One topic, one analogy** — never mix two game worlds or two metaphor systems mid-journey.
+- **Carry the knowledge ON the analogy** — if you can't explain the concept THROUGH the story (not beside it), the analogy doesn't fit.
+- **Verify before using** — if unsure about specific terms (game mechanics, era-specific content), web-search or ask user. Wrong-era references kill immersion.
+- **Novelty is OK** — if no existing frame fits, propose a new one, but explain why the user's known frames don't work for this topic.
+
+### After User Chooses
+
+- Confirm the choice briefly
+- NOW proceed to "Assess and Plan" — design the level map using the chosen analogy and depth
+- Record the chosen analogy in the topic's learning file for future sessions
+
+---
 
 ## Teaching Flow
 
@@ -160,9 +229,20 @@ If using a side agent to render HTML, give it a complete content spec and tell i
 
 - Use **bold** for the question. Do not use heading syntax.
 - Put each option on its own line, without blank lines between options.
-- Include at least one plausible but flawed distractor.
-- Vary the correct answer position.
 - Match difficulty to the current level.
+
+### Anti-Tell Rules (avoid giving the answer away by shape)
+
+The learner should pick the right answer by *reasoning*, not by spotting format tells. Two tells leak constantly — kill both:
+
+- **Position must be genuinely varied.** Do NOT default to A or B. Across a session, spread the correct answer roughly evenly over A/B/C/D. Before finalizing, glance at the previous 2-3 levels' answer positions and deliberately pick a different slot. If your draft keeps landing on B, that is the tell — move it.
+- **Length must not signal correctness.** The most common leak: the correct option is the longest, most detailed, most hedged ("...and X, which preserves Y"), while distractors are short. Test-savvy learners just pick the longest. Fix: make every option roughly the same length. Push the full justification into your post-answer explanation, NOT into the option text. The correct option should read as terse as the wrong ones.
+
+### Distractor Design (make wrong answers genuinely tempting)
+
+- **3 of the 4 options must be plausible.** Distractors should be wrong for a *subtle, real* reason — a common misconception, a half-truth, the right idea applied at the wrong layer, or a true statement that does not actually answer the question. Avoid distractors that are obviously absurd or trivially eliminated (those make it a 2-way guess).
+- **Tune distractor sharpness to depth.** At depth 1 (輕鬆速成), one clear right answer with softer distractors is fine. At depth 2-3 (紮實打底 / 深挖細節), make distractors close enough that the learner must actually understand the distinction to rule them out — near-misses, not strawmen.
+- **Exactly one option may be intentionally, purely dumb — for fun.** Include a single absurd/joke option that nobody would seriously pick, written to make the learner snort (e.g. a wildly wrong cause, a cartoon non-sequitur, a "delete the whole database" energy answer). Never make the funny option accidentally correct.
 
 ```markdown
 **問題: <question>**
