@@ -9,6 +9,7 @@
 | Dedup Schema Design | learning | 用 Vainglory 好友/公會類比。已答對 per-row vs per-pair 顆粒度。L1 進行中。 | 2026-06-23 | topics/dedup-schema.md |
 | Vercel 部署 | familiar→mastered | 楓之谷存檔+公告欄類比(A2)。4/4 MCQ 全對，主動用 ground truth 糾正教學者假設。懂 immutable/alias/promote/rollback。 | 2026-06-25 | topics/vercel-deploy.md |
 | Codex log churn / SSD endurance (#28224) | mastered | 罐頭工廠生產線類比(A3)。7/7 MCQ 全對。目標=練 GitHub issue/PR 求職。自己查真實 fork diff、抓出缺 opt-in 逃生門。 | 2026-06-26 | topics/codex-log-churn.md |
+| tmux | mastered | 舊楓之谷城鎮類比。L2-L6 全通：pane/window/session、持續性(detach/attach)、多 session(ls/attach -t/nested)、% 切 pane、pane 移動/關閉。全靠推理、抓出教學者 2 個流程錯。剩實機練。 | 2026-06-27 | topics/tmux.md |
 
 ## Status Labels
 

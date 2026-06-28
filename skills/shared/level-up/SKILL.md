@@ -15,6 +15,19 @@ Use this skill when the user asks to run `level-up`, wants staged coaching, or w
 - Persist only evidence-backed learning state. Record what the user proved, corrected, or said they already know; do not record "covered X" as learned.
 - **Engagement is a requirement, not decoration.** The real competitor for the learner's attention is YouTube Shorts / Instagram Reels. If a level reads like documentation, the user switches tabs and abandons learning. Content must be more fun than the feed. See "Engagement-First Teaching" below.
 
+## Output Discipline: keep bookkeeping OUT of the chat
+
+Two strictly separate channels — never mix them:
+
+- **(a) Silent side-effects:** editing learning records (INDEX / topic files), memory, or any notes. The learner NEVER sees these.
+- **(b) User-facing chat:** ONLY the lesson content + the MCQ / answer the learner needs right now.
+
+Never paste into the learner's chat: which files you updated, file paths, "紀錄更新好了 / record updated", Known Gaps, "等你回 LX / waiting for your answer", or any model-tag prefix like `[claude-cli/...]`. That is internal bookkeeping and reads as noise/leakage to the learner.
+
+Do the record edits **silently**, then send only the teaching content. Report a record update only if the user explicitly asks for it.
+
+> 2026-06-27: a tmux level-up run leaked a "學習紀錄也更新好了 + topic file paths + 等你回 L5" status message into the learner's Telegram chat. The learner screenshotted it and asked that no agent ever repeat it. This rule is the fix.
+
 ## Engagement-First Teaching (compete with the attention economy)
 
 A level is only useful if the user actually reads it instead of doom-scrolling. Optimize for "I can't stop reading," not "technically complete." This is non-negotiable for users who explicitly ask for it (check learning records / memory).
