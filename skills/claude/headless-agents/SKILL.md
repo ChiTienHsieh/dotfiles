@@ -24,15 +24,13 @@ surface instead (see Mode Awareness).
 - If running as the **orchestrator persona** (`cldo`), or any time the work
   **writes files** or needs to be watched/interrupted, do NOT delegate it
   headlessly here. Route it to an observable interactive surface, picking the
-  skill that matches the current environment:
-  - running under **cmux** → use the `cmux-orchestration` skill
-  - running under **tmux** → use the `tmux-orchestration` skill
+  `tmux-orchestration` skill.
 - Rule of thumb:
   - read-only + no network → headless is fine (the safe default).
   - read-only + network (`--search`) → headless is OK **only over trusted
     inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
-    web work to a cmux/tmux surface instead.
-  - mutating (writes files) → **always** an observable cmux/tmux surface, never
+    web work to a tmux surface instead.
+  - mutating (writes files) → **always** an observable tmux surface, never
     headless.
 
 ## When to Use Which
@@ -41,7 +39,7 @@ surface instead (see Mode Awareness).
 Task Type                           Codex              Gemini
 --------------------------------------------------------------------
 Web research + analysis             --search flag      Limited
-Multi-file refactoring              cmux/tmux surface  cmux/tmux surface
+Multi-file refactoring              tmux surface       tmux surface
 Quick code generation               Slower             Fast (Flash)
 Image/multimodal analysis           -i/--image         Native support
 Complex debugging (read-only)       Thorough           Surface level
@@ -87,14 +85,13 @@ codex --search exec -s read-only --skip-git-repo-check \
   repos, web pages, dependencies). See the orchestrator persona's reasoning.
 - Use it only over trusted inputs, and treat the result as if anything readable
   on the machine could have left it. For heavier or less-trusted web work, prefer
-  an observable cmux/tmux surface so a human can watch.
+  an observable tmux surface so a human can watch.
 
 ### Implementation / multi-file edits (mutating) — do NOT do headlessly
 
 Mutating work must run where a human can watch and interrupt. Do not run
 `codex exec -s workspace-write` (or higher) from this skill. Instead use the
-`cmux-orchestration` skill (under cmux) or the `tmux-orchestration` skill (under
-tmux), based on the current environment.
+`tmux-orchestration` skill.
 
 ### Key Flags (0.141)
 
@@ -116,7 +113,7 @@ Gemini is NOT inherently read-only. Under a permissive approval mode
 edit/write tools can mutate the workspace. To use it safely headless, treat it
 like Codex: drive it with a `-p` prompt and capture text via stdout redirect,
 and do NOT enable yolo / auto-edit approval modes. Anything that should change
-files goes to a cmux/tmux surface, not a headless Gemini run.
+files goes to a tmux surface, not a headless Gemini run.
 
 ### Basic Headless (read-only usage)
 ```bash
