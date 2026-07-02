@@ -33,3 +33,5 @@ node_modules/
 
 # Logs
 *.log
+
+**/.claude/.cc-writes/
