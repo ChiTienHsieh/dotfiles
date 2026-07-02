@@ -229,6 +229,15 @@ When the topic benefits from diagrams, comparisons, or interactive reading:
 - Put the main explanation in a self-contained HTML file in the current project, usually `explainer/` or `notes/`.
 - Keep CSS/JS inline. Do not use external CDN, external fonts, or `<script src>`.
 - Use zh-tw plain language and mobile-friendly layout.
+- **Theme: match the learner's gu-log blog (Solarized Light). Red is NOT a palette colour.** Reuse these exact tokens so every level looks consistent with their blog:
+  - bg `#fdf6e3`, surface/cards `#eee8d5`, surface-hover `#e5dfc9`, borders/dividers `#d3cbb7`
+  - body text `#556b73`, headings/muted `#4a5a5e`
+  - emphasis (bold / em / "this is important"): Mogu orange `#955330`; links/anchors/labels: deep blue `#1c679b`; positive/good: green `#1d6a5c`
+  - **Never colour bold body text red.** Reserve a single amber `#c47a00` on a pale `#fff3cd` background for genuine warning callouts only — nothing else uses red/amber.
+  - Cards/callouts: surface bg, 1px `#d3cbb7` border, optional 3–4px accent-coloured left border, radius 8–18px. Fonts: `Inter`, `Noto Sans TC`; zh body line-height 1.8, headings 1.3.
+  - The learner may override per-session (e.g. dark mode → gu-log Dracula: bg `#282a36`, text `#cecdda`, accent `#ff79c6`); honour it but keep Solarized Light as the standing default.
+- **Beginner-acronym test:** expand every English acronym/abbreviation on first use, e.g. `IBKR（盈透證券，一家美國網路券商）`, `VT（Vanguard 全世界股票 ETF）`. When several appear, add a short glossary box up front.
+- **After writing or updating an explainer HTML, do BOTH: (a) `open <abs-path>` so the learner sees it immediately, and (b) spawn a read-only fresh reviewer (a subagent or `codex review`) to catch beginner-confusing issues — unexpanded acronyms, undefined jargon, a broken/garnish-only analogy — before relying on it.**
 - In chat, give only a short intro plus the absolute file path. Ask the user to read it before the MCQ.
 - Verify the HTML has no external dependencies before handing it over:
 
