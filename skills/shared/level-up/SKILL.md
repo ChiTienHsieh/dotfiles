@@ -226,6 +226,7 @@ Prefer one narrow win per level. Avoid dumping the whole map when the user needs
 
 When the topic benefits from diagrams, comparisons, or interactive reading:
 
+- **Artifact form (page skeleton, micro-world interaction, built-in comprehension quiz) follows the shared `html-explainer` skill** — that skill is the recipe SSOT; this section only adds level-up-specific constraints (theme, language, delivery).
 - Put the main explanation in a self-contained HTML file in the current project, usually `explainer/` or `notes/`.
 - Keep CSS/JS inline. Do not use external CDN, external fonts, or `<script src>`.
 - Use zh-tw plain language and mobile-friendly layout.
