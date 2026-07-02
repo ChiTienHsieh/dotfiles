@@ -410,6 +410,16 @@ cldaddplaywright() {
     echo "(ﾉ◕ヮ◕)ﾉ Say 'use playwright mcp to open browser'"
 }
 
+# Safe planning session for sensitive dirs (e.g. ~).
+# plan mode  = CC can read & propose a plan, but cannot edit/move/delete anything.
+# safe-mode disables customizations, hooks, plugins, skills, and MCP servers.
+# --tools whitelist = no WebFetch/WebSearch/Agent/Edit/Write/Bash, so intended
+#   outbound traffic is CC's own model API to Anthropic ("ant-only").
+# Caveats: ExitPlanMode isn't whitelisted, so CC presents the plan as plain text
+#   (no interactive approve button); Read can still read file *contents* into
+#   context, so tell CC to skip sensitive files (.ssh, .aws, .env, ~/.codex/auth.json).
+alias plan-ant-only-cld='claude --safe-mode --permission-mode plan --tools "Read,Glob,Grep,TodoWrite"'
+
 # -----------------------------------------------------------------------------
 # Source machine-specific aliases (not tracked in dotfiles)
 # -----------------------------------------------------------------------------
