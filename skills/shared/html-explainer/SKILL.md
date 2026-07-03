@@ -44,7 +44,7 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 - 3–5 題選擇題，放頁面最底，全部用頁內 JS 判分：選了立刻回饋，答錯附一句「回去看第 N 段」的指路。
 - 錯誤選項要**真的有誘惑力**：常見誤解、對的概念用錯層次、半真半假。不要送分strawman。
 - 別用形狀洩題：正確選項不可以固定位置、不可以總是最長最詳細。解釋放在作答後回饋裡，不放在選項裡。
-- 立下規矩並寫在測驗開頭：**測驗沒過，不算讀完**。（Litt 的原版紀律：quiz 沒過不把 code 送出去 review。）
+- 立下規矩並寫在測驗開頭：**測驗沒過，不算讀完**。若呼叫方明確要求 learning-gated review，才把測驗當該流程的驗收門檻。
 
 ## 單檔硬規則
 
@@ -61,12 +61,12 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 - 直覺 = 這次改動的目標與本質，一句話
 - 微世界 = 可玩的關鍵行為（改前 vs 改後對照、逐步執行器）
 - 細節走讀 = literate diff：照理解順序走過改動，散文串接、嵌 code 片段
-- 測驗 = 5 題關於這次改動；沒過不 approve、不往下游送
+- 測驗 = 5 題關於這次改動；若呼叫方明確指定 learning-gated learning/code-explainer 交接，沒過才不往下游送
 
 ## 交付與驗收
 
 1. 寫完先自檢零依賴：`grep -cE '<script src|href="http|cdn|@import url' <file>` 必須是 0。
-2. `open <abs-path>` 直接開給讀者看，聊天裡只給一句簡介 + 絕對路徑。
+2. 允許且實務上可行時，用 `open <abs-path>` 直接開給讀者看；否則聊天裡只給一句簡介 + 絕對路徑。
 3. 自己過一遍測驗的每個選項路徑（對、錯、指路連結）確認 JS 判分沒壞。
 4. 有條件就 spawn 一個零上下文的 fresh reviewer 讀一遍，抓「沒展開的縮寫、只當裝飾的類比、預設讀者已懂的跳步」。
 
