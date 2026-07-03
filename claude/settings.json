@@ -79,7 +79,6 @@
     "hookify@claude-plugins-official": false,
     "learning-output-style@claude-plugins-official": true,
     "plugin-dev@claude-plugins-official": true,
-    "cth-plugins@cth-marketplace": false,
     "code-simplifier@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,

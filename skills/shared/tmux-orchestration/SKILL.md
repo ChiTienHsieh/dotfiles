@@ -114,6 +114,9 @@ tmux send-keys -t SESSION_NAME Enter
   controller defaults to checking only marker/report/git state, not the worker
   stream. Read the stream only for approval waits, timeout diagnosis, a blocked
   report, or active quality steering.
+- `scripts/...` paths in this skill resolve against the skill's own directory
+  (`~/dotfiles/skills/shared/tmux-orchestration/`), not your cwd — expand them
+  before running.
 - Monitor in three layers: deterministic completion uses a background shell
   watcher such as `scripts/agent-watch-marker.sh REPORT_PATH MARKER --timeout
   3600`; waits needing eyes use a cheap background subagent that polls in its

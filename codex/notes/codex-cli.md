@@ -13,8 +13,9 @@
 
 ## codex review 本機固定跑法（2026-07-04）
 
-- `codex review --commit <sha>` 不能同時附 custom prompt；CLI 會拒絕。要
-  simplify lens 就對 diff / uncommitted 另跑一次。
+- `codex review --commit <sha>` 與 `--base <branch>` 都不能同時附 custom
+  prompt；CLI 會拒絕（0.142.5 實測）。要 simplify lens 這類自訂視角，改用
+  `codex exec` 叫它自己跑 `git diff main...HEAD` 讀 diff。
 - sandbox 內遇到 `could not create PATH aliases` 警告或 `in-process app-server
   client: Operation not permitted`，直接走已核准的升權路徑重跑，不要試多種
   flag 變體。

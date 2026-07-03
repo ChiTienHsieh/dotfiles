@@ -127,6 +127,9 @@ The controller is an interface and judgment layer, not a doer. Internalize these
 
 ## Controller Workflow
 
+`scripts/...` paths below resolve against this skill's directory
+(`~/dotfiles/skills/shared/tmux-orchestration/`), not your cwd.
+
 1. Inspect the task, repo state, allowed edit paths, and stop conditions.
 2. Split work into independent prompts with exact deliverables, allowed paths, verification commands, and a marker-file completion contract.
 3. Start one new cmux surface per worker, or reuse an existing surface when appropriate. Stay in the current cmux window/workspace unless the user explicitly asks for a new one.

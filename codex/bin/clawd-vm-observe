@@ -45,7 +45,9 @@ case "$mode" in
     ;;
 esac
 
-exec clawd-ssh \
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+
+exec "$script_dir/clawd-ssh" \
   -o BatchMode=yes \
   -o ForwardAgent=no \
   -o ClearAllForwardings=yes \

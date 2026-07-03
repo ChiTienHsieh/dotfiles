@@ -80,9 +80,6 @@ enabled = true
 [plugins."vercel-plugin@vercel-vercel-plugin"]
 enabled = false
 
-[plugins."cth-plugins@cth-marketplace"]
-enabled = true
-
 [tui]
 animations = false
 terminal_title = ["run-state", "thread-title"]
