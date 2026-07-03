@@ -107,10 +107,3 @@
 - SSH 需要 `dangerouslyDisableSandbox: true`（sandbox 不允許 Unix socket）
 - VM 上的 Clawd skills/workspace path 屬於 machine-specific 設定，放在 local machine notes / VM 操作指南，不放 public dotfiles。
 
-## playwright-cli Usage
-- **CRITICAL**: For tasks requiring user login (OAuth, GCP Console, etc.), use `--headed` flag!
-  - `playwright-cli open "<url>" --headed` — opens visible browser window
-  - Without `--headed`, browser runs headless (invisible) — useless for manual login
-- Requires `dangerouslyDisableSandbox: true` (uses Unix sockets)
-- Use `playwright-cli open --help` to see command-specific options
-- After done: `playwright-cli session-stop-all` to clean up

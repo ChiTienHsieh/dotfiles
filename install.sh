@@ -27,6 +27,14 @@ backup_and_link() {
     local src="$1"
     local dest="$2"
 
+    # Guard: never create a symlink to a nonexistent source. A silent ln -sf
+    # here is how ~/.claude/skills once became a dangling link after a repo
+    # dir rename — fail loudly instead.
+    if [ ! -e "$src" ]; then
+        echo "  ERROR: link source missing, refusing to create dangling link: $src" >&2
+        return 1
+    fi
+
     # Create parent directory if needed
     mkdir -p "$(dirname "$dest")"
 
@@ -292,7 +300,6 @@ echo ""
 echo "[8/10] Installing Claude Code configuration..."
 CLAUDE_SKILLS_PRESERVE_FILE="${TMPDIR:-/tmp}/dotfiles-claude-skills-preserve.$$"
 collect_symlinked_dir_entries "$HOME/.claude/skills" "$CLAUDE_SKILLS_PRESERVE_FILE"
-ensure_real_dir "$HOME/.claude/commands"
 ensure_real_dir "$HOME/.claude/skills"
 
 # Main config files
@@ -305,8 +312,8 @@ if [ ! -e "$HOME/.claude/settings.json" ]; then
     echo "  Seeded: $HOME/.claude/settings.json"
 fi
 backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
-backup_and_link "$DOTFILES_DIR/claude/claude-powerline.json" "$HOME/.claude/claude-powerline.json"
 backup_and_link "$DOTFILES_DIR/claude/nvim-progress.json" "$HOME/.claude/nvim-progress.json"
+backup_and_link "$DOTFILES_DIR/claude/user-en-vocab.md" "$HOME/.claude/user-en-vocab.md"
 
 # Directories
 backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
@@ -321,24 +328,14 @@ restore_preserved_skill_links "$CLAUDE_SKILLS_PRESERVE_FILE" "$HOME/.claude/skil
 prune_stale_dotfiles_links "$HOME/.claude/skills"
 rm -f "$CLAUDE_SKILLS_PRESERVE_FILE"
 
-# Legacy command entrypoints are thin compatibility shims that delegate to skills.
-for cmd in chill.md eternal-code-seeker.md gsync.md iterate-worker-reviewer.md level-up.md night.md nvim-tutor.md remember.md wrap.md; do
-    backup_and_link "$DOTFILES_DIR/claude/commands/$cmd" "$HOME/.claude/commands/$cmd"
-done
+# Legacy command shims were removed (skills are directly user-invocable as
+# /skill-name); prune any leftover shim links from earlier installs.
+prune_stale_dotfiles_links "$HOME/.claude/commands"
 
 # yolo-cc CLI tool
 mkdir -p "$HOME/.local/bin"
 backup_and_link "$DOTFILES_DIR/yolo-cc/bin/yolo-cc" "$HOME/.local/bin/yolo-cc"
 
-# Plugins (personal marketplace - requires manual install after)
-# The marketplace is at: $DOTFILES_DIR/claude/plugins/
-# After running install.sh, run these commands in Claude Code:
-#   /plugin marketplace add ~/dotfiles/claude/plugins
-#   /plugin install cth-plugins@cth-marketplace
-echo "  [!] Personal plugins require manual setup in Claude Code:"
-echo "      /plugin marketplace add ~/dotfiles/claude/plugins"
-echo "      /plugin install cth-plugins@cth-marketplace"
-echo ""
 
 # -----------------------------------------------------------------------------
 # Codex CLI configuration
@@ -346,8 +343,14 @@ echo ""
 echo "[9/10] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
 backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
-backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
-configure_codex_cmux_permissions "$HOME/.codex/config.toml"
+# config.toml is seeded once, then owned by the live Codex runtime (it appends
+# projects/hooks/desktop state); unconditional copy would clobber live drift.
+if [ ! -e "$HOME/.codex/config.toml" ]; then
+    backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
+    configure_codex_cmux_permissions "$HOME/.codex/config.toml"
+else
+    echo "  ~/.codex/config.toml already exists, skipping config seed"
+fi
 if [ ! -e "$HOME/.codex/machine.md" ]; then
     backup_and_copy "$DOTFILES_DIR/codex/machine.md" "$HOME/.codex/machine.md"
 else
@@ -362,7 +365,10 @@ for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
 done
 ensure_real_dir "$HOME/.codex/skills"
 ensure_real_dir "$HOME/.agents/skills"
-for skill in "$DOTFILES_DIR"/codex/skills/.system "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
+# NOTE: codex/skills/.system was removed from the repo — codex-cli manages and
+# updates its own system skills under ~/.codex/skills/.system; vendoring a
+# snapshot here only re-installs stale copies over the live ones.
+for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
     is_linkable_skill_dir "$skill" || continue
     backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
 done
@@ -410,6 +416,21 @@ fi
 backup_and_link "$DOTFILES_DIR/bash/.aliases.local" "$HOME/.aliases.local"
 echo "  -> Add your machine-specific aliases here!"
 echo ""
+
+# -----------------------------------------------------------------------------
+# Postcondition: no dangling agent/skill links may survive an install run
+# -----------------------------------------------------------------------------
+DANGLING=0
+for dir in "$HOME/.claude/skills" "$HOME/.claude/commands" "$HOME/.codex/skills" "$HOME/.agents/skills"; do
+    [ -d "$dir" ] || continue
+    while IFS= read -r link; do
+        echo "  WARNING: dangling symlink: $link -> $(readlink "$link")" >&2
+        DANGLING=$((DANGLING + 1))
+    done < <(find "$dir" -maxdepth 1 -type l ! -exec test -e {} \; -print)
+done
+if [ "$DANGLING" -gt 0 ]; then
+    echo "  [!] $DANGLING dangling link(s) found — fix before relying on skills." >&2
+fi
 
 # -----------------------------------------------------------------------------
 # Done!
