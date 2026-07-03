@@ -19,6 +19,10 @@ Use when driving an interactive agent in a tmux pane from a controller.
   prompts in a file; the send-line just says "Read PATH and do it."
 - Capture panes (`capture-pane -p`) to confirm progress; do not assume idle
   means done.
+- Before `send-keys` to an agent pane, capture first and confirm it is not
+  showing an interactive dialog such as AskUserQuestion or an approval UI.
+  Text plus Enter sent into that dialog can choose an option for the user
+  (2026-07-04 %3 near miss). User-pending dialogs must be operated by the user.
 
 Failure patterns:
 
@@ -39,6 +43,9 @@ Use when writing a prompt file for a delegated worker.
   first.
 - Put long instructions in the file; keep the send-line a one-liner pointing at
   it.
+- Token-efficient delegation means not reading the worker output stream. It is
+  not mainly about choosing interactive vs exec surfaces; 2026-07-02 gu-log
+  tests showed the token savings come from marker/report polling.
 
 ## verification
 

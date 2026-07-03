@@ -11,6 +11,17 @@
   it outside the sandbox if the sandboxed attempt fails, then wait at least 60
   seconds before deciding it is hung or unavailable.
 
+## codex review 本機固定跑法（2026-07-04）
+
+- `codex review --commit <sha>` 不能同時附 custom prompt；CLI 會拒絕。要
+  simplify lens 就對 diff / uncommitted 另跑一次。
+- sandbox 內遇到 `could not create PATH aliases` 警告或 `in-process app-server
+  client: Operation not permitted`，直接走已核准的升權路徑重跑，不要試多種
+  flag 變體。
+- skill 驗證固定命令：`uv run --with pyyaml python
+  ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`，
+  避免重踩 `ModuleNotFoundError: yaml` 或 permission denied。
+
 ## 已知的 Codex CLI 限制
 
 - 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。

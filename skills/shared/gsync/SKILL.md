@@ -5,7 +5,9 @@ description: "Run the `gsync` workflow when the user wants git sync help, includ
 
 # gsync
 
-Use this skill when the user asks to run `gsync`.
+Use this skill when the user asks to run `gsync`, pull, catch up with remote,
+check ahead/behind, resolve divergence, or decide whether it is safe to
+commit and push.
 
 ## Command Template
 

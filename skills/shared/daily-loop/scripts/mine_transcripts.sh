@@ -177,6 +177,11 @@ def clean_bin:
                  | .message.content[]? | select(.type=="tool_use" and .name=="Bash")
                  | (.input.command // "") | clean_bin
                ) as $b ({}; .[$b] += 1) ),
+      read_files: ( reduce ( $w[]
+                 | select(.type=="assistant")
+                 | .message.content[]? | select(.type=="tool_use" and .name=="Read")
+                 | (.input.file_path // empty)
+               ) as $p ({}; .[$p] += 1) ),
       errorish: ( [ $w[]
                  | select(.type=="user")
                  | .message.content | select(type=="array") | .[]
@@ -237,6 +242,7 @@ def clean_bin:
                  | map(select(. != "bash" and . != "-lc" and . != "-c" and . != "sh"))
                  | (.[0] // "") | clean_bin
                ) as $b ({}; .[$b] += 1) ),
+      read_files: {},
       errorish: ( [ $w[]
                  | select(.type=="response_item")
                  | .payload | select(.type=="function_call_output")
@@ -316,6 +322,9 @@ def mergecounts(f): reduce (.[] | f | to_entries[]) as $e ({}; .[$e.key] += $e.v
     signals: {
       hot_bins: ( mergecounts(.bash_bins) | to_entries | map(select(.value >= 3))
                   | sort_by(-.value) | map({ bin: .key, n: .value }) ),
+      duplicate_read_hotspots: ( mergecounts(.read_files) | to_entries
+                  | map(select(.value > 3)) | sort_by(-.value)
+                  | map({ path: .key, n: .value }) ),
       recurring_openers: (
         [ $sessions[].snippets[]
           | ascii_downcase | gsub("[^a-z0-9 ]";" ") | gsub("  +";" ")
@@ -377,7 +386,13 @@ def commas(o): [ o | to_entries | sort_by(-.value) | .[] | "\(.key)×\(.value)" 
   ( if (.signals.recurring_openers | length) > 0
       then "- recurring ask openers (≥2×): " +
         ( [ .signals.recurring_openers[] | "\"\(.opener)\"×\(.n)" ] | join("; ") )
-      else "- recurring ask openers (≥2×): (none)" end )
+      else "- recurring ask openers (≥2×): (none)" end ),
+  ( "" ),
+  ( "## Duplicate Read Hotspots" ),
+  ( if (.signals.duplicate_read_hotspots | length) > 0
+      then "- Claude Read paths over 3×: " +
+        ( [ .signals.duplicate_read_hotspots[] | "\(.path)(\(.n))" ] | join(", ") )
+      else "- Claude Read paths over 3×: (none)" end )
 JQ
 
 printf '%s\n' "$AGG" | jq -r --argjson maxsnip "$MAX_SNIPPETS" "$MD_JQ"

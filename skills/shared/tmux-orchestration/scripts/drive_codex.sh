@@ -97,6 +97,17 @@ cmux_send_surface(){
   cmux send "${CMUX_WORKSPACE_ARGS[@]}" --surface "$surface" "$@"
 }
 
+prompt_visible(){
+  local screen="$1"
+  local prompt="$2"
+  local out_path="$3"
+  local marker="$4"
+  printf '%s\n' "$screen" | grep -Fq "$prompt" && return 0
+  printf '%s\n' "$screen" | grep -Fq "Read $PF_ABS" \
+    && printf '%s\n' "$screen" | grep -Fq "$out_path" \
+    && printf '%s\n' "$screen" | grep -Fq "$marker"
+}
+
 wait_ready(){
   local surface="$1"
   local trust_enters=0
@@ -140,11 +151,25 @@ main(){
     echo "[history] helper not executable: $HISTORY_HELPER"
   fi
 
-  # 送單行 prompt（不含換行避免提早送出），再單獨送 Enter
-  cmux_send_surface "$SURF" -- "Read $PF_ABS and follow it exactly. Write the report to $OUT_ABS and end the file with a line containing only $MARK."
+  # 送單行 prompt（不含換行避免提早送出），確認在輸入框後再單獨送 Enter
+  PROMPT_TEXT="Read $PF_ABS and follow it exactly. Write the report to $OUT_ABS and end the file with a line containing only $MARK."
+  cmux_send_surface "$SURF" -- "$PROMPT_TEXT"
   sleep 0.6
+  SCREEN="$(cmux_read_screen "$SURF" 40 2>/dev/null || true)"
+  if ! prompt_visible "$SCREEN" "$PROMPT_TEXT" "$OUT_ABS" "$MARK"; then
+    cmux_send_surface "$SURF" -- "$PROMPT_TEXT"
+    sleep 0.6
+    SCREEN="$(cmux_read_screen "$SURF" 40 2>/dev/null || true)"
+    if ! prompt_visible "$SCREEN" "$PROMPT_TEXT" "$OUT_ABS" "$MARK"; then
+      echo "[$SURF] prompt 未出現在輸入框，停止送出" >&2
+      echo "----- surface tail -----" >&2
+      printf '%s\n' "$SCREEN" >&2
+      exit 1
+    fi
+  fi
   cmux_send_surface "$SURF" "\n"
 
+  LAST_SCREEN=""
   start=$SECONDS
   while [ $((SECONDS-start)) -lt "$TO" ]; do
     if [ -f "$OUT" ] && [ "$(tail -n 1 "$OUT" 2>/dev/null)" = "$MARK" ]; then
@@ -152,11 +177,20 @@ main(){
       echo "----- $OUT -----"; tail -45 "$OUT"
       exit 0
     fi
+    LAST_SCREEN="$(cmux_read_screen "$SURF" 25 2>/dev/null || true)"
     sleep 5
   done
-  echo "[$SURF] TIMEOUT ${TO}s — 可能卡在 approve 或還在跑，需人工看一眼"
-  echo "----- surface tail -----"
-  cmux_read_screen "$SURF" 25 2>/dev/null
+  if [ ! -f "$OUT" ]; then
+    echo "[$SURF] TIMEOUT ${TO}s — OUTFILE 不存在: $OUT"
+  else
+    echo "[$SURF] TIMEOUT ${TO}s — OUTFILE 存在但 marker 不在最後一行: $OUT"
+  fi
+  echo "----- last surface tail -----"
+  if [ -n "$LAST_SCREEN" ]; then
+    printf '%s\n' "$LAST_SCREEN"
+  else
+    cmux_read_screen "$SURF" 25 2>/dev/null || true
+  fi
   exit 2
 }
 
