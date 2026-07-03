@@ -40,7 +40,7 @@ A level is only useful if the user actually reads it instead of doom-scrolling. 
 
 ### The learner's specific taste lives in their profile, not here
 
-Do not hedge with "some learners prefer X" — tune to the actual person. Their concrete framing (favorite game and era, silliness intensity, what delights/frustrates them) lives in their **USER.md** profile (for Claude Code, imported via CLAUDE.md). The orchestrator reads that profile and bakes the framing into each per-level content spec it hands the rendering agent. Keep the generic engagement principles here; keep the person-specific taste in USER.md.
+Do not hedge with "some learners prefer X" — tune to the actual person. Their concrete framing (favorite game and era, silliness intensity, what delights/frustrates them) lives in **`learning/user-profile.md`** (next to the learning records; moved out of the always-loaded USER.md). The orchestrator reads that profile and bakes the framing into each per-level content spec it hands the rendering agent. Keep the generic engagement principles here; keep the person-specific taste in the profile file.
 
 ### Reference example (study this for tone — for the RENDERING agent, not the orchestrator)
 
@@ -150,7 +150,7 @@ Picking the wrong analogy = a weak mental model that doesn't transfer. AI must t
 
 - **Shape of the topic**: Is it dynamic/static? Accumulative/resettable? Coordination/independent? Time-sensitive/permanent?
 - **Carrying capacity**: Which analogy can "carry" the ENTIRE topic, not just L1? If an analogy only works for the first 2 levels, it's a bad pick — the mental model will be incomplete.
-- **User's proven frames**: Check USER.md for analogies that already landed with this user. Prefer those unless the topic genuinely doesn't fit.
+- **User's proven frames**: Check `learning/user-profile.md` for analogies that already landed with this user. Prefer those unless the topic genuinely doesn't fit.
 
 ### Elicit the Learner's Goal (motivation lens)
 
@@ -180,7 +180,7 @@ Then WAIT for user to choose. Do not assume. Do not proceed.
 
 ### Analogy Selection Discipline
 
-- **Prefer proven frames** from user's profile (USER.md) — they're already validated.
+- **Prefer proven frames** from the user's profile (`learning/user-profile.md`) — they're already validated.
 - **One topic, one analogy** — never mix two game worlds or two metaphor systems mid-journey.
 - **Carry and verify the frame** — explain concepts through the story, not beside it; if unsure about game mechanics, era-specific content, or other source details, web-search or ask user before using them.
 - **Novelty is OK** — if no existing frame fits, propose a new one, but explain why the user's known frames don't work for this topic.
