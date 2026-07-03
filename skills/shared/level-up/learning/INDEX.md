@@ -4,6 +4,9 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| Transcript 研究決策關 | learning | A2 Vainglory shotcaller；決策走廊（分支/arbitrage/marker/helpers/新skill/出兵）。剛開課。 | 2026-07-03 | topics/transcript-study-decisions.md |
+| gu-log 大掃除回放 | learning | A1 Vainglory 深夜排位場；追劇+實戰 BOSS 關（#538 merge 等）；depth 3。剛開課。 | 2026-07-03 | topics/gu-log-cleanup-replay.md |
+| Dotfiles 10x 審計回放 | learning | A3 楓之谷倉庫大掃除；純娛樂追劇補進度；結尾接實戰決策關（4 ask_user + html* 融合 + merge main）。剛開課。 | 2026-07-03 | topics/dotfiles-10x-audit.md |
 | LLM 應用核心能力 | familiar | 自述已熟 agent/context window/三種 API/Python 基本/基礎 SQL，及「不信單一 agent」前提；教學跳過。**Gap: 不熟 message broker/Kafka/RabbitMQ/Celery，別當類比。** | 2026-07-01 | topics/llm-app-foundations.md |
 | AgentFlow 專案商業邏輯 | learning | 剛開課；MAP「路標非證據」已能複述(familiar)；pipeline/角色/腳本仍待教。 | 2026-06-17 | topics/agentflow-repo.md |
 | Dedup Schema Design | learning | 用 Vainglory 好友/公會類比。已答對 per-row vs per-pair 顆粒度。L1 進行中。 | 2026-06-23 | topics/dedup-schema.md |
