@@ -1,6 +1,6 @@
 ---
 name: trim
-description: Hunt and cut no-ops from a skill / prompt / agent-instruction file using fresh-eyes sub-agents. Use when the user wants to simplify, trim, declutter, or shrink a skill or prompt, or asks "is this prompt bloated", "remove the no-ops", "this skill is too verbose". Spawns one skeptic sub-agent per target file that runs the no-op test line by line (delete it — does the agent's behavior change? no → cut) and returns a punch list of candidate cuts; the main agent reviews and applies via PR, never silently. Named `trim` to not collide with the built-in `/simplify` (which trims CODE, not prompt prose).
+description: Use when the user wants to simplify, trim, declutter, or shrink a skill, prompt, playbook, AGENTS.md/CLAUDE.md, or other agent-instruction prose. `trim` cuts prompt prose; `/simplify` cuts code.
 ---
 
 # trim

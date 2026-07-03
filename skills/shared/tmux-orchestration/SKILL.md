@@ -1,6 +1,6 @@
 ---
 name: tmux-orchestration
-description: "Use when running, supervising, or delegating work to interactive agents inside tmux, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, fallback from zellij, or safe cleanup after completion."
+description: "Use when running, supervising, or delegating work to interactive agents inside tmux or cmux surfaces, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, event-based completion detection, marker-file completion fallback, or safe cleanup after completion."
 ---
 
 # tmux Orchestration
@@ -9,12 +9,38 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 
 ## Core Rules
 
-- Use tmux when zellij is unavailable, unreliable, or not requested.
 - Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session, and do NOT start a new cmux session, for this co-review case.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
 - Do not kill unrelated tmux sessions. Only close sessions created for the current task or explicitly named by the user.
+- For cmux-specific orchestration, read `references/cmux.md`; cmux is the secondary surface and this skill remains the entry point.
+
+## Delegation Contract
+
+Use this contract whenever a worker prompt, marker file task, or delegated
+surface will be read by another agent.
+
+- Marker-file 完工合約: every delegated worker writes a report to PATH and ends
+  it with one exact MARKER line; the controller polls the marker, not terminal
+  visual state.
+- Use fixed nouns "CC" and "user", never 你/我 — a relative pronoun flips
+  referent when a different agent reads the prompt.
+- Put long instructions in a file; keep the send-line a one-liner pointing at
+  it. `tmux send-keys` turns every newline in the argument into an Enter, so a
+  multi-line prompt submits in fragments.
+- Give an explicit completion contract: write output to PATH, end the file with
+  one exact MARKER line. The controller polls the marker, not the visual
+  "Working" state.
+- State the side-effect boundary up front: READ-ONLY research, or exactly which
+  paths may be edited, plus "do not commit/push" when the controller verifies
+  first.
+- Verify load-bearing claims with cheap read-only checks: grep for leftover
+  references, `git status` / `git diff --stat`, confirm files moved/deleted,
+  read only the one section whose accuracy matters.
+- Fresh-reviewer 驗證原則: for large artifacts, delegate the FULL review to a fresh worker rather than
+  re-reading everything yourself — a clean-context reviewer is at least as
+  reliable and saves the controller's context.
 
 ## Starting Claude Code
 
@@ -136,9 +162,10 @@ Decision rules:
 
 Before delegating or supervising a worker, read the shared lessons index:
 
-`~/dotfiles/skills/shared/delegation-lessons/MEMORY.md`
+`~/dotfiles/skills/shared/tmux-orchestration/references/lessons.md`
 
 It is a small index. Open ONLY the topic file relevant to the current delegation;
 do not read every topic each turn. After the delegation finishes, if you learned a
-durable lesson, update the relevant topic file and ensure the index has a one-line
-entry. Distill into reusable rules — do not append raw logs or one-off incident detail.
+durable lesson, update the relevant section or `references/cmux.md` when the
+lesson is cmux-specific. Distill into reusable rules — do not append raw logs or
+one-off incident detail.

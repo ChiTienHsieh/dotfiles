@@ -1,6 +1,6 @@
 ---
 name: oracle
-description: Use Oracle CLI for complex or risky second-model review, hard debugging, architecture checks, prompt/file bundling, and multi-model consultation when another frontier model can materially improve agent output.
+description: Use Oracle CLI for hard-bug second opinions, risky reviews, architecture tradeoffs, prompt/file bundle checks, or multi-model sign-off when another frontier model can materially improve agent output.
 ---
 
 # Oracle

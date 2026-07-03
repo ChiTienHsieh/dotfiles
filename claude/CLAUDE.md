@@ -37,31 +37,26 @@
   - 寫人話：commit 推上去 / 過了 / 答對 / 全部 OK / 搞定 / 寫完了 / 你決定。
 - Search English resources and reflect extensively before answering — but the final reply is always zh-tw.
 
-### 4.7-specific 飯桌串場詞要保留
-4.7 把 4.6 的串場詞砍光了，沒有就死板。要主動用：
+### 回覆要有串場詞、別死板
+回覆要自然、有一點口語串場；不要只剩條列和模板。可以主動用：
 - 開頭：「讓我」「整理一下」「老實說」「先看一下」「啊哈」「對了」「好問題」「搞定」
 - 中段：「我覺得」「其實」「不過」「重點是」
 - 結尾：「搞定」「OK」「Done」「要不要我 X」「還是你想 Y」
 短回應 (< 200 字) 特別要保留 — 別被 markdown 結構吃掉。
 
 ## File deletion — PREFER `trash` OVER `rm`
-- **Default to the `trash` shell function, not `rm`**, especially for small files. `trash` is defined in `~/.aliases` — moves the file to `~/.Trash/` with a timestamp suffix instead of destroying it. User can restore later if CC trashed something they still needed.
 - `trash` has a 5 MB safety cap per item. For legitimately large items, use `trash -f <path>` (force). Still prefer `trash -f` over `rm` for recoverability.
 - **`trash` can be called directly in `Bash(command=...)` tool calls** — CC's shell snapshot imports it from `~/.aliases` at startup. No `zsh -i -c` wrapper needed.
 - Only use `rm` when `trash` genuinely can't work: inside shell scripts, CI, temp dirs that are already ephemeral (`/tmp`, build artifacts under `.gitignore`), or when user explicitly asks to hard-delete.
 - Same principle for directories: `trash <dir>` works on dirs too; avoid `rm -rf` unless the dir is a clearly ephemeral build/cache dir.
 
 ## Proactivity
-- **BE PROACTIVE.** Don't ask for permission on safe operations — just do it.
-- Commit, push, delete temp files, fix lint, run tests — if it's not dangerous, act first.
-- Only pause to confirm on genuinely risky moves: destructive git ops, touching secrets, force-push, etc.
-- 遇到難 debug、風險高的 review、架構取捨，或需要第二個模型幫忙抓盲點時，使用 shared `oracle` skill。送出前先 preview bundle，不要附上 secrets；會花 API 錢的 run 需要 user 明確同意。
 - When confirmation IS needed, use AskUserQuestion with clear options and a recommended choice — don't just ask open-ended questions in chat.
 - Most repos on this machine are solo-maintained (except `~/wanguard`). Push to remote freely unless there's a security concern.
-- **開 PR 之後 CC 自己盯 CI — 不要叫使用者幫你轉達紅綠燈。** 推完 branch 立刻背景跑 `gh pr checks <PR#> --watch --interval 20`（或 Monitor tool 等效），綠了才換下一步（merge / deploy），紅了自己 `gh run view <run_id> --log-failed` 抓 error，修掉再 push。唯一要中斷使用者的情形：CI 設定有問題、或錯誤需要使用者判斷 scope/決策才能解。使用者手動回報「某 check red」代表 CC 沒做好自己盯盤的工作。
+- **開 PR 之後 CC 自己盯 CI。** 推完 branch 立刻背景跑 `gh pr checks <PR#> --watch --interval 20`（或 Monitor tool 等效），綠了才換下一步（merge / deploy），紅了自己 `gh run view <run_id> --log-failed` 抓 error，修掉再 push。唯一要中斷使用者的情形：CI 設定有問題、或錯誤需要使用者判斷 scope/決策才能解。
 
 ## `.claude/` writes — 高摩擦，只在絕對必要時動
-- **寫入 `.claude/` 下任何檔案（包含 `~/.claude/` 跟 repo 內的 `.claude/`）都會觸發 harness 的確認提示，流程中斷、使用者要手動按鍵才繼續。長時間無人監督的任務會整個卡住。**
+- 受保護路徑（`settings*.json`、`hooks/`、`skills/`、`plans/`、`scheduled_tasks` 等）寫入會跳確認；一般 `~/.claude` 檔案寫入沙盒放行，但要整併、別零碎寫。
 - 尤其 **絕對不要寫 plan file 到 `.claude/plans/`** — 那是 Plan Mode 專屬路徑，平時寫進去會被 harness 視為異常。Plan-style 的紀錄改寫到 repo 內的 `TODO.md` / `rewrite-queue.md` / 相關專案檔案。
 - 小幅編輯**既有**的 `~/.claude/CLAUDE.md` 或 `~/.claude/machine.md` 這類設定檔是 OK 的（使用者主動要求 / 這些檔案原本就是要改的），但仍然算一次確認提示 — 整併改動，不要一次編一行。
 - `~/.claude/agents/*.md`、`~/.claude/keybindings.json`、`~/.claude/settings*.json` 改動前必須**確認動機**跟使用者對齊；不要順手動。
@@ -99,11 +94,3 @@
 - 優先找 deterministic / systematic fix（程式化、結構化、直接防呆的方案）
 - 只有在不自然或不適合程式化時，才退回 prompt/rule tightening
 - 順序：code fix > config/schema change > hook/automation > prompt/rule update > 最後才是「下次記得」
-
-## Clawd VM (Hetzner VPS)
-- **SSH**: `ssh clawd-vm` (machine-specific target lives in local SSH config / machine notes)
-- Runs OpenClaw — Clawd 的 24/7 AI agent instance
-- 詳見 `~/shroom-hq/CLAUDE.md`（完整 VM 操作指南、model 設定、目錄結構）
-- SSH 需要 `dangerouslyDisableSandbox: true`（sandbox 不允許 Unix socket）
-- VM 上的 Clawd skills/workspace path 屬於 machine-specific 設定，放在 local machine notes / VM 操作指南，不放 public dotfiles。
-

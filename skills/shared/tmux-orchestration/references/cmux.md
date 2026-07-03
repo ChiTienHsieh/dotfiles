@@ -1,7 +1,4 @@
----
-name: cmux-orchestration
-description: "Use when orchestrating or delegating work to multiple Codex agents through cmux surfaces, especially when a Claude Code or Codex controller needs safe multi-agent coordination, event-based completion detection, marker-file completion fallback, or the drive_codex.sh helper."
----
+cmux 是次要 surface；主入口見 ../SKILL.md。
 
 # cmux Orchestration
 
@@ -165,7 +162,7 @@ problem until the fully targeted command fails the same way. This exact failure
 can happen when the controller is in another workspace and `surface:N` resolves
 against the wrong context.
 
-Use `cmux new-surface --type terminal` for new workers. `drive_codex.sh`
+Use `cmux new-surface --type terminal` for new workers. `scripts/drive_codex.sh`
 pins new worker surfaces to the resolved controller workspace. Avoid
 window/workspace creation commands unless explicitly requested by the user.
 
@@ -175,7 +172,7 @@ In the cmux app, use the left sidebar to inspect worker surfaces directly.
 
 When Claude Code is the controller, export
 `CMUX_ORCH_WORKSPACE=<real controller workspace id>` before calling
-`drive_codex.sh`, or otherwise pass it through to the helper. Claude Code's
+`scripts/drive_codex.sh`, or otherwise pass it through to the helper. Claude Code's
 Bash tool may run in a helper surface whose `$CMUX_SURFACE_ID` belongs to a
 different workspace than the visible Claude Code agent TUI, so automatic
 lookup from `$CMUX_SURFACE_ID` can target the helper workspace instead of the
@@ -185,6 +182,20 @@ The controller can learn its real workspace from the user or from the
 `◀ active` marker in `cmux tree` when the user is focused on the controller
 workspace. Codex-as-controller does not need this override because its shell
 surface is its controller surface.
+
+Workspace scoping details from the old delegation lessons:
+
+- `agent.hook.Stop` is workspace-scoped, not surface-scoped. Multiple workers
+  in one workspace need `session_id` correlation OR a marker/lease file to tell
+  them apart.
+- cmux replay-window detail: notification events can be suppressed
+  (nested/stale sessions); the replay window is bounded (~4096 events); slow
+  consumers get disconnected.
+- `surface:N` refs are resolved in the current cmux context and can be
+  ambiguous across workspaces. When inspecting or driving a surface outside the
+  controller's active workspace, include explicit `--window` and `--workspace`
+  targets before assuming a sandbox or permission problem.
+- Keep marker-file polling as the final completion contract and fallback.
 
 ## Delegation History
 
@@ -209,22 +220,22 @@ them. Do not commit it.
 
 ## delegate.sh
 
-Use `delegate.sh` as the one-command wrapper for routine delegation:
+Use `scripts/delegate.sh` as the one-command wrapper for routine delegation:
 
 ```bash
-./delegate.sh "short task title" [PROMPTFILE] [TIMEOUT]
+scripts/delegate.sh "short task title" [PROMPTFILE] [TIMEOUT]
 ```
 
 It auto-creates a scratch workdir, prompt copy, marker, and report path, then
-delegates through `drive_codex.sh`, which records the worker in delegation
+delegates through `scripts/drive_codex.sh`, which records the worker in delegation
 history for later cleanup.
 
 ## drive_codex.sh
 
-Use the bundled `drive_codex.sh` helper to drive one interactive Codex surface and wait for a marker file:
+Use the bundled `scripts/drive_codex.sh` helper to drive one interactive Codex surface and wait for a marker file:
 
 ```bash
-./drive_codex.sh SURFACE PROMPTFILE MARKER OUTFILE TIMEOUT NEWSURF
+scripts/drive_codex.sh SURFACE PROMPTFILE MARKER OUTFILE TIMEOUT NEWSURF
 ```
 
 - `SURFACE`: existing cmux surface, for example `surface:3`.
@@ -256,7 +267,7 @@ Marker-file polling is the fallback when events are not reliable enough for exac
 
 Before delegating or supervising a worker, read the shared lessons index:
 
-`~/dotfiles/skills/shared/delegation-lessons/MEMORY.md`
+`~/dotfiles/skills/shared/tmux-orchestration/references/lessons.md`
 
 It is a small index. Open ONLY the topic file relevant to the current delegation;
 do not read every topic each turn. After the delegation finishes, if you learned a

@@ -2,6 +2,15 @@
 
 這份檔案記錄調查過的 Codex CLI 怪癖、死路、與綁定特定版本的發現。每條都標日期，過時就刪掉。
 
+## CodexBar usage checks
+
+- For quota checks, prefer `codexbar usage --provider both --source cli`.
+- Plain `codexbar usage` may import browser cookies and trigger macOS Keychain
+  Safe Storage prompts that block non-interactive agents.
+- CodexBar can take a while to load, often around 30 seconds. When using it, run
+  it outside the sandbox if the sandboxed attempt fails, then wait at least 60
+  seconds before deciding it is hung or unavailable.
+
 ## 已知的 Codex CLI 限制
 
 - 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。

@@ -4,7 +4,7 @@
 #   NEWSURF 非空 -> 開新 cmux surface 跑 codex（ref 由 new-surface 回傳）；空 -> 用既有 SURFACE。
 set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)" || exit 1
-HISTORY_HELPER="$SCRIPT_DIR/scripts/delegation_history.sh"
+HISTORY_HELPER="$SCRIPT_DIR/delegation_history.sh"
 
 resolve_launcher_workspace(){
   [ -n "${CMUX_SURFACE_ID:-}" ] || return 0

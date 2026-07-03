@@ -45,19 +45,9 @@ git status --short 2>/dev/null || echo "(n/a)"
 - **卡住就跳過** — 需要使用者判斷的、需要密碼的、需要手動操作的 → 記在「待使用者處理」清單，不要卡住整個流程
 - **完成一項就更新 task plan** — 保持進度可追蹤
 
-### Step 2.5: 檢查相關 repo 並同步
+### Step 2.5: 相關 repo 檢查交給 Step 3 的 wrap
 
-一人專案，改動做完就 push — 睡前備份最重要。
-
-1. **目前的 repo** — 有改動就 commit + push
-2. **相關 repo**（例如 `~/dotfiles` 追蹤 `~/.codex/` 的 symlink 來源）— 也要檢查有沒有被弄髒，有的話一起 commit + push
-3. **本 session touched repos** — 使用 dirty report 盤點 `PostToolUse` 已追蹤到的 git roots；這是刻意取代 blocking `Stop` hook 的收尾檢查
-4. **多個 repo 都有改動** — 每個都推，不用問
-
-只有以下情況**不推**：
-- 含密碼 / secrets 的檔案在 diff 裡
-- 需要 force push（代表有 diverge，可能吃掉別人的東西）
-- upstream 有設保護規則擋住了
+相關 repo 檢查交給 Step 3 的 wrap；night 模式下 wrap 的 stop-and-ask 項目自動處理，secrets 與 force-push 除外。
 
 ### Step 3: 跑 wrap skill
 

@@ -1,6 +1,6 @@
 ---
 name: html-artifacts
-description: Create self-contained HTML artifacts for plans, reviews, reports, explainers, diagrams, prototypes, dashboards, custom editors, and other work products where Markdown would lose structure, interactivity, navigation, or export-back-to-agent workflows. Use when the user explicitly asks for an HTML artifact, interactive document, visual explainer, single-file prototype, diagram, deck, report, or browser-openable deliverable; otherwise suggest HTML first when it would materially improve review or decision-making.
+description: Create self-contained HTML artifacts for plans, reviews, reports, diagrams, prototypes, dashboards, custom editors, and other work products where Markdown would lose structure, interactivity, navigation, or export-back-to-agent workflows. Use when the user explicitly asks for an HTML artifact, interactive document, single-file prototype, diagram, deck, report, or browser-openable deliverable; for learning/teaching pages use the html-explainer skill instead.
 ---
 
 # HTML Artifacts
