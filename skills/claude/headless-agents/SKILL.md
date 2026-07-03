@@ -23,27 +23,23 @@ surface instead (see Mode Awareness).
 - This skill is for **normal Claude Code sessions** doing cheap, read-only,
   fire-and-forget headless work.
 - If running as the **orchestrator persona** (`cldo`), or any time the work
-  **writes files** or needs to be watched/interrupted, do NOT delegate it
-  headlessly here. Route it to an observable interactive surface, picking the
-  `tmux-orchestration` skill.
+  **writes files** or needs to be watched/interrupted, route it through
+  `tmux-orchestration` instead.
 - Rule of thumb:
   - read-only + no network → headless is fine (the safe default).
   - read-only + network (`--search`) → headless is OK **only over trusted
     inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
     web work to a tmux surface instead.
-  - mutating (writes files) → **always** an observable tmux surface, never
-    headless.
+  - mutating (writes files) → follow `tmux-orchestration`, never this skill.
 
 ## When to Use Which
 
 ```
 Task Type                           Codex              Gemini
 --------------------------------------------------------------------
-Web research + analysis             --search flag      Limited
-Multi-file refactoring              tmux surface       tmux surface
-Quick code generation               Slower             Fast (Flash)
+Read-only research                  Thorough           Fast
 Image/multimodal analysis           -i/--image         Native support
-Complex debugging (read-only)       Thorough           Surface level
+Debugging analysis (read-only)      Thorough           Surface level
 ```
 
 ## Codex CLI Commands
@@ -87,12 +83,6 @@ codex --search exec -s read-only --skip-git-repo-check \
 - Use it only over trusted inputs, and treat the result as if anything readable
   on the machine could have left it. For heavier or less-trusted web work, prefer
   an observable tmux surface so a human can watch.
-
-### Implementation / multi-file edits (mutating) — do NOT do headlessly
-
-Mutating work must run where a human can watch and interrupt. Do not run
-`codex exec -s workspace-write` (or higher) from this skill. Instead use the
-`tmux-orchestration` skill.
 
 ### Key Flags
 

@@ -17,16 +17,6 @@ Use this skill when the user asks to run `night`, says night night, or wants Cod
 
 **備份原則：一人專案，大膽 push。** 這台機器上的 repo 幾乎都是使用者自己一個人在維護的。收尾時一律 commit + push 到 remote 備份進度，不需要猶豫。只有明確危險的情況（force push main、push 含密碼的檔案）才需要跳過。
 
-## Context Commands
-
-When this skill runs, inspect the current task list and gather git state with:
-
-```bash
-git branch --show-current 2>/dev/null || echo "(n/a)"
-git status --short 2>/dev/null || echo "(n/a)"
-/usr/bin/python3 "$HOME/dotfiles/codex/hooks/stop_dirty_worktree.py" --dirty-report --cwd "$PWD" 2>/dev/null || echo "(dirty report unavailable)"
-```
-
 ## Execution Flow
 
 ### Step 1: 盤點未完成的工作
@@ -51,35 +41,11 @@ git status --short 2>/dev/null || echo "(n/a)"
 
 ### Step 3: 跑 wrap skill
 
-所有能做的都做完之後，使用 `$wrap` 的流程，讓它處理：
-- commit 未 commit 的改動
-- push 到 remote
-- 儲存 memory
-- 產出 wrap-up 報告
+所有能做的都做完之後，跑 `$wrap`，但套用 night policy：不要問問題；可安全處理的就自己處理；不安全或需要使用者判斷的項目跳過並記錄。
 
 ### Step 4: 晚安報告
 
-在 wrap 報告之後，加一段簡短的晚安訊息：
-
-```
----
-🌙 晚安報告
-
-### 幫你做完的
-- [x] ...
-
-### 明天起來要處理的
-- [ ] ... （原因：需要你判斷 / 需要 sudo / ...）
-
-晚安，明天見 (￣▽￣)／
-```
-
-如果沒有待辦事項（一切都已經搞定了），直接：
-
-```
----
-🌙 一切搞定，安心睡 (￣▽￣)／
-```
+在 wrap 報告之後，加一段簡短的晚安報告，只寫相對於 wrap 的 delta：幫你做完的、明天起來要處理的；如果沒有待辦事項，就直接說一切搞定。
 
 ## Style
 

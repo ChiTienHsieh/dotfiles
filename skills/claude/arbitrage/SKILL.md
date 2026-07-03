@@ -51,40 +51,17 @@ When exact model routing matters, read `references/model-routing.md`.
 
 ## Dispatch Protocol
 
-Use `tmux-orchestration` for delegated implementation. The contract is a prompt
-file, an observable Codex TUI surface, a marker-file report, and controller-side
-verification. Do not delegate file-mutating work via headless `codex exec`.
-
-Read-only headless Codex is allowed for the controller's own verification or
-research, such as `codex review` or `codex exec --sandbox read-only`.
+Use `tmux-orchestration` for delegated implementation and follow its Delegation
+Contract for prompt files, observable Codex TUI surfaces, marker reports, and
+controller-side verification. Do not delegate file-mutating work via headless
+`codex exec`; read-only headless Codex remains allowed for controller-side
+verification or research.
 
 1. Inspect the repo state, dirty files, stop conditions, and relevant docs.
-2. Write a worker prompt file in an ignored scratch directory. Include:
-   - objective;
-   - exact files or areas the worker may touch;
-   - constraints and non-goals;
-   - acceptance criteria;
-   - required verification commands;
-   - report path and final marker line.
-3. Start or reuse the appropriate tmux surface with interactive Codex.
-4. Send a one-line instruction that points Codex at the prompt file and report
-   path.
-5. Observe the surface when useful. The user may manually intervene, tweak the
-   prompt, approve actions, or enable `/fast`.
-6. Wait for the marker-file report, then verify worker claims from the
-   controller session.
-7. Review the diff before committing or pushing.
-
-## Delegation Surface Rules
-
-- Follow the `tmux-orchestration` skill with tmux send-keys.
-- Keep long prompts in files; do not paste large prompts directly into the TUI.
-- Poll a marker file for completion instead of trusting terminal visual state.
-- Never use YOLO, bypass, or danger flags.
-- Never ask a worker to weaken sandboxing, disable approvals, touch secrets, or
-  bypass guardrails.
-- Use one Codex surface per coherent unit of work. Split at API or ownership
-  boundaries, not in the middle of a tightly coupled change.
+2. Write a worker prompt that captures objective, allowed scope, constraints,
+   acceptance criteria, verification, and report marker.
+3. Dispatch through the `tmux-orchestration` Delegation Contract.
+4. Verify worker claims and review the diff before committing or pushing.
 
 ## Frontend Validation Loop
 

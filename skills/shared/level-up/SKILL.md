@@ -169,9 +169,7 @@ AI presents:
 0. **One goal question** (open-ended, with a few example answers) — what outcome the user is chasing. Weave its answer into the level map and the per-level lens.
 
 1. **3 Analogy Options** — each with:
-   - A one-line pitch (why this frame fits this topic)
-   - "Carrying forecast" — which concepts it handles well, and where it might strain
-   - Example mapping: one core concept → one scene from this analogy
+   - A one-line pitch, its carrying forecast, and one verified concept→scene mapping.
 
 2. **Depth Options** — numbered (1/2/3) so user can answer like "A2" or "B1":
    - 1) 輕鬆速成 — core mental model only; enough to predict the happy path and recognize when you're out of scope
@@ -184,8 +182,7 @@ Then WAIT for user to choose. Do not assume. Do not proceed.
 
 - **Prefer proven frames** from user's profile (USER.md) — they're already validated.
 - **One topic, one analogy** — never mix two game worlds or two metaphor systems mid-journey.
-- **Carry the knowledge ON the analogy** — if you can't explain the concept THROUGH the story (not beside it), the analogy doesn't fit.
-- **Verify before using** — if unsure about specific terms (game mechanics, era-specific content), web-search or ask user. Wrong-era references kill immersion.
+- **Carry and verify the frame** — explain concepts through the story, not beside it; if unsure about game mechanics, era-specific content, or other source details, web-search or ask user before using them.
 - **Novelty is OK** — if no existing frame fits, propose a new one, but explain why the user's known frames don't work for this topic.
 
 ### After User Chooses
@@ -226,10 +223,8 @@ Prefer one narrow win per level. Avoid dumping the whole map when the user needs
 
 When the topic benefits from diagrams, comparisons, or interactive reading:
 
-- **Artifact form (page skeleton, micro-world interaction, built-in comprehension quiz) follows the shared `html-explainer` skill** — that skill is the recipe SSOT; this section only adds level-up-specific constraints (theme, language, delivery).
-- Put the main explanation in a self-contained HTML file in the current project, usually `explainer/` or `notes/`.
-- Keep CSS/JS inline. Do not use external CDN, external fonts, or `<script src>`.
-- Use zh-tw plain language and mobile-friendly layout.
+- Follow the shared `html-explainer` skill for artifact structure, self-contained HTML, inline CSS/JS, no external dependencies, reviewer checks, and built-in comprehension quiz. This section only adds level-up-specific theme, language, and delivery constraints.
+- Use zh-tw plain language and a mobile-friendly layout.
 - **Theme: match the learner's gu-log blog (Solarized Light). Red is NOT a palette colour.** Reuse these exact tokens so every level looks consistent with their blog:
   - bg `#fdf6e3`, surface/cards `#eee8d5`, surface-hover `#e5dfc9`, borders/dividers `#d3cbb7`
   - body text `#556b73`, headings/muted `#4a5a5e`
@@ -238,14 +233,7 @@ When the topic benefits from diagrams, comparisons, or interactive reading:
   - Cards/callouts: surface bg, 1px `#d3cbb7` border, optional 3–4px accent-coloured left border, radius 8–18px. Fonts: `Inter`, `Noto Sans TC`; zh body line-height 1.8, headings 1.3.
   - The learner may override per-session (e.g. dark mode → gu-log Dracula: bg `#282a36`, text `#cecdda`, accent `#ff79c6`); honour it but keep Solarized Light as the standing default.
 - **Beginner-acronym test:** expand every English acronym/abbreviation on first use, e.g. `IBKR（盈透證券，一家美國網路券商）`, `VT（Vanguard 全世界股票 ETF）`. When several appear, add a short glossary box up front.
-- **After writing or updating an explainer HTML, do BOTH: (a) `open <abs-path>` so the learner sees it immediately, and (b) spawn a read-only fresh reviewer (a subagent or `codex review`) to catch beginner-confusing issues — unexpanded acronyms, undefined jargon, a broken/garnish-only analogy — before relying on it.**
 - In chat, give only a short intro plus the absolute file path. Ask the user to read it before the MCQ.
-- Verify the HTML has no external dependencies before handing it over:
-
-```bash
-grep -cE '<script src|href="http|cdn|@import url' <file>
-```
-
 If using a side agent to render HTML, give it a complete content spec and tell it to render only, not invent lesson content.
 
 ## MCQ Rules
