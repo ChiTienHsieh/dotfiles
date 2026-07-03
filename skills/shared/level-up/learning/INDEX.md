@@ -4,6 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| html-artifacts vs html-explainer 分工 | mastered | A2 楓之谷商店街類比，3/3 MCQ 全對：work artifact vs 教學配方、description 路由、品名搶字眼病灶。自述已熟 agent skills 觸發機制。 | 2026-07-04 | topics/html-duo.md |
 | Transcript 研究決策關 | learning | A2 Vainglory shotcaller；決策走廊（分支/arbitrage/marker/helpers/新skill/出兵）。剛開課。 | 2026-07-03 | topics/transcript-study-decisions.md |
 | gu-log 大掃除回放 | learning | A1 Vainglory 深夜排位場；追劇+實戰 BOSS 關（#538 merge 等）；depth 3。剛開課。 | 2026-07-03 | topics/gu-log-cleanup-replay.md |
 | Dotfiles 10x 審計回放 | learning | A3 楓之谷倉庫大掃除；純娛樂追劇補進度；結尾接實戰決策關（4 ask_user + html* 融合 + merge main）。剛開課。 | 2026-07-03 | topics/dotfiles-10x-audit.md |
