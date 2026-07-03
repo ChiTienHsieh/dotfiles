@@ -1,6 +1,6 @@
 ---
 name: html-artifacts
-description: Create self-contained HTML artifacts for plans, reviews, reports, diagrams, prototypes, dashboards, custom editors, and other work products where Markdown would lose structure, interactivity, navigation, or export-back-to-agent workflows. Use when the user explicitly asks for an HTML artifact, interactive document, single-file prototype, diagram, deck, report, or browser-openable deliverable; for learning/teaching pages use the html-explainer skill instead.
+description: Create self-contained HTML artifacts for plans, reviews, reports, research syntheses, diagrams, prototypes, dashboards, custom editors, and other work products where Markdown would lose structure, interactivity, navigation, or export-back-to-agent workflows. Use when the user explicitly asks for an HTML artifact, interactive document, single-file prototype, diagram, deck, report, or browser-openable deliverable; for learning/teaching pages use the html-explainer skill instead.
 ---
 
 # HTML Artifacts
@@ -16,7 +16,7 @@ Default to **Ask Before HTML** unless the user explicitly asks for HTML. The ski
 Use HTML directly when the user asks for:
 
 - an HTML artifact, interactive document, browser-openable deliverable, or self-contained page
-- a visual plan, research explainer, report, status page, review artifact, diagram, deck, prototype, or custom editor
+- a visual plan, research synthesis, report, status page, review artifact, diagram, deck, prototype, or custom editor
 - a shareable local artifact that benefits from tabs, filters, copy buttons, export controls, or visual hierarchy
 
 Suggest HTML first when:
@@ -32,6 +32,8 @@ Stay in Markdown when:
 - the output is intended to be a frequently edited source file
 - a real application, package, or hosted frontend is the actual deliverable
 - HTML would only be decoration
+
+Unless the request is explicitly a teaching one, do not add quizzes, teaching analogies, or micro-worlds — route teaching requests to the html-explainer skill.
 
 ## Artifact Requirements
 

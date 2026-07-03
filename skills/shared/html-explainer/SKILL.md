@@ -1,6 +1,6 @@
 ---
 name: html-explainer
-description: Recipe for effective self-contained HTML learning artifacts — single-file explainer pages that teach ONE concept through a strong analogy carried throughout, an interactive micro-world the reader manipulates, and a built-in comprehension quiz. Use when the user asks for an HTML explainer, learning page, concept lesson, or code/diff explainer doc, or when the level-up workflow needs a level rendered as HTML.
+description: Recipe for effective self-contained HTML learning artifacts — single-file explainer pages that teach ONE concept through a strong analogy carried throughout, an interactive micro-world the reader manipulates, and a built-in comprehension quiz. Use when the user asks for an HTML explainer, learning page, concept lesson, or a code/diff explainer doc that teaches a person to understand a change (not a merge-decision review), or when the level-up workflow needs a level rendered as HTML.
 ---
 
 # html-explainer — 有效的 HTML 學習頁配方
@@ -73,5 +73,5 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 ## 跟其他 skill 的分工
 
 - **level-up**：教學「工作流程」SSOT（等級規劃、學習紀錄、聊天內 MCQ、類比選擇儀式）。它要渲染 HTML 教材時，用本 skill 當配方。
-- **html-artifacts**：一般工作產出（計畫、review、報告）的 HTML。學習頁歸這裡。
+- **html-artifacts**：一般工作產出（計畫、review、報告）的 HTML。學習頁歸這裡。目的不是「教懂人」的一般 report/review，不用本 skill。
 - **playground / dataviz**：前者是「調參數→複製 prompt」工具、後者是圖表規範——都不是教學頁；但微世界需要圖表時可參照 dataviz 的配色紀律。

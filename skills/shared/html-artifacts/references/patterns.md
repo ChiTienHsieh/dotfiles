@@ -20,7 +20,7 @@ Useful controls: tabs, filters, priority chips, expandable rationale, copy-as-Ma
 Use when Markdown would hide relationships between files, risks, and suggested fixes.
 
 - **Review dashboard**: findings by severity, affected area, status, and test coverage; keep the highest-risk issue visible first.
-- **Annotated diff explainer**: file list on the left, selected explanation on the right; use this for conceptual review, not as a replacement for real diffs.
+- **Diff review walkthrough**: file list on the left, selected explanation on the right; use this for conceptual review, not as a replacement for real diffs.
 - **Module map**: nodes for modules and edges for imports, data flow, or ownership; link each node to key files.
 - **Risk register**: table for behavior risk, blast radius, mitigation, owner, and verification.
 
@@ -52,7 +52,7 @@ Useful controls: fit-to-screen, section nav, keyboard arrows, export speaker not
 
 Use when the user needs a readable synthesis with source grouping, confidence, or multiple lenses.
 
-- **Research explainer**: summary, key claims, evidence, caveats, and source list.
+- **Research synthesis**: summary, key claims, evidence, caveats, and source list.
 - **Status report**: current state, milestones, blockers, risks, and next actions.
 - **Incident report**: timeline, impact, detection, root cause, remediation, and follow-ups.
 - **Knowledge map**: topics, relationships, unresolved questions, and recommended reading order.

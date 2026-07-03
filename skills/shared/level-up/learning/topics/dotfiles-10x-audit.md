@@ -8,15 +8,14 @@
 - A3：楓之谷・倉庫大掃除（永久存檔不重置 → dotfiles）。單一世界觀一路扛到底，不混 Vainglory。
 
 ## Current Level
-- Status: learning — L1-L3 通關，L4 的 MCQ 已出題**尚未作答**（marker file vs 盯畫面）。重開機後從「收 L4 答案」續跑。
-- Last updated: 2026-07-03（user 重開機前 wrap）
-- Confidence: 高（3/3 一次過，且能自行延伸洞見）
+- Status: learning — L1-L7 通關（L7 決策全數拍板並施工完畢），剩 L8 BOSS：merge 回 main。
+- Last updated: 2026-07-04
+- Confidence: 高（6/7 一次過 + L4 補考過，且能自行延伸洞見）
 
-## Resume Point（重開機後讀這裡）
-- 下一步：收 L4 MCQ 答案（正解=「畫面安靜≠完工，marker 檔才是主動完工宣告」，位置 B）→ L5 詐騙招牌整頓。
-- 三份 Codex 分析報告已從 /tmp 搶救到 ~/dotfiles/output/audit-2026-07-03/session2-analysis/（html-fusion 判決 SEPARATE；trim-sweep 省 372-493 行 top5；instructions-diet 已完成待讀）。舊審計全紀錄在同 dir 的 audit-main/。
-- L7 議程：4 個 ask_user + playwright-cli 手動移除 + html* 融合判決 + trim 清單 + instructions-diet + %104 的兩條規則候選 + 技能圖鑑。L8 = merge main 方式。
-- 跨 session HOLD 清單與 %104 分工見 Teaching Notes。
+## Resume Point
+- 下一步：L8 BOSS — 未推 commit 疊到 8 筆，先跑 codex review（安全+simplify）再 push branch，merge main 方式由 user 決定（機制：`git push origin skill/effective-html-explainer:main`，共用 tree 不 checkout）。
+- 待收：playwright-cli 上游同步+trim（Codex 在 tmux `trim-worker` 執行中，marker=PLAYWRIGHT_DONE）；user 手動移除 playwright-cli plugin（/plugin UI）。
+- 三份 Codex 分析報告在 ~/dotfiles/output/audit-2026-07-03/session2-analysis/；舊審計全紀錄在同 dir 的 audit-main/。
 
 ## Level Map
 - L1 十小時的裸裝時代 — ~/.claude/skills 斷鏈 + symlink 深知識（dangling link 成因）
@@ -40,6 +39,8 @@
 - 2026-07-03 L5 ✅：答對「persona skill 掛 disable-model-invocation 的理由 = 開戲的決定權屬於 user，模型代開永遠是打擾」，一次過。
 - 2026-07-03 L6 ✅：答對「simplify 審查視角 = 規則庫的反向壓力，防規則只增不減」，一次過。並主動提案 pre-commit secret-scan hook（deterministic gate 補足語意 review）— 好直覺，排入 L7。
 - user 對紀錄格式的回饋：不要記選項字母（如「答 C」），記「答對了什麼概念」；MCQ 位置輪替另外用 Teaching Notes 一行追蹤。
+- 2026-07-04 L7 ✅ 決策全數拍板並施工：craft-goal 升級成 CC/Codex 雙向（依任務性質+quota 選接棒者）；nvim-tutor+進度檔、hatch-pet 退役進垃圾桶（pets 素材留）；codex/bin/ssh 改名 clawd-ssh 解 PATH 遮蔽；pre-commit 裝 gitleaks 秘密掃描（實彈測過）；trim 8 skills -227 行（Codex 打手+CC 驗收）；instructions-diet 激進版 371→154 行（教學框架移到 level-up learning/user-profile.md）；html duo 判決 SEPARATE（user 上完 3 關迷你課親自下判決）＋改字彙根治品名搶字眼（Research synthesis / Diff review walkthrough，explainer 一詞專屬 html-explainer）。
+- 2026-07-04 html-duo 迷你課：user 3 關全通，展現能用自己的話重構「work artifact vs 教學配方」分界（詳見 topics/html-duo.md，教學 CC 記錄）。
 
 ## Teaching Notes
 - 90% 劇情 10% 技術錨點；MCQ 遵守 anti-tell（位置分散、長度一致、一個純搞笑選項）。
