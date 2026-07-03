@@ -9,9 +9,6 @@
   "permissions": {
     "allow": [
       "Read(**)",
-      "Read(/Users/sprin/.claude/projects/**)",
-      "Read(/Users/sprin/.codex/sessions/**)",
-      "Bash(/Users/sprin/dotfiles/skills/shared/daily-loop/scripts/mine_transcripts.sh:*)",
       "Glob(**)",
       "Grep(**)",
       "WebSearch",
@@ -108,9 +105,7 @@
       ],
       "allowUnixSockets": [
         "~/.local/state/cmux/cmux.sock",
-        "~/.local/state/cmux",
-        "/private/tmp/tmux-501/default",
-        "/private/tmp/tmux-501"
+        "~/.local/state/cmux"
       ]
     },
     "filesystem": {

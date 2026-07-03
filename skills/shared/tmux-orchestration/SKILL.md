@@ -29,9 +29,6 @@ surface will be read by another agent.
 - Put long instructions in a file; keep the send-line a one-liner pointing at
   it. `tmux send-keys` turns every newline in the argument into an Enter, so a
   multi-line prompt submits in fragments.
-- Give an explicit completion contract: write output to PATH, end the file with
-  one exact MARKER line. The controller polls the marker, not the visual
-  "Working" state.
 - State the side-effect boundary up front: READ-ONLY research, or exactly which
   paths may be edited, plus "do not commit/push" when the controller verifies
   first.

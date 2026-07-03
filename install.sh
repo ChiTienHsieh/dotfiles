@@ -430,6 +430,8 @@ for dir in "$HOME/.claude/skills" "$HOME/.claude/commands" "$HOME/.codex/skills"
 done
 if [ "$DANGLING" -gt 0 ]; then
     echo "  [!] $DANGLING dangling link(s) found — fix before relying on skills." >&2
+    echo "  Installation FAILED the postcondition check." >&2
+    exit 1
 fi
 
 # -----------------------------------------------------------------------------
