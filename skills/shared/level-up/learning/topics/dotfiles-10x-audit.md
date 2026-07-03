@@ -35,10 +35,14 @@
 - 2026-07-03 L2 ✅：答對 plugin 快照撞名雙載題，且自己延伸出正確洞見：過期 skill 內容會把 AI 引到錯的路上（stale guidance = 主動破壞，不只是死重）。
 - 2026-07-03 user 提案：效法「smart model 少吃指令」思路，大幅精簡 always-loaded 的 CLAUDE.md/AGENTS.md → 已派 Codex 分析（instructions-diet），L7 一併拍板。
 - 2026-07-03 L3 ✅：答對 seed-if-missing 概念（範本只在 live 不存在時發放），一次過。中途經歷兩輪 %104 跨 agent 協調插播仍接得回來。
+- 2026-07-03 L4 ❌（第一次失手）：marker file 題選了「省 quota」— 被本關的慢燒主題帶走，把「訊號正確性」誤讀成「成本考量」。已換角度重教（畫面靜止的四種狀態不可分辨），補一題「暗號行 vs 檔案存在」檢核中。
+- 2026-07-03 L4 補考 ✅：答對「暗號行證明報告完整寫完，檔案存在≠寫完」。並自行提出高品質洞見：capture-pane 是靜態快照，agent 看不到動畫；人類看 Codex TUI 的 spinner 動畫就能判斷還在不在跑 — 正確指出 agent 與人類在「liveness 訊號」上的資訊差，這正是 agent 需要 marker 而人類不用的根本原因。L4 判 mastered。
+- 2026-07-03 L5 ✅：答對「persona skill 掛 disable-model-invocation 的理由 = 開戲的決定權屬於 user，模型代開永遠是打擾」，一次過。
+- 2026-07-03 L6 ✅：答對「simplify 審查視角 = 規則庫的反向壓力，防規則只增不減」，一次過。並主動提案 pre-commit secret-scan hook（deterministic gate 補足語意 review）— 好直覺，排入 L7。
 - user 對紀錄格式的回饋：不要記選項字母（如「答 C」），記「答對了什麼概念」；MCQ 位置輪替另外用 Teaching Notes 一行追蹤。
 
 ## Teaching Notes
 - 90% 劇情 10% 技術錨點；MCQ 遵守 anti-tell（位置分散、長度一致、一個純搞笑選項）。
-- MCQ 正解位置紀錄（僅供輪替用）：L1=C, L2=D, L3=A
+- MCQ 正解位置紀錄（僅供輪替用）：L1=C, L2=D, L3=A, L4=B(未答中,選C), L4補=D, L5=B, L6=A
 - 跨 session 協調：pane %104（另一個 orchestrator CC，同 tree 同分支）負責 skills/*+codex/notes；%96 負責 always-loaded。HOLD 清單（等 user L7 拍板才解鎖給 %104）：html-artifacts、html-explainer、craft-goal、nvim-tutor、hatch-pet、arbitrage、daily-loop/SKILL.md、一切 skill 本文瘦身。commit 前互相 send-keys 錯開。推 main = user 保留。
 - 背景並行：Codex read-only 分析 html* 融合 + 全 skill trim-lens，報告餵 L7。

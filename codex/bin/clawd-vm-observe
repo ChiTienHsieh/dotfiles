@@ -45,7 +45,7 @@ case "$mode" in
     ;;
 esac
 
-exec ssh \
+exec clawd-ssh \
   -o BatchMode=yes \
   -o ForwardAgent=no \
   -o ClearAllForwardings=yes \

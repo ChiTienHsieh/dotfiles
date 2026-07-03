@@ -312,7 +312,6 @@ if [ ! -e "$HOME/.claude/settings.json" ]; then
     echo "  Seeded: $HOME/.claude/settings.json"
 fi
 backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
-backup_and_link "$DOTFILES_DIR/claude/nvim-progress.json" "$HOME/.claude/nvim-progress.json"
 backup_and_link "$DOTFILES_DIR/claude/user-en-vocab.md" "$HOME/.claude/user-en-vocab.md"
 
 # Directories
