@@ -23,6 +23,10 @@ Use when driving an interactive agent in a tmux pane from a controller.
   showing an interactive dialog such as AskUserQuestion or an approval UI.
   Text plus Enter sent into that dialog can choose an option for the user
   (2026-07-04 %3 near miss). User-pending dialogs must be operated by the user.
+- Shared-tree commit mutex: when another controller edits the same working
+  tree, notify it and wait for an ACK before committing. A 2026-07-04 race had
+  two controllers commit across each other, sweeping one side's staged files
+  under the other's commit message.
 
 Failure patterns:
 

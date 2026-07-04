@@ -7,9 +7,9 @@
 - A：Vainglory・shotcaller — 8 分析員=分路隊友、quota=資源條、marker=不 ping 隊友、對抗驗證=開團前探視野。單一世界觀扛到底。
 
 ## Current Level
-- Status: learning
-- Last updated: 2026-07-03
-- Confidence: n/a（剛開課）
+- Status: mastered
+- Last updated: 2026-07-04
+- Confidence: high（L1-L6 全通，MCQ 6/6，兩次主動質疑均屬高品質）
 
 ## Level Map（每關 = 一個拍板點）
 - L1 把 build 寫回公會攻略 — 分支策略（merge main vs 疊分支 vs 不 commit）
@@ -27,6 +27,7 @@
 - 2026-07-04 L5: MCQ 答 B 正確（description 搶觸發稀釋），且直接應用到分層決策：gu-log SOP 放 gu-log repo、dotfiles 只留薄入口 — 自己推導出 repo-domain 分層，mastered 級表現。
 - 2026-07-04 L5.5: 拍板不碰 orca — 理由自己給得精準（16GB 無風扇 + Electron 底噪 + 多工體驗），並設了解封條件（買 mac-mini/studio 才重評）。orca 偵察報告存 ~/scratch/transcript-study-20260703/orca-eval。
 - 2026-07-04 L6: 出兵。兩路 tmux Codex worker（dotfiles 批次 / gu-log SOP worktree 隔離）；arbitrage 續 HOLD（%3 的 user L7 拍板前不動）。險案教訓：send-keys 打進 %3 的 AskUserQuestion 對話框差點代按 — 已列入 lessons.md 出貨清單。
+- 2026-07-04 L6 收關: gu-log SOP ×2 過 codex review（修 P2：deploy `--file` 不存在，ground-truth 驗出 `--active-file`）→ PR #541 CI 8/8 全綠，merge 留給 user。dotfiles 尾款三件於 %3 解鎖後補齊：arbitrage Token Guardrails（L2 拍板）、lessons.md commit mutex（L6 撞車教訓）、gu-log skill 薄入口（L5 拍板）。課程收關。
 
 ## Teaching Notes
 - 90% 劇情 10% 錨點；MCQ anti-tell（位置分散、等長選項、一個純搞笑）。

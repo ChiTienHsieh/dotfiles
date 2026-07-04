@@ -40,6 +40,19 @@ the controller's own verification or research.
 | Diff review, commit, push, PR | Claude | Git ownership stays in the controller session. |
 | Small follow-up edits | Claude | Avoid delegation theater. |
 
+## Claude Token Guardrails
+
+Delegate by default when a task is about to burn Claude context on mechanical
+iteration, even if each step looks trivial:
+
+- More than ~20 same-shaped tool loops (read/grep/edit cycles, log trawling).
+- SSH command batches against remote hosts.
+- GitHub sweeps across many issues/PRs/runs.
+- Broad web research with many fetches.
+
+Claude keeps the judgment and the verification; the loop itself goes to a
+worker.
+
 ## Model Allocation
 
 Choose models by task difficulty and output quality requirements. For normal

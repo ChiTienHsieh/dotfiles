@@ -31,6 +31,21 @@ After locating the `gu-log` repo, read these files in order when they exist:
 
 Use those files as the in-repo context for agent behavior, project conventions, writing style, current work, and contribution workflow.
 
+## In-Repo Workflow SOPs
+
+The gu-log repo owns its own workflow SOPs; do not duplicate them here.
+
+- SP article draft/review/refine/translate/ship: read
+  `<gu-log>/.agents/skills/sp-pipeline-sop/SKILL.md`, then follow the linked
+  repo SSOT files.
+- GitHub issue/PR backlog sweeps: read
+  `<gu-log>/.agents/skills/backlog-sweep/SKILL.md`; keep fan-out analysis
+  read-only and never merge/delete/force-push from a sweep.
+
+If those SOP files are missing on the current checkout, they have not been
+merged yet (introduced in gu-log PR #541, branch `agents/sop-modes`); check
+that branch, or fall back to the repo SSOT docs listed above.
+
 ## Freshness Check
 
 The local checkout may be far behind `origin/main`. Before trusting local state, run:
