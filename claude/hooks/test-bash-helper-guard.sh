@@ -245,6 +245,38 @@ run_case \
   'rg TODO . | tail -n5' \
   "allow"
 
+# --- Rule C: long tmux send-keys prompt payloads -------------------------
+
+run_case \
+  "deny: long quoted tmux send-keys prompt payload" \
+  "tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.' && tmux send-keys -t %24 Enter" \
+  "deny"
+
+run_case \
+  "deny: long double-quoted tmux send-keys prompt payload" \
+  'tmux send-keys -t %24 "Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping."' \
+  "deny"
+
+run_case \
+  "allow: tmux send-keys Enter is allowed" \
+  'tmux send-keys -t %24 Enter' \
+  "allow"
+
+run_case \
+  "allow: tmux send-keys BTab is allowed" \
+  'tmux send-keys -t %24 BTab' \
+  "allow"
+
+run_case \
+  "allow: short tmux send-keys command is allowed" \
+  "tmux send-keys -t %24 'pwd'" \
+  "allow"
+
+run_case \
+  "allow: agent-send-prompt helper is allowed" \
+  "~/dotfiles/skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'" \
+  "allow"
+
 # --- Fail-open ------------------------------------------------------------
 
 run_case_raw_stdin \

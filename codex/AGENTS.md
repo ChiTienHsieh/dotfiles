@@ -24,6 +24,13 @@ Universal instructions for Codex CLI
 - Hard bugs / risky reviews / architecture tradeoffs → shared `oracle` skill (API-costing runs need explicit user approval). Quota checks → `codexbar usage --provider both --source cli`.
 - Token 效率：預期輸出超過 ~300 行的指令，先偵察（`wc -l`、`rg --count`、`head`）再決定讀法；同一檔第三次要讀時，改用 `rg` 或行號區間，不要整檔重讀。
 
+## Implementation Understanding Loop
+- For non-trivial or unfamiliar work, use a risk-triggered pre/during/post model; do not make it ceremony for tiny safe edits.
+- Before coding, surface unknowns that could change decisions: data model, type/API contracts, user-facing behavior, and architecture risk.
+- During coding, record plan deviations, conservative assumptions, and review-relevant decisions in the existing PR/report/handoff surface; create a separate notes file only for long or multi-agent handoffs.
+- After high-risk changes (data model, architecture, user-facing, or guardrail/SSOT), proactively offer a `level-up` post-implementation quiz before push; the user may explicitly skip, and the skip should be recorded.
+- Route pre/post implementation coaching through the `level-up` references; keep mechanical refactors at the bottom of explanations.
+
 ## Guardrail / SSOT repo 的 review 閘門
 - 推 guardrail / SSOT repo（例 `~/dotfiles`：CLAUDE.md、settings.json、AGENTS.md 等管 agent 行為的檔）：先 commit，跑 quota 檢查選 reviewer —— 預設 Codex（`codex review` 或 cmux Codex worker），只有 Codex quota/auth/tooling 不適合或使用者明講才改用 Claude Code。使用者已授權非互動式 review；執行 review 的 agent 自己跑、review 無 blocking issue 才 push，由單一擁有者收斂避免 non-fast-forward。
 - 行為規則類改動（prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric）除安全 review 外，再加「simplify review」視角：專找把一次事故寫成過窄規則、過度工程化、可用更通用說法之處；回報 Keep / Simplify / Drop，只有 blocking safety issue 或明顯更簡潔的通用規則才要求修改。

@@ -11,6 +11,9 @@ tmux-orchestration helper scripts instead of being hand-rolled:
   Rule B: unbounded `rg` invocations with no output cap -> add a bound
           (-c/-m/head/...) or use agent-rg.sh.
 
+  Rule C: hand-written `tmux send-keys` with a long quoted prompt payload
+          -> use agent-send-prompt.sh, which verifies paste and submit.
+
 Reads the PreToolUse payload from stdin as JSON, inspects
 `tool_input.command`, and prints a deny decision as JSON on stdout when a
 rule matches. Any parsing failure or unexpected shape fails OPEN (exit 0,
@@ -37,6 +40,13 @@ AGENT_RG_HINT = (
     "for full output)."
 )
 
+AGENT_SEND_PROMPT_HINT = (
+    "Long tmux send-keys payload detected (quoted string >= 80 characters). "
+    "Use ~/dotfiles/skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh "
+    "PANE 'ONE-LINE PROMPT' so the paste and Enter submission are verified. "
+    "Short keys such as Enter/BTab and short commands are allowed."
+)
+
 # A capture-pane INSIDE a loop body: between `do` and a later `done`.
 # Scoping to the do...done span (instead of "loop keyword anywhere +
 # capture-pane anywhere") allows commands that loop for unrelated setup
@@ -59,6 +69,8 @@ QUOTED_RE = re.compile(r"'[^']*'|\"[^\"]*\"")
 EXEC_QUOTE_PREFIX_RE = re.compile(
     r"(?:\b(?:ba|z)?sh\s+(?:-\S+\s+)*-\S*c|\beval)\s*$"
 )
+LONG_SEND_KEYS_PAYLOAD_CHARS = 80
+TMUX_SEND_KEYS_RE = re.compile(r"\btmux\s[^;&|\n]*\bsend-keys\b")
 
 
 def strip_data_quotes(command):
@@ -178,11 +190,38 @@ def check_unbounded_rg(command):
     return False
 
 
+def unquote_shell_literal(literal):
+    if len(literal) >= 2 and literal[0] == literal[-1] and literal[0] in "'\"":
+        return literal[1:-1]
+    return literal
+
+
+def check_long_tmux_send_keys_payload(command):
+    """Detect hand-written long quoted prompt payloads sent via tmux send-keys.
+
+    This deliberately targets simple quoted prompt strings. It leaves normal
+    key sends (`Enter`, `BTab`), short commands, and the dedicated helper alone.
+    """
+    for statement in STATEMENT_SPLIT_RE.split(command):
+        if "agent-send-prompt.sh" in statement:
+            continue
+        if not TMUX_SEND_KEYS_RE.search(statement):
+            continue
+        for match in QUOTED_RE.finditer(statement):
+            payload = unquote_shell_literal(match.group(0))
+            if len(payload) >= LONG_SEND_KEYS_PAYLOAD_CHARS:
+                return True
+    return False
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
         command = payload.get("tool_input", {}).get("command")
         if not isinstance(command, str) or not command:
+            return 0
+        if check_long_tmux_send_keys_payload(command):
+            deny(AGENT_SEND_PROMPT_HINT)
             return 0
         command = strip_data_quotes(command)
 

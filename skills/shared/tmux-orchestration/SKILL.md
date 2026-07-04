@@ -96,16 +96,16 @@ Some terminals map `Shift+Tab` differently. If `BTab` does not work, proceed wit
 ## Sending Prompts
 
 - Put long prompts in a scratch file.
-- Paste or send one concise instruction that tells the worker to read that file.
-- Send Enter separately.
-- Send the prompt as ONE line — no embedded newlines or blank lines. `tmux send-keys` turns every newline in the argument into an Enter, so a multi-line prompt submits in fragments; on a Codex TUI this can crash the turn (`turn/start failed`) and drop it to a bare shell. Build the whole instruction on a single line, then send Enter as its own call.
-- If the prompt appears pasted but not submitted, send Enter again after checking the pane.
+- Send one concise instruction that tells the worker to read that file.
+- Default to `scripts/agent-send-prompt.sh PANE 'ONE-LINE PROMPT'`; it pastes the literal prompt, verifies it is visible, sends Enter separately, and retries Enter once if needed.
+- Hand-written `tmux send-keys` for long prompt payloads is blocked by the Bash helper guard. Short key sends such as `Enter` / `BTab` remain fine.
+- Send the prompt as ONE line — no embedded newlines or blank lines. `tmux send-keys` turns every newline in the argument into an Enter, so a multi-line prompt submits in fragments; on a Codex TUI this can crash the turn (`turn/start failed`) and drop it to a bare shell.
 
 Example:
 
 ```bash
-tmux send-keys -t SESSION_NAME 'Read /tmp/task-prompt.md and complete it. Report when done.'
-tmux send-keys -t SESSION_NAME Enter
+~/dotfiles/skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh \
+  SESSION_NAME 'Read /tmp/task-prompt.md and complete it. Report when done.'
 ```
 
 ## Observation Cadence
