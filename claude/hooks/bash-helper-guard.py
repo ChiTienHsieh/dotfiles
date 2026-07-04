@@ -45,7 +45,26 @@ AGENT_RG_HINT = (
 LOOP_BODY_CAPTURE_RE = re.compile(
     r"\bdo\b(?:(?!\bdone\b).)*?tmux\s[^;&|]*capture-pane", re.S
 )
-CAPTURE_PANE_RE = re.compile(r"capture-pane")
+# Quoted string literals are data/message payloads, not commands. They are
+# stripped before any rule runs, so prose (e.g. a send-keys announcement
+# that mentions capture-pane, 2026-07-04 incident) never triggers rules.
+# EXCEPT: a quoted span holding a command substitution ($( or backtick)
+# contains executable code and is kept. Imperfect for escaped/nested
+# quotes; fail-open spirit applies.
+QUOTED_RE = re.compile(r"'[^']*'|\"[^\"]*\"")
+
+
+def strip_data_quotes(command):
+    def replace(match):
+        span = match.group(0)
+        if "$(" in span or "`" in span:
+            return span
+        return " "
+
+    return QUOTED_RE.sub(replace, command)
+
+# Count real `tmux ... capture-pane` invocations, not the literal string.
+TMUX_CAPTURE_RE = re.compile(r"tmux\s[^;&|]*capture-pane")
 
 # Statement separators: `;`, `&&`, `||`, newline. Not a full shell parser;
 # separators inside quotes may over-split, which is an accepted error --
@@ -94,11 +113,11 @@ def deny(reason):
 
 
 def check_capture_pane_loop(command):
-    if not CAPTURE_PANE_RE.search(command):
+    if not TMUX_CAPTURE_RE.search(command):
         return False
     if LOOP_BODY_CAPTURE_RE.search(command):
         return True
-    if len(CAPTURE_PANE_RE.findall(command)) >= 3:
+    if len(TMUX_CAPTURE_RE.findall(command)) >= 3:
         return True
     return False
 
@@ -133,6 +152,7 @@ def main():
         command = payload.get("tool_input", {}).get("command")
         if not isinstance(command, str) or not command:
             return 0
+        command = strip_data_quotes(command)
 
         if check_capture_pane_loop(command):
             deny(WATCH_MARKER_HINT)

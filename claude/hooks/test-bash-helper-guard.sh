@@ -99,6 +99,21 @@ run_case \
   "allow"
 
 run_case \
+  "allow: prose mentions of capture-pane in a send-keys payload" \
+  'tmux capture-pane -p -t %3 | tail -3 && tmux send-keys -t %3 "note: capture-pane loops denied; single capture-pane fine"' \
+  "allow"
+
+run_case \
+  "allow: looped send-keys whose payload says tmux capture-pane" \
+  'for p in %1 %2; do tmux send-keys -t "$p" "avoid tmux capture-pane"; done' \
+  "allow"
+
+run_case \
+  "deny: polling via quoted command substitution is still polling" \
+  'while true; do x="$(tmux capture-pane -p -t %3)"; sleep 5; done' \
+  "deny"
+
+run_case \
   "allow: capture-pane sandwiched between two unrelated loops" \
   'for p in %1; do tmux send-keys -t "$p" C-c; done; tmux capture-pane -p -t %1 | tail -20; for p in %2; do echo ok; done' \
   "allow"
