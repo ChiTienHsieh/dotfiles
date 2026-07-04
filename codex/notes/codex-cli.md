@@ -19,6 +19,10 @@
 - sandbox 內遇到 `could not create PATH aliases` 警告或 `in-process app-server
   client: Operation not permitted`，直接走已核准的升權路徑重跑，不要試多種
   flag 變體。
+- 在 CC 的 Bash sandbox 內跑 `codex review` 會直接掛在 `failed to start managed
+  network proxy: … reserve managed loopback proxy listeners`（0.142.5 實測）——
+  它要綁本機 loopback listener，sandbox 不給。固定解法：該指令用
+  `dangerouslyDisableSandbox` 重跑，不用試 config 變體。
 - skill 驗證固定命令：`uv run --with pyyaml python
   ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`，
   避免重踩 `ModuleNotFoundError: yaml` 或 permission denied。
