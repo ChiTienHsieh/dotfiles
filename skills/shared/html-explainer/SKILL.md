@@ -7,8 +7,6 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 
 一份自包含 HTML，教懂**一個概念**。目標不是讓讀者「看過」，是讓讀者變成**參與者**：讀完能預測行為、能推到沒教過的情境、能判斷 AI 的輸出是不是唬爛。
 
-配方蒸餾自 Geoffrey Litt 的 explain-diff / micro-worlds 思路（上承 Papert 的 Mathland、Alan Kay 的動態媒體）。核心洞察：agent 愈來愈會自己驗證，人類的價值在「參與」——腦中要有夠豐富的概念才想得出下一步。而「讀過」不等於「懂」（Matuschak：books don't work），所以理解要親手操作出來、再用測驗驗收。
-
 ## 三支柱（缺一份就不算學習頁）
 
 1. **解說** —— 先背景、再直覺、最後細節。
@@ -23,20 +21,19 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 4. **細節走讀** —— literate 順序：照「理解的順序」走，不是照字母序或檔案序。散文為主、片段為輔。
 5. **測驗** —— 3–5 題，內建在頁面底部（見下）。
 
+關鍵定義、edge case、常見誤解可用少量 callout 標出；圖解只選 1–2 種形式反覆使用，不要每段換一套視覺語法。
+
 ## 一個強類比扛到底
 
 - 類比**就是**解說本身，不是旁邊的裝飾。讀者跟著故事走完，概念就該吸收進去；最後才用一行錨點對回術語（「這在技術上叫 X」）。
 - **一頁一類比**，從背景一路扛到測驗，絕不中途換世界觀、絕不混搭兩套比喻。
-- 挑類比先想「扛得動整個概念嗎」：只撐得起前兩段的類比是壞類比。
 - 類比要用讀者真的活過的世界。呼叫方（如 level-up）通常已指定讀者的偏好框架——沿用它；專有名詞不確定就查證或停在機制層，不要憑印象掰。
 
 ## 微世界設計
 
-讓讀者「住進」概念裡，靠好奇心自然摸懂——不是旁觀 demo。
-
 - **predict → act → observe**：每個互動都該讓讀者先猜、再操作、再對答案。能推翻讀者預測的互動才有教學力。
 - 選**最小**的互動模型：拖曳看座標變化、slider 掃參數、按鈕逐步執行、時間軸來回刷。夠讓讀者驗證心智模型就好。
-- 「自己動手做」跟「看別人做完」是兩回事——理解是在操作過程長出來的。所以控制權給讀者：下一步讓他按，狀態讓他改。
+- 控制權給讀者：下一步讓他按，狀態讓他改。
 - 純裝飾動畫、自動播放的炫效果 = 噪音，砍掉。
 
 ## 測驗設計
@@ -62,13 +59,15 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 - 微世界 = 可玩的關鍵行為（改前 vs 改後對照、逐步執行器）
 - 細節走讀 = literate diff：照理解順序走過改動，散文串接、嵌 code 片段
 - 測驗 = 5 題關於這次改動；若呼叫方明確指定 learning-gated learning/code-explainer 交接，沒過才不往下游送
+- 一次性解說檔預設放目標 repo 外；若呼叫方要納入 docs，才放進 repo。
 
 ## 交付與驗收
 
 1. 寫完先自檢零依賴：`grep -cE '<script src|href="http|cdn|@import url' <file>` 必須是 0。
 2. 允許且實務上可行時，用 `open <abs-path>` 直接開給讀者看；否則聊天裡只給一句簡介 + 絕對路徑。
 3. 自己過一遍測驗的每個選項路徑（對、錯、指路連結）確認 JS 判分沒壞。
-4. 有條件就 spawn 一個零上下文的 fresh reviewer 讀一遍，抓「沒展開的縮寫、只當裝飾的類比、預設讀者已懂的跳步」。
+4. 有 code block 時確認換行與縮排沒被 HTML 吃掉（用 `<pre>` 或等價 CSS）。
+5. 有條件就 spawn 一個零上下文的 fresh reviewer 讀一遍，抓「沒展開的縮寫、只當裝飾的類比、預設讀者已懂的跳步」。
 
 ## 跟其他 skill 的分工
 
