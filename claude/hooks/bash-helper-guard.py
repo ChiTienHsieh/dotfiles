@@ -109,6 +109,12 @@ def strip_heredoc_bodies(command):
     This is intentionally small, matching the hook's existing shell-lite
     parsing style. Bodies fed to executors such as bash/sh/zsh/eval/python stay
     visible to the rule; bodies fed to data sinks such as cat/tee are stripped.
+
+    Known non-goal: deliberate circumvention (e.g. `cat <<EOF | bash`,
+    base64, indirection through variables or script files). The threat model
+    is an honest agent hand-rolling send-keys by mistake, not an adversary;
+    a lexical guard cannot win an evasion arms race, so do not extend this
+    parser toward one.
     """
     lines = command.splitlines()
     output = []
