@@ -290,6 +290,13 @@ EOF" \
   "allow"
 
 run_case \
+  "deny: bash heredoc executor containing long tmux send-keys payload" \
+  "bash <<EOF
+tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'
+EOF" \
+  "deny"
+
+run_case \
   "allow: echo data containing long tmux send-keys payload" \
   "echo \"tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'\"" \
   "allow"

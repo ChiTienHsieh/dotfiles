@@ -17,11 +17,11 @@ prompt_visible() {
   local normalized_screen
   local normalized_prompt
   printf '%s\n' "$screen" | grep -Fq -- "$prompt" && return 0
-  # Long prompts can wrap with leading indentation on continuation lines.
-  # Normalize whitespace before matching so display wrapping does not look like
+  # Long prompts can wrap inside tokens or with indentation. Remove all
+  # whitespace before fallback matching so display wrapping does not look like
   # a failed paste.
-  normalized_screen="$(printf '%s\n' "$screen" | sed 's/^[[:space:]]*//' | tr '\n' ' ' | tr -s '[:space:]' ' ')"
-  normalized_prompt="$(printf '%s\n' "$prompt" | tr '\n' ' ' | tr -s '[:space:]' ' ')"
+  normalized_screen="$(printf '%s\n' "$screen" | tr -d '[:space:]')"
+  normalized_prompt="$(printf '%s\n' "$prompt" | tr -d '[:space:]')"
   printf '%s\n' "$normalized_screen" | grep -Fq -- "$normalized_prompt"
 }
 

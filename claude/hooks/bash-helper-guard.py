@@ -72,6 +72,15 @@ EXEC_QUOTE_PREFIX_RE = re.compile(
 LONG_SEND_KEYS_PAYLOAD_CHARS = 80
 TMUX_SEND_KEYS_RE = re.compile(r"\btmux\s[^;&|\n]*\bsend-keys\b")
 HEREDOC_RE = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+HEREDOC_EXECUTOR_RE = re.compile(
+    r"^\s*(?:\w+=\S+\s+)*(?:command\s+|time\s+|env\s+(?:-\S+\s+)*|sudo\s+)*"
+    r"(?:ba|z)?sh\b|^\s*(?:\w+=\S+\s+)*(?:command\s+|time\s+|env\s+(?:-\S+\s+)*|sudo\s+)*"
+    r"(?:eval|python[0-9.]*)\b"
+)
+HEREDOC_DATA_SINK_RE = re.compile(
+    r"^\s*(?:\w+=\S+\s+)*(?:command\s+|time\s+|env\s+(?:-\S+\s+)*|sudo\s+)*"
+    r"(?:cat|tee)\b|^\s*(?::|true)\s*(?:>|>>)"
+)
 
 
 def strip_data_quotes(command):
@@ -95,10 +104,11 @@ def strip_data_quotes(command):
 
 
 def strip_heredoc_bodies(command):
-    """Remove simple heredoc bodies so data lines are not treated as commands.
+    """Remove simple data heredoc bodies so data lines are not commands.
 
     This is intentionally small, matching the hook's existing shell-lite
-    parsing style. It handles common `<<EOF`, `<<'EOF'`, and `<<"EOF"` forms.
+    parsing style. Bodies fed to executors such as bash/sh/zsh/eval/python stay
+    visible to the rule; bodies fed to data sinks such as cat/tee are stripped.
     """
     lines = command.splitlines()
     output = []
@@ -106,7 +116,14 @@ def strip_heredoc_bodies(command):
     while i < len(lines):
         line = lines[i]
         output.append(line)
-        markers = [match.group(2) for match in HEREDOC_RE.finditer(line)]
+        markers = []
+        for statement in STATEMENT_SPLIT_RE.split(line):
+            if not HEREDOC_RE.search(statement):
+                continue
+            if HEREDOC_EXECUTOR_RE.search(statement):
+                continue
+            if HEREDOC_DATA_SINK_RE.search(statement):
+                markers.extend(match.group(2) for match in HEREDOC_RE.finditer(statement))
         i += 1
         for marker in markers:
             while i < len(lines):
