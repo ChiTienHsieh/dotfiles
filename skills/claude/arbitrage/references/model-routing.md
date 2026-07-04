@@ -37,11 +37,10 @@ price label.
 
 `gpt-5.5` is only available through Codex CLI: use `codex exec` or
 `codex review`; `~/.codex/config.toml` defaults to `gpt-5.5`. The Claude rows
-above are capability labels; when setting a Workflow or Agent `model` parameter,
-use the surface's accepted alias, not the versioned label. In this repo's
-Claude command and agent frontmatter, the supported aliases are `sonnet`,
-`opus`, and `haiku`; route `fable-5` recommendations through `opus` unless the
-specific surface is known to accept Fable or `claude-fable-5`.
+above are capability labels; when setting a Workflow, Agent, or frontmatter
+`model` parameter, use the accepted aliases: `sonnet`, `opus`, `haiku`, or
+`fable`. Use `fable` directly for the hardest delegation; fall back to `opus`
+only on surfaces that reject `fable`.
 
 If a Workflow or Agent needs `gpt-5.5` for read-only analysis or review,
 dispatch a lightweight Claude wrapper such as `model: 'sonnet', effort: 'low'`;

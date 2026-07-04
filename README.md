@@ -38,7 +38,7 @@ dotfiles/
 │   ├── .secrets.template      # API keys template (copy to ~/.secrets)
 │   └── .aliases.local.template  # Machine-specific aliases
 ├── claude/
-│   └── plugins/         # Personal Claude Code plugins (local marketplace)
+│   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
 ├── cmux/
 │   ├── cmux.default.jsonc      # cmux-generated default template
 │   └── cmux.performance.jsonc  # Installed performance profile
@@ -58,12 +58,7 @@ dotfiles/
 
 1. **Edit `~/.secrets`** - Add your API keys (this file is never committed)
 2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
-3. **Claude Code plugins** - Run these commands in Claude Code:
-   ```
-   /plugin marketplace add ~/dotfiles/claude/plugins
-   /plugin install cth-plugins@cth-marketplace
-   ```
-4. **Skills** - `skills/shared/` is installed into Claude Code, Codex, and `.agents`; `skills/codex/` and `skills/claude/` are installed only into their matching tools
+3. **Skills** - `skills/shared/` is installed into Claude Code, Codex, and `.agents`; `skills/codex/` and `skills/claude/` are installed only into their matching tools
 
 ## Files NOT Tracked
 

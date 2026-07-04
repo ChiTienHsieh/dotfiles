@@ -1,6 +1,6 @@
 ---
 name: headless-agents
-description: "Use to delegate research, refactors, generation, or parallel work to headless AI agents such as Codex CLI or Gemini CLI."
+description: "Use to delegate read-only research, analysis, or parallel investigation to headless AI agents such as Codex CLI, Gemini CLI, or Claude CLI."
 allowed-tools: Bash
 ---
 
@@ -9,8 +9,9 @@ allowed-tools: Bash
 ## Overview
 
 Claude Code can delegate tasks to headless AI agents:
-- **Codex CLI** (OpenAI) - Strong at research with `--search`, complex refactoring
-- **Gemini CLI** (Google) - Fast execution, good for quick generation
+- **Codex CLI** (OpenAI) - Strong at read-only research with `--search`
+- **Gemini CLI** (Google) - Fast read-only analysis
+- **Claude CLI** (Anthropic) - Subscription-backed read-only analysis with `claude -p`
 
 Headless means fire-and-forget: no human watches it run. That is only safe when
 the blast radius is near zero, so the default here is **read-only**. Anything
@@ -22,35 +23,31 @@ surface instead (see Mode Awareness).
 - This skill is for **normal Claude Code sessions** doing cheap, read-only,
   fire-and-forget headless work.
 - If running as the **orchestrator persona** (`cldo`), or any time the work
-  **writes files** or needs to be watched/interrupted, do NOT delegate it
-  headlessly here. Route it to an observable interactive surface, picking the
-  `tmux-orchestration` skill.
+  **writes files** or needs to be watched/interrupted, route it through
+  `tmux-orchestration` instead.
 - Rule of thumb:
   - read-only + no network → headless is fine (the safe default).
   - read-only + network (`--search`) → headless is OK **only over trusted
     inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
     web work to a tmux surface instead.
-  - mutating (writes files) → **always** an observable tmux surface, never
-    headless.
+  - mutating (writes files) → follow `tmux-orchestration`, never this skill.
 
 ## When to Use Which
 
 ```
 Task Type                           Codex              Gemini
 --------------------------------------------------------------------
-Web research + analysis             --search flag      Limited
-Multi-file refactoring              tmux surface       tmux surface
-Quick code generation               Slower             Fast (Flash)
+Read-only research                  Thorough           Fast
 Image/multimodal analysis           -i/--image         Native support
-Complex debugging (read-only)       Thorough           Surface level
+Debugging analysis (read-only)      Thorough           Surface level
 ```
 
-## Codex CLI Commands (codex 0.141 syntax)
+## Codex CLI Commands
 
 ### Research / debug — read-only, no network (default)
 
 ```bash
-OUTPUT="./ai_chatroom/{topic}/research_cdx.md"
+OUTPUT="${TMPDIR:-/tmp}/codex-research.md"
 mkdir -p "$(dirname "$OUTPUT")"   # codex -o does NOT create missing parent dirs
 codex exec -s read-only --skip-git-repo-check \
   -o "$OUTPUT" \
@@ -73,7 +70,7 @@ Only add `--search` when the task genuinely needs the live web:
 ```bash
 # NOTE: --search is a TOP-LEVEL flag — it goes BEFORE the `exec` subcommand.
 # `codex exec --search ...` is rejected as an unexpected argument.
-OUT="./ai_chatroom/{topic}/websearch_cdx.md"
+OUT="${TMPDIR:-/tmp}/codex-websearch.md"
 mkdir -p "$(dirname "$OUT")"   # codex -o does NOT create missing parent dirs
 codex --search exec -s read-only --skip-git-repo-check \
   -o "$OUT" \
@@ -87,13 +84,7 @@ codex --search exec -s read-only --skip-git-repo-check \
   on the machine could have left it. For heavier or less-trusted web work, prefer
   an observable tmux surface so a human can watch.
 
-### Implementation / multi-file edits (mutating) — do NOT do headlessly
-
-Mutating work must run where a human can watch and interrupt. Do not run
-`codex exec -s workspace-write` (or higher) from this skill. Instead use the
-`tmux-orchestration` skill.
-
-### Key Flags (0.141)
+### Key Flags
 
 - `-s, --sandbox <read-only|workspace-write|danger-full-access>` = sandbox policy
 - `--search` = enable live web search (turns network ON). Top-level flag: write
@@ -103,8 +94,7 @@ Mutating work must run where a human can watch and interrupt. Do not run
 - `-i, --image <FILE>` = attach image(s)
 - `-C, --cd <DIR>` = working directory root
 - `--skip-git-repo-check` = allow running outside a Git repo
-- Removed in 0.141: `--full-auto` (old alias for workspace-write). Set the
-  sandbox explicitly with `-s` instead. Never use `--dangerously-bypass-*`.
+- Set the sandbox explicitly with `-s`. Never use `--dangerously-bypass-*`.
 
 ## Gemini CLI Commands
 
@@ -133,23 +123,12 @@ cat source.py | gmn -p "Analyze this code" --quiet > analysis.md
 - `--output-format <text|json>`: Output format
 - `--quiet, -q`: Suppress spinners (essential for headless)
 
-## File-Based Communication (ai_chatroom)
+## Claude CLI Commands
 
-```
-./ai_chatroom/{topic}/
-├── research_cdx.md         # Codex research output (via -o)
-├── gemini_analysis_gmn.md  # Gemini output
-└── README_cld.md           # CC executive summary
-```
-
-### File Naming Convention
-- Codex: `*_cdx.txt`, `*_cdx.md`
-- Gemini: `*_gmn.txt`, `*_gmn.md`
-- Claude Code: `*_cld.txt`, `*_cld.md`
-
-### Communication Language
-- CC <-> User: zh-tw with English technical terms
-- CC <-> Codex/Gemini: English (LLM-to-LLM)
+`claude -p` bills against the user's Claude subscription. For nested
+`claude -p` runs, use `--permission-mode auto`; `bypassPermissions` exits 1.
+Keep headless Claude read-only unless the task is moved to an observable tmux
+surface.
 
 ## Timeout Guidelines
 
@@ -159,5 +138,4 @@ cat source.py | gmn -p "Analyze this code" --quiet > analysis.md
 ## Configuration Files
 
 - Codex: `~/.codex/AGENTS.md`
-- Gemini: `~/.gemini/AGENTS.md`
-- Both know to write to `./ai_chatroom/` with proper suffixes
+- Gemini: `~/.gemini/GEMINI.md`

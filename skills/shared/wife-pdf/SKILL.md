@@ -74,55 +74,15 @@ Typst card/block 預設應該避免跨頁：
 
 ### Kaomoji
 
-一頁 PDF 至少放一個 kaomoji 增加溫度；多頁文件可視內容自然少量使用，不必每頁硬塞。但只使用 PingFang TC 渲染穩定的字元。先讀 `references/kaomoji-guide.md`，不要使用容易變方塊的字元。
-
-安全清單：
-
-- `╰(°▽°)╯`
-- `(°▽°)`
-- `(￣▽￣)／`
-- `┐(￣ヘ￣)┌`
-- `ヽ(°〇°)ﾉ`
-
-避免：
-
-- `(◕‿◕)`，`‿` 常會變方塊。
-- `(๑•̀ㅂ•́)و✧`，混合 script 容易壞。
-- 大多數 emoji。
-- Typst PDF 中的 Markdown checkbox `- [ ]` 或 `- [x]`。
+一頁 PDF 至少放一個 kaomoji 增加溫度；多頁文件可視內容自然少量使用，不必每頁硬塞。先讀 `references/kaomoji-guide.md`，避免 checkbox、emoji、或 fallback 後會變方塊的字元。
 
 ## Typst 基礎樣板
 
-```typst
-// Font settings - PingFang TC on macOS, Noto Sans CJK TC on Linux/VM
-#set text(font: ("PingFang TC", "Heiti TC", "Noto Sans CJK TC", "Noto Sans CJK"), size: 11pt, lang: "zh")
-#set page(margin: (x: 2cm, y: 1.8cm))
-#set par(leading: 0.7em, justify: true)
+Use `assets/career_decision_template.typ` as the complete working Typst example. Key gotchas to preserve when adapting it:
 
-// Heading styles
-#show heading.where(level: 1): it => {
-  set text(size: 20pt, weight: "bold")
-  block(above: 1.5em, below: 1em)[#it.body]
-}
-
-#show heading.where(level: 2): it => {
-  set text(size: 14pt, weight: "bold")
-  block(above: 1.2em, below: 0.8em)[#it.body]
-}
-
-// Quote block for context
-#let quote-block(body) = {
-  block(
-    fill: luma(245),
-    inset: 12pt,
-    radius: 4pt,
-    width: 100%,
-  )[#text(style: "italic")[#body]]
-}
-
-// Divider line
-#let divider = line(length: 100%, stroke: 0.5pt + luma(200))
-```
+- Font stack must include macOS PingFang/Heiti and Linux/VM Noto Sans CJK fallback.
+- Information cards and tables should use `breakable: false`; split overlong cards instead of letting Typst cut them mid-page.
+- Avoid Markdown checkbox syntax in Typst output; it can render poorly in PDFs.
 
 ## 常用 Typst Pattern
 

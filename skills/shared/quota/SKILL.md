@@ -1,6 +1,6 @@
 ---
 name: quota
-description: "Use when checking Codex, Claude Code, or related AI CLI usage limits before or during long-running agent work; when the user mentions quota, codexbar usage, rate limits, session limits, weekly limits, sleeping until reset, or asks to continue after quota resumes."
+description: "Use when checking Codex, Claude Code, or related AI CLI usage limits before or during long-running agent work; when the user mentions quota, codexbar usage, rate limits, session limits, weekly limits, sleeping until reset, asks to continue after quota resumes, or needs to choose Codex vs Claude based on remaining quota, cooldown, or reset time."
 ---
 
 # Quota

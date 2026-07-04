@@ -1,6 +1,6 @@
 ---
 name: tmux-orchestration
-description: "Use when running, supervising, or delegating work to interactive agents inside tmux, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, fallback from zellij, or safe cleanup after completion."
+description: "Use when running, supervising, or delegating work to interactive agents inside tmux or cmux surfaces, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, event-based completion detection, marker-file completion fallback, or safe cleanup after completion."
 ---
 
 # tmux Orchestration
@@ -9,12 +9,41 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 
 ## Core Rules
 
-- Use tmux when zellij is unavailable, unreliable, or not requested.
 - Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session, and do NOT start a new cmux session, for this co-review case.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
 - Do not kill unrelated tmux sessions. Only close sessions created for the current task or explicitly named by the user.
+- For cmux-specific orchestration, read `references/cmux.md`; cmux is the secondary surface and this skill remains the entry point.
+
+## Delegation Contract
+
+Use this contract whenever a worker prompt, marker file task, or delegated
+surface will be read by another agent.
+
+- Marker-file 完工合約: every delegated worker writes a report to PATH and ends
+  it with one exact MARKER line; the controller polls the marker, not terminal
+  visual state. Contract fields: mode (read-only / write-new-only / edit-allowed), allowed paths, forbidden actions, report path, marker, authority signature.
+- Use fixed nouns "CC" and "user", never 你/我 — a relative pronoun flips
+  referent when a different agent reads the prompt.
+- Put long instructions in a file; keep the send-line a one-liner pointing at
+  it. `tmux send-keys` turns every newline in the argument into an Enter, so a
+  multi-line prompt submits in fragments.
+- Place prompt, report, and marker files inside the worker's trusted cwd or the
+  target repo's ignored task dir. If a worker must commit, it needs a full clone
+  with `.git` inside its workspace; otherwise the controller owns commits.
+- State the side-effect boundary up front: READ-ONLY research, or exactly which
+  paths may be edited, plus "do not commit/push" when the controller verifies
+  first.
+- Verify load-bearing claims with cheap read-only checks: grep for leftover
+  references, `git status` / `git diff --stat`, confirm files moved/deleted,
+  read only the one section whose accuracy matters.
+- Fresh-reviewer 驗證原則: for large artifacts, delegate the FULL review to a fresh worker rather than
+  re-reading everything yourself — a clean-context reviewer is at least as
+  reliable and saves the controller's context. If only one dimension fails,
+  fix it and prefer a targeted rescore for that dimension. The prompt must
+  include the original fail criterion, what changed, which slice to re-evaluate,
+  and whether neighboring dimensions need a light sanity check.
 
 ## Starting Claude Code
 
@@ -81,12 +110,37 @@ tmux send-keys -t SESSION_NAME Enter
 
 ## Observation Cadence
 
+- If the worker contract already includes a report path plus final marker, the
+  controller defaults to checking only marker/report/git state, not the worker
+  stream. Read the stream only for approval waits, timeout diagnosis, a blocked
+  report, or active quality steering.
+- `scripts/...` paths in this skill resolve against the skill's own directory
+  (`~/dotfiles/skills/shared/tmux-orchestration/`), not your cwd — expand them
+  before running.
+- Monitor in three layers: deterministic completion uses a background shell
+  watcher such as `scripts/agent-watch-marker.sh REPORT_PATH MARKER --timeout
+  3600`; waits needing eyes use a cheap background subagent that polls in its
+  own context and returns one-line summaries (still burns quota, so prefer file
+  signals); controller stream reads are only for quality steering.
+- For report/status reads, default to `scripts/agent-safe-read.sh REPORT_PATH`
+  and then `scripts/agent-safe-read.sh REPORT_PATH --range START:END` for the
+  load-bearing slice. For repo-wide checks, default to `scripts/agent-rg.sh
+  PATTERN PATH`, `scripts/agent-rg.sh PATTERN PATH --sample 3`, or
+  `scripts/agent-rg.sh PATTERN PATH --files`; use `--full REASON` only when the
+  complete output is necessary.
 - Choose the right mechanism FIRST: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to JUDGE quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free. Caveat: `tmux wait-for` blocks the calling shell, so for long waits prefer a marker file (poll its existence) or a hook — a blocking wait can hit the Bash command timeout.
 - When you DO poll, default to PATIENT polling. Once a worker is mid-run on a multi-minute task (a review loop, a build, a long Codex turn), check at intervals of at least 5 minutes. Polling every 30-90 seconds is micromanaging — it wastes controller turns and reads as creepy to the user. Reserve sub-minute checks for genuinely short tasks or when actively waiting on an approval/error prompt.
 - For user-requested patient Claude Code work, check every 10 minutes unless there is an obvious prompt/approval wait.
 - If the user says the work can take an hour, do not interrupt early just because the TUI is quiet.
 - When capturing, read the FULL new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
 - If the worker is waiting for approval, erroring, or stuck at a prompt, intervene.
+
+## Context Burn Stop Rule
+
+After one compaction or near 200k tokens, stop pasting raw pane captures or raw
+logs into the main thread. Ask for a condensed worker report plus source paths;
+for verification, read only load-bearing slices with `scripts/agent-safe-read.sh
+FILE --range START:END` and search counts/samples with `scripts/agent-rg.sh`.
 
 ## Completion
 
@@ -99,6 +153,10 @@ Before accepting a worker's result:
 5. Commit/push only when the task and repo rules allow it.
 
 ## Cleanup
+
+Keep start, wait, read-status, and cleanup as separate commands. Never bundle
+cleanup actions such as `pkill`, reset, or clean with status queries in the same
+Bash call.
 
 When the worker is no longer needed:
 
@@ -136,9 +194,14 @@ Decision rules:
 
 Before delegating or supervising a worker, read the shared lessons index:
 
-`~/dotfiles/skills/shared/delegation-lessons/MEMORY.md`
+`~/dotfiles/skills/shared/tmux-orchestration/references/lessons.md`
 
 It is a small index. Open ONLY the topic file relevant to the current delegation;
 do not read every topic each turn. After the delegation finishes, if you learned a
-durable lesson, update the relevant topic file and ensure the index has a one-line
-entry. Distill into reusable rules — do not append raw logs or one-off incident detail.
+durable lesson, update the relevant section or `references/cmux.md` when the
+lesson is cmux-specific. Distill into reusable rules — do not append raw logs or
+one-off incident detail.
+
+Implementation routing policy lives in the `arbitrage` skill. This skill only
+covers surface mechanics: prompt files, observable workers, marker reports,
+completion, and verification.

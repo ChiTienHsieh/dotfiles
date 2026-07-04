@@ -1,11 +1,11 @@
 ---
 name: "remember"
-description: "Run the `remember` workflow when the user explicitly asks Codex to remember, save, update, or forget durable guidance."
+description: "Run the `remember` workflow when the user explicitly asks the agent to remember, save, update, or forget durable guidance."
 ---
 
 # remember
 
-Use this skill when the user explicitly asks Codex to remember, save, update, or forget durable guidance.
+Use this skill when the user explicitly asks the agent to remember, save, update, or forget durable guidance.
 
 ## Purpose
 

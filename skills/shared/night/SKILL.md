@@ -17,16 +17,6 @@ Use this skill when the user asks to run `night`, says night night, or wants Cod
 
 **備份原則：一人專案，大膽 push。** 這台機器上的 repo 幾乎都是使用者自己一個人在維護的。收尾時一律 commit + push 到 remote 備份進度，不需要猶豫。只有明確危險的情況（force push main、push 含密碼的檔案）才需要跳過。
 
-## Context Commands
-
-When this skill runs, inspect the current task list and gather git state with:
-
-```bash
-git branch --show-current 2>/dev/null || echo "(n/a)"
-git status --short 2>/dev/null || echo "(n/a)"
-/usr/bin/python3 "$HOME/dotfiles/codex/hooks/stop_dirty_worktree.py" --dirty-report --cwd "$PWD" 2>/dev/null || echo "(dirty report unavailable)"
-```
-
 ## Execution Flow
 
 ### Step 1: 盤點未完成的工作
@@ -45,51 +35,17 @@ git status --short 2>/dev/null || echo "(n/a)"
 - **卡住就跳過** — 需要使用者判斷的、需要密碼的、需要手動操作的 → 記在「待使用者處理」清單，不要卡住整個流程
 - **完成一項就更新 task plan** — 保持進度可追蹤
 
-### Step 2.5: 檢查相關 repo 並同步
+### Step 2.5: 相關 repo 檢查交給 Step 3 的 wrap
 
-一人專案，改動做完就 push — 睡前備份最重要。
-
-1. **目前的 repo** — 有改動就 commit + push
-2. **相關 repo**（例如 `~/dotfiles` 追蹤 `~/.codex/` 的 symlink 來源）— 也要檢查有沒有被弄髒，有的話一起 commit + push
-3. **本 session touched repos** — 使用 dirty report 盤點 `PostToolUse` 已追蹤到的 git roots；這是刻意取代 blocking `Stop` hook 的收尾檢查
-4. **多個 repo 都有改動** — 每個都推，不用問
-
-只有以下情況**不推**：
-- 含密碼 / secrets 的檔案在 diff 裡
-- 需要 force push（代表有 diverge，可能吃掉別人的東西）
-- upstream 有設保護規則擋住了
+相關 repo 檢查交給 Step 3 的 wrap；night 模式下 wrap 的 stop-and-ask 項目自動處理，secrets 與 force-push 除外。
 
 ### Step 3: 跑 wrap skill
 
-所有能做的都做完之後，使用 `$wrap` 的流程，讓它處理：
-- commit 未 commit 的改動
-- push 到 remote
-- 儲存 memory
-- 產出 wrap-up 報告
+所有能做的都做完之後，跑 `$wrap`，但套用 night policy：不要問問題；可安全處理的就自己處理；不安全或需要使用者判斷的項目跳過並記錄。
 
 ### Step 4: 晚安報告
 
-在 wrap 報告之後，加一段簡短的晚安訊息：
-
-```
----
-🌙 晚安報告
-
-### 幫你做完的
-- [x] ...
-
-### 明天起來要處理的
-- [ ] ... （原因：需要你判斷 / 需要 sudo / ...）
-
-晚安，明天見 (￣▽￣)／
-```
-
-如果沒有待辦事項（一切都已經搞定了），直接：
-
-```
----
-🌙 一切搞定，安心睡 (￣▽￣)／
-```
+在 wrap 報告之後，加一段簡短的晚安報告，只寫相對於 wrap 的 delta：幫你做完的、明天起來要處理的；如果沒有待辦事項，就直接說一切搞定。
 
 ## Style
 

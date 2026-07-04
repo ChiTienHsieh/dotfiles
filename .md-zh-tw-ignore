@@ -4,3 +4,4 @@ codex/skills/**/*.md
 claude/CLAUDE.md
 claude/agents/*.md
 skills/**/*.md
+codex/notes/

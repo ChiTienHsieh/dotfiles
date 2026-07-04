@@ -1,6 +1,6 @@
 model = "gpt-5.5"
-model_reasoning_effort = "high"
-service_tier = "fast"
+model_reasoning_effort = "medium"
+service_tier = "default"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 approvals_reviewer = "auto_review"
@@ -80,18 +80,11 @@ enabled = true
 [plugins."vercel-plugin@vercel-vercel-plugin"]
 enabled = false
 
-[plugins."cth-plugins@cth-marketplace"]
-enabled = true
-
 [tui]
 animations = false
 terminal_title = ["run-state", "thread-title"]
-status_line = [
-    "context-remaining",
-    "current-dir",
-    "five-hour-limit",
-    "weekly-limit",
-]
+status_line = ["context-remaining", "current-dir", "weekly-limit", "thread-title", "approval-mode", "model-with-reasoning"]
+status_line_use_colors = true
 
 [features]
 hooks = true

@@ -1,11 +1,20 @@
 ---
 name: craft-goal
-description: 協助撰寫、縮短、驗證、整理可交給下一個 Codex session 執行的 `/goal` prompt。當使用者要寫 `/goal`、準備 handoff prompt、把模糊任務整理成可執行 goal、需要 clarification、research、task spec file、side-effect boundary、或 quick smoke test 時使用。
+description: 協助撰寫、縮短、驗證、整理可交給下一個 agent session（Claude Code 或 Codex）執行的 handoff prompt，含 Codex app 的 `/goal`。當使用者要寫 `/goal`、準備 handoff prompt、把模糊任務整理成可執行 goal、要依任務性質與剩餘 quota 決定交給 CC 還是 Codex、需要 clarification、research、task spec file、side-effect boundary、或 quick smoke test 時使用。
 ---
 
 # Craft Goal
 
-使用這個 skill，把一個粗略任務想法整理成下一個 Codex 可以可靠執行的 `/goal` prompt。目標不是寫漂亮 prompt，而是做出能交棒、能驗證、風險邊界清楚的 handoff。
+使用這個 skill，把一個粗略任務想法整理成下一個 agent session 可以可靠執行的 handoff prompt。目標不是寫漂亮 prompt，而是做出能交棒、能驗證、風險邊界清楚的 handoff。
+
+## 先選接棒者：CC 還是 Codex
+
+產出 prompt 前先決定交給誰，兩個因素一起看：
+
+- **任務性質**：judgment、review、規格拿捏、跟使用者來回多的 → 傾向 CC；大量機械實作、長時間跑、bulk rewrite → 傾向 Codex。
+- **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看兩邊剩餘額度，其他條件接近時選較肥的一邊。
+
+目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI（tmux session）、claude CLI（tmux session）、或使用者手動貼。**本文其餘段落寫「下一個 Codex」處，接棒者是 CC 時一律讀作「接棒 CC」**；4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
 
 使用者預設用 zh-tw proofread，所以除非使用者明確要求英文，**輸出給使用者的 brief 與 `/goal` prompt 都預設用繁體中文**。保留必要 English technical terms，例如 `/goal`、Codex、GitHub、VM、SSH、API、CLI、token、commit、push、branch、file path、command、config key、model ID、UI label。
 

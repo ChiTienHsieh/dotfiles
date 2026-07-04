@@ -22,9 +22,9 @@ a quality gate so the loop improves things instead of generating noise.
 
 - "Remember this / save this guidance" → the `remember` skill.
 - "Wrap up this session / commit + push" → the `wrap` skill.
-- "Change a permission / settings.json / hook" (Claude Code) → the
-  `update-config` skill. daily-loop only *proposes* such changes; it routes the
-  approved ones to `update-config`.
+- "Change a permission / settings.json / hook" → route to the owning config or
+  skill workflow. daily-loop only *proposes* such changes; it does not apply
+  them directly.
 
 ## Core principle: closed loop, user is the gate
 
@@ -81,8 +81,8 @@ Look for, in priority order:
    **`CLAUDE.md` / `AGENTS.md` rule** (route via the `remember` skill's layering:
    normative→AGENTS.md, quirk→notes).
 3. A **hot manual shell binary** or a repeated permission prompt → candidate for
-   a **helper-script change or an allowlist entry** (route via `update-config`
-   or an edit to the relevant existing script).
+   a **helper-script change or an allowlist entry** (route to the owning config
+   workflow or edit the relevant existing script after approval).
 4. **Friction signals**: a project with a high error-ish count or repeated
    retries → worth surfacing even without a clean fix.
 
@@ -103,13 +103,11 @@ only when the payoff justifies the cost.
 
 ### Step 5 — Present proposals (approval gate)
 
-Present a short ranked report. For each proposal show:
+Present a short ranked report. Each proposal must include three things:
 
-- **type**: new-skill | rule | script-change
-- **evidence**: which sessions / how often (cite the digest)
-- **target file**: the exact path
-- **proposed change**: the exact edit or skill outline
-- **expected payoff**: why it's worth it
+- **what and where**: type plus exact target file / workflow owner.
+- **why now**: digest-backed evidence and expected payoff.
+- **proposed edit**: the exact rule, script change, or skill outline.
 
 Then ask the user which to act on:
 
@@ -122,10 +120,10 @@ Then ask the user which to act on:
 
 ### Step 6 — Execute approved items (delegate, don't freestyle)
 
-- new skill → the `skill-development` skill
 - rule / memory → the `remember` skill (it owns the AGENTS.md/CLAUDE.md/notes
   layering)
-- settings / permissions / hooks (Claude Code) → the `update-config` skill
+- new skill → the owning skill authoring workflow
+- settings / permissions / hooks → the relevant config owner
 - change to an existing helper script → a normal edit, user-confirmed
 
 daily-loop itself does not write `CLAUDE.md` / `AGENTS.md` / config; it routes.
