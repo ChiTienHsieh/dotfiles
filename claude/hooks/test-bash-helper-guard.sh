@@ -253,6 +253,11 @@ run_case \
   "deny"
 
 run_case \
+  "deny: true long quoted tmux send-keys prompt payload still blocked" \
+  "tmux send-keys -t %24 'This is a deliberately long prompt payload that should still be blocked because tmux send-keys is really being executed here.'" \
+  "deny"
+
+run_case \
   "deny: long double-quoted tmux send-keys prompt payload" \
   'tmux send-keys -t %24 "Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping."' \
   "deny"
@@ -275,6 +280,18 @@ run_case \
 run_case \
   "allow: agent-send-prompt helper is allowed" \
   "~/dotfiles/skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'" \
+  "allow"
+
+run_case \
+  "allow: heredoc data containing long tmux send-keys payload" \
+  "cat > /tmp/example <<EOF
+tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'
+EOF" \
+  "allow"
+
+run_case \
+  "allow: echo data containing long tmux send-keys payload" \
+  "echo \"tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'\"" \
   "allow"
 
 # --- Fail-open ------------------------------------------------------------

@@ -71,6 +71,7 @@ EXEC_QUOTE_PREFIX_RE = re.compile(
 )
 LONG_SEND_KEYS_PAYLOAD_CHARS = 80
 TMUX_SEND_KEYS_RE = re.compile(r"\btmux\s[^;&|\n]*\bsend-keys\b")
+HEREDOC_RE = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
 
 
 def strip_data_quotes(command):
@@ -91,6 +92,31 @@ def strip_data_quotes(command):
         return " "
 
     return QUOTED_RE.sub(replace, command)
+
+
+def strip_heredoc_bodies(command):
+    """Remove simple heredoc bodies so data lines are not treated as commands.
+
+    This is intentionally small, matching the hook's existing shell-lite
+    parsing style. It handles common `<<EOF`, `<<'EOF'`, and `<<"EOF"` forms.
+    """
+    lines = command.splitlines()
+    output = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        output.append(line)
+        markers = [match.group(2) for match in HEREDOC_RE.finditer(line)]
+        i += 1
+        for marker in markers:
+            while i < len(lines):
+                if lines[i].strip() == marker:
+                    output.append(lines[i])
+                    i += 1
+                    break
+                output.append("")
+                i += 1
+    return "\n".join(output)
 
 # Count real `tmux ... capture-pane` invocations, not the literal string.
 TMUX_CAPTURE_RE = re.compile(r"tmux\s[^;&|]*capture-pane")
@@ -202,10 +228,12 @@ def check_long_tmux_send_keys_payload(command):
     This deliberately targets simple quoted prompt strings. It leaves normal
     key sends (`Enter`, `BTab`), short commands, and the dedicated helper alone.
     """
+    command = strip_heredoc_bodies(command)
     for statement in STATEMENT_SPLIT_RE.split(command):
         if "agent-send-prompt.sh" in statement:
             continue
-        if not TMUX_SEND_KEYS_RE.search(statement):
+        executable_statement = strip_data_quotes(statement)
+        if not TMUX_SEND_KEYS_RE.search(executable_statement):
             continue
         for match in QUOTED_RE.finditer(statement):
             payload = unquote_shell_literal(match.group(0))

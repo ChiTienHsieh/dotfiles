@@ -14,10 +14,15 @@ pane_tail() {
 
 prompt_visible() {
   local screen="$1"
-  printf '%s\n' "$screen" | grep -Fq "$prompt" && return 0
-  # Long prompts can wrap in the terminal; this catches the common case where
-  # capture-pane splits only on display lines.
-  printf '%s' "$screen" | tr -d '\n' | grep -Fq "$prompt"
+  local normalized_screen
+  local normalized_prompt
+  printf '%s\n' "$screen" | grep -Fq -- "$prompt" && return 0
+  # Long prompts can wrap with leading indentation on continuation lines.
+  # Normalize whitespace before matching so display wrapping does not look like
+  # a failed paste.
+  normalized_screen="$(printf '%s\n' "$screen" | sed 's/^[[:space:]]*//' | tr '\n' ' ' | tr -s '[:space:]' ' ')"
+  normalized_prompt="$(printf '%s\n' "$prompt" | tr '\n' ' ' | tr -s '[:space:]' ' ')"
+  printf '%s\n' "$normalized_screen" | grep -Fq -- "$normalized_prompt"
 }
 
 busy_or_sent() {
