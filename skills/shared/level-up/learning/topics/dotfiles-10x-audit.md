@@ -8,13 +8,13 @@
 - A3：楓之谷・倉庫大掃除（永久存檔不重置 → dotfiles）。單一世界觀一路扛到底，不混 Vainglory。
 
 ## Current Level
-- Status: learning — L1-L7 通關（L7 決策全數拍板並施工完畢），剩 L8 BOSS：merge 回 main。
+- Status: mastered — L1-L8 全通關。PR #1 已 merge 進 main（3c5daa6，merge commit 保留 15 筆故事線）。
 - Last updated: 2026-07-04
-- Confidence: 高（6/7 一次過 + L4 補考過，且能自行延伸洞見）
+- Confidence: 高（6/7 一次過 + L4 補考過，全程能自行延伸洞見）
 
 ## Resume Point
-- 下一步：L8 BOSS — 未推 commit 疊到 8 筆，先跑 codex review（安全+simplify）再 push branch，merge main 方式由 user 決定（機制：`git push origin skill/effective-html-explainer:main`，共用 tree 不 checkout）。
-- 待收：playwright-cli 上游同步+trim（Codex 在 tmux `trim-worker` 執行中，marker=PLAYWRIGHT_DONE）；user 手動移除 playwright-cli plugin（/plugin UI）。
+- 課程完結。若 user 想回顧：main HEAD=3c5daa6；PR https://github.com/ChiTienHsieh/dotfiles/pull/1。
+- 未清尾巴（非 blocking）：user 手動移除 playwright-cli plugin（/plugin UI）；output/audit-2026-07-03/ 是 gitignored 工作區可保留當 audit trail。
 - 三份 Codex 分析報告在 ~/dotfiles/output/audit-2026-07-03/session2-analysis/；舊審計全紀錄在同 dir 的 audit-main/。
 
 ## Level Map
