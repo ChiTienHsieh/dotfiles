@@ -114,6 +114,26 @@ run_case \
   "deny"
 
 run_case \
+  "deny: polling via bash -lc quoted executable code" \
+  "while true; do bash -lc 'tmux capture-pane -p -t %3'; sleep 5; done" \
+  "deny"
+
+run_case \
+  "allow: send-keys prose mentioning bash -lc is data" \
+  "tmux send-keys -t %3 'note: bash -lc is risky'" \
+  "allow"
+
+run_case \
+  "deny: polling via bash -l -c split-flag executable code" \
+  "while true; do bash -l -c 'tmux capture-pane -p -t %3'; sleep 5; done" \
+  "deny"
+
+run_case \
+  "allow: looped send-keys broadcasting a bash -lc capture-pane snippet" \
+  'for p in %1 %2; do tmux send-keys -t "$p" "bash -lc '"'"'tmux capture-pane -p -t %3'"'"'"; done' \
+  "allow"
+
+run_case \
   "allow: capture-pane sandwiched between two unrelated loops" \
   'for p in %1; do tmux send-keys -t "$p" C-c; done; tmux capture-pane -p -t %1 | tail -20; for p in %2; do echo ok; done' \
   "allow"
@@ -198,6 +218,31 @@ run_case \
 run_case \
   "allow: xargs rg bounded by head in same pipeline" \
   'find . -type f | xargs rg TODO | head -5' \
+  "allow"
+
+run_case \
+  "deny: tail -n +1 is not an output cap" \
+  'rg TODO . | tail -n +1' \
+  "deny"
+
+run_case \
+  "deny: sed -n p is not an output cap" \
+  'rg TODO . | sed -n p' \
+  "deny"
+
+run_case \
+  "allow: rg piped to tail -n 5 is bounded" \
+  'rg TODO . | tail -n 5' \
+  "allow"
+
+run_case \
+  "allow: rg piped to tail -20 is bounded" \
+  'rg TODO . | tail -20' \
+  "allow"
+
+run_case \
+  "allow: rg piped to tail -n5 is bounded" \
+  'rg TODO . | tail -n5' \
   "allow"
 
 # --- Fail-open ------------------------------------------------------------

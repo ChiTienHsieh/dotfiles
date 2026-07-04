@@ -45,19 +45,36 @@ AGENT_RG_HINT = (
 LOOP_BODY_CAPTURE_RE = re.compile(
     r"\bdo\b(?:(?!\bdone\b).)*?tmux\s[^;&|]*capture-pane", re.S
 )
-# Quoted string literals are data/message payloads, not commands. They are
-# stripped before any rule runs, so prose (e.g. a send-keys announcement
-# that mentions capture-pane, 2026-07-04 incident) never triggers rules.
-# EXCEPT: a quoted span holding a command substitution ($( or backtick)
-# contains executable code and is kept. Imperfect for escaped/nested
-# quotes; fail-open spirit applies.
+# Quoted string literals are usually data/message payloads, not commands.
+# They are stripped before any rule runs, so prose (e.g. a send-keys
+# announcement that mentions capture-pane, 2026-07-04 incident) never
+# triggers rules.
+#
+# EXCEPT: keep quoted spans that contain command substitution ($( or
+# backtick), or that immediately follow a shell/eval execution prefix such
+# as `bash -lc '...'` or `eval '...'`. Those quotes hold executable code.
+# Still out of scope: deliberately evasive wrappers, escaped/nested quotes,
+# and complete shell grammar.
 QUOTED_RE = re.compile(r"'[^']*'|\"[^\"]*\"")
+EXEC_QUOTE_PREFIX_RE = re.compile(
+    r"(?:\b(?:ba|z)?sh\s+(?:-\S+\s+)*-\S*c|\beval)\s*$"
+)
 
 
 def strip_data_quotes(command):
     def replace(match):
         span = match.group(0)
         if "$(" in span or "`" in span:
+            return span
+        prefix = command[: match.start()]
+        # Precedence: inside a send-keys statement everything quoted is
+        # payload data for another pane, even if it textually looks like
+        # `bash -lc '...'`. The exec-prefix exception applies only when
+        # the quote is NOT a send-keys argument.
+        statement_prefix = STATEMENT_SPLIT_RE.split(prefix)[-1]
+        if "send-keys" in statement_prefix:
+            return " "
+        if EXEC_QUOTE_PREFIX_RE.search(prefix):
             return span
         return " "
 
@@ -97,8 +114,25 @@ BOUND_FLAG_RES = [
     re.compile(r"--quiet\b"),
 ]
 
-# A downstream segment in the SAME pipeline that limits output volume.
-LIMITER_SEGMENT_RE = re.compile(r"^\s*(head|tail|wc|grep -c|sed -n)\b")
+HEAD_LIMITER_RE = re.compile(r"^\s*head\b")
+WC_LIMITER_RE = re.compile(r"^\s*wc\b")
+GREP_COUNT_LIMITER_RE = re.compile(r"^\s*grep\s+-c\b")
+TAIL_LIMITER_RE = re.compile(
+    r"^\s*tail(?:\s*$|\s+-\d+\b|\s+-n\s*\d+\b|\s+--lines[=\s]\d+\b)"
+)
+
+
+def is_limiter_segment(segment):
+    """Return whether a downstream pipeline segment bounds output volume."""
+    return any(
+        limiter.search(segment)
+        for limiter in (
+            HEAD_LIMITER_RE,
+            WC_LIMITER_RE,
+            GREP_COUNT_LIMITER_RE,
+            TAIL_LIMITER_RE,
+        )
+    )
 
 
 def deny(reason):
@@ -138,9 +172,7 @@ def check_unbounded_rg(command):
                 continue
             if any(flag.search(segment) for flag in BOUND_FLAG_RES):
                 continue
-            if any(
-                LIMITER_SEGMENT_RE.match(later) for later in segments[i + 1:]
-            ):
+            if any(is_limiter_segment(later) for later in segments[i + 1:]):
                 continue
             return True
     return False
