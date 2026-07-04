@@ -60,6 +60,16 @@
     ],
     "defaultMode": "auto"
   },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 ~/.claude/hooks/bash-helper-guard.py"}
+        ]
+      }
+    ]
+  },
   "model": "claude-fable-5[1m]",
   "statusLine": {
     "type": "command",
