@@ -11,11 +11,15 @@ Sprin 是 GuangFuHero（光復超人）救災平台志工，這套 level-up 不�
 - **節奏**：放鬆、玩著學、預期 20–30 關、命名押到最後一關。語氣輕鬆、多用 Vainglory 類比。
 
 ## Current Level
-- Status: learning
-- Last updated: 2026-06-28
-- Confidence: L1–L7 mastered（junction table、self-referential、canonical ordering+UNIQUE、ticket/task 顆粒度、payload、FK ON DELETE、相似度不傳遞/connected component）。**L8（ticket 狀態機）已開、MCQ 待 Sprin 作答**（正解 B）。
-- Next: 從 L8 接，並把 map 依上面 4 項 goal 擴張到 ~20–30 關。
-- Pace: User 要求放鬆步調、玩著學，預期總長 20–30 關。命名押到最後一關才定。
+- Status: mastered（概念關 L1–L9 教完；交付物關 L10+ 由 user 改為「orchestrator + Codex 艦隊」直接做完，不再教學）
+- Last updated: 2026-07-04
+- 交付物全數完成並 commit 進 .local repo（ae89829）：測試案例 13 案+json 假資料、EAV 欄位清單、super admin onboarding、v1 schema 提案（SSOT §九，命名定案 ticket_duplicate_pairs 家族）。
+- 模式轉換：2026-07-04 user 明講「instead of teaching…finish all of the task」→ 後續此 topic 是工作模式不是教學模式，除非 user 再開課。
+
+## 環境/協作變更（2026-07-01）
+- **repo 路徑移動**：`~/Desktop/CodeForge/...` → `~/CodeForge/...`。SSOT 現在在 `~/CodeForge/learning_resources/github_repo/GuangFuHero/optimized-version/.local/dedup-design.md`。
+- **User 要省 Mac RAM**：不要再開 Codex tmux pane，改用 CC subagent（同 process）或 orchestrator 自己做。%81/%82 已關（`claude -r` 可 resume）。
+- **交付物累積**：狀態機圖 `.local/dedup-state-machine.html`（含 dup_ignored）、決策表已上 brief（§七鏡像）、索引清單已寫 dedup-design.md §八。
 
 ## Analogy & Depth (Level 0 選擇)
 - **Analogy**: Vainglory 好友名單 & 公會系統。好友名單 = 關聯表、公會 = 群組、都是永久存檔。
@@ -48,7 +52,9 @@ Sprin 是 GuangFuHero（光復超人）救災平台志工，這套 level-up 不�
 - 2026-06-27: L6（FK ON DELETE）答對（A=CASCADE），理由精準：「配對情報的意義寄生在兩端都還活著」。已補實務 nuance：災防系統多用 soft delete（呼應 brief 不讓受災戶消失），CASCADE 只在 hard delete 當清道夫；audit/歷程表反而不該 CASCADE（稽核要留得住）。
 - 2026-06-27: L7（相似度傳遞性 / pair→group）。Sprin 覺得難、三個都覺得有理、主動求解 → 此關非自行推出，是引導講解。正解 B：相似不傳遞，merge drift 會讓真實受災戶被連鎖併走（brief 紅線）；A 陷阱=連鎖合併；C 精神對(別漏 A-C)但做法錯(不可憑空建邊，應丟佇列實算)。核心觀念：相似邊(自動/兩兩/寬鬆) vs 成群合併(刻意/人工/嚴門檻 / connected component)是兩個分開階段。
 - 2026-06-27: L7 正解（B）首次送出時遺失，只送到 bookkeeping 行 → User wtf。已重貼乾淨版，理解確認。
-- 2026-06-28: 開 L8（狀態機）。用 Vainglory 好友邀請流程類比（陌生人→邀請中→好友/拒絕；推薦好友=機器建議不會自動成立）。狀態：建議(機器發)/確認(人工)/駁回(人工)。MCQ 正解 B：機器只生建議、只有人能推確認/駁回、確認要可反悔（呼應 brief 紅線）。待 Sprin 作答。
+- 2026-06-28: 開 L8（狀態機）。用 Vainglory 好友邀請流程類比（陌生人→邀請中→好友/拒絕；推薦好友=機器建議不會自動成立）。狀態：建議(機器發)/確認(人工)/駁回(人工)。MCQ 正解 B：機器只生建議、只有人能推確認/駁回、確認要可反悔（呼應 brief 紅線）。
+- 2026-06-28: L8 答對 B。之後自己延伸到「每條 transition 的觸發條件+後果」，用四格表推出 Layer 1「聽勸=靜默 / 不聽勸=建單+dup_ignored」模式 → 揭露 dup_ignored 這個新終結狀態。狀態機圖已補 dup_ignored 分支。決策表寫進 dedup-design.md §七、%81 render 進 brief。訊號：對狀態機的邊/副作用很敏銳，會自己把圖補完整。
+- 2026-07-01: L9（查詢決定索引）答對 B。原本以為 index 是「只裝符合條件列的小表」→ 已修正（一般 index 收整欄排序+指標），但順勢帶出他其實描述的是 partial index（真東西），並肯定他自推的「寫入變慢」取捨。自己推出最左前綴缺口要補 high 欄索引。產出索引清單交付物（dedup-design.md §八）。
 
 ## Known Gaps
 - (待觀察)
