@@ -50,6 +50,14 @@ Use when writing a prompt file for a delegated worker.
 - Token-efficient delegation means not reading the worker output stream. It is
   not mainly about choosing interactive vs exec surfaces; 2026-07-02 gu-log
   tests showed the token savings come from marker/report polling.
+- Cheapest ground truth first: before contracting any "reproduce / copy /
+  match X" task, spend one read-only check hunting for X's direct source (a
+  public repo behind a *.github.io page, a package, an export). Reproducing
+  from rendered output when the source is directly obtainable wastes a whole
+  worker run.
+- Inherited red gates: worker contracts must say "an out-of-contract CI
+  failure = report it, do not fix it" — otherwise every parallel worker
+  independently fixes the same inherited failure and the fix lands N times.
 
 ## verification
 
@@ -63,3 +71,8 @@ Use when a worker reports done and the controller must accept or reject.
   reliable and saves the controller's context.
 - `wc -l` before opening a big file; read the load-bearing slice, not the whole
   thing.
+- Long pane/transcript reviews follow the same principle: the controller does
+  not read the full scrollback itself — spawn a cheap subagent (e.g. haiku) to
+  capture the pane and report highlights, then personally verify only the
+  load-bearing slices. (2026-07-06, user-directed after the controller started
+  reading two full coach sessions inline.)
