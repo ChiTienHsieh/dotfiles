@@ -30,6 +30,8 @@
 
 ## 路由
 
-- Pre-implementation coaching：讀 `pre-implementation.md`。
-- Post-implementation understanding 或 merge/push 前 quiz：讀 `post-implementation.md`。
+口語觸發詞（user 的慣用叫法）：**preflight** ＝ pre-implementation，**debrief** ＝ post-implementation。
+
+- Pre-implementation coaching（「preflight」「run preflight」）：讀 `pre-implementation.md`。
+- Post-implementation understanding 或 merge/push 前 quiz（「debrief」「debrief time」）：讀 `post-implementation.md`。
 - during notes 是一般 implementation 行為，不是純教學；只在需要形成 post quiz 素材時拉進來。

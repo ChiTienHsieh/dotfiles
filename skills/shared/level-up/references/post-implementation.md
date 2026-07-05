@@ -1,4 +1,4 @@
-# Post-Implementation Mode
+# Post-Implementation Mode（口語：debrief）
 
 目標是讓 user 在 merge/push 前理解關鍵決策，而不是背 diff。這個 mode 適合高風險改動，也適合 user 明確說想確認自己懂這次變更。
 

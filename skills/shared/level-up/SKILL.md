@@ -198,7 +198,8 @@ Then WAIT for user to choose. Do not assume. Do not proceed.
 When the user asks for pre-implementation planning, post-implementation
 understanding, merge-readiness quiz, or decision-focused implementation
 coaching, first read `references/implementation-understanding-loop.md` and then
-the relevant pre/post reference. Keep normal level-up behavior for pure
+the relevant pre/post reference. Spoken triggers: "preflight" = pre-implementation,
+"debrief" = post-implementation. Keep normal level-up behavior for pure
 teaching.
 
 ## Teaching Flow

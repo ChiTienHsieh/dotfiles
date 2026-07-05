@@ -1,4 +1,4 @@
-# Pre-Implementation Mode
+# Pre-Implementation Mode（口語：preflight）
 
 目標不是純學習，而是幫 user 把 unknown unknowns 變成可決策的 known unknowns。每個 level 都要同時做到兩件事：教一個必要概念，並產出一個「決策確認」，釐清 user 的一項 intent。
 
