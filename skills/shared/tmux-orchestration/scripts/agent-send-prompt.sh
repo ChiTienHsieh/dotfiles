@@ -24,13 +24,19 @@ prompt_occurrences() {
   # Long prompts can wrap inside tokens or with indentation. Remove all
   # whitespace before fallback matching so display wrapping does not look like
   # a failed paste.
-  normalized_screen="$(printf '%s\n' "$screen" | tr -d '[:space:]')"
-  normalized_prompt="$(printf '%s\n' "$prompt" | tr -d '[:space:]')"
+  # LC_ALL=C throughout: macOS tr in a UTF-8 locale treats [:space:] as
+  # including U+00A0/U+0085 but deletes them BYTE-wise, ripping continuation
+  # bytes (0xA0/0x85) out of CJK characters (e.g. 報 = E5 A0 B1). The mangled
+  # text then makes grep fail with "illegal byte sequence", the count reads 0,
+  # and the caller re-pastes a prompt that actually arrived fine. C locale
+  # makes both tools byte-oriented and deterministic.
+  normalized_screen="$(printf '%s\n' "$screen" | LC_ALL=C tr -d '[:space:]')"
+  normalized_prompt="$(printf '%s\n' "$prompt" | LC_ALL=C tr -d '[:space:]')"
   if [ -z "$normalized_prompt" ]; then
     echo 0
     return
   fi
-  printf '%s\n' "$normalized_screen" | grep -oF -- "$normalized_prompt" | wc -l | tr -d '[:space:]'
+  printf '%s\n' "$normalized_screen" | LC_ALL=C grep -oF -- "$normalized_prompt" | wc -l | LC_ALL=C tr -d '[:space:]'
 }
 
 busy_or_sent() {
@@ -80,11 +86,17 @@ sleep 0.4
 screen="$(pane_tail)"
 
 if ! prompt_visible "$screen"; then
+  # Clear the input box before re-pasting: a false-negative verification must
+  # not stack a second copy on top of a paste that actually landed.
+  tmux send-keys -t "$pane" C-u
+  sleep 0.2
   tmux send-keys -t "$pane" -l "$prompt"
   sleep 0.4
   screen="$(pane_tail)"
   if ! prompt_visible "$screen"; then
-    echo "agent-send-prompt.sh: prompt did not appear in pane input; refusing to press Enter." >&2
+    # Leave the pane clean instead of abandoning half-pasted text.
+    tmux send-keys -t "$pane" C-u
+    echo "agent-send-prompt.sh: prompt did not appear in pane input; cleared input and refusing to press Enter." >&2
     echo "----- pane tail -----" >&2
     printf '%s\n' "$screen" >&2
     exit 1
