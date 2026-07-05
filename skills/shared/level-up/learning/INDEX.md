@@ -4,6 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| Implementation loop / debrief mode | mastered | 航空框架 debrief 5/5 全對：risk-triggered、during notes 原則、規範 vs hook、threat model（defer vs non-goal）、heredoc 收件人判準。自推「提議便宜所以線劃在提議」。**報告要拆 level，不可一次倒完。** | 2026-07-05 | topics/implementation-understanding-loop.md |
 | html-artifacts vs html-explainer 分工 | mastered | A2 楓之谷商店街類比，3/3 MCQ 全對：work artifact vs 教學配方、description 路由、品名搶字眼病灶。自述已熟 agent skills 觸發機制。 | 2026-07-04 | topics/html-duo.md |
 | 裝修優先序與溝通 | learning | A3 Vainglory shotcaller；浴室/防蟑螂/臥室睡眠為一期核心，預算約 50 萬評估。通風=浴室排濕、臥室可控通風、全熱研究。若爆預算先砍全熱/封陽台/客廳大窗/全屋冷氣。 | 2026-07-04 | topics/renovation-prioritization.md |
 | Transcript 研究決策關 | mastered | A2 Vainglory shotcaller；決策走廊（分支/arbitrage/marker/helpers/新skill/出兵）。L1-L6 全通收關，成果：gu-log PR #541、arbitrage 門檻、helper 三件裝。 | 2026-07-04 | topics/transcript-study-decisions.md |

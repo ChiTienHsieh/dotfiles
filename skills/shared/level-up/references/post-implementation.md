@@ -27,11 +27,17 @@
 5. Risk, tests, and residual uncertainty.
 6. Mechanical refactoring and file movement.
 
+## 交付方式（拆關，不要一次倒完）
+
+- 不要把整篇高密度報告一次送出再考試 —— user 讀不完就是失敗。
+- 照 level-up 主線拆關：一關一個決策（含語氣外殼與類比），關末出該關的 MCQ，user 答對才開下一關。
+- 關卡順序沿用上面的 decisions-first 排序；mechanical 改動不開關，收尾一句帶過。
+
 ## Quiz 設計
 
 - 沿用 `SKILL.md` 的 MCQ anti-tell 與 distractor 規則。
 - 題目測「user 能否判斷改動是否合理」，不要測背誦哪幾個檔案改了。
-- 2-4 題通常夠；高風險可加一題 tiny application check。
+- 一關一題，題數跟著決策數走；高風險可加一題 tiny application check。
 - 正確答案應要求理解 tradeoff，例如 compatibility、migration order、failure mode、rollback path。
 - user 答錯時，回到相關決策脈絡重講，不要急著放行。
 
