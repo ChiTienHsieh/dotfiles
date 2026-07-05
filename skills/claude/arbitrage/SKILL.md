@@ -1,29 +1,31 @@
 ---
 name: arbitrage
-description: "Use in Claude Code when implementation work is being planned or delegated, to keep Claude focused on judgment while routing code-writing work to observable Codex sessions through tmux."
+description: "Use in Claude Code when implementation work is being planned or delegated, to keep Claude focused on judgment while routing code-writing work to observable worker sessions through tmux (provider per the worker-routing SSOT)."
 ---
 
 # Arbitrage
 
 This skill adapts `blader/arbitrage` for this machine's Claude + Codex workflow.
 The core idea stays the same: Claude spends attention on judgment, planning,
-design intent, verification, diff review, and git ownership; Codex does the
-bulk implementation work.
+design intent, verification, diff review, and git ownership; a delegated worker
+does the bulk implementation work. Which provider serves as the worker is
+decided by `~/dotfiles/codex/notes/worker-routing.md` (the worker-routing
+SSOT), not by this skill.
 
-On this machine, implementation is delegated to an observable interactive Codex
-surface via `tmux-orchestration`, not file-mutating headless `codex exec`. The
-user wants observable Codex TUI sessions that can be watched, interrupted,
-nudged, or switched to `/fast` manually. Read-only headless Codex is fine for
-the controller's own verification or research.
+On this machine, implementation is delegated to an observable interactive
+worker surface via `tmux-orchestration`, never a file-mutating headless run.
+The user wants observable TUI sessions that can be watched, interrupted, and
+nudged manually. Read-only headless Codex is fine for the controller's own
+verification or research.
 
 ## When To Use
 
 - Use when Claude Code is planning implementation work that would benefit from a
-  separate Codex worker.
+  separate worker.
 - Use when work needs a spec, acceptance criteria, and a visible implementation
   surface.
 - Use for frontend implementation when Claude should preserve design intent and
-  perform visual validation after Codex edits.
+  perform visual validation after worker edits.
 - Do not use for tiny one-line edits where delegation overhead is larger than
   the work.
 - Do not use inside Codex as a reason for Codex to delegate to itself.
@@ -34,7 +36,7 @@ the controller's own verification or research.
 | --- | --- | --- |
 | Product judgment, scope, architecture, constraints | Claude | Keep the thinking here. |
 | Spec writing and acceptance criteria | Claude | Make the worker prompt precise. |
-| Bulk code edits and test-driven implementation | Codex in tmux | Use an observable surface. |
+| Bulk code edits and test-driven implementation | Worker in tmux | Provider per SSOT; observable surface. |
 | Frontend visual validation | Claude | Run, inspect, screenshot, and judge. |
 | Debugging analysis | Claude first | Delegate the concrete fix after root cause is clear. |
 | Diff review, commit, push, PR | Claude | Git ownership stays in the controller session. |
@@ -79,14 +81,14 @@ verification or research.
 ## Frontend Validation Loop
 
 1. Claude writes design intent and acceptance criteria in the worker prompt.
-2. Codex implements in a visible tmux surface.
+2. The worker implements in a visible tmux surface.
 3. Claude runs the app, inspects the UI, and takes screenshots when useful.
 4. Claude writes concrete visual feedback and re-dispatches if needed.
 5. Stop when the UI matches intent and verification passes.
 
 ## Escape Hatch
 
-Do not predict that Codex will fail. Dispatch first when the work is suitable.
+Do not predict that the worker will fail. Dispatch first when the work is suitable.
 If a worker misses the acceptance criteria twice after concrete corrective
 feedback, Claude should stop re-dispatching, keep the useful parts of the diff,
 and finish the implementation directly.

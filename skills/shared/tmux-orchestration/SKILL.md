@@ -202,6 +202,7 @@ durable lesson, update the relevant section or `references/cmux.md` when the
 lesson is cmux-specific. Distill into reusable rules — do not append raw logs or
 one-off incident detail.
 
-Implementation routing policy lives in the `arbitrage` skill. This skill only
+Implementation routing policy lives in the `arbitrage` skill; provider priority
+lives in `~/dotfiles/codex/notes/worker-routing.md`. This skill only
 covers surface mechanics: prompt files, observable workers, marker reports,
 completion, and verification.

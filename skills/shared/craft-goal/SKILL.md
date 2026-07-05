@@ -11,8 +11,8 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 agent ses
 
 產出 prompt 前先決定交給誰，兩個因素一起看：
 
-- **任務性質**：judgment、review、規格拿捏、跟使用者來回多的 → 傾向 CC；大量機械實作、長時間跑、bulk rewrite → 傾向 Codex。
-- **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看兩邊剩餘額度，其他條件接近時選較肥的一邊。
+- **預設路由**：讀 `~/dotfiles/codex/notes/worker-routing.md`（訂閱狀態＋路由規則）決定交給 CC 還是 Codex。
+- **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看即時餘量；在 SSOT 規則之內，其他條件接近時選較肥的一邊。
 
 目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI（tmux session）、claude CLI（tmux session）、或使用者手動貼。**本文其餘段落寫「下一個 Codex」處，接棒者是 CC 時一律讀作「接棒 CC」**；4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
 

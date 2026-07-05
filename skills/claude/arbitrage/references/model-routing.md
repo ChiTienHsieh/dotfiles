@@ -1,7 +1,10 @@
 # Model Routing
 
 Read this reference only when model choice materially affects delegated work,
-long-running work, quota use, or review quality.
+long-running work, quota use, or review quality. Subscription state and
+provider priority live in `~/dotfiles/codex/notes/worker-routing.md`; read
+that first. This file only ranks capability — the cost column shifts whenever
+subscriptions change.
 
 The cost rank below reflects actual paid cost, not list price or OpenAI quota;
 higher numbers are better.

@@ -5,7 +5,7 @@ description: "Use when checking Codex, Claude Code, or related AI CLI usage limi
 
 # Quota
 
-Use this skill to check and react to AI CLI quota before starting or continuing long-running work. The local source of truth is CodexBar CLI usage output.
+Use this skill to check and react to AI CLI quota before starting or continuing long-running work. The local source of truth is CodexBar CLI usage output. This skill reports live quota only; which provider to prefer for delegation is decided by `~/dotfiles/codex/notes/worker-routing.md` (the worker-routing SSOT).
 
 ## Quick Check
 

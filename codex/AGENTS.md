@@ -32,7 +32,7 @@ Universal instructions for Codex CLI
 - Route pre/post implementation coaching through the `level-up` references (user triggers: "preflight" = pre, "debrief" = post); keep mechanical refactors at the bottom of explanations.
 
 ## Guardrail / SSOT repo 的 review 閘門
-- 推 guardrail / SSOT repo（例 `~/dotfiles`：CLAUDE.md、settings.json、AGENTS.md 等管 agent 行為的檔）：先 commit，跑 quota 檢查選 reviewer —— 預設 Codex（`codex review` 或 cmux Codex worker），只有 Codex quota/auth/tooling 不適合或使用者明講才改用 Claude Code。使用者已授權非互動式 review；執行 review 的 agent 自己跑、review 無 blocking issue 才 push，由單一擁有者收斂避免 non-fast-forward。
+- 推 guardrail / SSOT repo（例 `~/dotfiles`：CLAUDE.md、settings.json、AGENTS.md 等管 agent 行為的檔）：先 commit，reviewer 依 `~/dotfiles/codex/notes/worker-routing.md`（worker 路由 SSOT）的路由規則選；quota 不確定就先查。
 - 行為規則類改動（prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric）除安全 review 外，再加「simplify review」視角：專找把一次事故寫成過窄規則、過度工程化、可用更通用說法之處；回報 Keep / Simplify / Drop，只有 blocking safety issue 或明顯更簡潔的通用規則才要求修改。
 
 ## 跨 agent prompt 的簽名：回信地址 + 權限等級
