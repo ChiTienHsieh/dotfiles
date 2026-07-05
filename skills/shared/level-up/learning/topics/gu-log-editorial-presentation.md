@@ -5,9 +5,9 @@
 - User 明講：沒有 before/after prototype 看不懂改版提案 → 教材必須帶視覺對照（live 截圖 + 互動 mock）。
 
 ## Current Level
-- Status: learning（L1 通過，L2 起跑）
+- Status: mastered（L1–L6 MCQ 6/6 first-try；三個 open questions 全拍板）
 - Last updated: 2026-07-05
-- Confidence: medium-high
+- Confidence: high
 
 ## Analogy / Depth
 - C3：米其林餐廳 vs 工廠食堂（新框架，user 選的），深度 3（深挖細節）。
@@ -37,7 +37,7 @@
 - **互動拉桿大受好評**（「實驗廚房拉桿超酷」）——之後的 level 盡量給可操作的 slider/toggle playground，不只靜態對照。
 - 教材檔在 session scratchpad：`L1-restaurant-inspection.html` + live 截圖 before-*.png（tmp，session 結束會消失；如 user 要留檔再搬）。
 - 每關 = 教一個概念 + 一個決策確認（preflight 模式）。
-- 待拍板決策：D0 Approval Meaning framing、Q1 serif 招牌、Q2 source citation 位置、Q3 collapse 範圍、TOC 降噪程度。
+- 決策已全數拍板（D0、Q1 sans-first、Q2 標題下小卡、Q3 全進抽屜、TOC 細線）——詳見 Evidence。
 
 ## Next Suggested Levels
-- L2 上菜節奏（D2）→ L3 serif 風險（Open Q1）→ L4 首屏/source（D3/Q2）→ L5 TOC（D4）→ L6 底部收斂（D5/D6/Q3）→ L7 收關結論清單。
+- 課程完結（L1–L6 全通過）。後續：PR #548 實作若偏離拍板結論，用 debrief mode 驗收實作 vs 決策。
