@@ -28,7 +28,15 @@ prompt_visible() {
 busy_or_sent() {
   local screen="$1"
   ! prompt_visible "$screen" && return 0
+  # Codex TUI busy signals.
   printf '%s\n' "$screen" | grep -qiE 'Working|esc to interrupt|interrupt' && return 0
+  # Claude Code TUI: submitted prompts stay echoed in the transcript, so
+  # prompt_visible alone cannot distinguish input-box from history. Two
+  # CC-specific "it was sent" signals:
+  # 1) the last input-marker line is empty (input box cleared after submit);
+  printf '%s\n' "$screen" | grep -E '^❯' | tail -1 | grep -qE '^❯[[:space:]]*$' && return 0
+  # 2) a spinner line like "✻ Germinating…" is present (turn in flight).
+  printf '%s\n' "$screen" | grep -qE '^[[:space:]]*[✻✽✢✳✶∗·][[:space:]].+…' && return 0
   return 1
 }
 
