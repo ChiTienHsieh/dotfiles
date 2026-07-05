@@ -14,20 +14,28 @@ pane_tail() {
 
 prompt_visible() {
   local screen="$1"
+  [ "$(prompt_occurrences "$screen")" -gt "$prompt_baseline_count" ]
+}
+
+prompt_occurrences() {
+  local screen="$1"
   local normalized_screen
   local normalized_prompt
-  printf '%s\n' "$screen" | grep -Fq -- "$prompt" && return 0
   # Long prompts can wrap inside tokens or with indentation. Remove all
   # whitespace before fallback matching so display wrapping does not look like
   # a failed paste.
   normalized_screen="$(printf '%s\n' "$screen" | tr -d '[:space:]')"
   normalized_prompt="$(printf '%s\n' "$prompt" | tr -d '[:space:]')"
-  printf '%s\n' "$normalized_screen" | grep -Fq -- "$normalized_prompt"
+  if [ -z "$normalized_prompt" ]; then
+    echo 0
+    return
+  fi
+  printf '%s\n' "$normalized_screen" | grep -oF -- "$normalized_prompt" | wc -l | tr -d '[:space:]'
 }
 
 busy_or_sent() {
   local screen="$1"
-  ! prompt_visible "$screen" && return 0
+  [ "$(prompt_occurrences "$screen")" -le "$prompt_baseline_count" ] && return 0
   # Codex TUI busy signals.
   printf '%s\n' "$screen" | grep -qiE 'Working|esc to interrupt|interrupt' && return 0
   # Claude Code TUI: submitted prompts stay echoed in the transcript, so
@@ -51,6 +59,7 @@ fi
 
 pane="$1"
 prompt="$2"
+prompt_baseline_count=0
 
 case "$prompt" in
   *$'\n'*|*$'\r'*)
@@ -63,6 +72,8 @@ if ! tmux capture-pane -p -t "$pane" -S -1 >/dev/null 2>&1; then
   echo "agent-send-prompt.sh: tmux target not found: $pane" >&2
   exit 2
 fi
+
+prompt_baseline_count="$(prompt_occurrences "$(pane_tail)")"
 
 tmux send-keys -t "$pane" -l "$prompt"
 sleep 0.4
