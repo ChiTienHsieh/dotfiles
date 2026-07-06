@@ -325,6 +325,39 @@ function stagedMarkdownFiles() {
     .filter((line) => line.endsWith(".md"));
 }
 
+// During a merge commit, `git diff --cached` lists every file the other
+// branch brings in — including files this branch never touched, which
+// already passed this check on their own commits/PRs. Flagging those is a
+// false positive (observed 2026-07-06: merges blocked on unchanged files
+// from main). A file is exempt when its staged blob is byte-identical to
+// the blob in ANY merge parent; conflict resolutions and genuinely edited
+// files differ from every parent and are still checked.
+function mergeParentRefs() {
+  try {
+    const mergeHeadPath = git(["rev-parse", "--git-path", "MERGE_HEAD"]).trim();
+    return readIfExists(mergeHeadPath)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function blobOid(spec) {
+  try {
+    return git(["rev-parse", "--verify", "--quiet", spec]).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+function unchangedFromAnyParent(file, parents) {
+  const staged = blobOid(`:${file}`);
+  if (!staged) return false;
+  return parents.some((parent) => blobOid(`${parent}:${file}`) === staged);
+}
+
 function stagedContent(file) {
   return git(["show", `:${file}`]);
 }
@@ -384,7 +417,13 @@ function main() {
   const policy = parsePolicy(repoRoot);
   if (!policy.enabled) return;
 
-  const files = stagedMarkdownFiles();
+  let files = stagedMarkdownFiles();
+  if (files.length === 0) return;
+
+  const mergeParents = mergeParentRefs();
+  if (mergeParents.length > 0) {
+    files = files.filter((file) => !unchangedFromAnyParent(file, mergeParents));
+  }
   if (files.length === 0) return;
 
   const ignoreRules = loadIgnoreRules(repoRoot);

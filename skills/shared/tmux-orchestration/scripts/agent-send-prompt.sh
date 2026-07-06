@@ -58,6 +58,25 @@ send_enter() {
   tmux send-keys -t "$pane" Enter
 }
 
+# An approval/selection dialog steals keyboard focus: pasted text is swallowed
+# and any '1'/'2' character in the prompt can SELECT an option on the user's
+# behalf. Detect an active dialog anywhere on the VISIBLE screen (no
+# scrollback: answered dialogs disappear from the repaint but linger in
+# history, so -S would false-positive).
+dialog_active() {
+  tmux capture-pane -p -t "$pane" 2>/dev/null \
+    | LC_ALL=C grep -qE 'Esc to cancel|Do you want to (proceed|allow)|Enter to confirm'
+}
+
+# Paste via a tmux buffer instead of send-keys -l: send-keys types the string
+# key-by-key, which can outrun the TUI on long CJK prompts (head-truncation,
+# double-paste on retry). paste-buffer delivers the text atomically; -p uses
+# bracketed paste when the app supports it.
+paste_prompt() {
+  printf '%s' "$prompt" | tmux load-buffer -b __agent_send_prompt - \
+    && tmux paste-buffer -p -t "$pane" -b __agent_send_prompt -d
+}
+
 if [ "$#" -ne 2 ]; then
   usage
   exit 2
@@ -79,9 +98,14 @@ if ! tmux capture-pane -p -t "$pane" -S -1 >/dev/null 2>&1; then
   exit 2
 fi
 
+if dialog_active; then
+  echo "agent-send-prompt.sh: pane $pane is showing an approval/selection dialog; refusing to paste (text could select an option). Resolve the dialog first (e.g. tmux send-keys -t $pane 1), then resend." >&2
+  exit 3
+fi
+
 prompt_baseline_count="$(prompt_occurrences "$(pane_tail)")"
 
-tmux send-keys -t "$pane" -l "$prompt"
+paste_prompt
 sleep 0.4
 screen="$(pane_tail)"
 
@@ -90,7 +114,7 @@ if ! prompt_visible "$screen"; then
   # not stack a second copy on top of a paste that actually landed.
   tmux send-keys -t "$pane" C-u
   sleep 0.2
-  tmux send-keys -t "$pane" -l "$prompt"
+  paste_prompt
   sleep 0.4
   screen="$(pane_tail)"
   if ! prompt_visible "$screen"; then
