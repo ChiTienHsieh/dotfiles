@@ -57,17 +57,24 @@ Use when a worker's commit is blocked by a pre-commit/pre-push hook.
 
 - Per-file hooks that are not merge-aware will re-flag files a merge brings in
   from main unchanged (they already passed CI on their own PRs). That is a
-  false positive, not a violation.
-- Resolution ladder: (1) the hook's own config front door — e.g. a repo-root
-  ignore file the checker reads from DISK, which can be edited without being
-  staged and restored right after the commit; (2) ask the user. Never
-  `--no-verify`: the user's PreToolUse guardrail blocks it at the harness
-  layer, and any equivalent bypass (hooksPath override, env tricks) violates
-  the same guardrail's intent.
-- The temporary ignore-file edit must stay out of the commit: edit tracked
-  file without staging, verify with `git status --short -- <file>` before and
-  `git show HEAD --stat` after, then `git restore <file>` (not `rm` — it is
-  tracked) and diff against HEAD to confirm byte-identical.
+  false positive, not a violation — but the fix still needs authority.
+- Never `--no-verify` or any equivalent (hooksPath override, env tricks).
+  There is NO dedicated technical block for it (verified 2026-07-06: the only
+  PreToolUse hook is bash-helper-guard.py, which has zero --no-verify logic;
+  a permission-layer denial is what actually stopped it once) — the ban is a
+  standing prompt-level rule in AGENTS/CLAUDE. Treat it as hard anyway; a rule
+  being technically unenforced is not permission.
+- Resolution ladder: (1) propose the durable fix to the user — make the hook
+  merge-aware, or commit a permanent ignore entry (that is repo/machine
+  policy, so it is the user's call); (2) only when the user has already
+  explicitly authorized the OUTCOME (e.g. "merge both") and the hook is the
+  user's own machine-level check misfiring on unchanged files: a temporary
+  on-disk edit to the checker's own ignore config is acceptable, but it must
+  be fully documented in the task report, kept out of the commit (verify with
+  `git status --short -- <file>` before and `git show HEAD --stat` after),
+  and restored via `git restore` (not `rm` — it is tracked) with a diff
+  against HEAD to confirm byte-identical. Silent or undocumented = bypass.
+  When in doubt, ask.
 
 ## worker prompts
 
