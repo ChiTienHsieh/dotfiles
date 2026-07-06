@@ -4,6 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| 投資配置：39w 全球股容器 | learning | A2 舊楓之谷 7 關；L1–L2 完成（XP 3/7，L2 MCQ 對）。**Fable 決策已寫在 topic 檔（VWRA 主推＋決策樹），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
 | Dedup 設計會議準備（討論） | learning | B3 公會幹部會議續作；scope=schema+演算法+data-driven；Level 0 完成、優先序提案待確認。 | 2026-07-05 | topics/dedup-meeting-prep.md |
 | gu-log editorial presentation preflight | mastered | C3 米其林餐廳框架，L1–L6 MCQ 6/6 全對；三 open questions 全拍板（sans-first／標題下小卡／全進抽屜＋TOC 細線）。品味規則：卡片質感>裸文字、UI 不用 emoji 用 SVG icon、小字要配緊行高。 | 2026-07-05 | topics/gu-log-editorial-presentation.md |
 | Implementation loop / debrief mode | mastered | 航空框架 debrief 5/5 全對＋preflight 盲測 2/2（四象限、風險觸發）；七項決策確認與 shipped 全吻合，重量分配由 preflight 顯式化。**報告要拆 level，不可一次倒完。** | 2026-07-05 | topics/implementation-understanding-loop.md |
