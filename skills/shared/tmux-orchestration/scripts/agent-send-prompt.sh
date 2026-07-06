@@ -72,9 +72,12 @@ dialog_active() {
 # key-by-key, which can outrun the TUI on long CJK prompts (head-truncation,
 # double-paste on retry). paste-buffer delivers the text atomically; -p uses
 # bracketed paste when the app supports it.
+# Buffer name is per-invocation ($$): concurrent orchestrators sharing one
+# global name could overwrite each other between load-buffer and paste-buffer,
+# pasting the wrong prompt into a pane.
 paste_prompt() {
-  printf '%s' "$prompt" | tmux load-buffer -b __agent_send_prompt - \
-    && tmux paste-buffer -p -t "$pane" -b __agent_send_prompt -d
+  printf '%s' "$prompt" | tmux load-buffer -b "__agent_send_$$" - \
+    && tmux paste-buffer -p -t "$pane" -b "__agent_send_$$" -d
 }
 
 if [ "$#" -ne 2 ]; then
