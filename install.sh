@@ -311,6 +311,27 @@ if [ ! -e "$HOME/.claude/settings.json" ]; then
     cp "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
     echo "  Seeded: $HOME/.claude/settings.json"
 fi
+# machine.md: one machine-local canonical (~/.config/machine.md) shared by
+# Claude Code + Codex via symlink, so both agents always read identical
+# machine notes. Seeded once from a secret-free template, then owned locally
+# (machine-specific, non-syncable content — never committed). Editing a symlink
+# is refused by the agent write-guard, which is what keeps the views from
+# diverging: edits are forced back to the canonical file.
+mkdir -p "$HOME/.config"
+if [ ! -e "$HOME/.config/machine.md" ]; then
+    # On machines predating the canonical, migrate an existing REAL machine.md
+    # (not a symlink) so hand-written notes survive instead of being replaced by
+    # an empty template; else seed the secret-free template. Only the first
+    # match is migrated — if both agent paths are real files with diverging
+    # content, merge them by hand afterwards (the other is in $BACKUP_DIR).
+    machine_seed="$DOTFILES_DIR/templates/machine.md.template"
+    for existing in "$HOME/.codex/machine.md" "$HOME/.claude/machine.md"; do
+        if [ -f "$existing" ] && [ ! -L "$existing" ]; then machine_seed="$existing"; break; fi
+    done
+    cp "$machine_seed" "$HOME/.config/machine.md"
+    echo "  Seeded: $HOME/.config/machine.md (from ${machine_seed##*/})"
+fi
+backup_and_link "$HOME/.config/machine.md" "$HOME/.claude/machine.md"
 backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
 backup_and_link "$DOTFILES_DIR/claude/user-en-vocab.md" "$HOME/.claude/user-en-vocab.md"
 
@@ -350,11 +371,9 @@ if [ ! -e "$HOME/.codex/config.toml" ]; then
 else
     echo "  ~/.codex/config.toml already exists, skipping config seed"
 fi
-if [ ! -e "$HOME/.codex/machine.md" ]; then
-    backup_and_copy "$DOTFILES_DIR/codex/machine.md" "$HOME/.codex/machine.md"
-else
-    echo "  ~/.codex/machine.md already exists, skipping machine notes bootstrap"
-fi
+# machine.md symlinks to the shared canonical (~/.config/machine.md) seeded in
+# the Claude Code step above — same file both agents read, no divergence.
+backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
 mkdir -p "$HOME/.codex/rules"

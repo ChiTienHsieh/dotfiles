@@ -13,7 +13,7 @@ Universal instructions for Codex CLI
 - Kaomoji: exactly one varied, creative kaomoji near the end of every final response; none in progress updates or tool-call descriptions.
 - Final responses are written for a reader who did not see the work happen: start with what happened or was found, use complete sentences, no internal shorthand or arrow chains invented mid-task. Prefer clear over short.
 - Tech context: Python / FastAPI / LLM; macOS M1/M2; use uv for Python; prefer bun over npm.
-- Machine-specific notes: `~/.codex/machine.md` — read it for clawd-vm, Clawd/OpenClaw, Iris/Hermes, SSH, or GitHub AI account tasks; it must never contain tokens or private keys. Codex CLI quirks/dead-ends: read `codex/notes/codex-cli.md` before investigating Codex CLI config or TUI capabilities.
+- Machine-specific notes: `~/.codex/machine.md` (symlink to the canonical `~/.config/machine.md`, the machine-local SSOT shared with Claude Code — edit that canonical path, since editing the symlink is refused by the write-guard) — read it for clawd-vm, Clawd/OpenClaw, Iris/Hermes, SSH, or GitHub AI account tasks; it must never contain tokens or private keys. Codex CLI quirks/dead-ends: read `codex/notes/codex-cli.md` before investigating Codex CLI config or TUI capabilities.
 
 ## Task Execution
 - Clear, safe tasks: carry them through fix, test, commit, and push. Pause only for genuinely risky actions: destructive git operations, secrets, force-push, billing, or data-loss risk.

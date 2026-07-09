@@ -49,3 +49,10 @@
 - 已驗證可行的 installed `config.toml` 形狀：`default_permissions = "workspace-cmux"`，`[features] network_proxy = true`，`[permissions.workspace-cmux] extends = ":workspace"`，以及 `[permissions.workspace-cmux.network] enabled = true`, `mode = "limited"`, `unix_sockets = { "$HOME/.local/state/cmux 的絕對路徑" = "allow" }`。`codex/config.toml` 保持 portable，`install.sh` 會在 copy 到 `~/.codex/config.toml` 後用當下 `$HOME` 寫入絕對 socket path。
 - 實測 `codex sandbox -P workspace-cmux cmux ping` 會回 `PONG`；`codex sandbox -P workspace-cmux curl https://example.com` 仍會被 limited proxy 擋下，避免順手打開一般 outbound network。
 - 已踩過的死路：top-level `network.allow_unix_sockets = [...]` 會被 config parser 接受，但 `codex sandbox cmux ping` 仍會 `Operation not permitted`；`sandbox_workspace_write.network_access = true` 也不會放行 AF_UNIX socket。
+
+## Codex.app Local Recovery (desktop / Electron)
+（從 machine.md 移來：這是 Codex.app 通用行為、非機器層級 machine 事實。）
+- Codex.app 字級爆掉時，檢查 `~/.codex/.codex-global-state.json` 的 `sansFontSize`。
+- 正常值是 `15`；`150`、`1500`、`1615` 之類會讓 Electron UI 大到無法操作。
+- 不要在 Codex.app 還開著時改 state：app 退出時會用記憶體狀態覆寫檔案。
+- 復原流程：`osascript -e 'tell application "Codex" to quit'` → 確認 `/Applications/Codex.app/Contents/MacOS/Codex` 主 process 已消失 → 同步更新 `.codex-global-state.json` 與 `.codex-global-state.json.bak` → 驗證 JSON → 重開 Codex.app。
