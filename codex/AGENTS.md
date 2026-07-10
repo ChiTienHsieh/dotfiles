@@ -21,7 +21,7 @@ Universal instructions for Codex CLI
 - 收尾前 worktree 仍 dirty → 主動給整理選項（review 後 commit/push、拆分 stage、stash、經同意 discard、或 keep dirty），不要自動清掉使用者未交代的變更。
 - Prefer recoverable deletion via `trash`; hard-delete only clearly disposable temp/build artifacts or on explicit request.
 - After opening a PR, monitor CI yourself instead of asking the user to relay check status.
-- Hard bugs / risky reviews / architecture tradeoffs → shared `oracle` skill (API-costing runs need explicit user approval). Quota checks → `codexbar usage --provider both --source cli`.
+- Hard bugs / risky reviews / architecture tradeoffs → get a second opinion from another frontier model via the headless-agents route (oracle CLI is unconfigured for now — see `codex/notes/backlog.md`). Quota checks → `codexbar usage --provider both --source cli`.
 - Token 效率：預期輸出超過 ~300 行的指令，先偵察（`wc -l`、`rg --count`、`head`）再決定讀法；同一檔第三次要讀時，改用 `rg` 或行號區間，不要整檔重讀。
 
 ## Implementation Understanding Loop

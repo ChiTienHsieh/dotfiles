@@ -1,6 +1,6 @@
 ---
 name: headless-agents
-description: "Use to delegate read-only research, analysis, or parallel investigation to headless AI agents such as Codex CLI, Gemini CLI, or Claude CLI."
+description: "Delegate read-only research, analysis, or parallel investigation to headless AI agents (Codex CLI, Gemini CLI, Claude CLI). Use when the user says 'run codex on this'、「讓 gemini 查」, wants a second opinion from another model, wants to fan out research across models in parallel, or needs an independent read-only investigation that must not touch the working tree — even without naming a CLI."
 allowed-tools: Bash
 ---
 
