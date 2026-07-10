@@ -15,7 +15,8 @@ a quality gate so the loop improves things instead of generating noise.
 
 ## When NOT to use (route elsewhere)
 
-- "Remember this / save this guidance" → the `remember` skill.
+- "Remember this / save this guidance" → the agent's native memory system;
+  layering rule lives in codex/AGENTS.md「Memory Routing」.
 - "Wrap up this session / commit + push" → the `wrap` skill.
 - "Change a permission / settings.json / hook" → route to the owning config or
   skill workflow. daily-loop only *proposes* such changes; it does not apply
@@ -73,8 +74,8 @@ Look for, in priority order:
    → candidate for a **new skill**. (e.g. a repeated "remind me where we were"
    opener → a resume/catch-up skill.)
 2. A **preference or instruction the user keeps re-typing** → candidate for a
-   **`CLAUDE.md` / `AGENTS.md` rule** (route via the `remember` skill's layering:
-   normative→AGENTS.md, quirk→notes).
+   **`CLAUDE.md` / `AGENTS.md` rule** (route via the codex/AGENTS.md「Memory
+   Routing」layering: normative→AGENTS.md, quirk→notes).
 3. A **hot manual shell binary** or a repeated permission prompt → candidate for
    a **helper-script change or an allowlist entry** (route to the owning config
    workflow or edit the relevant existing script after approval).
@@ -115,8 +116,8 @@ Then ask the user which to act on:
 
 ### Step 6 — Execute approved items (delegate, don't freestyle)
 
-- rule / memory → the `remember` skill (it owns the AGENTS.md/CLAUDE.md/notes
-  layering)
+- rule / memory → the agent's native memory plus the codex/AGENTS.md「Memory
+  Routing」layering (normative→AGENTS.md/CLAUDE.md, quirk→notes)
 - new skill → the owning skill authoring workflow
 - settings / permissions / hooks → the relevant config owner
 - change to an existing helper script → a normal edit, user-confirmed
