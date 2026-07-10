@@ -4,7 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
-| Skill 規則堆積學 | learning | A2 老楓道具欄大掃除；5 關、每關一個真實修繕決策；Level 0 完成剛開課。 | 2026-07-10 | topics/skill-rule-hygiene.md |
+| Skill 規則堆積學 | mastered | 老楓道具欄類比。讀者入口判準、使用頻率分層、事故≠規則、description 觸發面全數一次通過（含綜合驗收）；四個真實修繕決策全拍板並 shipped。 | 2026-07-10 | topics/skill-rule-hygiene.md |
 | 投資配置：39w 全球股容器 | learning | 舊楓之谷類比。已懂 CFD 是對賭合約/交易對手風險。**Fable 決策已寫進 topic（VWRA 主推＋累積型＋bitcoin 上限＋分批進場），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
 | Dedup 設計會議準備（討論） | learning | 公會幹部會議類比。已拍板：Q2 走 join/YAGNI、rejected 永久黏、Layer→快慢層、Carol 選項一視同仁、double-submit 答辯。未決：undo 去向(Q8)、merge 語意(Q9)、慢層選型。廢詞/AI 代號零容忍。 | 2026-07-10 | topics/dedup-meeting-prep.md |
 | gu-log editorial presentation preflight | mastered | 米其林餐廳框架。三 open questions 全拍板（sans-first／標題下小卡／全進抽屜＋TOC 細線）。品味規則：卡片質感>裸文字、UI 不用 emoji 用 SVG icon、小字要配緊行高。 | 2026-07-05 | topics/gu-log-editorial-presentation.md |
