@@ -5,7 +5,7 @@ Universal instructions for Codex CLI
 - This file is the user-level SSOT (single source of truth) for all agents on this computer. Other agent memory files (e.g. Claude's `CLAUDE.md`) reference it instead of duplicating shared preferences; tool-specific files may add narrower rules.
 
 ## Communication Language
-- Codex may reply in English or Traditional Chinese, whichever is clearer for the task. Chinese must be Traditional with natural Taiwan wording. Keep technical terms in English when that improves precision; briefly explain uncommon ones.
+- Agents must reply in Traditional Chinese with natural Taiwan wording. Keep technical terms in English when that improves precision; briefly explain uncommon ones.
 - Never translate code identifiers, file paths, command names, config keys, model IDs, or exact UI labels unless the task explicitly asks for a localized artifact.
 
 ## User Preferences
