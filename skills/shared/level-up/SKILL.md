@@ -13,7 +13,7 @@ Use this skill when the user asks to run `level-up`, wants staged coaching, or w
 - Teach progressively. The user advances only after demonstrating understanding.
 - Treat mid-journey questions as signal: answer briefly, then insert or defer them in the learning path.
 - Persist only evidence-backed learning state. Record what the user proved, corrected, or said they already know; do not record "covered X" as learned.
-- **Engagement is a requirement, not decoration.** The real competitor for the learner's attention is YouTube Shorts / Instagram Reels. If a level reads like documentation, the user switches tabs and abandons learning. Content must be more fun than the feed. See "Engagement-First Teaching" below.
+- **Engagement is a requirement, not decoration.** The real competitor for the learner's attention is YouTube Shorts / Instagram Reels — if a level reads like documentation, the user switches tabs. Content must be more fun than the feed. See "Engagement-First Teaching".
 
 ## Output Discipline: keep bookkeeping OUT of the chat
 
@@ -22,36 +22,34 @@ Two strictly separate channels — never mix them:
 - **(a) Silent side-effects:** editing learning records (INDEX / topic files), memory, or any notes. The learner NEVER sees these.
 - **(b) User-facing chat:** ONLY the lesson content + the MCQ / answer the learner needs right now.
 
+**Channel (b) is EVERY user-visible surface** — chat, tmux pane output, Telegram, progress/status lines. Record updates, file paths, XP/level bookkeeping, and "紀錄已更新" style messages must never appear on any of them.
+
 Never paste into the learner's chat: which files you updated, file paths, "紀錄更新好了 / record updated", Known Gaps, "等你回 LX / waiting for your answer", or any model-tag prefix like `[claude-cli/...]`. That is internal bookkeeping and reads as noise/leakage to the learner.
 
 Do the record edits **silently**, then send only the teaching content. Report a record update only if the user explicitly asks for it.
 
-> 2026-06-27: a tmux level-up run leaked a "學習紀錄也更新好了 + topic file paths + 等你回 L5" status message into the learner's Telegram chat. The learner screenshotted it and asked that no agent ever repeat it. This rule is the fix.
+> 2026-06-27: 曾把記帳訊息漏進學習者聊天室，學習者明確要求任何 agent 不得重演 —— 本規則因此而生。
 
 ## Engagement-First Teaching (compete with the attention economy)
 
-A level is only useful if the user actually reads it instead of doom-scrolling. Optimize for "I can't stop reading," not "technically complete." This is non-negotiable for users who explicitly ask for it (check learning records / memory).
+A level is only useful if the user actually reads it instead of doom-scrolling. Optimize for "I can't stop reading," not "technically complete." Non-negotiable for users who ask for it (check learning records / memory).
 
-- **Carry the knowledge ON the analogy, not beside it.** Do NOT write a serious technical explanation and then bolt on a cute metaphor as garnish. Invert it: the analogy *is* the explanation. The learner should absorb the real concept by following the silly story, and only at the end map it back to the technical term in one short line.
 - **Silly and vivid beats accurate-but-flat.** A ridiculous, concrete, scene-like metaphor wins over a correct dry paragraph. If a section sounds like a manual, rewrite it as a scene with characters doing something.
-- **Minimize "serious mode" blocks.** Keep raw technical prose down to short anchor callouts (one line: "this is called X"). The bulk of each section should be the analogy/story. A good ratio is most-analogy, little-jargon.
-- **Use a frame the learner actually lived.** Pick a game / show / hobby the user genuinely knows — verify era and exact terms (web-search if unsure) rather than guessing. A wrong-era or unfamiliar reference kills immersion. Record which framing landed in the user's learning file so the next session reuses it.
+- **Minimize "serious mode" blocks.** Keep raw technical prose to short one-line anchors ("this is called X"); the bulk of each section is the story. Most-analogy, little-jargon.
 - **Reward + momentum.** Lean into game feel (XP bars, level-ups, NPC dialogue, loot) so finishing a level feels like progress, not homework.
 
-### The learner's specific taste lives in their profile, not here
+Analogy picking, carrying, and verification rules live once in "Analogy Selection Discipline".
 
-Do not hedge with "some learners prefer X" — tune to the actual person. Their concrete framing (favorite game and era, silliness intensity, what delights/frustrates them) lives in **`learning/user-profile.md`** (next to the learning records; moved out of the always-loaded USER.md). The orchestrator reads that profile and bakes the framing into each per-level content spec it hands the rendering agent. Keep the generic engagement principles here; keep the person-specific taste in the profile file.
+### The learner's taste lives in their profile
 
-### Reference example (study this for tone — for the RENDERING agent, not the orchestrator)
-
-`examples/level2-eav.html` in this skill directory is the gold-standard for tone, ratio, and layout. The rendering agent (the side Codex that builds the HTML) should open and study it before rendering a new level so the style stays consistent. The orchestrator does NOT need to read it — that wastes tokens; just point the renderer at it.
+Do not hedge with "some learners prefer X" — tune to the actual person. Their concrete framing (favorite game and era, silliness intensity, what delights/frustrates them) lives in **`learning/user-profile.md`**. The orchestrator reads it and bakes the framing into each per-level content spec. Generic engagement principles here; person-specific taste in the profile.
 
 ### Delegating HTML rendering to a side agent
 
 When a side agent (e.g. Codex) renders the HTML:
 
-- The orchestrator writes the full per-level content spec in zh-tw (orchestrator is better at the user's zh-tw voice); the side agent only renders, never invents lesson content.
-- Tell the side agent to **read this `level-up` skill** (for the Engagement-First principles + this user's taste) **and study `examples/level2-eav.html`** before rendering. That way the style standard lives here once, instead of being re-pasted into every delegation prompt — saving the orchestrator's tokens.
+- The orchestrator writes the full per-level content spec in zh-tw (better at the user's voice); the side agent only renders, never invents lesson content.
+- Tell the side agent to **read this `level-up` skill** (Engagement-First principles + this user's taste) **and study `examples/level2-eav.html`** (the gold-standard for tone, ratio, layout) before rendering. The style standard lives here once instead of being re-pasted into every prompt. The orchestrator does NOT need to open the example — just point the renderer at it.
 
 ## Persistent Learning Records
 
@@ -60,6 +58,7 @@ Before teaching, inspect the learning folder in this skill directory:
 ```text
 learning/
 ├── INDEX.md
+├── user-profile.md   # this learner's taste + proven analogy frames (load-bearing)
 └── topics/
     └── <topic-slug>.md
 ```
@@ -82,14 +81,9 @@ Update records after each completed level and at session end. Record only learni
 - **gap**: user showed a misconception, missing prerequisite, or repeated uncertainty.
 - **skip_for_now**: intentionally deferred scope.
 
-Good evidence:
+Good evidence — record at the **concept level**: which concepts the user proved, which misconceptions got corrected, which gaps showed up, plus any self-reported "I already know X". Do NOT record level numbers or MCQ option letters (A/B/C/D) — they don't shape a future lesson.
 
-- Correct MCQ answer plus the reason, if the user explained one.
-- A corrected misconception and the new phrasing that worked.
-- A user statement like "I already know X", marked as self-report.
-- A concrete task or scenario where the user applied the concept.
-
-Do not store secrets, client-specific facts, private code snippets, tokens, or long chat transcripts. Summarize at the concept level.
+Do not store secrets, client-specific facts, private code snippets, tokens, or long chat transcripts.
 
 ### Index Rules
 
@@ -136,31 +130,18 @@ Before planning ANY levels, run Level 0. This is a mandatory interactive checkpo
 
 ### The Goal: Build a Strong Mental Model
 
-In the AI era, memorizing facts is worthless — AI can look them up faster. What matters is having a **mental model** that lets you:
+In the AI era, memorizing facts is worthless — AI looks them up faster. What matters is a **mental model** that lets the user **predict** what should happen, **transfer** the pattern to new situations, and **judge** whether AI output is sense or hallucinated garbage. A good analogy isn't decoration — it IS the mental model: the user should finish able to reason with the analogy's intuition even in unseen scenarios.
 
-- **Predict** what should happen before you see it
-- **Transfer** the pattern to new situations AI hasn't told you about
-- **Judge** whether AI's output makes sense or is hallucinated garbage
-
-A good analogy isn't decoration — it IS the mental model. When the user finishes, they should be able to reason about the topic using the analogy's intuition, even in scenarios they've never seen.
-
-### Why Level 0 Matters
-
-Picking the wrong analogy = a weak mental model that doesn't transfer. AI must think carefully:
-
-- **Shape of the topic**: Is it dynamic/static? Accumulative/resettable? Coordination/independent? Time-sensitive/permanent?
-- **Carrying capacity**: Which analogy can "carry" the ENTIRE topic, not just L1? If an analogy only works for the first 2 levels, it's a bad pick — the mental model will be incomplete.
-- **User's proven frames**: Check `learning/user-profile.md` for analogies that already landed with this user. Prefer those unless the topic genuinely doesn't fit.
+Picking the wrong analogy = a weak model that doesn't transfer. Before picking, read the topic's **shape** (dynamic/static? accumulative/resettable? coordination/independent? time-sensitive/permanent?), then apply "Analogy Selection Discipline" below.
 
 ### Elicit the Learner's Goal (motivation lens)
 
-The same topic taught toward different goals should produce different lessons. "Understand WAL" for a DBA, for an SSD-endurance debugger, and for someone trying to look hireable in a GitHub thread are three different courses. Before locking the level map, ask the user **why they want this** — the concrete outcome they're chasing, not just the topic name.
+The same topic toward different goals is different courses — "understand WAL" for a DBA vs. an SSD-endurance debugger vs. someone trying to look hireable in a GitHub thread. Before locking the level map, ask the user **why they want this** — the concrete outcome, not just the topic name.
 
-- **Ask, don't assume.** Pose one short open question in the Level 0 prompt, e.g. "順便說一下：你學這個是想達成什麼？(看懂某段對話 / 修某個 bug / 面試 / 純好奇 / 想被某社群看見…)". Offer a few example answers so it's easy to reply, but keep it open-ended.
-- **Let the goal reshape the map.** Use the answer to reorder, add, or drop levels, and to pick a recurring **lens** — a per-level callout that ties each concept back to the user's goal (e.g. a "🎯 recruiter view" line showing how this exact technical move signals competence to maintainers).
-- **The goal can override defaults.** A stated goal outranks the generic "solid mental model" default — chase what the user actually wants, even if it means going deeper on one branch and skipping another.
+- **Ask, don't assume.** One short open question in the Level 0 prompt, e.g. "順便說一下：你學這個是想達成什麼？(看懂某段對話 / 修某個 bug / 面試 / 純好奇 / 想被某社群看見…)" — offer example answers but keep it open-ended.
+- **Let the goal reshape the map, and override defaults.** Use the answer to reorder/add/drop levels and pick a recurring **lens** — a per-level callout tying each concept to the goal (e.g. a "🎯 recruiter view" line). A stated goal outranks the generic "solid mental model" default — go deeper on one branch and skip another if that's what the user wants.
 - **Record it.** Save the stated goal in the topic's learning file so future sessions stay aimed at it.
-- If the user gives no goal or says "just teach me", fall back to the standard mental-model framing — do not block on it.
+- No goal / "just teach me" → fall back to the standard mental-model framing, don't block.
 
 ### Level 0 Output Format
 
@@ -180,16 +161,17 @@ Then WAIT for user to choose. Do not assume. Do not proceed.
 
 ### Analogy Selection Discipline
 
-- **Prefer proven frames** from the user's profile (`learning/user-profile.md`) — they're already validated.
-- **One topic, one analogy** — never mix two game worlds or two metaphor systems mid-journey.
-- **Carry and verify the frame** — explain concepts through the story, not beside it; if unsure about game mechanics, era-specific content, or other source details, web-search or ask user before using them.
-- **Novelty is OK** — if no existing frame fits, propose a new one, but explain why the user's known frames don't work for this topic.
+The single home for analogy rules — picking, carrying, and verifying all live here:
+
+- **Prefer proven frames** from `learning/user-profile.md` — already validated with this user. If none fit, propose a new one and say why the known frames don't work for this topic.
+- **One topic, one analogy** — never mix two game worlds or metaphor systems mid-journey.
+- **Carrying capacity** — the analogy must carry the ENTIRE topic, not just the first couple of levels. If it only works for L1-L2, it's a bad pick and the mental model ends up incomplete.
+- **Knowledge rides ON the analogy, not beside it** — the analogy *is* the explanation. Teach the concept through the story, then map back to the technical term in one short line; do not write dry prose and bolt on a metaphor as garnish.
+- **Verify before use** — if unsure about game mechanics, era-specific content, or exact terms, web-search or ask the user first. A wrong-era or wrong-fact reference kills immersion.
 
 ### After User Chooses
 
-- Confirm the choice briefly
-- NOW proceed to "Assess and Plan" — design the level map using the chosen analogy and depth
-- Record the chosen analogy in the topic's learning file for future sessions
+Confirm briefly, record the chosen analogy in the topic's learning file, then proceed to "Assess and Plan" using the chosen analogy and depth. 若這個 frame 整段課程驗證有效（或明顯沒命中），回寫 `learning/user-profile.md` 讓之後的 session 重用或避開。
 
 ---
 
@@ -242,8 +224,7 @@ When the topic benefits from diagrams, comparisons, or interactive reading:
   - Cards/callouts: surface bg, 1px `#d3cbb7` border, optional 3–4px accent-coloured left border, radius 8–18px. Fonts: `Inter`, `Noto Sans TC`; zh body line-height 1.8, headings 1.3.
   - The learner may override per-session (e.g. dark mode → gu-log Dracula: bg `#282a36`, text `#cecdda`, accent `#ff79c6`); honour it but keep Solarized Light as the standing default.
 - **Beginner-acronym test:** expand every English acronym/abbreviation on first use, e.g. `IBKR（盈透證券，一家美國網路券商）`, `VT（Vanguard 全世界股票 ETF）`. When several appear, add a short glossary box up front.
-- In chat, give only a short intro plus the absolute file path. Ask the user to read it before the MCQ.
-If using a side agent to render HTML, give it a complete content spec and tell it to render only, not invent lesson content.
+- In chat, give only a short intro plus the absolute file path. Ask the user to read it before the MCQ. (Side-agent rendering: see "Delegating HTML rendering to a side agent".)
 
 ## MCQ Rules
 
@@ -255,7 +236,7 @@ If using a side agent to render HTML, give it a complete content spec and tell i
 
 The learner should pick the right answer by *reasoning*, not by spotting format tells. Two tells leak constantly — kill both:
 
-- **Position must be genuinely varied.** Do NOT default to A or B. Across a session, spread the correct answer roughly evenly over A/B/C/D. Before finalizing, glance at the previous 2-3 levels' answer positions and deliberately pick a different slot. If your draft keeps landing on B, that is the tell — move it.
+- **Position must be genuinely varied.** Do NOT default to A or B. Across a session, spread the correct answer roughly evenly over A/B/C/D. Before finalizing, glance at the previous 2-3 levels' answer positions and deliberately pick a different slot. If your draft keeps landing on B, that is the tell — move it. Track positions in session working memory only — never write answer positions (e.g.「MCQ 正解位置：L5=D」) into the learning records; they are bookkeeping, not learning state, and they leak answers to any future reader.
 - **Length must not signal correctness.** The most common leak: the correct option is the longest, most detailed, most hedged ("...and X, which preserves Y"), while distractors are short. Test-savvy learners just pick the longest. Fix: make every option roughly the same length. Push the full justification into your post-answer explanation, NOT into the option text. The correct option should read as terse as the wrong ones.
 
 ### Distractor Design (make wrong answers genuinely tempting)

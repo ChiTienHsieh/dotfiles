@@ -2,19 +2,17 @@
 
 > 這份記「**這包 repo 本身**怎麼運作」的學習狀態（專案商業邏輯）。通用底子另記於 [[llm-app-foundations]]。
 
-## Current Level
-- Status: learning（2026-06-17 開課，尚在第一輪）
-- Last updated: 2026-06-17
-- Confidence: 低（剛開始）
+## Status
+- learning（2026-06-17 開課，尚在第一輪，confidence 低）。
 
 ## 專案是什麼（教學者參考，不是學習者已會）
 - AgentFlow = Claude Code 的結構化多代理 pipeline，口號「用結構攔截幻覺，不信任任何單一 agent」。
 - 8 個 phase：機械前置 → 需求(PRD-Intake) → 探索(Explorer) → 計畫+挑戰(Planner+Challenger，人工關卡) → 驗收測試先行(Spec-Tester) → 實作(Coder) → 並行驗證+smoke(Reviewer+Tester) → 銷帳歸檔(Planner)。
 - 10 個角色 + 一堆 shell 腳本（new-run/check-map/lock/metrics/opt-next/opt-dedup/notify-slack）+ 自我回歸網(tests/)。
 
-## Evidence
-- 2026-06-17: 使用者已能秒懂 **MAP「路標不是證據、fail-safe」** 的設計（經一次解說後正確複述）→ MAP 概念 familiar。
-- 2026-06-17: 使用者自述**已懂「不信單一 agent」前提**（見 [[llm-app-foundations]]），故此前提關卡跳過。
+## 已掌握 / 已跳過
+- MAP「路標不是證據、fail-safe」的設計已能正確複述 → familiar。
+- 「不信單一 agent」前提已懂（見 [[llm-app-foundations]]），該關卡跳過。
 
 ## Known Gaps
 - 尚不熟：pipeline 8 phase 的整體流動、各角色分工、shell 腳本機械化關卡、各設計取捨（worktree 隔離、計畫是探索產物、驗收測試先行+禁改測試、申報互核、Warnings 銷帳、自我優化停人關卡）。

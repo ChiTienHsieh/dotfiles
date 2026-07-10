@@ -196,11 +196,11 @@ Before delegating or supervising a worker, read the shared lessons index:
 
 `~/dotfiles/skills/shared/tmux-orchestration/references/lessons.md`
 
-It is a small index. Open ONLY the topic file relevant to the current delegation;
-do not read every topic each turn. After the delegation finishes, if you learned a
-durable lesson, update the relevant section or `references/cmux.md` when the
-lesson is cmux-specific. Distill into reusable rules — do not append raw logs or
-one-off incident detail.
+It is a single file of dated incident lessons, grouped by section. Open ONLY the
+section relevant to the current delegation. After the delegation finishes, if you
+learned a durable lesson, update the relevant section (or `references/cmux.md`
+when cmux-specific) — dated, distilled rules only; the general delegation
+contract stays in this SKILL.md, not there.
 
 Implementation routing policy lives in the `arbitrage` skill; provider priority
 lives in `~/dotfiles/codex/notes/worker-routing.md`. This skill only

@@ -31,17 +31,12 @@ description: Create a plain zh-TW, non-technical family-facing PDF (Typst .typ s
 
 ### 手機閱讀與換頁
 
-如果 PDF 是給手機閱讀，排版優先順序是「整塊好讀」高於「少一頁」：
+如果 PDF 是給手機閱讀，排版優先順序是「整塊好讀」高於「少一頁」。防切頁的完整規則只寫在這裡：
 
-- 把手機 PDF 當成一組直式 slides，而不是連續文章；每一頁都應該能單獨被讀懂。
-- 但不要過度矯正成「一個小 section 一頁」。如果多個區塊能放在同一頁，而且仍然舒服閱讀，就應該合併。
-- 不要讓新頁面從上一頁 section 的尾巴開始。若一個 section 會跨頁，拆成多個有明確標題的 page group，例如 `必到時間｜晚餐與大秀`、`必到時間｜其他表演`。
-- 不要讓同一個 card、block、section 或餐廳/活動資訊卡被分割到上下兩頁。
-- 如果一個區塊放不下目前頁面，就讓它整塊移到下一頁。
-- 優先使用短卡片、短段落與清楚 heading，避免靠讀者縮放來補救版面。
-- 對於資訊密集內容，寧可拆成多張完整卡片，也不要做成一張過長卡片後被切頁；但短卡片太多時，可以合併成摘要卡，保留所有資訊並降低重複卡片外框造成的浪費。
-- 產出前必須檢查 PDF 頁面截圖，確認沒有 block 被頁面邊界切開，也沒有無標題的 section continuation page。
-- 視覺檢查要同時抓兩種錯：太擠與太空。若頁面底部留白接近半頁，先判斷能否和同主題相鄰內容合併。
+- 把手機 PDF 當成一組直式 slides：每頁能單獨讀懂、上方有清楚標題。section 會跨頁時，拆成多個有標題的 page group（例如 `必到時間｜晚餐與大秀`、`必到時間｜其他表演`），不要讓新頁從上一頁的尾巴開始。
+- 同一張 card、block、table 絕不切到上下兩頁：Typst 元件一律 `breakable: false`，放不下就整塊移到下一頁。卡片本身長到一頁放不下，先拆成多張有標題的完整卡 —— 不要移除 `breakable: false` 讓它硬切。
+- 也不要過度矯正成「一小節一頁」：多個短區塊能舒服放同一頁就合併（短卡片太多可收成一張摘要卡），避免重複卡框浪費版面。
+- 排版驗收（Workflow 步驟 6-7 執行）：截圖目檢要同時抓「太擠」與「太空」。
 
 Typst card/block 預設應該避免跨頁：
 
@@ -61,8 +56,6 @@ Typst card/block 預設應該避免跨頁：
 ]
 ```
 
-如果某個區塊本身長到一頁放不下，先拆內容，不要移除 `breakable: false` 讓它硬切。
-
 ### Kaomoji
 
 一頁 PDF 至少放一個 kaomoji 增加溫度；多頁文件可視內容自然少量使用，不必每頁硬塞。先讀 `references/kaomoji-guide.md`，避免 checkbox、emoji、或 fallback 後會變方塊的字元。
@@ -72,20 +65,18 @@ Typst card/block 預設應該避免跨頁：
 Use `assets/career_decision_template.typ` as the complete working Typst example. Key gotchas to preserve when adapting it:
 
 - Font stack must include macOS PingFang/Heiti and Linux/VM Noto Sans CJK fallback.
-- Information cards and tables should use `breakable: false`; split overlong cards instead of letting Typst cut them mid-page.
+- 資訊卡與表格照「手機閱讀與換頁」的防切頁規則。
 - Avoid Markdown checkbox syntax in Typst output; it can render poorly in PDFs.
 
 ## 常用 Typst Pattern
 
-避免 table 或 card 被切頁：
+table 防切頁 wrapper：
 
 ```typst
 #block(breakable: false)[
   #table(...)
 ]
 ```
-
-手機版 PDF 的每個資訊卡也應該使用 `breakable: false`。若發現整張卡太長，改成兩張有標題的卡，不要讓 Typst 在頁面中間切開它。
 
 重點決策色塊：
 

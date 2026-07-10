@@ -1,9 +1,9 @@
 # Delegation Lessons
 
-Shared, maintained lessons for the `tmux-orchestration` skill. Read this small
-index before delegating or supervising a worker, then open only the relevant
-section. Distill durable rules; do not append raw logs or one-off incident
-detail.
+Dated incident lessons for the `tmux-orchestration` skill. Durable delegation
+rules live in SKILL.md (Delegation Contract) — do not restate them here. Open
+only the relevant section; distill new lessons into dated, reusable rules
+without raw logs.
 
 ## tmux driving
 
@@ -15,10 +15,6 @@ Use when driving an interactive agent in a tmux pane from a controller.
   scratch dir (for example under `/tmp`) when the worker must write a report
   while only reading another repo; set cwd to the target repo when the worker
   must edit that repo.
-- Send the instruction line, wait briefly, then send Enter separately. Put long
-  prompts in a file; the send-line just says "Read PATH and do it."
-- Capture panes (`capture-pane -p`) to confirm progress; do not assume idle
-  means done.
 - Before `send-keys` to an agent pane, capture first and confirm it is not
   showing an interactive dialog such as AskUserQuestion or an approval UI.
   Text plus Enter sent into that dialog can choose an option for the user
@@ -78,17 +74,9 @@ Use when a worker's commit is blocked by a pre-commit/pre-push hook.
 
 ## worker prompts
 
-Use when writing a prompt file for a delegated worker.
+Use when writing a prompt file for a delegated worker. (Contract fields, fixed
+nouns, side-effect boundary: see SKILL.md「Delegation Contract」.)
 
-- Use fixed nouns "CC" and "user", never 你/我 — a relative pronoun flips
-  referent when a different agent reads the prompt.
-- Marker-file 完工合約: write output to PATH, end the file with one exact
-  MARKER line. The controller polls the marker, not the visual "Working" state.
-- State the side-effect boundary up front: READ-ONLY research, or exactly which
-  paths may be edited, plus "do not commit/push" when the controller verifies
-  first.
-- Put long instructions in the file; keep the send-line a one-liner pointing at
-  it.
 - Token-efficient delegation means not reading the worker output stream. It is
   not mainly about choosing interactive vs exec surfaces; 2026-07-02 gu-log
   tests showed the token savings come from marker/report polling.
@@ -104,13 +92,9 @@ Use when writing a prompt file for a delegated worker.
 ## verification
 
 Use when a worker reports done and the controller must accept or reject.
+(Load-bearing-claim checks and the fresh-reviewer 驗證原則: see SKILL.md
+「Delegation Contract」.)
 
-- Verify load-bearing claims with cheap read-only checks: grep for leftover
-  references, `git status` / `git diff --stat`, confirm files moved/deleted,
-  read only the one section whose accuracy matters.
-- Fresh-reviewer 驗證原則: for large artifacts, delegate the FULL review to a fresh worker rather than
-  re-reading everything yourself — a clean-context reviewer is at least as
-  reliable and saves the controller's context.
 - `wc -l` before opening a big file; read the load-bearing slice, not the whole
   thing.
 - Long pane/transcript reviews follow the same principle: the controller does

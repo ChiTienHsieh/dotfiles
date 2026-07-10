@@ -4,21 +4,23 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
-| 投資配置：39w 全球股容器 | learning | A2 舊楓之谷 7 關；L1–L2 完成（XP 3/7，L2 MCQ 對）。**Fable 決策已寫在 topic 檔（VWRA 主推＋決策樹），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
-| Dedup 設計會議準備（討論） | learning | B3 公會幹部會議續作；scope=schema+演算法+data-driven；Level 0 完成、優先序提案待確認。 | 2026-07-05 | topics/dedup-meeting-prep.md |
-| gu-log editorial presentation preflight | mastered | C3 米其林餐廳框架，L1–L6 MCQ 6/6 全對；三 open questions 全拍板（sans-first／標題下小卡／全進抽屜＋TOC 細線）。品味規則：卡片質感>裸文字、UI 不用 emoji 用 SVG icon、小字要配緊行高。 | 2026-07-05 | topics/gu-log-editorial-presentation.md |
-| Implementation loop / debrief mode | mastered | 航空框架 debrief 5/5 全對＋preflight 盲測 2/2（四象限、風險觸發）；七項決策確認與 shipped 全吻合，重量分配由 preflight 顯式化。**報告要拆 level，不可一次倒完。** | 2026-07-05 | topics/implementation-understanding-loop.md |
-| html-artifacts vs html-explainer 分工 | mastered | A2 楓之谷商店街類比，3/3 MCQ 全對：work artifact vs 教學配方、description 路由、品名搶字眼病灶。自述已熟 agent skills 觸發機制。 | 2026-07-04 | topics/html-duo.md |
-| 裝修優先序與溝通 | learning | A3 Vainglory shotcaller；浴室/防蟑螂/臥室睡眠為一期核心，預算約 50 萬評估。通風=浴室排濕、臥室可控通風、全熱研究。若爆預算先砍全熱/封陽台/客廳大窗/全屋冷氣。 | 2026-07-04 | topics/renovation-prioritization.md |
-| Transcript 研究決策關 | mastered | A2 Vainglory shotcaller；決策走廊（分支/arbitrage/marker/helpers/新skill/出兵）。L1-L6 全通收關，成果：gu-log PR #541、arbitrage 門檻、helper 三件裝。 | 2026-07-04 | topics/transcript-study-decisions.md |
-| gu-log 大掃除回放 | learning | A1 Vainglory 深夜排位場；追劇+實戰 BOSS 關（#538 merge 等）；depth 3。剛開課。 | 2026-07-03 | topics/gu-log-cleanup-replay.md |
-| Dotfiles 10x 審計回放 | learning | A3 楓之谷倉庫大掃除；純娛樂追劇補進度；結尾接實戰決策關（4 ask_user + html* 融合 + merge main）。剛開課。 | 2026-07-03 | topics/dotfiles-10x-audit.md |
+| Skill 規則堆積學 | learning | A2 老楓道具欄大掃除；5 關、每關一個真實修繕決策；Level 0 完成剛開課。 | 2026-07-10 | topics/skill-rule-hygiene.md |
+| 投資配置：39w 全球股容器 | learning | 舊楓之谷類比。已懂 CFD 是對賭合約/交易對手風險。**Fable 決策已寫進 topic（VWRA 主推＋累積型＋bitcoin 上限＋分批進場），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
+| Dedup 設計會議準備（討論） | learning | 公會幹部會議類比。已拍板：Q2 走 join/YAGNI、rejected 永久黏、Layer→快慢層、Carol 選項一視同仁、double-submit 答辯。未決：undo 去向(Q8)、merge 語意(Q9)、慢層選型。廢詞/AI 代號零容忍。 | 2026-07-10 | topics/dedup-meeting-prep.md |
+| gu-log editorial presentation preflight | mastered | 米其林餐廳框架。三 open questions 全拍板（sans-first／標題下小卡／全進抽屜＋TOC 細線）。品味規則：卡片質感>裸文字、UI 不用 emoji 用 SVG icon、小字要配緊行高。 | 2026-07-05 | topics/gu-log-editorial-presentation.md |
+| Implementation loop / debrief mode | mastered | 航空框架。已掌握四象限、風險觸發(看決策不看 diff 大小)、during notes 只記保守假設、heredoc 看收件人。七項決策與 shipped 全吻合。**報告要拆 level，不可一次倒完。** | 2026-07-05 | topics/implementation-understanding-loop.md |
+| html-artifacts vs html-explainer 分工 | mastered | 楓之谷商店街類比。已分清 work artifact vs 教學配方、description 路由、品名搶字眼病灶。判決 SEPARATE。自述已熟 agent skills 觸發機制。 | 2026-07-04 | topics/html-duo.md |
+| 裝修優先序與溝通 | learning | Vainglory shotcaller。一期核心=浴室全拆(15-30萬)/防蟑螂/臥室睡眠，預算約 50 萬；通風=浴室排濕、臥室可控通風、全熱先研究。爆預算先砍全熱/封陽台/客廳大窗/全屋冷氣。 | 2026-07-04 | topics/renovation-prioritization.md |
+| Transcript 研究決策關 | mastered | Vainglory shotcaller。決策走廊全通並出兵：疊分支、arbitrage >20 tool loop 門檻、marker-only、helper 三件裝、repo-domain 分層。成果 gu-log PR #541。 | 2026-07-04 | topics/transcript-study-decisions.md |
+| gu-log 大掃除回放 | learning | Vainglory 深夜排位場。追劇+實戰 BOSS 關（#538 merge 等）。剛開課，已懂 fan-out 理由(context 爆+平行)。 | 2026-07-03 | topics/gu-log-cleanup-replay.md |
+| Dotfiles 10x 審計回放 | mastered | 楓之谷倉庫大掃除。已掌握 oracle≠arbitrage、dangling symlink、stale guidance、marker 訊號正確性。L7 決策全施工（PR #1 merge 進 main）。 | 2026-07-04 | topics/dotfiles-10x-audit.md |
 | LLM 應用核心能力 | familiar | 自述已熟 agent/context window/三種 API/Python 基本/基礎 SQL，及「不信單一 agent」前提；教學跳過。**Gap: 不熟 message broker/Kafka/RabbitMQ/Celery，別當類比。** | 2026-07-01 | topics/llm-app-foundations.md |
 | AgentFlow 專案商業邏輯 | learning | 剛開課；MAP「路標非證據」已能複述(familiar)；pipeline/角色/腳本仍待教。 | 2026-06-17 | topics/agentflow-repo.md |
-| Dedup Schema Design | mastered | Vainglory 好友/公會類比。L1–L9 mastered（關聯表→狀態機→索引），常自推正解升級版。交付物關改由 Codex 艦隊直接完成（v1 schema 已進 SSOT）。 | 2026-07-04 | topics/dedup-schema.md |
-| Vercel 部署 | familiar→mastered | 楓之谷存檔+公告欄類比(A2)。4/4 MCQ 全對，主動用 ground truth 糾正教學者假設。懂 immutable/alias/promote/rollback。 | 2026-06-25 | topics/vercel-deploy.md |
-| Codex log churn / SSD endurance (#28224) | mastered | 罐頭工廠生產線類比(A3)。7/7 MCQ 全對。目標=練 GitHub issue/PR 求職。自己查真實 fork diff、抓出缺 opt-in 逃生門。 | 2026-06-26 | topics/codex-log-churn.md |
-| tmux | mastered | 舊楓之谷城鎮類比。L2-L6 全通：pane/window/session、持續性(detach/attach)、多 session(ls/attach -t/nested)、% 切 pane、pane 移動/關閉。全靠推理、抓出教學者 2 個流程錯。剩實機練。 | 2026-06-27 | topics/tmux.md |
+| Dedup Schema Design | mastered | Vainglory 好友/公會類比。關聯表→狀態機→索引概念全通，常自推正解。交付物由 Codex 艦隊直接完成（v1 schema 已進 SSOT），轉工作模式。 | 2026-07-04 | topics/dedup-schema.md |
+| Vercel 部署 | familiar→mastered | 楓之谷存檔+公告欄類比。懂 immutable/alias/promote/rollback、綁定靠 projectId；主動用 ground truth 糾正教學者假設。 | 2026-06-25 | topics/vercel-deploy.md |
+| Codex log churn / SSD endurance (#28224) | mastered | 罐頭工廠生產線類比。SSD endurance/WAL/trigger vs patch 全通。目標=練 GitHub issue/PR 求職；自查真實 fork diff，抓出缺 opt-in 逃生門。 | 2026-06-26 | topics/codex-log-churn.md |
+| tmux | mastered | 舊楓之谷城鎮類比。pane/window/session、持續性(detach/attach)、多 session/nested、pane 切割與移動全通。全靠推理、抓出教學者 2 個流程錯。剩實機練。 | 2026-06-27 | topics/tmux.md |
+| MonitorControl 亮度控制 | learning | 舊楓之谷衝卷軸類比。已懂 DDC=硬體原生控制但傳輸未必穩。目標設定：smooth/combine on、sync off、zero on 做 overnight 近零亮度。DDC 導入須展開全名。 | 2026-07-09 | topics/monitorcontrol-brightness.md |
 
 ## Status Labels
 
