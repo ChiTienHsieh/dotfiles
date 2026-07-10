@@ -33,3 +33,4 @@ CC 產出含英文詞的 zh-tw 回覆前查這張表；分級規則見 `~/.claud
 | orchestration | 多代理協調 (orchestration) |
 | observability | 可觀測性 (observability) |
 | idempotent | 重跑安全 (idempotent) |
+| custody | 保管／託管 (custody) ｜金融語意＝資產由保管機構代管，非「看管人質」 |
