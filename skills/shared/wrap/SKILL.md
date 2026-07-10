@@ -3,12 +3,6 @@ name: "wrap"
 description: "Run the `wrap` workflow when the user asks to wrap up, ship the current work, check dirty worktrees, commit, push, save useful memory, and produce a concise zh-tw session summary."
 ---
 
-# wrap
-
-Use this skill when the user asks to run `wrap` or wants to wrap up the current session.
-
-## Command Template
-
 # wrap — Session Wrap-up & Ship
 
 Wrap up = document properly, then commit + push. Not just a checklist — actually finish the job.
@@ -31,7 +25,7 @@ git branch --show-current 2>/dev/null || echo "(n/a)"
 
 ### Step 1: Gather & Assess
 
-The git state is already pre-loaded above. In parallel, gather:
+Run the Context Commands above and read their output. In parallel, gather:
 
 1. **Tasks**: Use the current task list to check for any incomplete tasks
 2. **Memory check**: Reflect on the conversation — was there anything the user said to remember, any feedback given, any decisions made that should be saved to memory?
@@ -114,7 +108,7 @@ then runs `cmux close-surface`. Do not use Ctrl-C for this cleanup path unless
 
 After executing, present a compact result in zh-tw. Only show sections with content — skip clean sections.
 
-If `In-git-repo?` pre-loaded as `(not a git repo ...)`, **omit the Git section entirely**.
+If the repo check in Context Commands printed `(not a git repo ...)`, **omit the Git section entirely**.
 
 ```
 ## Wrap-up：<repo-name>（<branch>）

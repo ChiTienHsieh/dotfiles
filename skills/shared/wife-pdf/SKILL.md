@@ -1,20 +1,11 @@
 ---
 name: wife-pdf
-description: Create a plain zh-TW, non-technical family-facing PDF with Typst when asked for a wife PDF, wife-friendly summary, family decision document, or spouse-readable explanation.
+description: Create a plain zh-TW, non-technical family-facing PDF (Typst .typ source + compiled .pdf) when asked for a wife PDF, wife-friendly summary, family decision document, spouse-readable explanation, or 「做一份給老婆／家人看的 PDF」— any request to turn technical, career, or financial decisions into a document a non-technical family reader can follow.
 ---
 
 # Wife-Friendly PDF Generator
 
 產生給家人閱讀的 PDF：清楚、溫暖、決策導向，而且避免把技術細節直接丟到讀者臉上。主要使用 Typst，並優先支援 Traditional Chinese (zh-TW)。macOS 優先用 PingFang TC；Linux / VM 環境要加入 Noto Sans CJK TC fallback。
-
-## 使用時機
-
-在以下情況使用這個 skill：
-
-- 使用者要求「create a PDF for my wife」、「wife-friendly summary」、「export to wife PDF」、「wife-approved PDF」。
-- 使用者需要把技術、職涯、財務或家庭決策整理成非技術讀者能理解的文件。
-- 使用者提到 wife、spouse、family，或明確要求 plain zh-TW summary。
-- 輸出需要是 `.typ` 與 `.pdf`，方便之後修改與重新編譯。
 
 ## 核心原則
 

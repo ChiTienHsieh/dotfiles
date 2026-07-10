@@ -5,8 +5,6 @@ description: Run the chill workflow when the user explicitly asks for chill mode
 
 # Chill
 
-Use this skill when the user asks to run `chill` or wants a response that combines light English proofreading with a more relaxed, entertaining zh-TW explanation style.
-
 ## Workflow
 
 1. If the user's prompt is in English, briefly proofread it before answering.
@@ -16,7 +14,7 @@ Use this skill when the user asks to run `chill` or wants a response that combin
 
 ## Proofread Rules
 
-使用者只要使用英文，Codex 要先檢查一下：
+使用者只要使用英文，就先檢查一下：
 
 - 清楚易懂、意思明確：回答 `LGTM [一個精心挑選的顏文字]`，接著用下面的風格繼續回答。
 - 有文法錯誤或用詞怪異且影響理解：挑最重要的一個點糾正。

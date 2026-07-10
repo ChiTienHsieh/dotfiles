@@ -13,11 +13,6 @@ it never silently rewrites** `CLAUDE.md`, `AGENTS.md`, skills, or config.
 Inspired by loop engineering: explore → plan → execute → verify → iterate, with
 a quality gate so the loop improves things instead of generating noise.
 
-## When to use
-
-- The user asks to run the daily loop / `/daily-loop`, review yesterday, or
-  "find what I can improve from how I worked recently".
-
 ## When NOT to use (route elsewhere)
 
 - "Remember this / save this guidance" → the `remember` skill.

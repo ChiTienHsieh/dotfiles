@@ -14,7 +14,7 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 agent ses
 - **預設路由**：讀 `~/dotfiles/codex/notes/worker-routing.md`（訂閱狀態＋路由規則）決定交給 CC 還是 Codex。
 - **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看即時餘量；在 SSOT 規則之內，其他條件接近時選較肥的一邊。
 
-目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI（tmux session）、claude CLI（tmux session）、或使用者手動貼。**本文其餘段落寫「下一個 Codex」處，接棒者是 CC 時一律讀作「接棒 CC」**；4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
+目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI（tmux session）、claude CLI（tmux session）、或使用者手動貼。4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
 
 使用者預設用 zh-tw proofread，所以除非使用者明確要求英文，**輸出給使用者的 brief 與 `/goal` prompt 都預設用繁體中文**。保留必要 English technical terms，例如 `/goal`、Codex、GitHub、VM、SSH、API、CLI、token、commit、push、branch、file path、command、config key、model ID、UI label。
 
@@ -28,28 +28,28 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 agent ses
 2. **區分短 prompt 與詳細 spec**
    - 實際貼進 `/goal` 的 prompt 必須低於 app 限制，目前是 4000 characters。
    - 如果任務複雜，先在相關 repo 寫一份 tracked task spec file，再讓 `/goal` 引用該檔案。
-   - ignored temp file 只能當 scratch draft；如果下一個 Codex 必須讀到，請放在 tracked file。
+   - ignored temp file 只能當 scratch draft；如果接棒 agent 必須讀到，請放在 tracked file。
    - **有 task spec file 時，`/goal` prompt 應極短，只負責指向 spec file 與補充少量 launch-time instruction。** 不要把 spec 摘要、任務清單、side-effect boundary、verification checklist 再複製一遍到 prompt；那些內容應留在 spec 裡。
    - **`/goal` prompt 是一次性 chat text，預設不要寫進 repo，也不要建立 temporary prompt artifact file。** 不要建立 `goal-prompt.md`、`prompt.md`、scratch prompt file、不要把 prompt 放在 spec 檔開頭，也不要把 prompt commit 進 git history，除非使用者明確要求保存 prompt 本身。
-   - 如果使用者說「我只想 review spec」，final response 只給 spec path 和 chat 裡的短 prompt；不要新增 prompt file 讓使用者或下一個 Codex 讀兩次。
+   - 如果使用者說「我只想 review spec」，final response 只給 spec path 和 chat 裡的短 prompt；不要新增 prompt file 讓使用者或接棒 agent 讀兩次。
 
 3. **定義 side effects**
-   - 明確寫出下一個 Codex 可以讀或改哪些 local files。
+   - 明確寫出接棒 agent 可以讀或改哪些 local files。
    - 明確寫出可能會改哪些 external systems，例如 VM config、Telegram、GitHub、Vercel、browser state。
    - 明確禁止 destructive、permission-sensitive、billing、credential、或 broad-scope changes，除非使用者另外批准。
-   - 寫清楚下一個 Codex 是否可以 commit / push。預設不要 commit / push，除非使用者要求。
-   - 如果使用者要求「完成後備份」或「讓下一個 Codex 好 review」，可以在 spec 裡允許下一個 Codex 在驗證通過、確認沒有 secrets/private data/unrelated changes 後 commit + push。
+   - 寫清楚接棒 agent 是否可以 commit / push。預設不要 commit / push，除非使用者要求。
+   - 如果使用者要求「完成後備份」或「讓接棒 agent 好 review」，可以在 spec 裡允許接棒 agent 在驗證通過、確認沒有 secrets/private data/unrelated changes 後 commit + push。
    - **不要建立或 commit 一次性 prompt 檔、scratch draft、review notes、或僅為溝通方便建立的臨時 artifact。** 若使用者沒有明確要求保存這些檔案，連 temp prompt artifact file 都不要建立；若不小心 commit/push 了這類檔案，優先移除或 amend；是否改寫 remote history 依使用者要求與風險決定。
 
 4. **做快速 feasibility check**
-   - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免下一個 Codex 第一步就失敗。
+   - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免接棒 agent 第一步就失敗。
    - 如果 `/goal` 依賴特定 CLI、plugin、connector、skill、browser automation、或其他工具，確認它不只是「應該存在」，而是當下真的可見且可用。
    - 對 CLI 工具，至少檢查 command path 與版本；如果使用者要求 latest/up-to-date，確認版本是否符合當下可用資訊或明確標註未驗證。
-   - 對 Playwright CLI、`agent-browser` 這類會被下一個 Codex 直接操作的工具，做最低成本 smoke test，例如確認 exact CLI 的 `--version` 與 relevant help command 可執行；若任務依賴 standalone browser，確認可用的啟動方式或把待驗證項寫進 handoff。
+   - 對 Playwright CLI、`agent-browser` 這類會被接棒 agent 直接操作的工具，做最低成本 smoke test，例如確認 exact CLI 的 `--version` 與 relevant help command 可執行；若任務依賴 standalone browser，確認可用的啟動方式或把待驗證項寫進 handoff。
    - 不要混淆不同 browser automation surface：Playwright CLI、`agent-browser` CLI、MCP browser tools、以及 in-app browser skill 是不同能力；handoff 必須寫 exact tool name，並驗證同一個 tool。
-   - 對 skill/plugin 依賴，確認 skill/plugin 在 Codex 當前可見路徑或 tool discovery 裡可見；不要只確認 repo tree 有檔案。
+   - 對 skill/plugin 依賴，確認 skill/plugin 在接棒 agent 當前可見路徑或 tool discovery 裡可見；不要只確認 repo tree 有檔案。
    - 如果 `/goal` 會引用檔案，確認檔案存在；需要跨 session 使用時，確認它是 tracked。
-   - 如果下一個 Codex 會在本地 worktree 工作，先看 `git status`，並在 prompt 或 brief 裡說清楚預期狀態。
+   - 如果接棒 agent 會在本地 worktree 工作，先看 `git status`，並在 prompt 或 brief 裡說清楚預期狀態。
    - 不要為了讓 prompt 看起來完整，而跑昂貴、破壞性、或高風險檢查。
 
 5. **做 adversarial review gate**
@@ -58,7 +58,7 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 agent ses
    - 不要把自己的診斷、預期答案、懷疑問題、打算採用的修法傳給 reviewer；review 的價值來自獨立挑錯，不是附和。
    - 要求 reviewer 專門找 ambiguous scope、unsafe side effects、missing ask-first boundary、unverifiable success criteria、tool/path assumptions、以及 prompt 是否超過 4000 characters。
    - 若沒有 subagent 工具或任務明顯 low-risk，改做 self-adversarial pass，並在 brief 裡說明未開 subagent 的原因。
-   - 對 review findings 要明確處置：接受並修改、拒絕並說明理由，或列為下一個 Codex 必須先確認的 open question。
+   - 對 review findings 要明確處置：接受並修改、拒絕並說明理由，或列為接棒 agent 必須先確認的 open question。
    - 如果使用者明確要求 reviewer subagent review spec，review 對象應是 **目前最終 spec file**，不是過期 draft prompt。若 review 後又大幅改寫 spec，必須重新 review 或明確說明改動很小、不影響 review 結論。
    - reviewer 結論若提到已修的 blocking finding，要本地確認檔案真的包含該修正，再告訴使用者「可 review」。
 
@@ -87,7 +87,7 @@ Goal:
 <一句話描述具體 outcome>
 
 Context:
-- <只放下一個 Codex 必須知道的背景>
+- <只放接棒 agent 必須知道的背景>
 
 Instructions:
 1. 先 inspect current state。
@@ -120,7 +120,7 @@ Local side effects:
 
 - `/goal` prompt 會超過 4000 characters。
 - 任務有很多步驟、安全規則、或 external systems。
-- 下一個 Codex 需要 exact config snippets、topic lists、command formats、verification criteria。
+- 接棒 agent 需要 exact config snippets、topic lists、command formats、verification criteria。
 - 任務之後需要 audit trail。
 
 依 repo 慣例選檔案位置：
@@ -129,7 +129,7 @@ Local side effects:
 - `studies/`：conceptual research 或 analysis。
 - repo 已有明確 docs/spec 目錄時，沿用既有慣例。
 - 不要在已有結構規則的 repo 裡自行發明新的 top-level directory。
-- spec file 只放下一個 Codex 必須讀的 durable instruction。不要在 spec file 內嵌「這段貼進 `/goal`」的 prompt；那是 launch-time chat text，不是 spec 內容。
+- spec file 只放接棒 agent 必須讀的 durable instruction。不要在 spec file 內嵌「這段貼進 `/goal`」的 prompt；那是 launch-time chat text，不是 spec 內容。
 - spec file 要讓使用者容易 review：標題清楚、段落短、使用「問題 / 要做到 / 驗證」這種穩定結構；不要把 reviewer process、draft prompt 歷史、或 agent 自我辯解寫進去。
 
 ## Smoke Test Examples
@@ -137,7 +137,7 @@ Local side effects:
 - `git status --short`
 - 用 `test -f` 或 `rg --files` 確認 referenced files 存在。
 - 用 `command -v <tool>` 確認 required command 存在，並用 `<tool> --version` 或等價指令確認可執行。
-- 若 `/goal` 指定 Playwright CLI 或 `agent-browser`，檢查 exact CLI path、version、relevant help command，並確認對應 skill/plugin 在 Codex 可見；不要用另一個 browser tool 的存在替代這項檢查。
+- 若 `/goal` 指定 Playwright CLI 或 `agent-browser`，檢查 exact CLI path、version、relevant help command，並確認對應 skill/plugin 對接棒 agent 可見；不要用另一個 browser tool 的存在替代這項檢查。
 - 如果快速且安全，跑 narrow syntax check 或 targeted test。
 - 對 external systems，先 inspect current state，再寫需要 names、IDs、branches、resources 的指令。
 

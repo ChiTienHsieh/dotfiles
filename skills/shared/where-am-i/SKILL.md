@@ -18,12 +18,6 @@ pane inspection.
 Read-only by default. The only action it may take is `git pull`, and
 only after the user confirms.
 
-## When to use
-
-- "remind me where were we", "where am I", "where did we leave off", "what was
-  I doing in this repo", "catch me up", "pick up where I left off".
-- The user returns to a project after a break and wants context before diving in.
-
 ## When NOT to use
 
 - Ending a session / committing / pushing → the `wrap` skill.

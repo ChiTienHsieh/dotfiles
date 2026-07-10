@@ -5,8 +5,6 @@ description: "Use when the user or an agent wants gu-log context, mentions gu-lo
 
 # gu-log
 
-Use this skill when the user or another agent asks for context about `gu-log`, `gu-log-api`, `gu-log-ios`, or blog-related work.
-
 ## Machine Paths
 
 Read `paths.local` in this skill directory before looking for repositories. It contains machine-specific checkout paths for:

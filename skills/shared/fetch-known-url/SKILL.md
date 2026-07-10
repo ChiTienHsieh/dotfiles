@@ -7,8 +7,6 @@ metadata:
 
 # Fetch Known URL
 
-Use this skill when a user asks to fetch content from a supported URL and save it for other AI agents to read.
-
 ## Supported URLs
 
 - `chatgpt.com/share/...`: fetches the raw HTML, extracts the shared conversation payload, and writes Markdown plus JSON.

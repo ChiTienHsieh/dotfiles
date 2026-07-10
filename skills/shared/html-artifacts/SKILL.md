@@ -23,7 +23,7 @@ Suggest HTML first when:
 
 - Markdown would flatten side-by-side comparison, spatial structure, state, or interaction
 - the output needs multiple views over the same data
-- the user needs to inspect, rank, filter, annotate, or copy structured output back into Codex
+- the user needs to inspect, rank, filter, annotate, or copy structured output back to the agent
 - the answer is long enough that navigation and progressive disclosure would change its usability
 
 Stay in Markdown when:
