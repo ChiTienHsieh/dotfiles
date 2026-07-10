@@ -15,7 +15,7 @@ If the progress question mentions a tmux pane, combine this skill with
 `tmux-orchestration`: where-am-i handles the recap, tmux-orchestration handles
 pane inspection.
 
-Read-only by default. The only action it may take is `git pull` / `gsync`, and
+Read-only by default. The only action it may take is `git pull`, and
 only after the user confirms.
 
 ## When to use
@@ -27,8 +27,6 @@ only after the user confirms.
 ## When NOT to use
 
 - Ending a session / committing / pushing → the `wrap` skill.
-- Pure git sync questions (diverged branches, rebase safety) → the `gsync` skill
-  (where-am-i routes there if the branch is behind/diverged).
 
 ## Step 1 — Git state (read-only)
 
@@ -68,8 +66,8 @@ If Step 1 shows the branch is **behind** upstream, surface it and offer to catch
 up — do not pull silently:
 
 - Clean catch-up (behind only, not diverged) → offer `git pull --ff-only`.
-- Diverged (both ahead and behind) → route to the `gsync` skill instead of
-  pulling here.
+- Diverged (both ahead and behind) → present the divergence and let the user
+  pick rebase/merge; do not pull here.
 
 Ask before running any pull.
 

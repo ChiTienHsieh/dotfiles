@@ -74,7 +74,7 @@ If docs need updating, **do it now** before committing — docs should ship with
 - **Drop stale stashes** — if stashes are clearly from this session's work that's already committed
 
 #### Stop and ask:
-- **Conflicts or diverged state** — run /gsync instead
+- **Conflicts or diverged state** — surface the divergence and let the user pick rebase/merge/skip
 - **Behind remote** — need to pull first, might conflict
 - **Ambiguous uncommitted changes** — files that might be WIP vs. ready to ship
 - **Multiple repos touched** — confirm which ones to push
