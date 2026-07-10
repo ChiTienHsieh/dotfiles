@@ -19,7 +19,7 @@
 | Dedup Schema Design | mastered | Vainglory 好友/公會類比。關聯表→狀態機→索引概念全通，常自推正解。交付物由 Codex 艦隊直接完成（v1 schema 已進 SSOT），轉工作模式。 | 2026-07-04 | topics/dedup-schema.md |
 | Vercel 部署 | familiar→mastered | 楓之谷存檔+公告欄類比。懂 immutable/alias/promote/rollback、綁定靠 projectId；主動用 ground truth 糾正教學者假設。 | 2026-06-25 | topics/vercel-deploy.md |
 | Codex log churn / SSD endurance (#28224) | mastered | 罐頭工廠生產線類比。SSD endurance/WAL/trigger vs patch 全通。目標=練 GitHub issue/PR 求職；自查真實 fork diff，抓出缺 opt-in 逃生門。 | 2026-06-26 | topics/codex-log-churn.md |
-| tmux | mastered | 舊楓之谷城鎮類比。pane/window/session、持續性(detach/attach)、多 session/nested、pane 切割與移動全通。全靠推理、抓出教學者 2 個流程錯。剩實機練。 | 2026-06-27 | topics/tmux.md |
+| tmux | mastered | 舊楓之谷城鎮類比。pane/window/session、持續性、多 session/nested 全通。第二門課 L1–L5 全通關：Ghostty 分層、session-per-tab 取捨、resurrect 藍圖 vs 現場（4/4）。抓教材 bug×2。剩實機練。 | 2026-07-11 | topics/tmux.md |
 | MonitorControl 亮度控制 | learning | 舊楓之谷衝卷軸類比。已懂 DDC=硬體原生控制但傳輸未必穩。目標設定：smooth/combine on、sync off、zero on 做 overnight 近零亮度。DDC 導入須展開全名。 | 2026-07-09 | topics/monitorcontrol-brightness.md |
 
 ## Status Labels
