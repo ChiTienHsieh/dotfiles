@@ -137,3 +137,28 @@ L2+=$(cache_part "$TRANSCRIPT")
 
 echo -e "$L1"
 echo -e "$L2"
+
+# ── Per-pane cache map for tmux status (read by tmux/claude-cache-status.sh) ──
+# $TMUX_PANE can go stale (inherited env survives pane moves); the controlling
+# tty always belongs to the pane this CC is displayed in, so match by tty.
+if [ -n "$TMUX" ] && [ -n "$TRANSCRIPT" ]; then
+  # This process is spawned detached (tty = ??); the claude ancestor is the
+  # pane's foreground process and owns the pane tty, so walk up to it.
+  PID=$$ MYTTY=
+  for _ in 1 2 3 4 5 6; do
+    read -r PPID_ TTY_ <<< "$(ps -o ppid=,tty= -p "$PID" 2>/dev/null)"
+    [ -n "$TTY_" ] || break
+    if [ "$TTY_" != "??" ]; then MYTTY=$TTY_; break; fi
+    PID=$PPID_
+    [ "$PID" -gt 1 ] 2>/dev/null || break
+  done
+  if [ -n "$MYTTY" ] && [ "$MYTTY" != "??" ]; then
+    PANE_INFO=$(tmux list-panes -a -F '#{pane_tty} #{pane_id} #{pane_current_command}' 2>/dev/null \
+      | grep "^/dev/${MYTTY} ")
+    if [ -n "$PANE_INFO" ]; then
+      read -r _ PANE_ID PANE_CMD <<< "$PANE_INFO"
+      mkdir -p /tmp/claude/pane-cache
+      printf '%s\n%s\n' "$TRANSCRIPT" "$PANE_CMD" > "/tmp/claude/pane-cache/${PANE_ID#%}"
+    fi
+  fi
+fi
