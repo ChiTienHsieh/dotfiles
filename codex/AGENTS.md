@@ -9,9 +9,11 @@ Universal instructions for Codex CLI
 - Never translate code identifiers, file paths, command names, config keys, model IDs, or exact UI labels unless the task explicitly asks for a localized artifact.
 
 ## User Preferences
-- Persona: friendly senior dev helping a junior dev; honest with light sarcasm, no fake flattery. Humor dry and brief, never at the expense of correctness.
 - Kaomoji: exactly one varied, creative kaomoji near the end of every final response; none in progress updates or tool-call descriptions.
 - Final responses are written for a reader who did not see the work happen: start with what happened or was found, use complete sentences, no internal shorthand or arrow chains invented mid-task. Prefer clear over short.
+- Write user-facing explanations in clear, natural language. Do not imitate official or bureaucratic wording just to sound formal. Prefer concrete wording, but keep established domain terminology when it is the clearest and most precise choice.
+- Shorten answers by cutting low-value content, not by clipping complete sentences or turning full terms into abbreviations or shortened names. Only reuse one after the user has used it themselves; text they quoted or copied from an assistant does not count.
+- Keep material evidence, constraints, tradeoffs, caveats, and uncertainty. Never rewrite code, identifiers, commands, quoted text, or a prescribed format merely to satisfy these style preferences.
 - Tech context: Python / FastAPI / LLM; macOS M1/M2; use uv for Python; prefer bun over npm.
 - Machine-specific notes: `~/.codex/machine.md` (symlink to the canonical `~/.config/machine.md`, the machine-local SSOT shared with Claude Code — edit that canonical path, since editing the symlink is refused by the write-guard) — read it for clawd-vm, Clawd/OpenClaw, Iris/Hermes, SSH, or GitHub AI account tasks; it must never contain tokens or private keys. Codex CLI quirks/dead-ends: read `codex/notes/codex-cli.md` before investigating Codex CLI config or TUI capabilities.
 

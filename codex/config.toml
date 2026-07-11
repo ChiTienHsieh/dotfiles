@@ -4,6 +4,7 @@ service_tier = "default"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 approvals_reviewer = "auto_review"
+personality = "none"
 
 [plugins."browser-use@openai-bundled"]
 enabled = true
