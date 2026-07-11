@@ -22,10 +22,12 @@ mtime=$(stat -c %Y "$transcript" 2>/dev/null || stat -f %m "$transcript" 2>/dev/
 ttl=300
 tail -c 65536 "$transcript" 2>/dev/null | grep -q '"ephemeral_1h_input_tokens":[1-9]' && ttl=3600
 
+# Blue pane id says which pane this cache belongs to (the focused one)
+who="#[fg=#82b8ff]%${pane}#[default]"
 if [ $(( mtime + ttl - $(date +%s) )) -le 0 ]; then
-  echo "#[fg=#a2bef9]❄ cold#[default]"
+  echo "${who} #[fg=#a2bef9]❄ cold#[default]"
 else
   # BSD date -r takes epoch seconds; GNU date -r wants a file, so it errs and falls to -d
   exp=$(date -r $(( mtime + ttl )) +%H:%M 2>/dev/null || date -d "@$(( mtime + ttl ))" +%H:%M 2>/dev/null)
-  echo "#[fg=#ff9e64]♨ ↻${exp}#[default]"
+  echo "${who} #[fg=#ff9e64]♨ ↻${exp}#[default]"
 fi

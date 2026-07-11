@@ -1,7 +1,9 @@
 #!/bin/bash
 # Custom Claude Code statusline
 # Line 1: dir [git branch] model (context size)
-# Line 2: context tokens (%) │ 5h: usage% ↻HH:MM │ 7d: usage% ↻Day HH:MM │ ♨ ↻HH:MM (cache)
+# Line 2: context tokens (%) │ 5h: usage% ↻HH:MM │ 7d: usage% ↻Day HH:MM
+# Cache state is NOT displayed here (lives in tmux status-right, single home);
+# this script only registers the pane→transcript map that tmux reads.
 
 input=$(cat)
 
@@ -106,24 +108,6 @@ if [ "$FIVE_PCT" != "-1" ] && [ -n "$FIVE_PCT" ]; then
   fi
 fi
 
-# ── Prompt cache (♨ hot with expiry time / ❄ cold) ──
-# Ephemeral cache resets its TTL on every request; transcript mtime ≈ last request.
-# TTL is read from the transcript's usage.cache_creation buckets (5m vs 1h), not hardcoded.
-CACHE_TTL=300
-cache_part() {
-  local f=$1 mtime now ttl=$CACHE_TTL
-  [ -n "$f" ] && [ -f "$f" ] || return
-  # GNU first: BSD stat rejects -c and falls through; GNU stat -f would "succeed" with fs info
-  mtime=$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f" 2>/dev/null) || return
-  tail -c 65536 "$f" 2>/dev/null | grep -q '"ephemeral_1h_input_tokens":[1-9]' && ttl=3600
-  now=$(date +%s)
-  if [ $(( mtime + ttl - now )) -le 0 ]; then
-    echo -ne " ${GRAYD}│${R} ${BLUE}❄ cold${R}"
-  else
-    echo -ne " ${GRAYD}│${R} ${ORA}♨ ↻$(ts_fmt $(( mtime + ttl )) "%H:%M")${R}"
-  fi
-}
-
 if [ "$SEVEN_PCT" != "-1" ] && [ -n "$SEVEN_PCT" ]; then
   SP=$(printf '%.0f' "$SEVEN_PCT")
   L2+=" ${GRAYD}│${R} $(pct_color "$SP")7d: ${SP}%${R}"
@@ -132,8 +116,6 @@ if [ "$SEVEN_PCT" != "-1" ] && [ -n "$SEVEN_PCT" ]; then
     [ -n "$SR" ] && L2+=" $(pct_dim "$SP")↻${SR}${R}"
   fi
 fi
-
-L2+=$(cache_part "$TRANSCRIPT")
 
 echo -e "$L1"
 echo -e "$L2"
