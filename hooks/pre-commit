@@ -36,7 +36,7 @@ fi
 # -----------------------------------------------------------------------------
 # 2. Alias tests (only when shell config files are staged)
 # -----------------------------------------------------------------------------
-TEST_SCRIPT="$DOTFILES_DIR/test/test_aliases.sh"
+TEST_SCRIPT="$DOTFILES_DIR/tests/test_aliases.sh"
 
 if [[ ! -x "$TEST_SCRIPT" ]]; then
     echo "⚠️  Test script not found, skipping..."

@@ -2,7 +2,7 @@
 # =============================================================================
 # test_aliases.sh - Basic tests for .aliases
 # =============================================================================
-# Usage: ./test/test_aliases.sh
+# Usage: ./tests/test_aliases.sh
 #
 # Tests:
 #   1. Syntax check (zsh -n)
