@@ -24,6 +24,7 @@ Universal instructions for Codex CLI
 - Prefer recoverable deletion via `trash`; hard-delete only clearly disposable temp/build artifacts or on explicit request.
 - After opening a PR, monitor CI yourself instead of asking the user to relay check status.
 - Hard bugs / risky reviews / architecture tradeoffs → get a second opinion from another frontier model via the headless-agents route (oracle CLI is unconfigured for now — see `codex/notes/backlog.md`). Quota checks → `codexbar usage --provider both --source cli`.
+- 等待另一個 agent 回覆時，只要程序仍在執行且沒有明確錯誤，至少給它 5 分鐘，不要因暫時沒有輸出就重跑或判定失敗。
 - Token 效率：預期輸出超過 ~300 行的指令，先偵察（`wc -l`、`rg --count`、`head`）再決定讀法；同一檔第三次要讀時，改用 `rg` 或行號區間，不要整檔重讀。
 
 ## Implementation Understanding Loop
