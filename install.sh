@@ -352,10 +352,8 @@ rm -f "$CLAUDE_SKILLS_PRESERVE_FILE"
 # /skill-name); prune any leftover shim links from earlier installs.
 prune_stale_dotfiles_links "$HOME/.claude/commands"
 
-# yolo-cc CLI tool
-mkdir -p "$HOME/.local/bin"
-backup_and_link "$DOTFILES_DIR/yolo-cc/bin/yolo-cc" "$HOME/.local/bin/yolo-cc"
-
+# Prune retired CLI links that pointed into this repo.
+prune_stale_dotfiles_links "$HOME/.local/bin"
 
 # -----------------------------------------------------------------------------
 # Codex CLI configuration
