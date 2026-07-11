@@ -1,7 +1,7 @@
 #!/bin/bash
 # Custom Claude Code statusline
 # Line 1: dir [git branch] model (context size)
-# Line 2: context tokens (%) │ 5h: usage% ↻HH:MM │ 7d: usage% ↻Day HH:MM
+# Line 2: context tokens (%) │ 5h: usage% ↻HH:MM │ 7d: usage% ↻Day HH:MM │ ⚡cache bar ↻HH:MM
 
 input=$(cat)
 
@@ -35,11 +35,12 @@ DATA=$(echo "$input" | jq -r '
     (.rate_limits.five_hour.used_percentage // -1 | tostring),
     (.rate_limits.five_hour.resets_at // -1 | tostring),
     (.rate_limits.seven_day.used_percentage // -1 | tostring),
-    (.rate_limits.seven_day.resets_at // -1 | tostring)
+    (.rate_limits.seven_day.resets_at // -1 | tostring),
+    (.transcript_path // "")
   ] | .[]
 ')
 IFS=$'\n' read -r -d '' MODEL DIR CTX_TOKENS CTX_PCT CTX_SIZE \
-  FIVE_PCT FIVE_RESET SEVEN_PCT SEVEN_RESET <<< "$DATA" || true
+  FIVE_PCT FIVE_RESET SEVEN_PCT SEVEN_RESET TRANSCRIPT <<< "$DATA" || true
 
 # ── Helpers ──
 fmt_tokens() {
@@ -105,6 +106,33 @@ if [ "$FIVE_PCT" != "-1" ] && [ -n "$FIVE_PCT" ]; then
   fi
 fi
 
+# ── Prompt cache bar ──
+# Ephemeral cache resets its TTL on every request; transcript mtime ≈ last request.
+CACHE_TTL=300
+CACHE_BAR_W=6
+cache_part() {
+  local f=$1 mtime now remain bar="" i
+  [ -n "$f" ] && [ -f "$f" ] || return
+  # GNU first: BSD stat rejects -c and falls through; GNU stat -f would "succeed" with fs info
+  mtime=$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f" 2>/dev/null) || return
+  now=$(date +%s)
+  remain=$(( mtime + CACHE_TTL - now ))
+  if [ "$remain" -le 0 ]; then
+    for ((i = 0; i < CACHE_BAR_W; i++)); do bar+="▱"; done
+    echo -ne " ${GRAYD}│${R} ${BLUE}⚡${bar} cold${R}"
+    return
+  fi
+  # ceil so a fresh cache shows a full bar and a still-hot one never shows empty
+  local filled=$(( (remain * CACHE_BAR_W + CACHE_TTL - 1) / CACHE_TTL ))
+  [ "$filled" -gt "$CACHE_BAR_W" ] && filled=$CACHE_BAR_W
+  local empty=""
+  for ((i = 0; i < filled; i++)); do bar+="▰"; done
+  for ((i = filled; i < CACHE_BAR_W; i++)); do empty+="▱"; done
+  local exp
+  exp=$(ts_fmt $(( mtime + CACHE_TTL )) "%H:%M")
+  echo -ne " ${GRAYD}│${R} ${ORA}⚡${bar}${R}${GRAYD}${empty}${R} ${ORA}↻${exp}${R}"
+}
+
 if [ "$SEVEN_PCT" != "-1" ] && [ -n "$SEVEN_PCT" ]; then
   SP=$(printf '%.0f' "$SEVEN_PCT")
   L2+=" ${GRAYD}│${R} $(pct_color "$SP")7d: ${SP}%${R}"
@@ -113,6 +141,8 @@ if [ "$SEVEN_PCT" != "-1" ] && [ -n "$SEVEN_PCT" ]; then
     [ -n "$SR" ] && L2+=" $(pct_dim "$SP")↻${SR}${R}"
   fi
 fi
+
+L2+=$(cache_part "$TRANSCRIPT")
 
 echo -e "$L1"
 echo -e "$L2"
