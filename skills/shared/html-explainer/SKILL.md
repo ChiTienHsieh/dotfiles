@@ -29,6 +29,7 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 - **一頁一類比**，從背景一路扛到測驗，絕不中途換世界觀、絕不混搭兩套比喻。
 - 挑類比先想「扛得動整個概念嗎」：只撐得起前兩段的類比是壞類比。
 - 類比要用讀者真的活過的世界。呼叫方（如 level-up）通常已指定讀者的偏好框架——沿用它；專有名詞不確定就查證或停在機制層，不要憑印象掰。
+- 角色稱呼要自然變化但保留職位線索；避免每次重複「名字＝職位」模板。可依場景輪替「工程師」「值班工程師」「工程師老兄」，不要為變化而新增難記角色。
 
 ## 微世界設計
 
@@ -42,6 +43,7 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 - 3–5 題選擇題，放頁面最底，全部用頁內 JS 判分：選了立刻回饋，答錯附一句「回去看第 N 段」的指路。
 - 錯誤選項要**真的有誘惑力**：常見誤解、對的概念用錯層次、半真半假。不要送分strawman。
 - 別用形狀洩題：正確選項不可以固定位置、不可以總是最長最詳細。解釋放在作答後回饋裡，不放在選項裡。
+- 答對時，在使用者點擊事件內把精簡的「題目＋正解」複製到系統剪貼簿，並顯示「已複製，可直接貼回 agent」。若 Clipboard API 不可用，顯示可手動複製的同一段文字；不得讓複製失敗卡住作答回饋。
 - 立下規矩並寫在測驗開頭：**測驗沒過，不算讀完**。若呼叫方明確要求 learning-gated review，才把測驗當該流程的驗收門檻。
 
 ## 單檔硬規則
@@ -67,6 +69,7 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 1. 寫完先自檢零依賴：`grep -cE '<script src|href="http|cdn|@import url' <file>` 必須是 0。
 2. 允許且實務上可行時，用 `open <abs-path>` 直接開給讀者看；否則聊天裡只給一句簡介 + 絕對路徑。
 3. 自己過一遍測驗的每個選項路徑（對、錯、指路連結）確認 JS 判分沒壞。
+   - 若有答對自動複製，實際點擊正解並讀回剪貼簿，確認內容正確；同時驗證失敗 fallback 仍可手動複製。
 4. 有 code block 時確認換行與縮排沒被 HTML 吃掉（用 `<pre>` 或等價 CSS）。
 5. 用可用的 subagent / reviewer 機制請一個零上下文 fresh reviewer 讀一遍，抓「沒展開的縮寫、只當裝飾的類比、預設讀者已懂的跳步」。
 
