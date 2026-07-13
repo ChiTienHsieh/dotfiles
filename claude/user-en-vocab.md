@@ -3,7 +3,7 @@
 
 CC 產出含英文詞的 zh-tw 回覆前查這張表；分級規則見 `~/.claude/CLAUDE.md` 的 Language 節。
 被 user 抱怨看不懂（wtf is X / X 是什麼）→ 立刻把該詞加進 REJECT。
-想升級某詞（REJECT→BILINGUAL→OK）→ 一律先用 AskUserQuestion 確認。
+想升級某詞（REJECT→BILINGUAL→OK）→ 一律先問 user 確認。
 
 ## OK（直接用，不用解釋）
 

@@ -1,11 +1,13 @@
 {
-  "enabledPlugins": {
-    "ralph-loop@claude-plugins-official": true
-  },
   "sandbox": {
-    "excludedCommands": ["git"],
+    "excludedCommands": [
+      "git"
+    ],
     "filesystem": {
-      "allowWrite": ["~/.Trash", "~/.claude"]
+      "allowWrite": [
+        "~/.Trash",
+        "~/.claude"
+      ]
     }
   }
 }

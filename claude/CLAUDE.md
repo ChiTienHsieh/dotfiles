@@ -1,6 +1,5 @@
 @SOUL.md
 @USER.md
-@~/.claude/machine.md
 @~/dotfiles/codex/AGENTS.md
 
 ## Terminology
@@ -10,7 +9,7 @@
 - **ALWAYS reply in Traditional Chinese (zh-tw).** 不跟隨 user 的語言 —— user 打英文是為了快，英文訊息 ≠ 英文回覆。
 - **最高優先：user 讀得懂。** Verbose > unclear。User 原話：「too many english terms… mainly use zh-tw terms」「DO NOT invent new spelling or saying」—— 不自造新詞、不發明英文框架名、不整段英文。
 - **英文詞彙分級**：產出含英文詞的 zh-tw 回覆前，lazy-Read `~/.claude/user-en-vocab.md` 查表（OK / NATIVE-ZH / BILINGUAL / REJECT 各級格式規則寫在表頭）；不在表上的詞一律「中文翻譯 (English original)」；一般用詞（think/file/status…）優先用中文；沒有中文的專有名詞用英文＋一句中文解釋。
-- **維護詞彙表**：user 出現抱怨訊號（wtf is X / X 是什麼 / DO NOT use X）→ 立刻把該詞加進 REJECT，對話中途也要做；要升級某詞 → 一律先 AskUserQuestion 確認，不靠觀察自動升級。
+- **維護詞彙表**：user 出現抱怨訊號（wtf is X / X 是什麼 / DO NOT use X）→ 立刻把該詞加進 REJECT，對話中途也要做；要升級某詞 → 一律先問 user 確認，不靠觀察自動升級。
 - 可保留英文的：code、指令、路徑、錯誤訊息、工具名、短慣用語（LGTM、WIP、TL;DR）。查資料儘管用英文，最終回覆一律 zh-tw。
 - **CRITICAL**: quality 只寫「品質」、絕不寫「質量」；level 用「水準」。
 - **zh-tw native 優先**：拒絕 zh-cn 用語（信息→資訊、網絡→網路、優化→最佳化、視頻→影片、屏幕→螢幕、文件夾→資料夾、默認→預設、接口→介面、內存→記憶體、保存→儲存、用戶→使用者；「反模式」→寫「要避免的寫法」）；拒絕簡體字；拒絕英文直譯怪詞（「完封」「落地」「收斂」當「結束」用）。寫人話：推上去了 / 過了 / 搞定 / 你決定。
@@ -21,7 +20,7 @@
 - 只有 shell script、CI、本來就短命的 `/tmp`/build 產物、或 user 明確要硬刪時才用 `rm` / `rm -rf`。
 
 ## Proactivity
-- 需要確認時用 AskUserQuestion 給明確選項＋推薦選項，不要在聊天裡開放式乾問。
+- 需要確認時直接在聊天裡列編號選項＋標推薦，不要開放式乾問；不用 AskUserQuestion（已 deny —— 選項欄位固定長度，內容被截斷看不懂）。
 - 本機 repo 幾乎都是 solo（除了 `~/wanguard`），沒安全疑慮就放心 push。
 - **開 PR 之後 CC 自己盯 CI**：推完立刻背景 `gh pr checks <PR#> --watch --interval 20`，綠了才走下一步；紅了自己 `gh run view --log-failed` 抓 error 修掉再 push。只有 CI 設定壞掉或需要 user 決策才中斷。
 - 幫 user 擬訊息（Slack/Discord/email）：精簡、展現主動；用 `pbcopy` 進剪貼簿。
