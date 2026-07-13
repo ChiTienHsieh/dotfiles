@@ -9,6 +9,7 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 
 ## Core Rules
 
+- When the user asks for a Claude Code or Codex CLI reviewer, default to an observable tmux pane even for read-only work. A direct headless command is only for a clearly bounded one-shot check that needs no tool use or approval, or when the user explicitly asks for headless execution.
 - Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session, and do NOT start a new cmux session, for this co-review case.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
@@ -131,7 +132,8 @@ Example:
 - Choose the right mechanism FIRST: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to JUDGE quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free. Caveat: `tmux wait-for` blocks the calling shell, so for long waits prefer a marker file (poll its existence) or a hook — a blocking wait can hit the Bash command timeout.
 - When you DO poll, default to PATIENT polling. Once a worker is mid-run on a multi-minute task (a review loop, a build, a long Codex turn), check at intervals of at least 5 minutes. Polling every 30-90 seconds is micromanaging — it wastes controller turns and reads as creepy to the user. Reserve sub-minute checks for genuinely short tasks or when actively waiting on an approval/error prompt.
 - For user-requested patient Claude Code work, check every 10 minutes unless there is an obvious prompt/approval wait.
-- If the user says the work can take an hour, do not interrupt early just because the TUI is quiet.
+- If a worker shows no output or observable state change for 25 consecutive minutes, inspect the pane once for an approval prompt, explicit error, or known long-running command. If none is present, the controller may terminate the worker. Any output or state change resets the 25-minute clock.
+- If the user says the work can take an hour, do not interrupt while there is observable progress. The 25-minute no-change rule still applies unless the user explicitly gives a different limit.
 - When capturing, read the FULL new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
 - If the worker is waiting for approval, erroring, or stuck at a prompt, intervene.
 

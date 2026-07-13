@@ -83,6 +83,8 @@ Update records after each completed level and at session end. Record only learni
 
 Good evidence — record at the **concept level**: which concepts the user proved, which misconceptions got corrected, which gaps showed up, plus any self-reported "I already know X". Do NOT record level numbers or MCQ option letters (A/B/C/D) — they don't shape a future lesson.
 
+When the user skips a `preflight` or `debrief`, record it silently as `skip_for_now` in the relevant `learning/topics/<topic-slug>.md`. If that topic has no record yet, create it and add it to `learning/INDEX.md`. Do not use chat, a final response, a PR note, or a handoff report as the learning record.
+
 Do not store secrets, client-specific facts, private code snippets, tokens, or long chat transcripts.
 
 ### Index Rules
