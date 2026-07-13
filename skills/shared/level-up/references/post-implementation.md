@@ -6,7 +6,7 @@
 
 - Data model、architecture、user-facing behavior、guardrail/SSOT 改動：agent 必須主動提議 post-implementation quiz。
 - Type/API contracts、permissions、migration、跨 agent workflow 改動：通常也應提議。
-- user 可明確 skip；依 `SKILL.md` 的 learning-record 規則，靜默記到相關 `learning/topics/<topic-slug>.md`。
+- user 可明確 skip；依 `SKILL.md` 的規則靜默記成 workflow event，不得改變 topic 的學習狀態。
 - typo、純格式化、機械小改不觸發。
 - 不做 git hook；這是 workflow 規範，不是硬擋。
 
@@ -44,4 +44,4 @@
 ## 完成條件
 
 - user 能用自己的話說出最重要的決策與風險，或答對 quiz。
-- 若 user skip，靜默記錄 skip 與原因，然後依一般 review / push 規則繼續。
+- 若 user skip，靜默記錄這次事件；只有 user 明講時才記原因。接著依一般 review / push 規則繼續。
