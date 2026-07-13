@@ -33,6 +33,12 @@
 - 照 level-up 主線拆關：一關一個決策（含語氣外殼與類比），關末出該關的 MCQ，user 答對才開下一關。
 - 關卡順序沿用上面的 decisions-first 排序；mechanical 改動不開關，收尾一句帶過。
 
+## 題型混用（shotcall ＋ quiz）
+
+- **agent 決策用 shotcall 重演**：實作期間 agent 自行拍的板（plan deviations、conservative assumptions、選 A 沒選 B 的取捨）→ 攤成 shotcall MCQ：選項擺出當時的可行方案、標出 agent 實際選的＋一句理由，user 重新定奪 —— 維持＝放行，推翻＝開後續修正工單。
+- **user 理解用 quiz 驗證**：成品懂不懂，走 quiz MCQ（下節規則）。
+- 一關仍一題；decisions-first：先 shotcall 重演，再 quiz 收尾。
+
 ## Quiz 設計
 
 - 沿用 `SKILL.md` 的 MCQ anti-tell 與 distractor 規則。

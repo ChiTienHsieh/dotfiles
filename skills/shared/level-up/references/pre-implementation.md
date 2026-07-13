@@ -20,6 +20,8 @@
 - 沿用 `SKILL.md` 的 Engagement-First 原則與 `learning/user-profile.md`；不要在本檔重複比喻規則。
 - 問題要優先問「答案會改變實作路線」的事，一次問少量，避免把訪談做成表單地獄。
 - user 若不確定，給 2-3 個可比較選項，並說清楚 tradeoff。
+- 「決策確認」預設用 **shotcall MCQ**（規則見 SKILL.md「Shotcall MCQ」節）：先概念故事、再一題選項全合理的決策題，user 的選擇＝決策定案。
+- 途中冒出值得深教的進階概念 → 提議開一個 teacher agent（走 `tmux-orchestration`）對該概念跑 quiz 模式的支線課，主線 preflight 不中斷。
 
 ## 終點產物
 

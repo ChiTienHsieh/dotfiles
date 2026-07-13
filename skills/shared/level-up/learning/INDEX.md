@@ -4,6 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| Dedup 會後施工 preflight | mastered | 實戰課程格式首航。六關決策全拍板（兩層並用/遞移旗標/拆群復活/合約B形/權重拆帳燈號/掃描三全掃），merge＝內容整理責任是 user 自己立的原則。出貨 report-preflight-build.md。 | 2026-07-13 | topics/dedup-post-meeting-build.md |
 | Skill 規則堆積學 | mastered | 老楓道具欄類比。讀者入口判準、使用頻率分層、事故≠規則、description 觸發面全數一次通過（含綜合驗收）；四個真實修繕決策全拍板並 shipped。 | 2026-07-10 | topics/skill-rule-hygiene.md |
 | 投資配置：39w 全球股容器 | learning | 舊楓之谷類比。已懂 CFD 是對賭合約/交易對手風險。**Fable 決策已寫進 topic（VWRA 主推＋累積型＋bitcoin 上限＋分批進場），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
 | Dedup 設計會議準備（討論） | learning | 公會幹部會議類比。已拍板：Q2 走 join/YAGNI、rejected 永久黏、Layer→快慢層、Carol 選項一視同仁、double-submit 答辯。未決：undo 去向(Q8)、merge 語意(Q9)、慢層選型。廢詞/AI 代號零容忍。 | 2026-07-10 | topics/dedup-meeting-prep.md |
