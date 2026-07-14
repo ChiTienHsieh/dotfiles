@@ -132,7 +132,19 @@ body {
 .hachure { pointer-events: none; }
 .nodeText { font-family: var(--hand); pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,.82); stroke-width: 3.5px; }
 .edgeLabel { font-family: var(--hand); paint-order: stroke; stroke: var(--canvas); stroke-width: 5px; pointer-events: none; }
-.badge { font-size: 12px; pointer-events: none; }
+.node, .edge { transition: opacity .28s ease; }
+#svg.dimming .node, #svg.dimming .edge { opacity: .14; }
+#svg.dimming .spot { opacity: 1; }
+.cbadge { cursor: help; }
+.cbadge path { transition: stroke .15s ease, fill .15s ease; }
+.cbadge:hover path { stroke: var(--violet); }
+.cbadge:hover circle { fill: var(--violet); }
+#commentTip {
+  position: fixed; z-index: 40; display: none; max-width: 300px;
+  background: #fff; border-radius: 9px; box-shadow: var(--shadow);
+  padding: 8px 11px; font-family: var(--hand); font-size: 14px; line-height: 1.45;
+  white-space: pre-wrap; word-break: break-word; color: var(--ink); pointer-events: none;
+}
 .selBox { fill: none; stroke: var(--violet); stroke-width: 1.2; stroke-dasharray: 4 4; pointer-events: none; }
 .selDot { fill: #fff; stroke: var(--violet); stroke-width: 1.2; pointer-events: none; }
 @media (max-width: 760px) {
@@ -279,6 +291,7 @@ body {
 </div>
 
 <input id="inlineEdit" autocomplete="off">
+<div id="commentTip"></div>
 <div id="toasts"></div>
 
 <script>
@@ -748,6 +761,13 @@ function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// 手繪風對話泡泡(有註解的元素),hover 顯示內容並聚光
+function commentBadge(x, y) {
+  return `<g class="cbadge" transform="translate(${x},${y}) rotate(-5)">` +
+    `<path d="M 3.5 0 H 14 Q 17.5 0 17.5 3.5 V 8.5 Q 17.5 12 14 12 H 8.6 L 3.4 16.2 L 5 12 H 3.5 Q 0 12 0 8.5 V 3.5 Q 0 0 3.5 0 Z" fill="#fff" stroke="#1e1e1e" stroke-width="1.3" stroke-linejoin="round"/>` +
+    `<circle cx="5.2" cy="6" r="1" fill="#1e1e1e"/><circle cx="8.8" cy="6" r="1" fill="#1e1e1e"/><circle cx="12.4" cy="6" r="1" fill="#1e1e1e"/></g>`;
+}
+
 // ---------- 節點渲染 ----------
 function nodeSvg(n, sizeMap) {
   const p = positions.get(n.id);
@@ -780,7 +800,7 @@ function nodeSvg(n, sizeMap) {
     body += `<rect x="${x}" y="${y}" width="${s.w}" height="${s.h}" fill="#fff" opacity="0"/>`;
   }
   body += `<text class="nodeText" x="${p.x}" y="${p.y}" font-size="15" fill="${esc(textColor)}" text-anchor="middle" dominant-baseline="central">${esc(displayLabel(n))}</text>`;
-  if (n.comment) body += `<text class="badge" x="${x + s.w - 5}" y="${y + 3}">💬</text><title>${esc(n.comment)}</title>`;
+  if (n.comment) body += commentBadge(x + s.w - 9, y - 16);
   if (selection && selection.kind === 'node' && selection.id === n.id) {
     const m = 7;
     body += `<rect class="selBox" x="${x - m}" y="${y - m}" width="${s.w + m * 2}" height="${s.h + m * 2}" rx="3"/>`;
@@ -904,14 +924,53 @@ function edgeSvg(e, i, sizeMap, groups) {
   }
   let extra = '';
   if (e.label) extra += `<text class="edgeLabel" x="${lx}" y="${ly}" font-size="13.5" fill="${esc(color)}" text-anchor="middle">${esc(e.label)}</text>`;
-  if (e.comment) extra += `<text class="badge" x="${lx + (e.label ? measureCtx.measureText(e.label).width / 2 + 7 : 0)}" y="${ly}">💬</text>`;
-  const title = e.comment ? `<title>${esc(e.comment)}</title>` : '';
+  if (e.comment) extra += commentBadge(lx + (e.label ? measureCtx.measureText(e.label).width / 2 + 9 : -9), ly - 20);
   const selHalo = sel ? `<path d="${hitD}" fill="none" stroke="#6965db" stroke-width="${sw + 5}" opacity=".25"/>` : '';
-  return `<g class="edge" data-eidx="${i}">${title}<path class="edgeHit" d="${hitD}"/>${selHalo}` +
+  return `<g class="edge" data-eidx="${i}"><path class="edgeHit" d="${hitD}"/>${selHalo}` +
     `<path d="${parts.join(' ')}" fill="none" stroke="${esc(color)}" stroke-width="${sw}"${dash} stroke-linecap="round"/>${extra}</g>`;
 }
 
+// ---------- 註解泡泡 hover:顯示內容 + 聚光(其他元素變淡) ----------
+let hoverBadge = null;
+function clearBadgeHover() {
+  if (!hoverBadge) return;
+  hoverBadge = null;
+  $('commentTip').style.display = 'none';
+  svgEl.classList.remove('dimming');
+  for (const g of svgEl.querySelectorAll('.spot')) g.classList.remove('spot');
+}
+svgEl.addEventListener('pointerover', e => {
+  const b = e.target.closest && e.target.closest('.cbadge');
+  if (b === hoverBadge) return;
+  clearBadgeHover();
+  if (!b) return;
+  const g = b.closest('[data-nid],[data-eidx]');
+  let text = '';
+  if (g && g.dataset.nid) {
+    const n = doc.nodes.find(x => x.id === g.dataset.nid);
+    text = (n && n.comment) || '';
+  } else if (g) {
+    const ed = doc.edges[+g.dataset.eidx];
+    text = (ed && ed.comment) || '';
+  }
+  if (!text) return;
+  hoverBadge = b;
+  const tip = $('commentTip');
+  tip.textContent = text;
+  tip.style.display = 'block';
+  const r = b.getBoundingClientRect();
+  let tx = r.right + 10, ty = r.top - tip.offsetHeight - 6;
+  if (tx + tip.offsetWidth > window.innerWidth - 8) tx = window.innerWidth - 8 - tip.offsetWidth;
+  if (ty < 8) ty = r.bottom + 10;
+  tip.style.left = tx + 'px';
+  tip.style.top = ty + 'px';
+  svgEl.classList.add('dimming');
+  if (g) g.classList.add('spot');
+});
+svgEl.addEventListener('pointerleave', clearBadgeHover);
+
 function renderCanvas() {
+  clearBadgeHover(); // innerHTML 要重建了,舊的聚光/提示一起收掉
   const sizeMap = new Map(doc.nodes.map(n => [n.id, measureNode(n)]));
   const groups = makeGroups();
   let s = '';
