@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mermaid 流程圖編輯器</title>
+<style>
+:root {
+  --bg: #f4f5f7; --panel: #ffffff; --line: #d4d9e0; --ink: #1f2530;
+  --sub: #66707d; --accent: #2563eb; --accent-soft: #dbe7fd;
+  --warn: #b45309; --edge: #4a5563; --canvas: #fbfcfd;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; display: flex; flex-direction: column; height: 100dvh;
+  font: 14px/1.6 -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  color: var(--ink); background: var(--bg);
+}
+header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 14px; background: var(--panel); border-bottom: 1px solid var(--line);
+}
+header .brand { display: flex; flex-direction: column; margin-right: 4px; }
+header .brand strong { font-size: 15px; }
+header .brand .sub { font-size: 11px; color: var(--sub); }
+.tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button, select {
+  font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+button:disabled { opacity: .45; cursor: default; }
+main { flex: 1; display: flex; min-height: 0; }
+#canvasWrap { flex: 1; position: relative; min-width: 0; background: var(--canvas); }
+svg { width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+#canvasWrap.connecting { outline: 2px solid var(--accent); outline-offset: -2px; }
+#zoomCtl { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; }
+#zoomCtl button { width: 34px; height: 30px; padding: 0; }
+#canvasHint {
+  position: absolute; left: 10px; bottom: 8px; right: 10px; pointer-events: none;
+  font-size: 11px; color: var(--sub);
+}
+#modeHint {
+  position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 7px;
+  background: var(--accent); color: #fff; font-size: 12px; display: none;
+}
+aside {
+  width: 390px; display: flex; flex-direction: column; overflow-y: auto;
+  background: var(--panel); border-left: 1px solid var(--line);
+}
+aside section { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+aside h3 { margin: 0 0 8px; font-size: 12px; color: var(--sub); font-weight: 600; letter-spacing: .05em; }
+.field { margin-bottom: 8px; }
+.field label { display: block; font-size: 12px; color: var(--sub); margin-bottom: 2px; }
+.field input[type=text], .field select, .field textarea {
+  width: 100%; font: inherit; font-size: 13px; padding: 5px 8px;
+  border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+}
+.field textarea { resize: vertical; min-height: 52px; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; }
+.danger { color: #b3261e; border-color: #e2b6b3; }
+.danger:hover { border-color: #b3261e; }
+#codeSec { flex: 1; display: flex; flex-direction: column; min-height: 160px; border-bottom: none; }
+#code {
+  flex: 1; width: 100%; min-height: 120px; resize: none; font: 12px/1.55 ui-monospace, Menlo, Consolas, monospace;
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: #fff; color: var(--ink);
+  white-space: pre; overflow: auto;
+}
+#code.dirty { border-color: var(--warn); }
+#dirtyHint { font-size: 11px; color: var(--warn); min-height: 16px; }
+#unknownBox {
+  font: 11px/1.5 ui-monospace, Menlo, monospace; background: #fdf6ec; border: 1px solid #ecd9b8;
+  border-radius: 6px; padding: 6px 8px; white-space: pre-wrap; word-break: break-all; color: #7a5b17;
+  max-height: 130px; overflow: auto;
+}
+#toasts { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 50;
+  display: flex; flex-direction: column; gap: 6px; max-width: min(560px, 92vw); }
+.toast {
+  background: #2b3240; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25); cursor: pointer;
+}
+.toast.warn { background: #8a5a12; }
+.muted { color: var(--sub); font-size: 12px; }
+/* SVG 元素 */
+.node { cursor: grab; }
+.node .box { fill: #fff; stroke: #8895a7; stroke-width: 1.4; }
+.node.selected .box { stroke: var(--accent); stroke-width: 2.4; }
+.node.connectFrom .box { stroke: var(--accent); stroke-width: 2.4; stroke-dasharray: 5 3; }
+.node text { font-size: 14px; fill: var(--ink); pointer-events: none; }
+.node .plainBox { fill: transparent; stroke: none; }
+.node.plain text { text-decoration: underline dotted; }
+.edgeHit { stroke: transparent; stroke-width: 16; fill: none; cursor: pointer; }
+.edgeLine { fill: none; stroke: var(--edge); pointer-events: none; }
+.edge.selected .edgeLine { stroke: var(--accent); }
+.edgeLabel { font-size: 12.5px; fill: var(--ink); paint-order: stroke; stroke: var(--canvas); stroke-width: 5px; pointer-events: none; }
+.badge { font-size: 12px; pointer-events: none; }
+@media (max-width: 840px) {
+  main { flex-direction: column; }
+  #canvasWrap { flex: none; height: 50dvh; }
+  aside { width: 100%; flex: 1; border-left: none; border-top: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <strong>Mermaid 流程圖編輯器</strong>
+    <span class="sub">人用畫布改圖,AI 讀文字——進出都是 Mermaid</span>
+  </div>
+  <div class="tools">
+    <button id="btnAddNode" class="primary">＋ 節點</button>
+    <button id="btnConnect">🔗 連線</button>
+    <select id="selDir" title="流程方向">
+      <option value="TD">方向:上→下</option>
+      <option value="LR">方向:左→右</option>
+      <option value="BT">方向:下→上</option>
+      <option value="RL">方向:右→左</option>
+    </select>
+    <button id="btnLayout">自動排版</button>
+    <button id="btnUndo">復原</button>
+    <button id="btnNew">新圖</button>
+  </div>
+</header>
+<main>
+  <div id="canvasWrap">
+    <svg id="svg" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="modeHint"></div>
+    <div id="zoomCtl">
+      <button id="btnZoomIn" title="放大">＋</button>
+      <button id="btnZoomOut" title="縮小">－</button>
+      <button id="btnFit" title="縮放到剛好看到全圖">⤢</button>
+    </div>
+    <div id="canvasHint">拖曳節點只影響這裡的畫面——Mermaid 沒有座標欄位,匯出不會包含位置,重開會重新自動排版。</div>
+  </div>
+  <aside>
+    <section id="inspSec">
+      <h3 id="inspTitle">檢視與編輯</h3>
+      <div id="inspNone">
+        <p class="muted" style="margin:0 0 8px">點畫布上的節點或連線來編輯;拖曳空白處平移、滾輪縮放。</p>
+        <div class="field">
+          <label>文件層級註解(每行一則,匯出成開頭的 %% 行)</label>
+          <textarea id="docComments" rows="2" placeholder="整張圖的說明、給 AI 的整體指示…"></textarea>
+        </div>
+        <div id="unknownWrap" hidden>
+          <label class="muted">子集外語法(唯讀,匯出時原樣吐回):</label>
+          <div id="unknownBox"></div>
+        </div>
+      </div>
+      <div id="inspNode" hidden>
+        <div class="field"><label>節點 ID(英數與底線)</label><input type="text" id="nId"></div>
+        <div class="field"><label>形狀</label>
+          <select id="nShape">
+            <option value="rect">方框 [文字]</option>
+            <option value="round">圓角 (文字)</option>
+            <option value="stadium">膠囊 ([文字])</option>
+            <option value="diamond">菱形 {文字}</option>
+            <option value="plain">純 ID(無框)</option>
+          </select>
+        </div>
+        <div class="field"><label id="nLabelLab">顯示文字</label><input type="text" id="nLabel"></div>
+        <div class="field"><label>註解(匯出成 %% @comment 行,AI 讀得到)</label><textarea id="nComment" placeholder="想對這個節點說的話…"></textarea></div>
+        <div class="row">
+          <button id="nDelete" class="danger">刪除節點</button>
+        </div>
+      </div>
+      <div id="inspEdge" hidden>
+        <p class="muted" id="eTitle" style="margin:0 0 8px"></p>
+        <div class="field"><label>線型</label>
+          <select id="eType">
+            <option value="arrow">實線箭頭 --&gt;</option>
+            <option value="line">實線無箭頭 ---</option>
+            <option value="dotted">虛線箭頭 -.-&gt;</option>
+            <option value="thick">粗箭頭 ==&gt;</option>
+          </select>
+        </div>
+        <div class="field"><label>邊上的標籤</label><input type="text" id="eLabel" placeholder="例:是 / 否"></div>
+        <div class="field"><label>註解(匯出成 %% @comment 行,AI 讀得到)</label><textarea id="eComment" placeholder="想對這條連線說的話…"></textarea></div>
+        <div class="row">
+          <button id="eReverse">反轉方向</button>
+          <button id="eDelete" class="danger">刪除連線</button>
+        </div>
+      </div>
+    </section>
+    <section id="codeSec">
+      <h3>Mermaid 程式碼(可直接貼上再按「套用」)</h3>
+      <textarea id="code" spellcheck="false"></textarea>
+      <div id="dirtyHint"></div>
+      <div class="row" style="margin-top:6px">
+        <button id="btnApply" class="primary">套用程式碼</button>
+        <button id="btnImport">匯入檔案</button>
+        <button id="btnCopy">複製 Mermaid</button>
+        <button id="btnExportAgent">匯出給 agent</button>
+        <input type="file" id="fileInput" accept=".mmd,.md,.txt,.mermaid" hidden>
+      </div>
+    </section>
+  </aside>
+</main>
+<div id="toasts"></div>
+<script>
+'use strict';
+// ===== core-start =====
+// 純函式區:Mermaid flowchart 子集的 parse / serialize,不碰 DOM。
+// 不吞資料原則:看不懂的行進 doc.unknown,匯出時逐字吐回。
+
+const EDGE_TOKENS = { '-.->': 'dotted', '==>': 'thick', '-->': 'arrow', '---': 'line' };
+const TYPE_TOKEN = { dotted: '-.->', thick: '==>', arrow: '-->', line: '---' };
+const RESERVED_RE = /^(end|subgraph|direction|classDef|class|style|linkStyle|click|accTitle|accDescr)\b/;
+const PREAMBLE_PREFIX = '[diagram-editor]';
+
+function emptyDoc() {
+  return { header: 'flowchart', dir: 'TD', nodes: [], edges: [], docComments: [], unknown: [] };
+}
+
+// 讀一個節點參照:`A`、`A[文字]`、`A(文字)`、`A([文字])`、`A{文字}`;文字可用雙引號包住。
+function scanNodeRef(s) {
+  const m = s.match(/^\s*([A-Za-z0-9_]+)/);
+  if (!m) return null;
+  const id = m[1];
+  let rest = s.slice(m[0].length);
+  const wraps = [['([', '])', 'stadium'], ['[', ']', 'rect'], ['(', ')', 'round'], ['{', '}', 'diamond']];
+  for (const [open, close, shape] of wraps) {
+    if (!rest.startsWith(open)) continue;
+    const inner = rest.slice(open.length);
+    let text, after;
+    if (inner.startsWith('"')) {
+      const q = inner.indexOf('"', 1);
+      if (q < 0) return null;
+      text = inner.slice(1, q).replace(/#quot;/g, '"');
+      after = inner.slice(q + 1);
+    } else {
+      const c = inner.indexOf(close[0]);
+      if (c < 0) return null;
+      text = inner.slice(0, c).trim();
+      after = inner.slice(c);
+    }
+    if (!after.startsWith(close)) return null;
+    return { id, shape, label: text, rest: after.slice(close.length) };
+  }
+  return { id, shape: 'plain', label: null, rest };
+}
+
+// 讀一個邊 token:`-->`、`---`、`-.->`、`==>`,可帶 `|標籤|`。
+function scanEdge(s) {
+  const m = s.match(/^\s*(-\.->|==>|-->|---)/);
+  if (!m) return null;
+  let rest = s.slice(m[0].length);
+  let label = null;
+  const lm = rest.match(/^\s*\|([^|]*)\|/);
+  if (lm) { label = lm[1].trim(); rest = rest.slice(lm[0].length); }
+  return { type: EDGE_TOKENS[m[1]], label, rest };
+}
+
+// 解析一行陳述:單一節點定義,或 A --> B --> C 這樣的鏈。整行讀不完就回 null(交給 unknown)。
+function parseFlowLine(line) {
+  if (RESERVED_RE.test(line)) return null;
+  const first = scanNodeRef(line);
+  if (!first) return null;
+  const nodes = [{ id: first.id, shape: first.shape, label: first.label }];
+  const edges = [];
+  let prev = first, rest = first.rest;
+  while (rest.trim() !== '') {
+    const e = scanEdge(rest);
+    if (!e) return null;
+    const n = scanNodeRef(e.rest);
+    if (!n) return null;
+    nodes.push({ id: n.id, shape: n.shape, label: n.label });
+    edges.push({ from: prev.id, to: n.id, type: e.type, label: e.label, comment: '' });
+    prev = n; rest = n.rest;
+  }
+  return { nodes, edges };
+}
+
+function mergeNode(doc, n) {
+  const ex = doc.nodes.find(x => x.id === n.id);
+  if (!ex) {
+    doc.nodes.push({ id: n.id, shape: n.label != null ? n.shape : 'plain', label: n.label, comment: '' });
+  } else if (n.label != null) {
+    ex.shape = n.shape; ex.label = n.label;
+  }
+}
+
+function parseMermaid(text) {
+  const doc = emptyDoc();
+  const warnings = [];
+  const pending = []; // @comment 先收著,整份讀完再對回節點/邊(允許註解寫在定義前)
+  const lines = text.split(/\r?\n/);
+  let headerSeen = false;
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    const lineNo = i + 1;
+    i++;
+    if (!line) continue;
+    if (!headerSeen) {
+      const hm = line.match(/^(flowchart|graph)(?:\s+(TD|TB|LR|BT|RL))?\s*$/);
+      if (hm) {
+        doc.header = hm[1];
+        doc.dir = !hm[2] || hm[2] === 'TB' ? 'TD' : hm[2]; // 沒寫方向時 Mermaid 預設 TB
+        headerSeen = true;
+        continue;
+      }
+    }
+    if (line.startsWith('%%{')) { // %%{init:...}%% 指令不是註解,原樣保留
+      doc.unknown.push(line);
+      warnings.push('第 ' + lineNo + ' 行是 %%{…}%% 指令,不在支援範圍,已原樣保留');
+      continue;
+    }
+    if (line.startsWith('%%')) {
+      const body = line.replace(/^%%\s*/, '');
+      if (body.startsWith(PREAMBLE_PREFIX)) continue; // 「匯出給 agent」的說明行,重匯入時丟棄避免越疊越多
+      const cm = body.match(/^@comment\s+([^:]+):\s*(.*)$/);
+      if (!cm) { doc.docComments.push(body); continue; }
+      const target = cm[1].trim();
+      const em = target.match(/^([A-Za-z0-9_]+)\s*(-\.->|==>|-->|---)\s*([A-Za-z0-9_]+)$/);
+      if (em) {
+        pending.push({ kind: 'edge', from: em[1], type: EDGE_TOKENS[em[2]], to: em[3], text: cm[2], raw: line, lineNo });
+      } else if (/^[A-Za-z0-9_]+$/.test(target)) {
+        pending.push({ kind: 'node', id: target, text: cm[2], raw: line, lineNo });
+      } else {
+        doc.unknown.push(line);
+        warnings.push('第 ' + lineNo + ' 行的 @comment 目標「' + target + '」看不懂,已原樣保留');
+      }
+      continue;
+    }
+    if (/^subgraph\b/.test(line)) { // subgraph 整塊(含裡面的節點)原樣保留,避免拆散語意
+      const block = [line];
+      let depth = 1;
+      while (i < lines.length && depth > 0) {
+        const l2 = lines[i].trim();
+        if (/^subgraph\b/.test(l2)) depth++;
+        else if (/^end$/.test(l2)) depth--;
+        if (l2) block.push(l2); // 空行不收,未閉合的 subgraph 才不會每輪 round-trip 多長空白
+        i++;
+      }
+      doc.unknown.push(block.join('\n'));
+      warnings.push('第 ' + lineNo + ' 行起的 subgraph 不在支援範圍,已原樣保留(裡面的節點不會出現在畫布上)');
+      continue;
+    }
+    const parsed = parseFlowLine(line);
+    if (parsed) {
+      for (const n of parsed.nodes) mergeNode(doc, n);
+      for (const e of parsed.edges) doc.edges.push(e);
+    } else {
+      doc.unknown.push(line);
+      warnings.push('第 ' + lineNo + ' 行不在支援子集,已原樣保留:' + (line.length > 50 ? line.slice(0, 50) + '…' : line));
+    }
+  }
+  for (const p of pending) {
+    if (p.kind === 'node') {
+      const n = doc.nodes.find(x => x.id === p.id);
+      if (n) n.comment = n.comment ? n.comment + '\n' + p.text : p.text;
+      else {
+        doc.unknown.push(p.raw);
+        warnings.push('第 ' + p.lineNo + ' 行的註解找不到節點 ' + p.id + ',已原樣保留');
+      }
+    } else {
+      const cands = doc.edges.filter(e => e.from === p.from && e.to === p.to);
+      if (!cands.length) {
+        doc.unknown.push(p.raw);
+        warnings.push('第 ' + p.lineNo + ' 行的註解找不到 ' + p.from + '→' + p.to + ' 這條邊,已原樣保留');
+        continue;
+      }
+      const t = cands.find(e => e.type === p.type && !e.comment)
+        || cands.find(e => !e.comment)
+        || cands.find(e => e.type === p.type)
+        || cands[0];
+      t.comment = t.comment ? t.comment + '\n' + p.text : p.text;
+    }
+  }
+  return { doc, warnings };
+}
+
+function serializeLabel(text) {
+  if (text === '' || /[\[\]{}()"|]/.test(text) || /^\s|\s$/.test(text)) {
+    return '"' + text.replace(/"/g, '#quot;') + '"';
+  }
+  return text;
+}
+
+function serializeNode(n) {
+  if (n.shape === 'plain' || n.label == null) return n.id;
+  const w = { rect: ['[', ']'], round: ['(', ')'], stadium: ['([', '])'], diamond: ['{', '}'] }[n.shape];
+  return n.id + w[0] + serializeLabel(n.label) + w[1];
+}
+
+function serializeEdge(e) {
+  const lbl = e.label ? '|' + e.label + '|' : '';
+  return e.from + ' ' + TYPE_TOKEN[e.type] + lbl + ' ' + e.to;
+}
+
+function serializeMermaid(doc) {
+  const out = [doc.header + ' ' + doc.dir];
+  for (const c of doc.docComments) out.push('  %% ' + c);
+  for (const n of doc.nodes) {
+    out.push('  ' + serializeNode(n));
+    if (n.comment) for (const l of n.comment.split('\n')) out.push('  %% @comment ' + n.id + ': ' + l);
+  }
+  for (const e of doc.edges) {
+    out.push('  ' + serializeEdge(e));
+    if (e.comment) for (const l of e.comment.split('\n')) out.push('  %% @comment ' + e.from + TYPE_TOKEN[e.type] + e.to + ': ' + l);
+  }
+  for (const u of doc.unknown) for (const l of u.split('\n')) out.push('  ' + l);
+  return out.join('\n') + '\n';
+}
+
+function agentPreamble() {
+  return '%% ' + PREAMBLE_PREFIX + ' 註解慣例:「%% @comment 節點ID: 文字」是綁定節點的人工註記,「%% @comment 起點-->終點: 文字」綁定該條邊(緊跟在對應定義行後);其他 %% 行是文件層級註解。請把這些註記當作人類標給 AI 的重點說明。';
+}
+
+// 簡單分層排版(Sugiyama 精簡版):longest-path 分層 + 重心法排序。
+// measure(node) 要回 {w, h}。回傳 Map(id -> {x, y})。
+function autoLayout(doc, measure) {
+  const pos = new Map();
+  const nodes = doc.nodes;
+  const n = nodes.length;
+  if (!n) return pos;
+  const index = new Map(nodes.map((nd, i) => [nd.id, i]));
+  const edges = doc.edges.filter(e => index.has(e.from) && index.has(e.to) && e.from !== e.to);
+  const layer = new Array(n).fill(0);
+  for (let pass = 0; pass < n; pass++) { // Bellman-Ford 式鬆弛,層數上限 n,有環也會停
+    let changed = false;
+    for (const e of edges) {
+      const a = index.get(e.from), b = index.get(e.to);
+      if (layer[b] < layer[a] + 1 && layer[a] + 1 <= n) { layer[b] = layer[a] + 1; changed = true; }
+    }
+    if (!changed) break;
+  }
+  const byLayer = new Map();
+  nodes.forEach((nd, i) => {
+    if (!byLayer.has(layer[i])) byLayer.set(layer[i], []);
+    byLayer.get(layer[i]).push(i);
+  });
+  const layerList = [...byLayer.keys()].sort((a, b) => a - b).map(k => byLayer.get(k));
+  const inN = nodes.map(() => []), outN = nodes.map(() => []);
+  for (const e of edges) {
+    outN[index.get(e.from)].push(index.get(e.to));
+    inN[index.get(e.to)].push(index.get(e.from));
+  }
+  const order = new Map();
+  layerList.forEach(l => l.forEach((v, k) => order.set(v, k)));
+  function bary(v, down) {
+    const nb = down ? inN[v] : outN[v];
+    if (!nb.length) return order.get(v);
+    return nb.reduce((s, u) => s + order.get(u), 0) / nb.length;
+  }
+  for (let sweep = 0; sweep < 4; sweep++) {
+    const down = sweep % 2 === 0;
+    const seq = down ? layerList : [...layerList].slice().reverse();
+    for (const l of seq) {
+      l.sort((a, b) => bary(a, down) - bary(b, down));
+      l.forEach((v, k) => order.set(v, k));
+    }
+  }
+  const horizontal = doc.dir === 'LR' || doc.dir === 'RL'; // 層的推進軸是水平
+  const sizes = nodes.map(nd => measure(nd));
+  const LAYER_GAP = 80, NODE_GAP = 34;
+  let v = 0;
+  for (const l of layerList) {
+    const thick = Math.max(...l.map(i => horizontal ? sizes[i].w : sizes[i].h));
+    const spread = l.reduce((s, i) => s + (horizontal ? sizes[i].h : sizes[i].w), 0) + NODE_GAP * (l.length - 1);
+    let u = -spread / 2;
+    for (const i of l) {
+      const su = horizontal ? sizes[i].h : sizes[i].w;
+      const cu = u + su / 2, cv = v + thick / 2;
+      const x = horizontal ? cv : cu;
+      const y = horizontal ? cu : cv;
+      pos.set(nodes[i].id, { x: doc.dir === 'RL' ? -x : x, y: doc.dir === 'BT' ? -y : y });
+      u += su + NODE_GAP;
+    }
+    v += thick + LAYER_GAP;
+  }
+  return pos;
+}
+// ===== core-end =====
+
+// ---------- 應用層(DOM、互動) ----------
+const $ = id => document.getElementById(id);
+const svgEl = $('svg'), codeEl = $('code'), wrapEl = $('canvasWrap');
+const DRAFT_KEY = 'diagram-editor-draft';
+const SAMPLE = `flowchart TD
+  %% 範例圖:點節點或連線試試右邊的編輯欄
+  S([開始])
+  A[讀取設定檔]
+  C{設定存在?}
+  %% @comment C: 這個判斷之後想加快取
+  F(改用預設值)
+  E[啟動服務]
+  S --> A
+  A --> C
+  C -->|有| E
+  C -.->|沒有| F
+  F ==> E
+`;
+
+let doc = emptyDoc();
+let positions = new Map();       // id -> {x, y};只活在畫面上,不匯出
+let selection = null;            // {kind:'node', id} | {kind:'edge', index} | null
+let connectMode = false, connectFrom = null;
+let undoStack = [];
+let codeDirty = false;
+let view = { x: -400, y: -300, w: 800, h: 600 };
+
+const measureCtx = document.createElement('canvas').getContext('2d');
+measureCtx.font = '14px -apple-system, "PingFang TC", "Noto Sans TC", sans-serif';
+
+function displayLabel(n) {
+  return n.shape === 'plain' || n.label == null ? n.id : n.label;
+}
+
+function measureNode(n) {
+  const tw = measureCtx.measureText(displayLabel(n)).width;
+  if (n.shape === 'diamond') return { w: Math.max(76, tw * 1.6 + 36), h: 50 };
+  return { w: Math.max(60, tw + 28), h: 36 };
+}
+
+// ---------- 渲染 ----------
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function nodeSvg(n, sizeMap) {
+  const p = positions.get(n.id);
+  if (!p) return '';
+  const s = sizeMap.get(n.id);
+  const hw = s.w / 2, hh = s.h / 2;
+  const sel = selection && selection.kind === 'node' && selection.id === n.id ? ' selected' : '';
+  const cf = connectFrom === n.id ? ' connectFrom' : '';
+  const plain = n.shape === 'plain' ? ' plain' : '';
+  let shape;
+  if (n.shape === 'diamond') {
+    shape = `<polygon class="box" points="${p.x},${p.y - hh} ${p.x + hw},${p.y} ${p.x},${p.y + hh} ${p.x - hw},${p.y}"/>`;
+  } else if (n.shape === 'plain') {
+    shape = `<rect class="plainBox" x="${p.x - hw}" y="${p.y - hh}" width="${s.w}" height="${s.h}"/>`;
+  } else {
+    const rx = n.shape === 'stadium' ? hh : n.shape === 'round' ? 10 : 4;
+    shape = `<rect class="box" x="${p.x - hw}" y="${p.y - hh}" width="${s.w}" height="${s.h}" rx="${rx}"/>`;
+  }
+  const badge = n.comment
+    ? `<text class="badge" x="${p.x + hw - 4}" y="${p.y - hh + 2}">💬</text><title>${esc(n.comment)}</title>`
+    : '';
+  return `<g class="node${sel}${cf}${plain}" data-nid="${esc(n.id)}">${shape}` +
+    `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central">${esc(displayLabel(n))}</text>${badge}</g>`;
+}
+
+function clipToBox(cx, cy, dx, dy, size) {
+  const hw = size.w / 2 + 5, hh = size.h / 2 + 5;
+  let t = Infinity;
+  if (dx) t = Math.min(t, hw / Math.abs(dx));
+  if (dy) t = Math.min(t, hh / Math.abs(dy));
+  if (!isFinite(t)) t = 0;
+  return { x: cx + dx * t, y: cy + dy * t };
+}
+
+function edgeSvg(e, i, sizeMap, groups) {
+  const p1 = positions.get(e.from), p2 = positions.get(e.to);
+  if (!p1 || !p2) return '';
+  const sel = selection && selection.kind === 'edge' && selection.index === i ? ' selected' : '';
+  const stroke = e.type === 'thick' ? 3.4 : 1.7;
+  const dash = e.type === 'dotted' ? ' stroke-dasharray="5 4"' : '';
+  const marker = e.type === 'line' ? '' : ` marker-end="url(#mk${sel ? '-sel' : ''})"`;
+  let d, lx, ly;
+  if (e.from === e.to) { // 自迴圈:節點右側繞一圈
+    const s = sizeMap.get(e.from);
+    const k = groups.selfIdx(i) * 18;
+    const x = p1.x + s.w / 2, y = p1.y;
+    d = `M ${x} ${y - 9} C ${x + 46 + k} ${y - 30 - k}, ${x + 46 + k} ${y + 30 + k}, ${x} ${y + 9}`;
+    lx = x + 52 + k; ly = y;
+  } else {
+    let dx = p2.x - p1.x, dy = p2.y - p1.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+    let off = groups.offset(i, e);
+    const px = -dy * off, py = dx * off;
+    const a = clipToBox(p1.x + px, p1.y + py, dx, dy, sizeMap.get(e.from));
+    const b = clipToBox(p2.x + px, p2.y + py, -dx, -dy, sizeMap.get(e.to));
+    const bow = obstructionBow(e, a, b, sizeMap);
+    if (bow) { // 直線會穿過別的節點:改走二次曲線繞過去
+      const cx = (a.x + b.x) / 2 - dy * bow, cy = (a.y + b.y) / 2 + dx * bow;
+      d = `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+      lx = (a.x + b.x) / 4 + cx / 2 - dy * 12; ly = (a.y + b.y) / 4 + cy / 2 + dx * 12 - 6;
+    } else {
+      d = `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+      lx = (a.x + b.x) / 2; ly = (a.y + b.y) / 2 - 6;
+    }
+  }
+  let extra = '';
+  if (e.label) extra += `<text class="edgeLabel" x="${lx}" y="${ly}" text-anchor="middle">${esc(e.label)}</text>`;
+  if (e.comment) extra += `<text class="badge" x="${lx + (e.label ? measureCtx.measureText(e.label).width / 2 + 6 : 0)}" y="${ly}">💬</text>`;
+  const title = e.comment ? `<title>${esc(e.comment)}</title>` : '';
+  return `<g class="edge${sel}" data-eidx="${i}">${title}<path class="edgeHit" d="${d}"/>` +
+    `<path class="edgeLine" d="${d}" stroke-width="${stroke}"${dash}${marker}/>${extra}</g>`;
+}
+
+// 檢查 a→b 直線是否穿過其他節點;有就回傳弓形偏移量(帶正負號),沒有回 0
+function obstructionBow(e, a, b, sizeMap) {
+  const abx = b.x - a.x, aby = b.y - a.y;
+  const len2 = abx * abx + aby * aby;
+  if (!len2) return 0;
+  let worst = 0;
+  for (const n of doc.nodes) {
+    if (n.id === e.from || n.id === e.to) continue;
+    const p = positions.get(n.id);
+    if (!p) continue;
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * abx + (p.y - a.y) * aby) / len2));
+    if (t < 0.08 || t > 0.92) continue;
+    const qx = a.x + t * abx - p.x, qy = a.y + t * aby - p.y;
+    const s = sizeMap.get(n.id);
+    const clearance = Math.max(s.w, s.h) / 2 + 12;
+    const dist = Math.hypot(qx, qy);
+    if (dist < clearance) worst = Math.max(worst, clearance - dist + 22);
+  }
+  // 二次曲線在中點的實際偏移是控制點偏移的一半,所以乘 2
+  return worst ? Math.min(worst * 2, 190) : 0;
+}
+
+// 平行邊/自迴圈的錯開量
+function makeGroups() {
+  const pair = new Map(), selfs = new Map();
+  doc.edges.forEach((e, i) => {
+    if (e.from === e.to) {
+      if (!selfs.has(e.from)) selfs.set(e.from, []);
+      selfs.get(e.from).push(i);
+      return;
+    }
+    const k = e.from < e.to ? e.from + '|' + e.to : e.to + '|' + e.from;
+    if (!pair.has(k)) pair.set(k, []);
+    pair.get(k).push(i);
+  });
+  return {
+    offset(i, e) {
+      const k = e.from < e.to ? e.from + '|' + e.to : e.to + '|' + e.from;
+      const arr = pair.get(k);
+      let off = (arr.indexOf(i) - (arr.length - 1) / 2) * 16;
+      if (e.from > e.to) off = -off; // 用排序後的方向當基準,反向邊才不會疊在一起
+      return off;
+    },
+    selfIdx(i) {
+      const arr = selfs.get(doc.edges[i].from);
+      return arr.indexOf(i);
+    },
+  };
+}
+
+function renderCanvas() {
+  const sizeMap = new Map(doc.nodes.map(n => [n.id, measureNode(n)]));
+  const groups = makeGroups();
+  let s = `<defs>
+    <marker id="mk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5563"/></marker>
+    <marker id="mk-sel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+  </defs>`;
+  doc.edges.forEach((e, i) => { s += edgeSvg(e, i, sizeMap, groups); });
+  for (const n of doc.nodes) s += nodeSvg(n, sizeMap);
+  if (!doc.nodes.length) {
+    s += `<text x="${view.x + view.w / 2}" y="${view.y + view.h / 2}" text-anchor="middle" fill="#66707d" font-size="15">空白畫布——按「＋ 節點」開始,或在右邊貼上 Mermaid 再按「套用」</text>`;
+  }
+  svgEl.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+  svgEl.innerHTML = s;
+}
+
+function renderCode() {
+  codeEl.value = serializeMermaid(doc);
+  setDirty(false);
+}
+
+function setDirty(d) {
+  codeDirty = d;
+  codeEl.classList.toggle('dirty', d);
+  $('dirtyHint').textContent = d ? '程式碼改了還沒套用——按「套用程式碼」讓畫布跟上。' : '';
+}
+
+function renderInspector() {
+  $('inspNone').hidden = !!selection;
+  $('inspNode').hidden = !(selection && selection.kind === 'node');
+  $('inspEdge').hidden = !(selection && selection.kind === 'edge');
+  if (!selection) {
+    $('inspTitle').textContent = '檢視與編輯';
+    $('docComments').value = doc.docComments.join('\n');
+    const has = doc.unknown.length > 0;
+    $('unknownWrap').hidden = !has;
+    if (has) $('unknownBox').textContent = doc.unknown.join('\n');
+    return;
+  }
+  if (selection.kind === 'node') {
+    const n = doc.nodes.find(x => x.id === selection.id);
+    if (!n) { selection = null; renderInspector(); return; }
+    $('inspTitle').textContent = '節點:' + n.id;
+    $('nId').value = n.id;
+    $('nShape').value = n.shape;
+    $('nLabel').value = displayLabel(n);
+    $('nLabel').disabled = n.shape === 'plain';
+    $('nLabelLab').textContent = n.shape === 'plain' ? '顯示文字(純 ID 節點的顯示文字就是 ID)' : '顯示文字';
+    $('nComment').value = n.comment || '';
+  } else {
+    const e = doc.edges[selection.index];
+    if (!e) { selection = null; renderInspector(); return; }
+    $('inspTitle').textContent = '連線';
+    $('eTitle').textContent = e.from + ' → ' + e.to;
+    $('eType').value = e.type;
+    $('eLabel').value = e.label || '';
+    $('eComment').value = e.comment || '';
+  }
+}
+
+function renderAll() { renderCanvas(); renderInspector(); }
+
+// ---------- 狀態變更 ----------
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, serializeMermaid(doc)); } catch (_) { /* 無痕模式等情況,略過 */ }
+}
+
+function layoutMissing() {
+  const ids = new Set(doc.nodes.map(n => n.id));
+  for (const id of [...positions.keys()]) if (!ids.has(id)) positions.delete(id);
+  if (doc.nodes.some(n => !positions.has(n.id))) {
+    const fresh = autoLayout(doc, measureNode);
+    for (const n of doc.nodes) if (!positions.has(n.id)) positions.set(n.id, fresh.get(n.id) || { x: 0, y: 0 });
+  }
+}
+
+function mutate(fn) {
+  undoStack.push(serializeMermaid(doc));
+  if (undoStack.length > 100) undoStack.shift();
+  fn();
+  layoutMissing();
+  renderCode();
+  saveDraft();
+  renderAll();
+}
+
+function undo() {
+  if (!undoStack.length) { toast('沒有可復原的步驟了'); return; }
+  const text = undoStack.pop();
+  doc = parseMermaid(text).doc;
+  selection = null;
+  layoutMissing();
+  renderCode();
+  saveDraft();
+  renderAll();
+}
+
+function applyCode(opts) {
+  const { doc: d, warnings } = parseMermaid(codeEl.value);
+  undoStack.push(serializeMermaid(doc));
+  doc = d;
+  selection = null;
+  connectFrom = null;
+  positions = autoLayout(doc, measureNode);
+  renderCode();
+  saveDraft();
+  fitView();
+  renderAll();
+  if (!(opts && opts.quiet)) {
+    for (const w of warnings) toast(w, true);
+    if (!warnings.length) toast('已套用');
+  } else {
+    for (const w of warnings) toast(w, true);
+  }
+}
+
+// ---------- 視圖 ----------
+function fitView() {
+  const rect = svgEl.getBoundingClientRect();
+  const aspect = rect.width && rect.height ? rect.width / rect.height : 4 / 3;
+  if (!doc.nodes.length) {
+    view = { x: -400, y: -300 / aspect * (4 / 3), w: 800, h: 800 / aspect };
+    return;
+  }
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const n of doc.nodes) {
+    const p = positions.get(n.id);
+    if (!p) continue;
+    const s = measureNode(n);
+    minX = Math.min(minX, p.x - s.w / 2); maxX = Math.max(maxX, p.x + s.w / 2 + 70);
+    minY = Math.min(minY, p.y - s.h / 2); maxY = Math.max(maxY, p.y + s.h / 2);
+  }
+  const pad = 50;
+  minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+  let w = maxX - minX, h = maxY - minY;
+  if (w / h < aspect) { const nw = h * aspect; minX -= (nw - w) / 2; w = nw; }
+  else { const nh = w / aspect; minY -= (nh - h) / 2; h = nh; }
+  view = { x: minX, y: minY, w, h };
+}
+
+function zoom(factor, cx, cy) {
+  const px = cx == null ? view.x + view.w / 2 : cx;
+  const py = cy == null ? view.y + view.h / 2 : cy;
+  view = {
+    x: px - (px - view.x) * factor,
+    y: py - (py - view.y) * factor,
+    w: view.w * factor,
+    h: view.h * factor,
+  };
+  renderCanvas();
+}
+
+function toWorld(e) {
+  const r = svgEl.getBoundingClientRect();
+  return {
+    x: view.x + (e.clientX - r.left) / r.width * view.w,
+    y: view.y + (e.clientY - r.top) / r.height * view.h,
+  };
+}
+
+// ---------- 互動 ----------
+let drag = null;
+
+svgEl.addEventListener('pointerdown', e => {
+  if (e.button !== undefined && e.button !== 0) return;
+  const nodeG = e.target.closest && e.target.closest('[data-nid]');
+  const edgeG = e.target.closest && e.target.closest('[data-eidx]');
+  const pt = toWorld(e);
+  if (nodeG) {
+    const id = nodeG.dataset.nid;
+    const p = positions.get(id);
+    drag = { kind: 'node', id, dx: pt.x - p.x, dy: pt.y - p.y, moved: false };
+  } else if (edgeG) {
+    if (connectMode) return;
+    selection = { kind: 'edge', index: +edgeG.dataset.eidx };
+    renderAll();
+    return;
+  } else {
+    drag = { kind: 'pan', sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y, moved: false };
+  }
+  svgEl.setPointerCapture(e.pointerId);
+});
+
+svgEl.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const r = svgEl.getBoundingClientRect();
+  if (drag.kind === 'node') {
+    const pt = toWorld(e);
+    const p = positions.get(drag.id);
+    if (!drag.moved && Math.hypot(pt.x - drag.dx - p.x, pt.y - drag.dy - p.y) < 3) return;
+    drag.moved = true;
+    positions.set(drag.id, { x: pt.x - drag.dx, y: pt.y - drag.dy });
+    renderCanvas();
+  } else {
+    const dx = (e.clientX - drag.sx) / r.width * view.w;
+    const dy = (e.clientY - drag.sy) / r.height * view.h;
+    if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 3) drag.moved = true;
+    view.x = drag.vx - dx; view.y = drag.vy - dy;
+    renderCanvas();
+  }
+});
+
+svgEl.addEventListener('pointerup', e => {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  if (d.kind === 'node' && !d.moved) {
+    if (connectMode) {
+      if (!connectFrom) {
+        connectFrom = d.id;
+        setModeHint('起點:' + d.id + '——再點一個節點當終點(點同一個做自迴圈)');
+        renderCanvas();
+      } else {
+        const from = connectFrom;
+        connectFrom = null;
+        setConnectMode(false);
+        mutate(() => doc.edges.push({ from, to: d.id, type: 'arrow', label: null, comment: '' }));
+        selection = { kind: 'edge', index: doc.edges.length - 1 };
+        renderAll();
+      }
+      return;
+    }
+    selection = { kind: 'node', id: d.id };
+    renderAll();
+  } else if (d.kind === 'pan' && !d.moved) {
+    if (connectMode) { setConnectMode(false); return; }
+    selection = null;
+    renderAll();
+  }
+});
+
+svgEl.addEventListener('wheel', e => {
+  e.preventDefault();
+  const pt = toWorld(e);
+  zoom(e.deltaY > 0 ? 1.12 : 0.89, pt.x, pt.y);
+}, { passive: false });
+
+document.addEventListener('keydown', e => {
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  if (e.key === 'Escape') {
+    if (connectMode) setConnectMode(false);
+    else if (!typing) { selection = null; renderAll(); }
+    return;
+  }
+  if (typing) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && document.activeElement === codeEl) applyCode();
+    return;
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selection) {
+    e.preventDefault();
+    deleteSelection();
+  }
+});
+
+function deleteSelection() {
+  if (!selection) return;
+  if (selection.kind === 'node') {
+    const id = selection.id;
+    mutate(() => {
+      doc.nodes = doc.nodes.filter(n => n.id !== id);
+      doc.edges = doc.edges.filter(e => e.from !== id && e.to !== id);
+    });
+  } else {
+    const idx = selection.index;
+    mutate(() => { doc.edges.splice(idx, 1); });
+  }
+  selection = null;
+  renderAll();
+}
+
+function setConnectMode(on) {
+  connectMode = on;
+  if (!on) connectFrom = null;
+  $('btnConnect').classList.toggle('active', on);
+  wrapEl.classList.toggle('connecting', on);
+  setModeHint(on ? '連線模式:點第一個節點當起點' : '');
+  renderCanvas();
+}
+
+function setModeHint(t) {
+  const el = $('modeHint');
+  el.textContent = t;
+  el.style.display = t ? 'block' : 'none';
+}
+
+// ---------- 工具列 ----------
+$('btnAddNode').addEventListener('click', () => {
+  let i = 1;
+  while (doc.nodes.some(n => n.id === 'N' + i)) i++;
+  const id = 'N' + i;
+  positions.set(id, { x: view.x + view.w / 2, y: view.y + view.h / 2 });
+  mutate(() => doc.nodes.push({ id, shape: 'rect', label: id, comment: '' }));
+  selection = { kind: 'node', id };
+  renderAll();
+});
+
+$('btnConnect').addEventListener('click', () => {
+  if (doc.nodes.length < 1) { toast('先加節點才能連線'); return; }
+  setConnectMode(!connectMode);
+});
+
+$('selDir').addEventListener('change', e => {
+  mutate(() => { doc.dir = e.target.value; });
+  positions = autoLayout(doc, measureNode);
+  fitView();
+  renderCanvas();
+});
+
+$('btnLayout').addEventListener('click', () => {
+  positions = autoLayout(doc, measureNode);
+  fitView();
+  renderCanvas();
+});
+
+$('btnUndo').addEventListener('click', undo);
+
+$('btnNew').addEventListener('click', () => {
+  if (!confirm('清空目前的圖、開一張新的?(目前內容會留在復原歷史裡)')) return;
+  mutate(() => { doc = emptyDoc(); });
+  positions = new Map();
+  selection = null;
+  fitView();
+  renderAll();
+});
+
+$('btnZoomIn').addEventListener('click', () => zoom(0.8));
+$('btnZoomOut').addEventListener('click', () => zoom(1.25));
+$('btnFit').addEventListener('click', () => { fitView(); renderCanvas(); });
+
+// ---------- 編輯面板 ----------
+$('nId').addEventListener('change', e => {
+  if (!selection || selection.kind !== 'node') return;
+  const oldId = selection.id;
+  const newId = e.target.value.trim();
+  if (newId === oldId) return;
+  if (!/^[A-Za-z0-9_]+$/.test(newId)) { toast('ID 只能用英文、數字、底線', true); renderInspector(); return; }
+  if (doc.nodes.some(n => n.id === newId)) { toast('ID「' + newId + '」已經有人用了', true); renderInspector(); return; }
+  const p = positions.get(oldId);
+  mutate(() => {
+    const n = doc.nodes.find(x => x.id === oldId);
+    n.id = newId;
+    for (const ed of doc.edges) {
+      if (ed.from === oldId) ed.from = newId;
+      if (ed.to === oldId) ed.to = newId;
+    }
+  });
+  if (p) positions.set(newId, p);
+  selection = { kind: 'node', id: newId };
+  renderAll();
+});
+
+$('nShape').addEventListener('change', e => {
+  if (!selection || selection.kind !== 'node') return;
+  const id = selection.id;
+  mutate(() => {
+    const n = doc.nodes.find(x => x.id === id);
+    n.shape = e.target.value;
+    if (n.shape !== 'plain' && n.label == null) n.label = n.id;
+  });
+  renderAll();
+});
+
+$('nLabel').addEventListener('change', e => {
+  if (!selection || selection.kind !== 'node') return;
+  const id = selection.id;
+  mutate(() => {
+    const n = doc.nodes.find(x => x.id === id);
+    if (n.shape !== 'plain') n.label = e.target.value;
+  });
+  renderAll();
+});
+
+$('nComment').addEventListener('change', e => {
+  if (!selection || selection.kind !== 'node') return;
+  const id = selection.id;
+  mutate(() => {
+    const n = doc.nodes.find(x => x.id === id);
+    n.comment = e.target.value.replace(/\r/g, '').trim();
+  });
+  renderAll();
+});
+
+$('nDelete').addEventListener('click', deleteSelection);
+
+$('eType').addEventListener('change', e => {
+  if (!selection || selection.kind !== 'edge') return;
+  const idx = selection.index;
+  mutate(() => { doc.edges[idx].type = e.target.value; });
+  renderAll();
+});
+
+$('eLabel').addEventListener('change', e => {
+  if (!selection || selection.kind !== 'edge') return;
+  const idx = selection.index;
+  const v = e.target.value.replace(/\|/g, '/').trim();
+  mutate(() => { doc.edges[idx].label = v || null; });
+  renderAll();
+});
+
+$('eComment').addEventListener('change', e => {
+  if (!selection || selection.kind !== 'edge') return;
+  const idx = selection.index;
+  mutate(() => { doc.edges[idx].comment = e.target.value.replace(/\r/g, '').trim(); });
+  renderAll();
+});
+
+$('eReverse').addEventListener('click', () => {
+  if (!selection || selection.kind !== 'edge') return;
+  const idx = selection.index;
+  mutate(() => {
+    const ed = doc.edges[idx];
+    [ed.from, ed.to] = [ed.to, ed.from];
+  });
+  renderAll();
+});
+
+$('eDelete').addEventListener('click', deleteSelection);
+
+$('docComments').addEventListener('change', e => {
+  const v = e.target.value.replace(/\r/g, '');
+  mutate(() => { doc.docComments = v.trim() ? v.split('\n') : []; });
+});
+
+// ---------- 程式碼面板 ----------
+codeEl.addEventListener('input', () => setDirty(true));
+$('btnApply').addEventListener('click', () => applyCode());
+
+$('btnImport').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (codeDirty && !confirm('程式碼面板有未套用的修改,匯入檔案會把它覆蓋掉。繼續?')) { e.target.value = ''; return; }
+  const text = await f.text();
+  const fence = text.match(/```mermaid\s*\n([\s\S]*?)```/);
+  codeEl.value = fence ? fence[1] : text;
+  applyCode();
+  toast('已匯入 ' + f.name);
+  e.target.value = '';
+});
+
+async function copyText(t, msg) {
+  try {
+    await navigator.clipboard.writeText(t);
+    toast(msg);
+  } catch (_) {
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) { /* 交給下面的 toast */ }
+    ta.remove();
+    toast(ok ? msg : '複製失敗——請直接從程式碼面板全選複製', !ok);
+  }
+}
+
+$('btnCopy').addEventListener('click', () => {
+  if (codeDirty) { toast('程式碼有未套用的修改,先按「套用」再複製', true); return; }
+  copyText(serializeMermaid(doc), '已複製 Mermaid');
+});
+
+$('btnExportAgent').addEventListener('click', () => {
+  if (codeDirty) { toast('程式碼有未套用的修改,先按「套用」再匯出', true); return; }
+  copyText(agentPreamble() + '\n' + serializeMermaid(doc), '已複製(含給 AI 的註解說明),貼回 agent 對話即可');
+});
+
+// ---------- 提示 ----------
+function toast(msg, warn) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (warn ? ' warn' : '');
+  el.textContent = msg;
+  el.addEventListener('click', () => el.remove());
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), warn ? 9000 : 3500);
+}
+
+// ---------- 啟動 ----------
+window.addEventListener('resize', () => {
+  const r = svgEl.getBoundingClientRect();
+  if (r.width && r.height) { view.h = view.w * r.height / r.width; renderCanvas(); }
+});
+
+(function init() {
+  let stored = null;
+  try { stored = localStorage.getItem(DRAFT_KEY); } catch (_) { /* 無痕模式,忽略 */ }
+  codeEl.value = stored || SAMPLE;
+  applyCode({ quiet: true });
+  $('selDir').value = doc.dir;
+  if (stored) toast('已還原上次的草稿(存在這個瀏覽器的 localStorage)');
+})();
+
+$('selDir').addEventListener('focus', () => { $('selDir').value = doc.dir; });
+</script>
+</body>
+</html>
