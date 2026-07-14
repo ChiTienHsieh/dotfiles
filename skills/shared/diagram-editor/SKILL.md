@@ -11,6 +11,8 @@ Mermaid 對 AI 友善(token 少、純語意),但人類難以直接改文字、�
 
 工作流:agent 產出 mermaid → 人在瀏覽器裡編輯、加註解 → 一鍵「匯出給 agent」貼回對話。
 
+操作走 Excalidraw 慣例:手繪風渲染(自寫的 rough 線條與斜線填充,無外部依賴)、懸浮工具列＋數字快捷鍵(1 選取、2 方框、3 菱形、4 膠囊、5 箭頭、6 直線)、形狀工具點畫布放節點、箭頭工具從節點拖到節點建邊(拖到空白會順手長出新節點)、雙擊改字、雙擊空白新增節點、左側屬性面板改顏色/線寬/線型、滾輪平移、Ctrl/Cmd+滾輪或雙指捏合縮放、空白鍵暫時平移、Cmd+Z/Cmd+Shift+Z 復原重做、Cmd+D 複製節點。
+
 ## 怎麼用
 
 1. 把 `assets/editor.html` 複製到任務適合的位置(通常是 `~/scratch/` 或使用者指定處),連同 agent 產出的 mermaid 一起交給使用者;或直接 `open editor.html` 再請使用者貼上程式碼。
@@ -23,10 +25,13 @@ Mermaid 對 AI 友善(token 少、純語意),但人類難以直接改文字、�
 
 | 類別 | 語法 |
 |---|---|
-| 標頭 | `flowchart TD\|LR\|BT\|RL`(也接受 `graph`、`TB`) |
+| 標頭 | `flowchart TD\|LR\|BT\|RL`(也接受 `graph`、`TB`、省略方向) |
 | 節點 | `A`、`A[方框]`、`A(圓角)`、`A([膠囊])`、`A{菱形}`,標籤可用 `"…"` 包特殊字元 |
 | 邊 | `-->`、`---`、`-.->`、`==>`,標籤 `A -->\|文字\| B`,支援鏈式 `A --> B --> C` 與自迴圈 |
+| 樣式 | `style A fill:#…,stroke:#…`(節點)、`linkStyle 0 stroke:#…`(邊,單一索引;索引照邊的宣告順序,匯出時重算)。屬性面板的顏色/線寬/虛線就存在這裡,未知的樣式 key 原樣保留。若子集外語法(如 subgraph)裡也有邊,linkStyle 索引對不準,會整行原樣保留、不掛到邊上並警告 |
 | 註解 | `%%` 開頭的行(見下方慣例) |
+
+「筆觸」(工整/手繪/潦草)與斜線填充是這個編輯器的檢視偏好,不進 Mermaid;`fill` 在真正的 mermaid 渲染裡會是實心底色。
 
 ## 結構化註解慣例(本工具的核心價值)
 
@@ -47,4 +52,4 @@ Mermaid 沒有地方存座標。拖曳節點只改當下畫面,匯出不含位�
 
 ## 明確不做
 
-sequence/gantt/ER 圖、subgraph 編輯、樣式編輯(`classDef`/`style`)、Excalidraw 匯入、協作、localStorage 草稿以外的持久化。不打包 mermaid.js(體積不符單檔原則,parser 是自寫的子集實作)。
+sequence/gantt/ER 圖、subgraph 編輯、`classDef`/`class` 樣式類別(只支援上表的 `style`/`linkStyle` 直接樣式)、Excalidraw 匯入、協作、localStorage 草稿以外的持久化。不打包 mermaid.js 或 rough.js(體積不符單檔原則,parser 與手繪渲染都是自寫的精簡實作)。
