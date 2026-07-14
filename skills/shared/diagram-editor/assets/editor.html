@@ -768,7 +768,7 @@ style E fill:#fff4c2`;
 
     function loadSource(source, options = {}) {
       state.model = parseSource(source);
-      code.value = source;
+      if (code.value !== source) code.value = source;
       state.selected = { kind: "document" };
       if (options.layout !== false) autoLayout(false);
       renderAll();
@@ -1160,6 +1160,12 @@ style E fill:#fff4c2`;
       return closing && label.includes(closing) ? `這個形狀的文字不能包含 ${closing}；v1 不會猜測 Mermaid 跳脫語法。` : "";
     }
 
+    function retargetEdge(edge, endpoint, nodeId) {
+      edge[endpoint] = nodeId;
+      edge.dirty = true;
+      edge.comments.forEach((comment) => { comment.dirty = true; });
+    }
+
     function updateDocumentComments(value) {
       const texts = value.split(/\r?\n/).map((text) => text.trim()).filter(Boolean);
       const existing = state.model.records.filter((record) => record.kind === "document-comment");
@@ -1316,12 +1322,22 @@ style E fill:#fff4c2`;
       const second = serializeModel(parseSource(first));
       const unknownsPreserved = ["classDef future fill:#fff4c2,stroke:#875400", "style E fill:#fff4c2"]
         .every((line) => first.includes(line) && second.includes(line));
+      const retargetModel = parseSource("flowchart TD\nA --> B\n%% @comment A-->B: 跟著邊移動\nC");
+      const retargetedEdge = retargetModel.records.find((record) => record.kind === "edge");
+      retargetEdge(retargetedEdge, "from", "C");
+      const retargetedSource = serializeModel(retargetModel);
+      const reparsedRetarget = parseSource(retargetedSource);
+      const reparsedEdge = reparsedRetarget.records.find((record) => record.kind === "edge");
+      const commentRetargeted = retargetedSource.includes("%% @comment C-->B: 跟著邊移動")
+        && reparsedEdge.from === "C" && reparsedEdge.to === "B"
+        && reparsedEdge.comments.length === 1 && reparsedEdge.comments[0].text === "跟著邊移動";
       return {
-        pass: first === second && unknownsPreserved,
+        pass: first === second && unknownsPreserved && commentRetargeted,
         source: ROUND_TRIP_SOURCE,
         first,
         second,
-        unknownsPreserved
+        unknownsPreserved,
+        commentRetargeted
       };
     }
 
@@ -1411,8 +1427,8 @@ style E fill:#fff4c2`;
     });
     $("#deleteNode").addEventListener("click", deleteNode);
 
-    $("#edgeFrom").addEventListener("change", (event) => { const edge = selectedRecord(); edge.from = event.target.value; edge.dirty = true; syncFromModel(); });
-    $("#edgeTo").addEventListener("change", (event) => { const edge = selectedRecord(); edge.to = event.target.value; edge.dirty = true; syncFromModel(); });
+    $("#edgeFrom").addEventListener("change", (event) => { retargetEdge(selectedRecord(), "from", event.target.value); syncFromModel(); });
+    $("#edgeTo").addEventListener("change", (event) => { retargetEdge(selectedRecord(), "to", event.target.value); syncFromModel(); });
     $("#edgeType").addEventListener("change", (event) => { const edge = selectedRecord(); edge.type = event.target.value; edge.dirty = true; syncFromModel(); });
     $("#edgeLabel").addEventListener("input", (event) => {
       const invalid = event.target.value.includes("|") ? "連線標籤不能包含 |；它是 Mermaid 標籤的分隔符號。" : "";
