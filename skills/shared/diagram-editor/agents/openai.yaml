@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagram Editor"
+  short_description: "Edit Mermaid flowcharts in a single offline HTML file"
+  default_prompt: "Use $diagram-editor to create or adapt an offline Mermaid flowchart editor for this task."

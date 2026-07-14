@@ -1,0 +1,1448 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mermaid Flowchart 編輯器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1e8;
+      --panel: #fffdf7;
+      --ink: #1e2926;
+      --muted: #66716c;
+      --line: #cbd2cb;
+      --accent: #176b5b;
+      --accent-soft: #dceee8;
+      --warning: #875400;
+      --warning-bg: #fff2cf;
+      --danger: #9b3434;
+      --focus: #0c7bdc;
+      --shadow: 0 10px 30px rgba(32, 44, 40, .09);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button, select, input, textarea {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button {
+      min-height: 42px;
+      padding: .55rem .8rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover { border-color: var(--accent); }
+    button:active { transform: translateY(1px); }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.quiet { background: transparent; }
+    button.danger { color: var(--danger); border-color: #ddb8b8; background: #fff8f8; }
+
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+    [tabindex="0"]:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent);
+      outline-offset: 2px;
+    }
+
+    .appbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      gap: .65rem;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem max(.85rem, env(safe-area-inset-right)) .75rem max(.85rem, env(safe-area-inset-left));
+      background: rgba(244, 241, 232, .96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand { min-width: 12rem; }
+    .brand h1 { margin: 0; font-size: 1.05rem; }
+    .brand p { margin: .15rem 0 0; font-size: .78rem; color: var(--muted); }
+
+    .toolbar {
+      display: flex;
+      gap: .45rem;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(270px, .82fr) minmax(420px, 1.7fr) minmax(260px, .78fr);
+      gap: .8rem;
+      padding: .8rem;
+      min-height: calc(100vh - 78px);
+    }
+
+    .panel {
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      gap: .6rem;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: .65rem .8rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-head h2 { margin: 0; font-size: .95rem; }
+    .panel-head small { color: var(--muted); }
+
+    .code-panel { display: grid; grid-template-rows: auto minmax(300px, 1fr) auto; }
+
+    #code {
+      width: 100%;
+      min-height: 420px;
+      resize: none;
+      border: 0;
+      border-radius: 0;
+      padding: 1rem;
+      background: #18211f;
+      color: #e9f1ee;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      tab-size: 2;
+    }
+
+    #code:focus-visible { outline-offset: -3px; }
+
+    .warnings {
+      display: none;
+      padding: .7rem .85rem;
+      color: var(--warning);
+      background: var(--warning-bg);
+      border-top: 1px solid #e9ce83;
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .warnings.show { display: block; }
+    .warnings strong { display: block; margin-bottom: .25rem; }
+    .warnings ul { margin: 0; padding-left: 1.15rem; }
+
+    .canvas-panel { display: grid; grid-template-rows: auto minmax(430px, 1fr) auto; }
+    .canvas-wrap { position: relative; min-height: 430px; background: #fbfaf5; overflow: hidden; }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 430px;
+      touch-action: none;
+      background-image:
+        linear-gradient(#dfe4df 1px, transparent 1px),
+        linear-gradient(90deg, #dfe4df 1px, transparent 1px);
+      background-size: 24px 24px;
+      background-position: -1px -1px;
+    }
+
+    .canvas-note {
+      margin: 0;
+      padding: .7rem .85rem;
+      color: var(--muted);
+      background: #f8f5eb;
+      border-top: 1px solid var(--line);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
+    .inspector { display: grid; grid-template-rows: auto 1fr; }
+    .inspector-body { padding: .9rem; overflow: auto; }
+    .inspector-section[hidden] { display: none; }
+    .inspector-section h3 { margin: 0 0 .75rem; font-size: 1rem; }
+
+    .field { display: grid; gap: .3rem; margin-bottom: .8rem; }
+    .field label { color: var(--muted); font-size: .8rem; font-weight: 700; }
+    .field input, .field select, .field textarea { width: 100%; padding: .62rem .7rem; }
+    .field textarea { min-height: 92px; resize: vertical; line-height: 1.45; }
+    .field .hint { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.4; }
+    .value-chip { display: inline-block; padding: .25rem .5rem; border-radius: 7px; background: var(--accent-soft); font: 700 .82rem ui-monospace, monospace; }
+    .inspector-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+
+    .svg-node { cursor: grab; touch-action: none; }
+    .svg-node:active { cursor: grabbing; }
+    .node-shape { fill: #fffdf7; stroke: #43534e; stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .svg-node.selected .node-shape { stroke: var(--accent); stroke-width: 4; }
+    .node-label { fill: var(--ink); font-size: 16px; font-weight: 750; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+    .node-id { fill: var(--muted); font-size: 10px; font-family: ui-monospace, monospace; text-anchor: middle; pointer-events: none; }
+    .edge-line { fill: none; stroke: #53645e; stroke-width: 2.2; vector-effect: non-scaling-stroke; }
+    .edge-line.dashed { stroke-dasharray: 8 6; }
+    .edge-line.thick { stroke-width: 4.5; }
+    .edge-line.selected { stroke: var(--accent); stroke-width: 4; }
+    .edge-hit { fill: none; stroke: transparent; stroke-width: 20; cursor: pointer; }
+    .edge-label-bg { fill: #fbfaf5; stroke: #d2d8d3; }
+    .edge-label { fill: var(--ink); font-size: 13px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+    .comment-badge circle { fill: #f4b942; stroke: #6d4b00; stroke-width: 1.5; }
+    .comment-badge text { fill: #3d2a00; font: 800 11px ui-sans-serif, sans-serif; text-anchor: middle; dominant-baseline: middle; }
+
+    dialog {
+      width: min(560px, calc(100vw - 2rem));
+      max-height: calc(100vh - 2rem);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0;
+      color: var(--ink);
+      background: var(--panel);
+      box-shadow: 0 24px 90px rgba(0, 0, 0, .22);
+    }
+
+    dialog::backdrop { background: rgba(20, 30, 27, .45); }
+    .dialog-body { padding: 1rem; }
+    .dialog-body h2 { margin: 0 0 .9rem; font-size: 1.05rem; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; padding: .8rem 1rem; border-top: 1px solid var(--line); }
+    #importText, #exportText { width: 100%; min-height: 260px; padding: .8rem; font: 13px/1.5 ui-monospace, monospace; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(1rem, env(safe-area-inset-bottom));
+      z-index: 80;
+      max-width: min(520px, calc(100vw - 2rem));
+      padding: .75rem 1rem;
+      border-radius: 999px;
+      color: #fff;
+      background: #26332f;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translate(-50%, 12px);
+      pointer-events: none;
+      transition: .18s ease;
+      text-align: center;
+      font-size: .88rem;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 1050px) {
+      .appbar { align-items: flex-start; }
+      .workspace { grid-template-columns: minmax(260px, .8fr) minmax(420px, 1.4fr); }
+      .inspector { grid-column: 1 / -1; }
+      .inspector-body { display: grid; grid-template-columns: minmax(0, 640px); }
+    }
+
+    @media (max-width: 760px) {
+      .appbar { position: static; display: block; }
+      .brand { margin-bottom: .65rem; }
+      .toolbar { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: .2rem; }
+      .toolbar button { flex: 0 0 auto; }
+      .workspace { display: flex; flex-direction: column; padding: .55rem; min-height: auto; }
+      .canvas-panel { order: 1; }
+      .inspector { order: 2; }
+      .code-panel { order: 3; }
+      .canvas-wrap { min-height: 390px; overflow: auto; overscroll-behavior: contain; }
+      #canvas { width: 760px; height: 520px; min-height: 390px; touch-action: pan-x pan-y; }
+      #code { min-height: 360px; resize: vertical; }
+      .panel { border-radius: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <div class="brand">
+      <h1>Mermaid Flowchart 編輯器</h1>
+      <p>Mermaid 文字進、Mermaid 文字出；不支援的語法也會原樣保留。</p>
+    </div>
+    <nav class="toolbar" aria-label="圖表操作">
+      <button type="button" id="addNode">新增節點</button>
+      <button type="button" id="addEdge">新增連線</button>
+      <button type="button" id="autoLayout">自動排版</button>
+      <button type="button" id="openImport">匯入文字</button>
+      <button type="button" id="loadFile">載入檔案</button>
+      <button type="button" id="copyMermaid">複製 Mermaid</button>
+      <button type="button" id="copyAgent" class="primary">匯出給 agent</button>
+      <input type="file" id="fileInput" accept=".mmd,.md,text/plain,text/markdown" hidden>
+    </nav>
+  </header>
+
+  <main class="workspace">
+    <section class="panel code-panel" aria-labelledby="code-title">
+      <div class="panel-head">
+        <h2 id="code-title">Mermaid code</h2>
+        <small>直接貼上即可同步</small>
+      </div>
+      <textarea id="code" aria-label="Mermaid 原始碼" spellcheck="false"></textarea>
+      <div id="warnings" class="warnings" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel canvas-panel" aria-labelledby="canvas-title">
+      <div class="panel-head">
+        <h2 id="canvas-title">畫布</h2>
+        <small id="canvasSummary">0 個節點 · 0 條邊</small>
+      </div>
+      <div class="canvas-wrap">
+        <svg id="canvas" viewBox="0 0 1000 700" role="application" aria-label="可編輯的 flowchart 畫布">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#53645e"></path>
+            </marker>
+            <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#176b5b"></path>
+            </marker>
+          </defs>
+          <g id="edgesLayer"></g>
+          <g id="nodesLayer"></g>
+        </svg>
+      </div>
+      <p class="canvas-note"><strong>位置不會匯出：</strong>Mermaid 沒有節點座標欄位。拖曳只調整目前畫布；重新匯入、改 code 或按「自動排版」會重排。手機可在畫布空白處左右滑動查看。</p>
+    </section>
+
+    <aside class="panel inspector" aria-labelledby="inspector-title">
+      <div class="panel-head">
+        <h2 id="inspector-title">編輯與註解</h2>
+        <small id="selectionSummary">文件</small>
+      </div>
+      <div class="inspector-body">
+        <section id="documentInspector" class="inspector-section">
+          <h3>整張圖</h3>
+          <div class="field">
+            <label for="direction">排列方向</label>
+            <select id="direction">
+              <option value="TD">TD：由上到下</option>
+              <option value="LR">LR：由左到右</option>
+              <option value="BT">BT：由下到上</option>
+              <option value="RL">RL：由右到左</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="documentComments">文件層級註解</label>
+            <textarea id="documentComments" placeholder="每行一則，不用輸入 %%"></textarea>
+            <p class="hint">這些會輸出成一般 <code>%%</code> 行，不綁定任何元素。</p>
+          </div>
+        </section>
+
+        <section id="nodeInspector" class="inspector-section" hidden>
+          <h3>節點 <span id="nodeId" class="value-chip"></span></h3>
+          <div class="field">
+            <label for="nodeLabel">顯示文字</label>
+            <input id="nodeLabel" type="text">
+          </div>
+          <div class="field">
+            <label for="nodeShape">形狀</label>
+            <select id="nodeShape">
+              <option value="bare">預設（A）</option>
+              <option value="rect">方框 [文字]</option>
+              <option value="round">圓角 (文字)</option>
+              <option value="diamond">菱形 {文字}</option>
+              <option value="pill">膠囊 ([文字])</option>
+            </select>
+            <p class="hint">預設形狀若改了顯示文字，會自動變成方框。</p>
+          </div>
+          <div class="field">
+            <label for="nodeComments">節點註解</label>
+            <textarea id="nodeComments" placeholder="每行一則註解"></textarea>
+            <p class="hint">輸出格式：<code>%% @comment A: 內容</code></p>
+          </div>
+          <p id="virtualNodeHint" class="canvas-note" hidden>這個節點只出現在連線裡；第一次編輯時會補成明確節點定義。</p>
+          <div class="inspector-actions">
+            <button type="button" id="deleteNode" class="danger">刪除節點</button>
+            <button type="button" class="quiet selectDocument">回到文件註解</button>
+          </div>
+        </section>
+
+        <section id="edgeInspector" class="inspector-section" hidden>
+          <h3>連線</h3>
+          <div class="field">
+            <label for="edgeFrom">起點</label>
+            <select id="edgeFrom"></select>
+          </div>
+          <div class="field">
+            <label for="edgeTo">終點</label>
+            <select id="edgeTo"></select>
+          </div>
+          <div class="field">
+            <label for="edgeType">線型</label>
+            <select id="edgeType">
+              <option value="-->">箭頭 --&gt;</option>
+              <option value="---">實線 ---</option>
+              <option value="-.->">虛線箭頭 -.-&gt;</option>
+              <option value="==>">粗箭頭 ==&gt;</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="edgeLabel">標籤</label>
+            <input id="edgeLabel" type="text" placeholder="可留空">
+          </div>
+          <div class="field">
+            <label for="edgeComments">連線註解</label>
+            <textarea id="edgeComments" placeholder="每行一則註解"></textarea>
+            <p class="hint" id="edgeCommentHint"></p>
+          </div>
+          <div class="inspector-actions">
+            <button type="button" id="deleteEdge" class="danger">刪除連線</button>
+            <button type="button" class="quiet selectDocument">回到文件註解</button>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </main>
+
+  <dialog id="edgeDialog">
+    <form method="dialog" id="edgeForm">
+      <div class="dialog-body">
+        <h2>新增連線</h2>
+        <div class="field"><label for="newEdgeFrom">起點</label><select id="newEdgeFrom"></select></div>
+        <div class="field"><label for="newEdgeTo">終點</label><select id="newEdgeTo"></select></div>
+        <div class="field">
+          <label for="newEdgeType">線型</label>
+          <select id="newEdgeType">
+            <option value="-->">箭頭 --&gt;</option>
+            <option value="---">實線 ---</option>
+            <option value="-.->">虛線箭頭 -.-&gt;</option>
+            <option value="==>">粗箭頭 ==&gt;</option>
+          </select>
+        </div>
+        <div class="field"><label for="newEdgeLabel">標籤</label><input id="newEdgeLabel" type="text" placeholder="可留空"></div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" data-close="edgeDialog">取消</button>
+        <button type="submit" value="add" class="primary">新增</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="importDialog">
+    <form method="dialog" id="importForm">
+      <div class="dialog-body">
+        <h2>貼上 Mermaid</h2>
+        <textarea id="importText" aria-label="要匯入的 Mermaid 文字" placeholder="flowchart TD&#10;  A --> B"></textarea>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" data-close="importDialog">取消</button>
+        <button type="submit" value="import" class="primary">取代目前內容</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="exportDialog">
+    <form method="dialog">
+      <div class="dialog-body">
+        <h2>請手動複製</h2>
+        <p>瀏覽器沒有開放剪貼簿權限，文字仍完整保留在下方。</p>
+        <textarea id="exportText" readonly></textarea>
+      </div>
+      <div class="dialog-actions"><button type="submit">關閉</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  (() => {
+    "use strict";
+
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const STORAGE_KEY = "diagram-editor-draft-v1";
+    const AGENT_PREAMBLE = "%% 供 agent 閱讀：%% @comment A: 內容綁定節點；%% @comment A-->B: 內容綁定邊；其他 %% 行是文件註解。";
+    const DEFAULT_SOURCE = `flowchart TD
+  idea([Agent 提案])
+  review{需要調整嗎？}
+  done[貼回 Agent]
+  idea --> review
+  %% @comment idea-->review: 可在這裡補充希望 agent 注意的事
+  review -->|需要| idea
+  review -->|完成| done
+  %% 直接點畫布元素，就能在右側加註解`;
+
+    const ROUND_TRIP_SOURCE = `flowchart LR
+%% 文件層級：涵蓋 v1 round-trip
+A
+B[方框]
+%% @comment B: 保留這個方框
+C(圓角)
+D{菱形}
+E([膠囊])
+A -->|箭頭| B
+%% @comment A-->B: 這是箭頭註解
+B --- C
+C -.-> D
+D ==>|粗線| E
+%% @comment D-->E: 這是粗箭頭註解
+classDef future fill:#fff4c2,stroke:#875400
+style E fill:#fff4c2`;
+
+    const $ = (selector) => document.querySelector(selector);
+    const code = $("#code");
+    const canvas = $("#canvas");
+    const edgesLayer = $("#edgesLayer");
+    const nodesLayer = $("#nodesLayer");
+    let uidCounter = 0;
+    let toastTimer = null;
+    let codeTimer = null;
+
+    const state = {
+      model: null,
+      positions: new Map(),
+      selected: { kind: "document" },
+      drag: null
+    };
+
+    function nextUid(prefix) {
+      uidCounter += 1;
+      return `${prefix}-${uidCounter}`;
+    }
+
+    function parseNodeLine(raw, line) {
+      const patterns = [
+        ["pill", /^(\s*)([A-Za-z_][\w-]*)\s*\(\[([^\]\r\n]*)\]\)\s*$/],
+        ["rect", /^(\s*)([A-Za-z_][\w-]*)\s*\[([^\]\r\n]*)\]\s*$/],
+        ["diamond", /^(\s*)([A-Za-z_][\w-]*)\s*\{([^}\r\n]*)\}\s*$/],
+        ["round", /^(\s*)([A-Za-z_][\w-]*)\s*\(([^)\r\n]*)\)\s*$/]
+      ];
+
+      for (const [shape, regex] of patterns) {
+        const match = raw.match(regex);
+        if (match) {
+          return {
+            uid: nextUid("node"), kind: "node", id: match[2], label: match[3], shape,
+            indent: match[1], raw, line, dirty: false, comments: []
+          };
+        }
+      }
+
+      const bare = raw.match(/^(\s*)([A-Za-z_][\w-]*)\s*$/);
+      if (!bare) return null;
+      return {
+        uid: nextUid("node"), kind: "node", id: bare[2], label: bare[2], shape: "bare",
+        indent: bare[1], raw, line, dirty: false, comments: []
+      };
+    }
+
+    function parseEdgeLine(raw, line) {
+      const match = raw.match(/^(\s*)([A-Za-z_][\w-]*)\s*(-->|---|-\.->|==>)\s*(?:\|([^|\r\n]*)\|\s*)?([A-Za-z_][\w-]*)\s*$/);
+      if (!match) return null;
+      return {
+        uid: nextUid("edge"), kind: "edge", from: match[2], type: match[3], label: match[4] ?? "", to: match[5],
+        indent: match[1], raw, line, dirty: false, comments: []
+      };
+    }
+
+    function parseCommentTarget(target) {
+      const edge = target.match(/^([A-Za-z_][\w-]*)\s*-->\s*([A-Za-z_][\w-]*)$/);
+      if (edge) return { kind: "edge", from: edge[1], to: edge[2] };
+      if (/^[A-Za-z_][\w-]*$/.test(target)) return { kind: "node", id: target };
+      return null;
+    }
+
+    function targetMatches(record, target) {
+      if (!target || record.kind !== target.kind) return false;
+      if (target.kind === "node") return record.id === target.id;
+      return record.from === target.from && record.to === target.to;
+    }
+
+    function unsupportedMessage(raw, line) {
+      const trimmed = raw.trim();
+      if (/^(subgraph|end\b|classDef\b|class\b|style\b|linkStyle\b|click\b)/i.test(trimmed)) {
+        return `第 ${line} 行是 v1 不支援的 Mermaid 語法，已原樣保留。`;
+      }
+      return `第 ${line} 行無法安全解析，已原樣保留。`;
+    }
+
+    function parseSource(source) {
+      const lines = String(source).replace(/\r\n?/g, "\n").split("\n");
+      const records = [];
+      const warnings = [];
+      let direction = "TD";
+      let headerSeen = false;
+
+      lines.forEach((raw, index) => {
+        const line = index + 1;
+        const header = raw.match(/^(\s*)(flowchart|graph)\s+(TD|LR|BT|RL)\s*$/i);
+        if (header && !headerSeen) {
+          headerSeen = true;
+          direction = header[3].toUpperCase();
+          records.push({ uid: nextUid("header"), kind: "header", direction, indent: header[1], raw, line, dirty: false });
+          return;
+        }
+
+        const structured = raw.match(/^(\s*)%%\s*@comment\s+([^:]+):\s?(.*)$/);
+        if (structured) {
+          records.push({
+            uid: nextUid("comment"), kind: "structured-pending", targetRaw: structured[2].trim(),
+            target: parseCommentTarget(structured[2].trim()), text: structured[3], indent: structured[1],
+            raw, line, dirty: false
+          });
+          return;
+        }
+
+        const documentComment = raw.match(/^(\s*)%%(.*)$/);
+        if (documentComment) {
+          records.push({
+            uid: nextUid("doc"), kind: "document-comment", text: documentComment[2].replace(/^\s?/, ""),
+            indent: documentComment[1], raw, line, dirty: false
+          });
+          return;
+        }
+
+        const edge = parseEdgeLine(raw, line);
+        if (edge) { records.push(edge); return; }
+
+        const node = parseNodeLine(raw, line);
+        if (node) { records.push(node); return; }
+
+        if (raw.trim() === "") {
+          records.push({ uid: nextUid("blank"), kind: "blank", raw, line });
+          return;
+        }
+
+        records.push({ uid: nextUid("unknown"), kind: "unknown", raw, line });
+        warnings.push(unsupportedMessage(raw, line));
+      });
+
+      if (!headerSeen) warnings.unshift("找不到 flowchart／graph 方向宣告；原文仍完整保留。第一次用 GUI 修改時會補上 flowchart TD。");
+
+      const definitions = records.filter((record) => record.kind === "node" || record.kind === "edge");
+      const resolved = [];
+      let lastDefinition = null;
+
+      for (const record of records) {
+        if (record.kind === "structured-pending") {
+          if (record.target && lastDefinition && targetMatches(lastDefinition, record.target)) {
+            lastDefinition.comments.push(record);
+            continue;
+          }
+
+          const matches = record.target ? definitions.filter((candidate) => targetMatches(candidate, record.target)) : [];
+          if (matches.length === 1) {
+            matches[0].comments.push(record);
+            warnings.push(`第 ${record.line} 行的 @comment 不在定義後方；匯出時會移到 ${record.targetRaw} 後面。`);
+            continue;
+          }
+
+          const reason = !record.target ? "註解 target 格式無法辨識" : matches.length > 1 ? "有多個可能的目標" : "找不到目標";
+          resolved.push({ ...record, kind: "unknown" });
+          warnings.push(`第 ${record.line} 行的 @comment ${reason}，已原樣保留而不猜測綁定。`);
+          lastDefinition = null;
+          continue;
+        }
+
+        resolved.push(record);
+        if (record.kind === "node" || record.kind === "edge") lastDefinition = record;
+        else lastDefinition = null;
+      }
+
+      const nodeCounts = new Map();
+      for (const record of resolved) {
+        if (record.kind !== "node") continue;
+        nodeCounts.set(record.id, (nodeCounts.get(record.id) || 0) + 1);
+      }
+      for (const [id, count] of nodeCounts) {
+        if (count > 1) warnings.push(`節點 ${id} 有 ${count} 個定義；GUI 只編輯第一個，其餘原文照常保留。`);
+      }
+
+      return { records: resolved, direction, warnings };
+    }
+
+    function serializeComment(comment, target, indent = "") {
+      if (!comment.dirty && comment.raw != null) return comment.raw;
+      return `${indent}%% @comment ${target}: ${comment.text}`;
+    }
+
+    function serializeRecord(record) {
+      if (record.kind === "header") {
+        return [record.dirty ? `${record.indent || ""}flowchart ${record.direction}` : record.raw];
+      }
+      if (record.kind === "node") {
+        let line = record.raw;
+        if (record.dirty) {
+          const label = record.label || record.id;
+          const syntax = record.shape === "bare" ? record.id
+            : record.shape === "rect" ? `${record.id}[${label}]`
+            : record.shape === "round" ? `${record.id}(${label})`
+            : record.shape === "diamond" ? `${record.id}{${label}}`
+            : `${record.id}([${label}])`;
+          line = `${record.indent || ""}${syntax}`;
+        }
+        const target = record.id;
+        return [line, ...record.comments.map((comment) => serializeComment(comment, target, record.indent || ""))];
+      }
+      if (record.kind === "edge") {
+        const label = record.label ? `|${record.label}| ` : "";
+        const line = record.dirty
+          ? `${record.indent || ""}${record.from} ${record.type}${label || " "}${record.to}`
+          : record.raw;
+        const target = `${record.from}-->${record.to}`;
+        return [line, ...record.comments.map((comment) => serializeComment(comment, target, record.indent || ""))];
+      }
+      if (record.kind === "document-comment") {
+        return [record.dirty ? `${record.indent || ""}%%${record.text ? ` ${record.text}` : ""}` : record.raw];
+      }
+      return [record.raw ?? ""];
+    }
+
+    function serializeModel(model) {
+      return model.records.flatMap(serializeRecord).join("\n");
+    }
+
+    function explicitNode(id) {
+      return state.model.records.find((record) => record.kind === "node" && record.id === id) || null;
+    }
+
+    function graphNodes(model = state.model) {
+      const nodes = [];
+      const seen = new Set();
+      for (const record of model.records) {
+        if (record.kind !== "node" || seen.has(record.id)) continue;
+        nodes.push(record);
+        seen.add(record.id);
+      }
+      for (const edge of model.records.filter((record) => record.kind === "edge")) {
+        for (const id of [edge.from, edge.to]) {
+          if (seen.has(id)) continue;
+          nodes.push({ uid: `virtual:${id}`, kind: "node", id, label: id, shape: "bare", comments: [], virtual: true });
+          seen.add(id);
+        }
+      }
+      return nodes;
+    }
+
+    function graphEdges(model = state.model) {
+      return model.records.filter((record) => record.kind === "edge");
+    }
+
+    function nodeById(id) {
+      return graphNodes().find((node) => node.id === id) || null;
+    }
+
+    function selectedRecord() {
+      if (state.selected.kind === "document") return null;
+      if (state.selected.kind === "node" && state.selected.id) return nodeById(state.selected.id);
+      return state.model.records.find((record) => record.uid === state.selected.uid) || null;
+    }
+
+    function ensureHeader() {
+      let header = state.model.records.find((record) => record.kind === "header");
+      if (header) return header;
+      header = { uid: nextUid("header"), kind: "header", direction: state.model.direction || "TD", indent: "", raw: "", dirty: true };
+      state.model.records.unshift(header);
+      return header;
+    }
+
+    function promoteVirtual(id) {
+      const existing = explicitNode(id);
+      if (existing) return existing;
+      ensureHeader();
+      const record = {
+        uid: nextUid("node"), kind: "node", id, label: id, shape: "bare", comments: [],
+        indent: "  ", raw: "", dirty: true
+      };
+      const firstEdge = state.model.records.findIndex((item) => item.kind === "edge");
+      const insertAt = firstEdge >= 0 ? firstEdge : state.model.records.length;
+      state.model.records.splice(insertAt, 0, record);
+      state.selected = { kind: "node", id };
+      return record;
+    }
+
+    function persistDraft(source) {
+      try { localStorage.setItem(STORAGE_KEY, source); } catch (_) { /* file:// storage may be unavailable */ }
+    }
+
+    function loadSource(source, options = {}) {
+      state.model = parseSource(source);
+      code.value = source;
+      state.selected = { kind: "document" };
+      if (options.layout !== false) autoLayout(false);
+      renderAll();
+      if (options.save !== false) persistDraft(source);
+    }
+
+    function syncFromModel(options = {}) {
+      const source = serializeModel(state.model);
+      code.value = source;
+      persistDraft(source);
+      renderAll();
+      if (options.layout) autoLayout(true);
+    }
+
+    function toast(message) {
+      const el = $("#toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+    }
+
+    function showDialog(dialog) {
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "");
+    }
+
+    function closeDialog(dialog) {
+      if (typeof dialog.close === "function") dialog.close();
+      else dialog.removeAttribute("open");
+    }
+
+    function renderWarnings() {
+      const warnings = [...state.model.warnings];
+      const pairCounts = new Map();
+      for (const edge of graphEdges()) {
+        const key = `${edge.from}-->${edge.to}`;
+        pairCounts.set(key, (pairCounts.get(key) || 0) + 1);
+      }
+      for (const [key, count] of pairCounts) {
+        if (count > 1) warnings.push(`${key} 有 ${count} 條邊；@comment 請緊跟目標邊，避免綁定不明。`);
+      }
+
+      const box = $("#warnings");
+      if (!warnings.length) {
+        box.classList.remove("show");
+        box.replaceChildren();
+        return;
+      }
+      const shown = warnings.slice(0, 6);
+      box.classList.add("show");
+      box.innerHTML = `<strong>有 ${warnings.length} 個提醒；資料都還在。</strong><ul>${shown.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}${warnings.length > shown.length ? `<li>另有 ${warnings.length - shown.length} 個提醒。</li>` : ""}</ul>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+      })[character]);
+    }
+
+    function autoLayout(shouldRender = true) {
+      const nodes = graphNodes();
+      const edges = graphEdges();
+      const ids = nodes.map((node) => node.id);
+      const indegree = new Map(ids.map((id) => [id, 0]));
+      const adjacency = new Map(ids.map((id) => [id, []]));
+      const level = new Map(ids.map((id) => [id, 0]));
+
+      for (const edge of edges) {
+        if (!indegree.has(edge.from) || !indegree.has(edge.to)) continue;
+        adjacency.get(edge.from).push(edge.to);
+        indegree.set(edge.to, indegree.get(edge.to) + 1);
+      }
+
+      const queue = ids.filter((id) => indegree.get(id) === 0);
+      const visited = new Set();
+      while (queue.length) {
+        const id = queue.shift();
+        if (visited.has(id)) continue;
+        visited.add(id);
+        for (const next of adjacency.get(id)) {
+          level.set(next, Math.max(level.get(next), level.get(id) + 1));
+          indegree.set(next, indegree.get(next) - 1);
+          if (indegree.get(next) === 0) queue.push(next);
+        }
+      }
+
+      const maxVisitedLevel = Math.max(0, ...[...visited].map((id) => level.get(id)));
+      ids.filter((id) => !visited.has(id)).forEach((id, index) => level.set(id, maxVisitedLevel + 1 + Math.floor(index / 4)));
+
+      const groups = new Map();
+      for (const id of ids) {
+        const depth = level.get(id);
+        if (!groups.has(depth)) groups.set(depth, []);
+        groups.get(depth).push(id);
+      }
+
+      const direction = state.model.direction || "TD";
+      const depths = [...groups.keys()].sort((a, b) => a - b);
+      const primaryStart = 105;
+      const primaryEnd = direction === "TD" || direction === "BT" ? 595 : 895;
+      const crossStart = 110;
+      const crossEnd = direction === "TD" || direction === "BT" ? 890 : 590;
+
+      depths.forEach((depth, depthIndex) => {
+        const members = groups.get(depth);
+        const primary = depths.length === 1 ? (primaryStart + primaryEnd) / 2 : primaryStart + (primaryEnd - primaryStart) * depthIndex / (depths.length - 1);
+        members.forEach((id, memberIndex) => {
+          const cross = members.length === 1 ? (crossStart + crossEnd) / 2 : crossStart + (crossEnd - crossStart) * memberIndex / (members.length - 1);
+          let x = direction === "TD" || direction === "BT" ? cross : primary;
+          let y = direction === "TD" || direction === "BT" ? primary : cross;
+          if (direction === "BT") y = 700 - y;
+          if (direction === "RL") x = 1000 - x;
+          state.positions.set(id, { x, y });
+        });
+      });
+
+      if (shouldRender) {
+        renderCanvas();
+        toast("已重新排版；拖曳座標不會寫進 Mermaid。 ");
+      }
+    }
+
+    function nodeSize(node) {
+      const length = Array.from(node.label || node.id).length;
+      const width = Math.max(112, Math.min(230, 58 + length * 15 + (node.shape === "diamond" ? 26 : 0)));
+      return { width, height: node.shape === "diamond" ? 82 : 64 };
+    }
+
+    function connectionPoints(fromNode, toNode) {
+      const from = state.positions.get(fromNode.id) || { x: 0, y: 0 };
+      const to = state.positions.get(toNode.id) || { x: 0, y: 0 };
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const distance = Math.hypot(dx, dy) || 1;
+      const ux = dx / distance;
+      const uy = dy / distance;
+
+      function radius(node, unitX, unitY) {
+        const size = nodeSize(node);
+        const rx = size.width / 2;
+        const ry = size.height / 2;
+        if (node.shape === "diamond") return 1 / (Math.abs(unitX) / rx + Math.abs(unitY) / ry || 1);
+        return Math.min(rx / Math.max(Math.abs(unitX), .0001), ry / Math.max(Math.abs(unitY), .0001));
+      }
+
+      const startRadius = radius(fromNode, ux, uy);
+      const endRadius = radius(toNode, ux, uy);
+      return {
+        x1: from.x + ux * startRadius,
+        y1: from.y + uy * startRadius,
+        x2: to.x - ux * endRadius,
+        y2: to.y - uy * endRadius
+      };
+    }
+
+    function svgElement(name, attributes = {}) {
+      const element = document.createElementNS(SVG_NS, name);
+      for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
+      return element;
+    }
+
+    function renderEdges() {
+      edgesLayer.replaceChildren();
+      for (const edge of graphEdges()) {
+        const fromNode = nodeById(edge.from);
+        const toNode = nodeById(edge.to);
+        if (!fromNode || !toNode || !state.positions.has(edge.from) || !state.positions.has(edge.to)) continue;
+        const point = connectionPoints(fromNode, toNode);
+        const d = `M ${point.x1} ${point.y1} L ${point.x2} ${point.y2}`;
+        const selected = state.selected.kind === "edge" && state.selected.uid === edge.uid;
+        const group = svgElement("g", { role: "button", tabindex: "0", "aria-label": `連線 ${edge.from} 到 ${edge.to}` });
+        const lineClass = ["edge-line", edge.type === "-.->" ? "dashed" : "", edge.type === "==>" ? "thick" : "", selected ? "selected" : ""].filter(Boolean).join(" ");
+        const line = svgElement("path", { d, class: lineClass });
+        if (edge.type !== "---") line.setAttribute("marker-end", selected ? "url(#arrowAccent)" : "url(#arrow)");
+        const hit = svgElement("path", { d, class: "edge-hit" });
+        group.append(line, hit);
+
+        const midpoint = { x: (point.x1 + point.x2) / 2, y: (point.y1 + point.y2) / 2 };
+        if (edge.label) {
+          const width = Math.min(220, Math.max(44, Array.from(edge.label).length * 13 + 18));
+          group.append(svgElement("rect", { x: midpoint.x - width / 2, y: midpoint.y - 13, width, height: 26, rx: 8, class: "edge-label-bg" }));
+          const label = svgElement("text", { x: midpoint.x, y: midpoint.y, class: "edge-label" });
+          label.textContent = edge.label;
+          group.append(label);
+        }
+
+        if (edge.comments.length) group.append(makeCommentBadge(midpoint.x + 18, midpoint.y - 18, edge.comments.length));
+        group.addEventListener("click", (event) => { event.stopPropagation(); selectEdge(edge.uid); });
+        group.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectEdge(edge.uid); }
+        });
+        edgesLayer.append(group);
+      }
+    }
+
+    function makeCommentBadge(x, y, count) {
+      const group = svgElement("g", { class: "comment-badge", transform: `translate(${x} ${y})`, "aria-label": `${count} 則註解` });
+      group.append(svgElement("circle", { r: 11 }));
+      const text = svgElement("text", { x: 0, y: .5 });
+      text.textContent = count > 9 ? "9+" : String(count);
+      group.append(text);
+      return group;
+    }
+
+    function renderNodes() {
+      nodesLayer.replaceChildren();
+      for (const node of graphNodes()) {
+        if (!state.positions.has(node.id)) state.positions.set(node.id, { x: 500, y: 350 });
+        const position = state.positions.get(node.id);
+        const size = nodeSize(node);
+        const selected = state.selected.kind === "node" && state.selected.id === node.id;
+        const group = svgElement("g", {
+          class: `svg-node${selected ? " selected" : ""}`,
+          transform: `translate(${position.x} ${position.y})`, role: "button", tabindex: "0",
+          "aria-label": `節點 ${node.id}，${node.label || node.id}`
+        });
+
+        let shape;
+        if (node.shape === "diamond") {
+          shape = svgElement("polygon", {
+            points: `0,${-size.height / 2} ${size.width / 2},0 0,${size.height / 2} ${-size.width / 2},0`, class: "node-shape"
+          });
+        } else {
+          const radius = node.shape === "pill" ? size.height / 2 : node.shape === "round" ? 16 : 7;
+          shape = svgElement("rect", { x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height, rx: radius, class: "node-shape" });
+        }
+        group.append(shape);
+
+        const label = svgElement("text", { x: 0, y: node.label && node.label !== node.id ? -4 : 0, class: "node-label" });
+        label.textContent = node.label || node.id;
+        group.append(label);
+        if (node.label && node.label !== node.id) {
+          const id = svgElement("text", { x: 0, y: 19, class: "node-id" });
+          id.textContent = node.id;
+          group.append(id);
+        }
+        if (node.comments.length) group.append(makeCommentBadge(size.width / 2 - 3, -size.height / 2 + 2, node.comments.length));
+
+        group.addEventListener("pointerdown", (event) => startDrag(event, node.id, group));
+        group.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (!state.drag || !state.drag.moved) selectNode(node.id);
+        });
+        group.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectNode(node.id); }
+        });
+        nodesLayer.append(group);
+      }
+    }
+
+    function renderCanvas() {
+      renderEdges();
+      renderNodes();
+      $("#canvasSummary").textContent = `${graphNodes().length} 個節點 · ${graphEdges().length} 條邊`;
+    }
+
+    function populateNodeSelect(select, value) {
+      select.replaceChildren();
+      for (const node of graphNodes()) {
+        const option = document.createElement("option");
+        option.value = node.id;
+        option.textContent = `${node.id} — ${node.label || node.id}`;
+        option.selected = node.id === value;
+        select.append(option);
+      }
+    }
+
+    function renderInspector() {
+      const documentSection = $("#documentInspector");
+      const nodeSection = $("#nodeInspector");
+      const edgeSection = $("#edgeInspector");
+      documentSection.hidden = state.selected.kind !== "document";
+      nodeSection.hidden = state.selected.kind !== "node";
+      edgeSection.hidden = state.selected.kind !== "edge";
+
+      if (state.selected.kind === "document") {
+        $("#selectionSummary").textContent = "文件";
+        $("#direction").value = state.model.direction || "TD";
+        $("#documentComments").value = state.model.records
+          .filter((record) => record.kind === "document-comment")
+          .map((record) => record.text)
+          .join("\n");
+        $("#documentComments").setCustomValidity("");
+        return;
+      }
+
+      const record = selectedRecord();
+      if (!record) { state.selected = { kind: "document" }; renderInspector(); return; }
+
+      if (state.selected.kind === "node") {
+        $("#selectionSummary").textContent = `節點 ${record.id}`;
+        $("#nodeId").textContent = record.id;
+        $("#nodeLabel").value = record.label || record.id;
+        $("#nodeLabel").setCustomValidity("");
+        $("#nodeShape").value = record.shape;
+        $("#nodeShape").setCustomValidity("");
+        $("#nodeComments").value = record.comments.map((comment) => comment.text).join("\n");
+        $("#virtualNodeHint").hidden = !record.virtual;
+      } else {
+        $("#selectionSummary").textContent = `${record.from} → ${record.to}`;
+        populateNodeSelect($("#edgeFrom"), record.from);
+        populateNodeSelect($("#edgeTo"), record.to);
+        $("#edgeType").value = record.type;
+        $("#edgeLabel").value = record.label;
+        $("#edgeLabel").setCustomValidity("");
+        $("#edgeComments").value = record.comments.map((comment) => comment.text).join("\n");
+        $("#edgeCommentHint").innerHTML = `輸出格式：<code>%% @comment ${escapeHtml(record.from)}--&gt;${escapeHtml(record.to)}: 內容</code>`;
+      }
+    }
+
+    function renderAll() {
+      renderWarnings();
+      renderCanvas();
+      renderInspector();
+    }
+
+    function selectNode(id) {
+      state.selected = { kind: "node", id };
+      renderAll();
+    }
+
+    function selectEdge(uid) {
+      state.selected = { kind: "edge", uid };
+      renderAll();
+    }
+
+    function selectDocument() {
+      state.selected = { kind: "document" };
+      renderAll();
+    }
+
+    function clientToSvg(clientX, clientY) {
+      const point = canvas.createSVGPoint();
+      point.x = clientX;
+      point.y = clientY;
+      return point.matrixTransform(canvas.getScreenCTM().inverse());
+    }
+
+    function startDrag(event, id, group) {
+      if (event.button != null && event.button !== 0) return;
+      event.stopPropagation();
+      const point = clientToSvg(event.clientX, event.clientY);
+      const position = state.positions.get(id);
+      state.selected = { kind: "node", id };
+      nodesLayer.querySelectorAll(".svg-node").forEach((node) => node.classList.remove("selected"));
+      group.classList.add("selected");
+      renderEdges();
+      renderInspector();
+      state.drag = {
+        id, group, startX: point.x, startY: point.y, originX: position.x, originY: position.y,
+        moved: false, pointerId: event.pointerId
+      };
+    }
+
+    document.addEventListener("pointermove", (event) => {
+      if (!state.drag || event.pointerId !== state.drag.pointerId) return;
+      const point = clientToSvg(event.clientX, event.clientY);
+      const dx = point.x - state.drag.startX;
+      const dy = point.y - state.drag.startY;
+      if (Math.hypot(dx, dy) > 3) state.drag.moved = true;
+      const x = Math.max(55, Math.min(945, state.drag.originX + dx));
+      const y = Math.max(45, Math.min(655, state.drag.originY + dy));
+      state.positions.set(state.drag.id, { x, y });
+      state.drag.group.setAttribute("transform", `translate(${x} ${y})`);
+      renderEdges();
+      event.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("pointerup", (event) => {
+      if (!state.drag || event.pointerId !== state.drag.pointerId) return;
+      const moved = state.drag.moved;
+      state.drag = null;
+      if (moved) toast("位置只保留在目前畫布，不會寫進 Mermaid。 ");
+    });
+
+    function updateElementComments(record, value) {
+      const texts = value.split(/\r?\n/).map((text) => text.trim()).filter(Boolean);
+      record.comments = texts.map((text, index) => {
+        const existing = record.comments[index];
+        if (existing && existing.text === text) return existing;
+        return { uid: nextUid("comment"), kind: "structured-comment", text, raw: "", dirty: true };
+      });
+      record.dirty = record.dirty || false;
+    }
+
+    function invalidNodeLabel(label, shape) {
+      const closing = { rect: "]", round: ")", diamond: "}", pill: "]" }[shape];
+      return closing && label.includes(closing) ? `這個形狀的文字不能包含 ${closing}；v1 不會猜測 Mermaid 跳脫語法。` : "";
+    }
+
+    function updateDocumentComments(value) {
+      const texts = value.split(/\r?\n/).map((text) => text.trim()).filter(Boolean);
+      const existing = state.model.records.filter((record) => record.kind === "document-comment");
+      const remove = new Set(existing.slice(texts.length).map((record) => record.uid));
+      state.model.records = state.model.records.filter((record) => !remove.has(record.uid));
+
+      texts.slice(0, existing.length).forEach((text, index) => {
+        const record = existing[index];
+        if (!remove.has(record.uid) && record.text !== text) { record.text = text; record.dirty = true; }
+      });
+
+      if (texts.length > existing.length) {
+        ensureHeader();
+        let insertAt = state.model.records.reduce((last, record, index) => record.kind === "document-comment" ? index + 1 : last, -1);
+        if (insertAt < 0) insertAt = state.model.records.findIndex((record) => record.kind === "header") + 1;
+        const additions = texts.slice(existing.length).map((text) => ({
+          uid: nextUid("doc"), kind: "document-comment", text, indent: "", raw: "", dirty: true
+        }));
+        state.model.records.splice(insertAt, 0, ...additions);
+      }
+    }
+
+    function addNode() {
+      ensureHeader();
+      const used = new Set(graphNodes().map((node) => node.id));
+      let number = 1;
+      while (used.has(`N${number}`)) number += 1;
+      const id = `N${number}`;
+      const record = {
+        uid: nextUid("node"), kind: "node", id, label: `新節點 ${number}`, shape: "rect", comments: [],
+        indent: "  ", raw: "", dirty: true
+      };
+      const lastNode = state.model.records.reduce((last, item, index) => item.kind === "node" ? index : last, -1);
+      const headerIndex = state.model.records.findIndex((item) => item.kind === "header");
+      state.model.records.splice(lastNode >= 0 ? lastNode + 1 : headerIndex + 1, 0, record);
+      state.selected = { kind: "node", id };
+      autoLayout(false);
+      syncFromModel();
+      $("#nodeLabel").focus();
+      $("#nodeLabel").select();
+    }
+
+    function openEdgeDialog() {
+      const nodes = graphNodes();
+      if (!nodes.length) { toast("請先新增至少一個節點。 "); return; }
+      populateNodeSelect($("#newEdgeFrom"), nodes[0].id);
+      populateNodeSelect($("#newEdgeTo"), nodes[Math.min(1, nodes.length - 1)].id);
+      $("#newEdgeType").value = "-->";
+      $("#newEdgeLabel").value = "";
+      showDialog($("#edgeDialog"));
+    }
+
+    function addEdgeFromDialog() {
+      const labelField = $("#newEdgeLabel");
+      const invalid = labelField.value.includes("|") ? "連線標籤不能包含 |；它是 Mermaid 標籤的分隔符號。" : "";
+      labelField.setCustomValidity(invalid);
+      if (invalid) { labelField.reportValidity(); return false; }
+      ensureHeader();
+      const record = {
+        uid: nextUid("edge"), kind: "edge", from: $("#newEdgeFrom").value, to: $("#newEdgeTo").value,
+        type: $("#newEdgeType").value, label: $("#newEdgeLabel").value.trim(), comments: [],
+        indent: "  ", raw: "", dirty: true
+      };
+      const lastDefinition = state.model.records.reduce((last, item, index) => item.kind === "node" || item.kind === "edge" ? index : last, -1);
+      state.model.records.splice(lastDefinition + 1, 0, record);
+      state.selected = { kind: "edge", uid: record.uid };
+      autoLayout(false);
+      syncFromModel();
+      return true;
+    }
+
+    function deleteNode() {
+      const node = selectedRecord();
+      if (!node) return;
+      const incident = graphEdges().filter((edge) => edge.from === node.id || edge.to === node.id);
+      const message = node.virtual
+        ? `節點 ${node.id} 沒有獨立定義。要刪除它相連的 ${incident.length} 條支援範圍內連線嗎？未知語法原文不會變。`
+        : `要刪除節點 ${node.id} 和相連的 ${incident.length} 條支援範圍內連線嗎？未知語法原文不會變。`;
+      if (!confirm(message)) return;
+      const remove = new Set(incident.map((edge) => edge.uid));
+      if (!node.virtual) remove.add(node.uid);
+      state.model.records = state.model.records.filter((record) => !remove.has(record.uid));
+      state.positions.delete(node.id);
+      state.selected = { kind: "document" };
+      autoLayout(false);
+      syncFromModel();
+    }
+
+    function deleteEdge() {
+      const edge = selectedRecord();
+      if (!edge || !confirm(`要刪除 ${edge.from} 到 ${edge.to} 的這條連線嗎？`)) return;
+      state.model.records = state.model.records.filter((record) => record.uid !== edge.uid);
+      state.selected = { kind: "document" };
+      autoLayout(false);
+      syncFromModel();
+    }
+
+    function extractMermaidFence(text) {
+      const match = String(text).match(/```mermaid[^\n]*\n([\s\S]*?)```/i);
+      return match ? match[1].replace(/\s+$/, "") : null;
+    }
+
+    async function handleFile(file) {
+      const text = await file.text();
+      const isMarkdown = /\.md$/i.test(file.name) || /```mermaid/i.test(text);
+      if (isMarkdown) {
+        const mermaid = extractMermaidFence(text);
+        if (mermaid == null) { toast("這份 Markdown 找不到 mermaid code fence；目前內容沒有被取代。 "); return; }
+        loadSource(mermaid);
+      } else {
+        loadSource(text);
+      }
+      toast(`已載入 ${file.name}`);
+    }
+
+    async function copyText(text) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch (_) { /* use local fallback */ }
+
+      const helper = document.createElement("textarea");
+      helper.value = text;
+      helper.setAttribute("readonly", "");
+      helper.style.position = "fixed";
+      helper.style.opacity = "0";
+      document.body.append(helper);
+      helper.select();
+      let copied = false;
+      try { copied = document.execCommand("copy"); } catch (_) { copied = false; }
+      helper.remove();
+      return copied;
+    }
+
+    async function copyOrShow(text, successMessage) {
+      if (await copyText(text)) { toast(successMessage); return; }
+      $("#exportText").value = text;
+      showDialog($("#exportDialog"));
+      $("#exportText").focus();
+      $("#exportText").select();
+    }
+
+    function withAgentPreamble(source) {
+      const lines = source.split("\n").filter((line) => line !== AGENT_PREAMBLE);
+      const headerIndex = lines.findIndex((line) => /^\s*(flowchart|graph)\s+(TD|LR|BT|RL)\s*$/i.test(line));
+      lines.splice(headerIndex >= 0 ? headerIndex + 1 : 0, 0, AGENT_PREAMBLE);
+      return lines.join("\n");
+    }
+
+    function runRoundTripTest() {
+      const first = serializeModel(parseSource(ROUND_TRIP_SOURCE));
+      const second = serializeModel(parseSource(first));
+      const unknownsPreserved = ["classDef future fill:#fff4c2,stroke:#875400", "style E fill:#fff4c2"]
+        .every((line) => first.includes(line) && second.includes(line));
+      return {
+        pass: first === second && unknownsPreserved,
+        source: ROUND_TRIP_SOURCE,
+        first,
+        second,
+        unknownsPreserved
+      };
+    }
+
+    $("#addNode").addEventListener("click", addNode);
+    $("#addEdge").addEventListener("click", openEdgeDialog);
+    $("#autoLayout").addEventListener("click", () => autoLayout(true));
+    $("#openImport").addEventListener("click", () => { $("#importText").value = code.value; showDialog($("#importDialog")); });
+    $("#loadFile").addEventListener("click", () => $("#fileInput").click());
+    $("#fileInput").addEventListener("change", async (event) => {
+      const [file] = event.target.files;
+      if (file) await handleFile(file);
+      event.target.value = "";
+    });
+    $("#copyMermaid").addEventListener("click", () => copyOrShow(serializeModel(state.model), "Mermaid 已複製。 "));
+    $("#copyAgent").addEventListener("click", () => copyOrShow(withAgentPreamble(serializeModel(state.model)), "已加入註解慣例並複製，可直接貼給 agent。 "));
+
+    code.addEventListener("input", () => {
+      persistDraft(code.value);
+      clearTimeout(codeTimer);
+      codeTimer = setTimeout(() => loadSource(code.value), 260);
+    });
+
+    canvas.addEventListener("click", (event) => { if (event.target === canvas) selectDocument(); });
+    document.querySelectorAll(".selectDocument").forEach((button) => button.addEventListener("click", selectDocument));
+    document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => closeDialog($(`#${button.dataset.close}`))));
+
+    $("#edgeForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (addEdgeFromDialog()) closeDialog($("#edgeDialog"));
+    });
+    $("#importForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      loadSource($("#importText").value);
+      closeDialog($("#importDialog"));
+      toast("已匯入文字；原草稿已更新。 ");
+    });
+
+    $("#direction").addEventListener("change", (event) => {
+      const header = ensureHeader();
+      header.direction = event.target.value;
+      header.dirty = true;
+      state.model.direction = event.target.value;
+      autoLayout(false);
+      syncFromModel();
+    });
+    $("#documentComments").addEventListener("change", (event) => {
+      const hasStructuredPrefix = event.target.value.split(/\r?\n/).some((line) => line.trimStart().startsWith("@comment"));
+      event.target.setCustomValidity(hasStructuredPrefix ? "文件註解不能以 @comment 開頭；請改在節點或連線的註解欄輸入。" : "");
+      if (hasStructuredPrefix) { event.target.reportValidity(); return; }
+      updateDocumentComments(event.target.value);
+      syncFromModel();
+    });
+
+    $("#nodeLabel").addEventListener("input", (event) => {
+      let node = selectedRecord();
+      if (!node) return;
+      const nextShape = node.shape === "bare" && event.target.value !== node.id ? "rect" : node.shape;
+      const invalid = invalidNodeLabel(event.target.value, nextShape);
+      event.target.setCustomValidity(invalid);
+      if (invalid) { event.target.reportValidity(); return; }
+      if (node.virtual) node = promoteVirtual(node.id);
+      node.label = event.target.value;
+      node.shape = nextShape;
+      node.dirty = true;
+      syncFromModel();
+    });
+    $("#nodeShape").addEventListener("change", (event) => {
+      let node = selectedRecord();
+      if (!node) return;
+      const nextShape = event.target.value;
+      const nextLabel = nextShape === "bare" ? node.id : node.label;
+      const invalid = invalidNodeLabel(nextLabel, nextShape);
+      event.target.setCustomValidity(invalid);
+      if (invalid) { event.target.reportValidity(); return; }
+      if (node.virtual) node = promoteVirtual(node.id);
+      node.shape = nextShape;
+      node.label = nextLabel;
+      node.dirty = true;
+      syncFromModel();
+    });
+    $("#nodeComments").addEventListener("change", (event) => {
+      let node = selectedRecord();
+      if (!node) return;
+      if (node.virtual) node = promoteVirtual(node.id);
+      updateElementComments(node, event.target.value);
+      syncFromModel();
+    });
+    $("#deleteNode").addEventListener("click", deleteNode);
+
+    $("#edgeFrom").addEventListener("change", (event) => { const edge = selectedRecord(); edge.from = event.target.value; edge.dirty = true; syncFromModel(); });
+    $("#edgeTo").addEventListener("change", (event) => { const edge = selectedRecord(); edge.to = event.target.value; edge.dirty = true; syncFromModel(); });
+    $("#edgeType").addEventListener("change", (event) => { const edge = selectedRecord(); edge.type = event.target.value; edge.dirty = true; syncFromModel(); });
+    $("#edgeLabel").addEventListener("input", (event) => {
+      const invalid = event.target.value.includes("|") ? "連線標籤不能包含 |；它是 Mermaid 標籤的分隔符號。" : "";
+      event.target.setCustomValidity(invalid);
+      if (invalid) { event.target.reportValidity(); return; }
+      const edge = selectedRecord();
+      edge.label = event.target.value;
+      edge.dirty = true;
+      syncFromModel();
+    });
+    $("#edgeComments").addEventListener("change", (event) => { const edge = selectedRecord(); updateElementComments(edge, event.target.value); syncFromModel(); });
+    $("#deleteEdge").addEventListener("click", deleteEdge);
+
+    window.__diagramEditor = Object.freeze({
+      parse: parseSource,
+      serialize: serializeModel,
+      withAgentPreamble,
+      extractMermaidFence,
+      runRoundTripTest
+    });
+
+    let initial = DEFAULT_SOURCE;
+    let restored = false;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) { initial = saved; restored = true; }
+    } catch (_) { /* local storage unavailable */ }
+    loadSource(initial, { save: false });
+    if (restored) setTimeout(() => toast("已還原這台瀏覽器上次的草稿。 "), 120);
+  })();
+  </script>
+</body>
+</html>
