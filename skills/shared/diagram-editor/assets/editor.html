@@ -754,6 +754,7 @@ style E fill:#fff4c2`;
       pan: null,
       tool: "select",
       pendingEdgeFrom: null,
+      suppressNodeClick: null,
       inspectorOpen: false,
       documentInspectorOpen: false,
       codeOpen: false,
@@ -1282,6 +1283,10 @@ style E fill:#fff4c2`;
         group.addEventListener("pointerdown", (event) => startDrag(event, node.id, group));
         group.addEventListener("click", (event) => {
           event.stopPropagation();
+          if (state.suppressNodeClick === node.id) {
+            state.suppressNodeClick = null;
+            return;
+          }
           if (state.tool !== "select") return;
           if (!state.drag || !state.drag.moved) selectNode(node.id);
         });
@@ -1409,6 +1414,7 @@ style E fill:#fff4c2`;
 
     function startDrag(event, id, group) {
       if (event.button != null && event.button !== 0) return;
+      if (state.tool === "select" && state.suppressNodeClick) state.suppressNodeClick = null;
       if (state.tool === "hand") return;
       event.stopPropagation();
       if (state.tool === "edge") { handleEdgeNode(id); return; }
@@ -1566,6 +1572,7 @@ style E fill:#fff4c2`;
       state.selected = { kind: "edge", uid: record.uid };
       revealInspector(false);
       state.pendingEdgeFrom = null;
+      state.suppressNodeClick = to;
       state.tool = "select";
       updateToolChrome();
       syncFromModel();
