@@ -15,6 +15,13 @@ description: Create or adapt a self-contained offline HTML editor for Mermaid fl
 4. 用「複製 Mermaid」保留純圖，或用「匯出給 agent」加入一行註解慣例 preamble 後貼回 agent。
 5. 若有微調 editor，重新驗證離線、手機操作與 round-trip；資料保留優先於額外功能。
 
+## 操作模型
+
+- 畫布優先，工具列採 Excalidraw 類型的 mode：`1` 選取、`2` 平移、`3` 方框、`4` 菱形、`5` 圓角、`6` 膠囊、`7` 連線、`8` 註解。
+- 形狀工具選好後點畫布放置；連線工具依序點兩個節點；選到物件才展開 context properties。
+- Mermaid code、檔案匯入與文件設定預設收起，不要恢復成長駐三欄管理介面。
+- 外觀可以借鏡白色畫布、浮動工具列與紫色選取態，但只呈現能可靠寫回 v1 Mermaid 的控制項；不可用看似可編輯、實際不會 round-trip 的假樣式選項。
+
 ## v1 支援子集
 
 - 宣告：`flowchart TD|LR|BT|RL`，亦接受 `graph`。

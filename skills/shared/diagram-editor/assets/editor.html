@@ -59,40 +59,6 @@
       outline-offset: 2px;
     }
 
-    .appbar {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: flex;
-      gap: .65rem;
-      align-items: center;
-      justify-content: space-between;
-      padding: .75rem max(.85rem, env(safe-area-inset-right)) .75rem max(.85rem, env(safe-area-inset-left));
-      background: rgba(244, 241, 232, .96);
-      border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(12px);
-    }
-
-    .brand { min-width: 12rem; }
-    .brand h1 { margin: 0; font-size: 1.05rem; }
-    .brand p { margin: .15rem 0 0; font-size: .78rem; color: var(--muted); }
-
-    .toolbar {
-      display: flex;
-      gap: .45rem;
-      align-items: center;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .workspace {
-      display: grid;
-      grid-template-columns: minmax(270px, .82fr) minmax(420px, 1.7fr) minmax(260px, .78fr);
-      gap: .8rem;
-      padding: .8rem;
-      min-height: calc(100vh - 78px);
-    }
-
     .panel {
       min-width: 0;
       background: var(--panel);
@@ -146,7 +112,6 @@
     .warnings strong { display: block; margin-bottom: .25rem; }
     .warnings ul { margin: 0; padding-left: 1.15rem; }
 
-    .canvas-panel { display: grid; grid-template-rows: auto minmax(430px, 1fr) auto; }
     .canvas-wrap { position: relative; min-height: 430px; background: #fbfaf5; overflow: hidden; }
 
     #canvas {
@@ -239,26 +204,320 @@
 
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-    @media (max-width: 1050px) {
-      .appbar { align-items: flex-start; }
-      .workspace { grid-template-columns: minmax(260px, .8fr) minmax(420px, 1.4fr); }
-      .inspector { grid-column: 1 / -1; }
-      .inspector-body { display: grid; grid-template-columns: minmax(0, 640px); }
+    /* Canvas-first shell, visually grounded in Excalidraw's floating-tool pattern. */
+    :root {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --ink: #1b1b1f;
+      --muted: #6f6f78;
+      --line: #e3e3e8;
+      --accent: #6965db;
+      --accent-soft: #e8e7ff;
+      --warning: #9a5b00;
+      --warning-bg: #fff7db;
+      --danger: #c92a2a;
+      --focus: #6965db;
+      --shadow: 0 4px 18px rgba(30, 30, 42, .12), 0 1px 2px rgba(30, 30, 42, .08);
     }
 
-    @media (max-width: 760px) {
-      .appbar { position: static; display: block; }
-      .brand { margin-bottom: .65rem; }
-      .toolbar { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: .2rem; }
-      .toolbar button { flex: 0 0 auto; }
-      .workspace { display: flex; flex-direction: column; padding: .55rem; min-height: auto; }
-      .canvas-panel { order: 1; }
-      .inspector { order: 2; }
-      .code-panel { order: 3; }
-      .canvas-wrap { min-height: 390px; overflow: auto; overscroll-behavior: contain; }
-      #canvas { width: 760px; height: 520px; min-height: 390px; touch-action: pan-x pan-y; }
-      #code { min-height: 360px; resize: vertical; }
-      .panel { border-radius: 12px; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+    body { overscroll-behavior: none; }
+    .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+    .editor-shell { position: fixed; inset: 0; overflow: hidden; background: #fff; }
+
+    .icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+    .icon-button, .tool-button {
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      min-height: 44px;
+      padding: 0;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #202024;
+      box-shadow: none;
+    }
+    .icon-button:hover, .tool-button:hover { background: #f1f1f5; border: 0; }
+    .icon-button:active, .tool-button:active { transform: none; background: #e9e9ef; }
+    .tool-button.selected { color: #312e91; background: var(--accent-soft); }
+    .tool-button .shortcut { position: absolute; right: 4px; bottom: 2px; color: #a0a0a8; font: 600 11px/1 ui-sans-serif, sans-serif; }
+    .tool-button.selected .shortcut { color: #6965db; }
+
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      top: calc(100% + 9px);
+      left: 50%;
+      z-index: 90;
+      padding: .35rem .48rem;
+      border-radius: 6px;
+      color: #fff;
+      background: #25252b;
+      font-size: 11px;
+      font-weight: 650;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translate(-50%, -2px);
+      pointer-events: none;
+      transition: opacity .12s ease, transform .12s ease;
+    }
+    [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+
+    .floating-cluster {
+      position: fixed;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px;
+      border: 1px solid #e3e3e8;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+    .top-left { top: 18px; left: 18px; }
+    .top-right { top: 18px; right: 18px; }
+    .tool-palette { top: 18px; left: 50%; transform: translateX(-50%); gap: 3px; }
+    .tool-divider { width: 1px; height: 28px; margin: 0 4px; background: #e6e6eb; }
+    .brand-mark { padding: 0 .65rem 0 .35rem; color: #6f6f78; font-size: 13px; font-weight: 750; white-space: nowrap; }
+
+    .export-button {
+      display: inline-flex;
+      gap: .45rem;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 .85rem;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      box-shadow: none;
+    }
+    .export-button:hover { border: 0; background: #5b57c7; }
+    .export-button .icon { width: 18px; height: 18px; }
+
+    .stage { position: fixed; inset: 0; z-index: 1; overflow: hidden; background: #fff; }
+    .canvas-wrap { position: absolute; inset: 0; min-height: 0; overflow: hidden; background: #fff; }
+    #canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      touch-action: none;
+      background-color: #fff;
+      background-image: radial-gradient(circle, #d8d8df 1px, transparent 1px);
+      background-size: 20px 20px;
+      background-position: 0 0;
+    }
+    #canvas.tool-hand { cursor: grab; }
+    #canvas.tool-hand:active { cursor: grabbing; }
+    #canvas.tool-rect, #canvas.tool-diamond, #canvas.tool-round, #canvas.tool-pill, #canvas.tool-edge, #canvas.tool-comment { cursor: crosshair; }
+    .node-shape { fill: #fff; stroke: #1f1f24; stroke-width: 2; }
+    .svg-node.selected .node-shape { stroke: var(--accent); stroke-width: 3; }
+    .svg-node.edge-origin .node-shape { stroke: var(--accent); stroke-width: 4; stroke-dasharray: 7 4; }
+    .node-label { fill: #202024; font-size: 17px; font-weight: 550; }
+    .node-id { fill: #8b8b94; }
+    .edge-line { stroke: #202024; stroke-width: 2; }
+    .edge-line.selected { stroke: var(--accent); stroke-width: 3; }
+    .edge-hit { stroke-width: 26; }
+    .edge-label-bg { fill: #fff; stroke: #dedee4; }
+    .comment-badge circle { fill: #ffe066; stroke: #8f5f00; }
+
+    .canvas-status {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      min-height: 38px;
+      padding: 0 .8rem;
+      border-radius: 10px;
+      color: #6f6f78;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 2px 10px rgba(30, 30, 42, .09);
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .canvas-status strong { color: #33333a; }
+    #toolHint { color: #8a8a94; }
+
+    .dock {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 25;
+      display: flex;
+      gap: 8px;
+    }
+    .dock-button {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 42px;
+      padding: 0 .75rem;
+      border: 1px solid #e3e3e8;
+      border-radius: 10px;
+      background: #fff;
+      color: #33333a;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+    }
+    .dock-button:hover { border-color: #d3d3da; background: #f8f8fa; }
+    .warning-dot { display: none; width: 8px; height: 8px; border-radius: 50%; background: #f08c00; }
+    .has-warnings .warning-dot { display: inline-block; }
+
+    .menu-popover {
+      position: fixed;
+      top: 76px;
+      left: 18px;
+      z-index: 45;
+      width: 248px;
+      padding: 8px;
+      border: 1px solid #e3e3e8;
+      border-radius: 13px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(-6px) scale(.98);
+      transform-origin: top left;
+      pointer-events: none;
+      transition: opacity .14s ease, transform .14s ease;
+    }
+    .menu-popover.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    .menu-popover button {
+      display: flex;
+      width: 100%;
+      min-height: 40px;
+      gap: .7rem;
+      align-items: center;
+      padding: 0 .65rem;
+      border: 0;
+      background: #fff;
+      box-shadow: none;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .menu-popover button:hover { background: #f3f3f6; }
+    .menu-popover .icon { width: 18px; height: 18px; color: #5c5c65; }
+    .menu-rule { height: 1px; margin: 6px 4px; background: #ececf0; }
+
+    .panel { border: 1px solid #e3e3e8; border-radius: 14px; background: #fff; box-shadow: var(--shadow); }
+    .panel-head { min-height: 52px; padding: .65rem .85rem; border-bottom: 1px solid #ededf1; }
+    .panel-head h2 { font-size: 14px; }
+    .panel-head small { font-size: 11px; }
+    .panel-close { width: 34px; height: 34px; min-height: 34px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+    .panel-close .icon { width: 18px; height: 18px; }
+
+    .inspector {
+      position: fixed;
+      top: 88px;
+      left: 18px;
+      z-index: 28;
+      display: grid;
+      width: 294px;
+      max-height: calc(100vh - 130px);
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(-18px) scale(.98);
+      pointer-events: none;
+      transition: opacity .14s ease, transform .14s ease;
+    }
+    .inspector.open { opacity: 1; transform: translateX(0) scale(1); pointer-events: auto; }
+    .inspector-body { padding: .9rem; overflow: auto; }
+    .inspector-section h3 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 .85rem; font-size: 15px; }
+    .field { margin-bottom: .9rem; }
+    .field label { color: #37373d; font-size: 12px; }
+    .field input, .field select, .field textarea { border-color: #dcdce2; border-radius: 8px; background: #fff; font-size: 13px; }
+    .field textarea { min-height: 78px; }
+    .field .hint { color: #898992; font-size: 10.5px; }
+    .value-chip { background: var(--accent-soft); color: #4e4ab8; }
+    .shape-picker, .line-picker { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+    .line-picker { grid-template-columns: repeat(4, 1fr); }
+    .shape-option, .line-option {
+      display: grid;
+      place-items: center;
+      min-height: 50px;
+      padding: 0;
+      border: 0;
+      border-radius: 10px;
+      background: #f4f4f7;
+      box-shadow: none;
+    }
+    .shape-option:hover, .line-option:hover { border: 0; background: #ececf2; }
+    .shape-option.selected, .line-option.selected { color: #312e91; background: var(--accent-soft); }
+    .shape-option .icon, .line-option .icon { width: 24px; height: 24px; }
+    .inspector-actions { margin-top: .4rem; }
+    .inspector-actions button { min-height: 38px; font-size: 12px; }
+    .inspector .canvas-note { margin: 0 0 .75rem; padding: .65rem; border: 0; border-radius: 8px; background: #f7f7f9; font-size: 10.5px; }
+
+    .code-panel {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      bottom: 72px;
+      z-index: 35;
+      display: grid;
+      width: min(410px, calc(100vw - 36px));
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(calc(100% + 30px));
+      pointer-events: none;
+      transition: opacity .18s ease, transform .2s ease;
+    }
+    .code-panel.open { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    #code { min-height: 0; height: 100%; padding: 1rem; background: #202124; color: #f1f3f4; font-size: 13px; }
+    .warnings { max-height: 180px; overflow: auto; }
+
+    dialog { border-color: #dedee4; border-radius: 14px; }
+    .dialog-body h2 { font-size: 17px; }
+
+    @media (max-width: 820px) {
+      .brand-mark { display: none; }
+      .top-left { top: 10px; left: 10px; }
+      .top-right { top: 10px; right: 10px; }
+      .top-right .export-label { display: none; }
+      .export-button { width: 44px; padding: 0; justify-content: center; }
+      .tool-palette {
+        top: auto;
+        right: 10px;
+        bottom: max(10px, env(safe-area-inset-bottom));
+        left: 10px;
+        justify-content: center;
+        overflow-x: auto;
+        transform: none;
+      }
+      .tool-palette .tool-button { flex: 0 0 42px; width: 42px; height: 42px; }
+      .tool-palette .tool-divider { display: none; }
+      [data-tip]::after { display: none; }
+      .canvas-status { top: 66px; right: 10px; bottom: auto; left: 10px; justify-content: center; min-height: 30px; box-shadow: none; background: transparent; }
+      .canvas-status #toolHint { display: none; }
+      .dock { right: 10px; bottom: 68px; }
+      .dock-button span:not(.warning-dot) { display: none; }
+      .dock-button { width: 44px; padding: 0; justify-content: center; }
+      .menu-popover { top: 64px; left: 10px; width: 238px; }
+      .inspector {
+        top: auto;
+        right: 8px;
+        bottom: 66px;
+        left: 8px;
+        width: auto;
+        max-height: min(52vh, 460px);
+        transform: translateY(24px) scale(.99);
+      }
+      .inspector.open { transform: translateY(0) scale(1); }
+      .code-panel { top: auto; right: 8px; bottom: 66px; left: 8px; width: auto; height: min(66vh, 560px); transform: translateY(calc(100% + 30px)); }
+      .code-panel.open { transform: translateY(0); }
+      #canvas { width: 100%; height: 100%; min-height: 0; touch-action: none; }
+      .canvas-wrap { min-height: 0; overflow: hidden; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -267,168 +526,156 @@
   </style>
 </head>
 <body>
-  <header class="appbar">
-    <div class="brand">
-      <h1>Mermaid Flowchart 編輯器</h1>
-      <p>Mermaid 文字進、Mermaid 文字出；不支援的語法也會原樣保留。</p>
+  <!-- Tabler Icons (MIT), embedded as an offline sprite. -->
+  <svg class="sr-only" aria-hidden="true" width="0" height="0">
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M4 4l7.6 16.4 2.7-6.1 6.1-2.7L4 4z"/><path d="M13.7 13.7l5.3 5.3"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M7 11V6.5a1.5 1.5 0 0 1 3 0V10"/><path d="M10 10V5.5a1.5 1.5 0 0 1 3 0V10"/><path d="M13 10V6.5a1.5 1.5 0 0 1 3 0V11"/><path d="M16 11V9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-5.1-2.8L4.3 14a1.5 1.5 0 0 1 2.4-1.8L8 13.5"/></symbol>
+    <symbol id="i-square" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></symbol>
+    <symbol id="i-round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="5"/></symbol>
+    <symbol id="i-diamond" viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9 9-9z"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M15 8l4 4-4 4"/></symbol>
+    <symbol id="i-line" viewBox="0 0 24 24"><path d="M4 12h16"/></symbol>
+    <symbol id="i-dashed" viewBox="0 0 24 24"><path d="M3 12h4M10 12h4M17 12h4"/><path d="M17 8l4 4-4 4"/></symbol>
+    <symbol id="i-thick" viewBox="0 0 24 24"><path d="M4 12h16" stroke-width="3.5"/><path d="M16 7l5 5-5 5" stroke-width="3.5"/></symbol>
+    <symbol id="i-comment" viewBox="0 0 24 24"><path d="M5 19l1-4a7 7 0 1 1 3 3l-4 1z"/><path d="M9 12h.01M12 12h.01M15 12h.01"/></symbol>
+    <symbol id="i-wand" viewBox="0 0 24 24"><path d="M6 21l12-12-3-3L3 18l3 3zM15 6l3 3"/><path d="M19 3v2M22 6h-2M5 3v2M8 6H6"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3M14 5l-4 14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 15v4h16v-4"/></symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M9 9h6M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
+  </svg>
+
+  <div class="editor-shell">
+    <div class="floating-cluster top-left">
+      <button type="button" id="menuButton" class="icon-button" aria-label="開啟檔案選單" aria-expanded="false" data-tip="檔案與設定">
+        <svg class="icon"><use href="#i-menu"></use></svg>
+      </button>
+      <span class="brand-mark">Mermaid 畫布</span>
     </div>
-    <nav class="toolbar" aria-label="圖表操作">
-      <button type="button" id="addNode">新增節點</button>
-      <button type="button" id="addEdge">新增連線</button>
-      <button type="button" id="autoLayout">自動排版</button>
-      <button type="button" id="openImport">匯入文字</button>
-      <button type="button" id="loadFile">載入檔案</button>
-      <button type="button" id="copyMermaid">複製 Mermaid</button>
-      <button type="button" id="copyAgent" class="primary">匯出給 agent</button>
-      <input type="file" id="fileInput" accept=".mmd,.md,text/plain,text/markdown" hidden>
+
+    <nav class="floating-cluster tool-palette" aria-label="畫布工具">
+      <button type="button" id="toolSelect" class="tool-button selected" data-tool="select" aria-label="選取工具" data-tip="選取 · 1"><svg class="icon"><use href="#i-cursor"></use></svg><span class="shortcut">1</span></button>
+      <button type="button" id="toolHand" class="tool-button" data-tool="hand" aria-label="平移畫布" data-tip="平移 · 2"><svg class="icon"><use href="#i-hand"></use></svg><span class="shortcut">2</span></button>
+      <span class="tool-divider" aria-hidden="true"></span>
+      <button type="button" id="addNode" class="tool-button" data-tool="rect" aria-label="新增方框" data-tip="方框 · 3"><svg class="icon"><use href="#i-square"></use></svg><span class="shortcut">3</span></button>
+      <button type="button" id="toolDiamond" class="tool-button" data-tool="diamond" aria-label="新增菱形" data-tip="菱形 · 4"><svg class="icon"><use href="#i-diamond"></use></svg><span class="shortcut">4</span></button>
+      <button type="button" id="toolRound" class="tool-button" data-tool="round" aria-label="新增圓角節點" data-tip="圓角 · 5"><svg class="icon"><use href="#i-round"></use></svg><span class="shortcut">5</span></button>
+      <button type="button" id="toolPill" class="tool-button" data-tool="pill" aria-label="新增膠囊節點" data-tip="膠囊 · 6"><svg class="icon"><use href="#i-pill"></use></svg><span class="shortcut">6</span></button>
+      <span class="tool-divider" aria-hidden="true"></span>
+      <button type="button" id="addEdge" class="tool-button" data-tool="edge" aria-label="新增連線" data-tip="連線 · 7"><svg class="icon"><use href="#i-arrow"></use></svg><span class="shortcut">7</span></button>
+      <button type="button" id="toolComment" class="tool-button" data-tool="comment" aria-label="新增註解" data-tip="註解 · 8"><svg class="icon"><use href="#i-comment"></use></svg><span class="shortcut">8</span></button>
     </nav>
-  </header>
 
-  <main class="workspace">
-    <section class="panel code-panel" aria-labelledby="code-title">
-      <div class="panel-head">
-        <h2 id="code-title">Mermaid code</h2>
-        <small>直接貼上即可同步</small>
-      </div>
-      <textarea id="code" aria-label="Mermaid 原始碼" spellcheck="false"></textarea>
-      <div id="warnings" class="warnings" role="status" aria-live="polite"></div>
-    </section>
+    <div class="floating-cluster top-right">
+      <button type="button" id="autoLayout" class="icon-button" aria-label="自動排版" data-tip="自動排版"><svg class="icon"><use href="#i-wand"></use></svg></button>
+      <button type="button" id="copyAgent" class="export-button"><svg class="icon"><use href="#i-send"></use></svg><span class="export-label">給 agent</span></button>
+    </div>
 
-    <section class="panel canvas-panel" aria-labelledby="canvas-title">
-      <div class="panel-head">
-        <h2 id="canvas-title">畫布</h2>
-        <small id="canvasSummary">0 個節點 · 0 條邊</small>
-      </div>
+    <div id="menuPopover" class="menu-popover" role="menu">
+      <button type="button" id="openImport" role="menuitem"><svg class="icon"><use href="#i-clipboard"></use></svg>貼上 Mermaid</button>
+      <button type="button" id="loadFile" role="menuitem"><svg class="icon"><use href="#i-upload"></use></svg>載入 .mmd／.md</button>
+      <button type="button" id="copyMermaid" role="menuitem"><svg class="icon"><use href="#i-file-text"></use></svg>複製 Mermaid</button>
+      <div class="menu-rule"></div>
+      <button type="button" id="documentSettings" role="menuitem"><svg class="icon"><use href="#i-settings"></use></svg>文件方向與註解</button>
+      <input type="file" id="fileInput" accept=".mmd,.md,text/plain,text/markdown" hidden>
+    </div>
+
+    <main class="stage" aria-label="Flowchart 畫布">
       <div class="canvas-wrap">
         <svg id="canvas" viewBox="0 0 1000 700" role="application" aria-label="可編輯的 flowchart 畫布">
           <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#53645e"></path>
-            </marker>
-            <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#176b5b"></path>
-            </marker>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#202024"></path></marker>
+            <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6965db"></path></marker>
           </defs>
           <g id="edgesLayer"></g>
           <g id="nodesLayer"></g>
         </svg>
       </div>
-      <p class="canvas-note"><strong>位置不會匯出：</strong>Mermaid 沒有節點座標欄位。拖曳只調整目前畫布；重新匯入、改 code 或按「自動排版」會重排。手機可在畫布空白處左右滑動查看。</p>
-    </section>
+    </main>
 
-    <aside class="panel inspector" aria-labelledby="inspector-title">
+    <div class="canvas-status" aria-live="polite">
+      <strong id="canvasSummary">0 個節點 · 0 條邊</strong>
+      <span id="toolHint">點選物件編輯；拖曳只改目前畫布，不會寫進 Mermaid。</span>
+    </div>
+
+    <div class="dock">
+      <button type="button" id="codeToggle" class="dock-button" aria-expanded="false"><svg class="icon"><use href="#i-code"></use></svg><span>Mermaid code</span><i class="warning-dot" aria-hidden="true"></i></button>
+    </div>
+
+    <aside class="panel inspector" id="inspector" aria-labelledby="inspector-title">
       <div class="panel-head">
-        <h2 id="inspector-title">編輯與註解</h2>
-        <small id="selectionSummary">文件</small>
+        <div><h2 id="inspector-title">屬性</h2><small id="selectionSummary">文件</small></div>
+        <button type="button" id="inspectorClose" class="panel-close" aria-label="關閉屬性面板"><svg class="icon"><use href="#i-x"></use></svg></button>
       </div>
       <div class="inspector-body">
         <section id="documentInspector" class="inspector-section">
           <h3>整張圖</h3>
           <div class="field">
             <label for="direction">排列方向</label>
-            <select id="direction">
-              <option value="TD">TD：由上到下</option>
-              <option value="LR">LR：由左到右</option>
-              <option value="BT">BT：由下到上</option>
-              <option value="RL">RL：由右到左</option>
-            </select>
+            <select id="direction"><option value="TD">TD：由上到下</option><option value="LR">LR：由左到右</option><option value="BT">BT：由下到上</option><option value="RL">RL：由右到左</option></select>
           </div>
           <div class="field">
-            <label for="documentComments">文件層級註解</label>
+            <label for="documentComments">文件註解</label>
             <textarea id="documentComments" placeholder="每行一則，不用輸入 %%"></textarea>
-            <p class="hint">這些會輸出成一般 <code>%%</code> 行，不綁定任何元素。</p>
+            <p class="hint">一般 <code>%%</code> 行，不綁定物件。</p>
           </div>
         </section>
 
         <section id="nodeInspector" class="inspector-section" hidden>
-          <h3>節點 <span id="nodeId" class="value-chip"></span></h3>
+          <h3><span>節點</span><span id="nodeId" class="value-chip"></span></h3>
+          <div class="field"><label for="nodeLabel">文字</label><input id="nodeLabel" type="text"></div>
           <div class="field">
-            <label for="nodeLabel">顯示文字</label>
-            <input id="nodeLabel" type="text">
+            <label>形狀</label>
+            <div class="shape-picker" role="group" aria-label="節點形狀">
+              <button type="button" class="shape-option" data-shape="bare" aria-label="預設"><strong>A</strong></button>
+              <button type="button" class="shape-option" data-shape="rect" aria-label="方框"><svg class="icon"><use href="#i-square"></use></svg></button>
+              <button type="button" class="shape-option" data-shape="round" aria-label="圓角"><svg class="icon"><use href="#i-round"></use></svg></button>
+              <button type="button" class="shape-option" data-shape="diamond" aria-label="菱形"><svg class="icon"><use href="#i-diamond"></use></svg></button>
+              <button type="button" class="shape-option" data-shape="pill" aria-label="膠囊"><svg class="icon"><use href="#i-pill"></use></svg></button>
+            </div>
+            <select id="nodeShape" class="sr-only"><option value="bare">預設</option><option value="rect">方框</option><option value="round">圓角</option><option value="diamond">菱形</option><option value="pill">膠囊</option></select>
           </div>
-          <div class="field">
-            <label for="nodeShape">形狀</label>
-            <select id="nodeShape">
-              <option value="bare">預設（A）</option>
-              <option value="rect">方框 [文字]</option>
-              <option value="round">圓角 (文字)</option>
-              <option value="diamond">菱形 {文字}</option>
-              <option value="pill">膠囊 ([文字])</option>
-            </select>
-            <p class="hint">預設形狀若改了顯示文字，會自動變成方框。</p>
-          </div>
-          <div class="field">
-            <label for="nodeComments">節點註解</label>
-            <textarea id="nodeComments" placeholder="每行一則註解"></textarea>
-            <p class="hint">輸出格式：<code>%% @comment A: 內容</code></p>
-          </div>
-          <p id="virtualNodeHint" class="canvas-note" hidden>這個節點只出現在連線裡；第一次編輯時會補成明確節點定義。</p>
-          <div class="inspector-actions">
-            <button type="button" id="deleteNode" class="danger">刪除節點</button>
-            <button type="button" class="quiet selectDocument">回到文件註解</button>
-          </div>
+          <div class="field"><label for="nodeComments">註解</label><textarea id="nodeComments" placeholder="每行一則註解"></textarea><p class="hint">輸出成 <code>%% @comment A: 內容</code></p></div>
+          <p id="virtualNodeHint" class="canvas-note" hidden>這個節點只存在連線裡；編輯後會補成明確定義。</p>
+          <div class="inspector-actions"><button type="button" id="deleteNode" class="danger"><svg class="icon"><use href="#i-trash"></use></svg> 刪除</button></div>
         </section>
 
         <section id="edgeInspector" class="inspector-section" hidden>
           <h3>連線</h3>
+          <div class="field"><label for="edgeFrom">起點</label><select id="edgeFrom"></select></div>
+          <div class="field"><label for="edgeTo">終點</label><select id="edgeTo"></select></div>
           <div class="field">
-            <label for="edgeFrom">起點</label>
-            <select id="edgeFrom"></select>
+            <label>線型</label>
+            <div class="line-picker" role="group" aria-label="連線線型">
+              <button type="button" class="line-option" data-line="-->" aria-label="箭頭"><svg class="icon"><use href="#i-arrow"></use></svg></button>
+              <button type="button" class="line-option" data-line="---" aria-label="實線"><svg class="icon"><use href="#i-line"></use></svg></button>
+              <button type="button" class="line-option" data-line="-.->" aria-label="虛線箭頭"><svg class="icon"><use href="#i-dashed"></use></svg></button>
+              <button type="button" class="line-option" data-line="==>" aria-label="粗箭頭"><svg class="icon"><use href="#i-thick"></use></svg></button>
+            </div>
+            <select id="edgeType" class="sr-only"><option value="-->">箭頭</option><option value="---">實線</option><option value="-.->">虛線箭頭</option><option value="==>">粗箭頭</option></select>
           </div>
-          <div class="field">
-            <label for="edgeTo">終點</label>
-            <select id="edgeTo"></select>
-          </div>
-          <div class="field">
-            <label for="edgeType">線型</label>
-            <select id="edgeType">
-              <option value="-->">箭頭 --&gt;</option>
-              <option value="---">實線 ---</option>
-              <option value="-.->">虛線箭頭 -.-&gt;</option>
-              <option value="==>">粗箭頭 ==&gt;</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="edgeLabel">標籤</label>
-            <input id="edgeLabel" type="text" placeholder="可留空">
-          </div>
-          <div class="field">
-            <label for="edgeComments">連線註解</label>
-            <textarea id="edgeComments" placeholder="每行一則註解"></textarea>
-            <p class="hint" id="edgeCommentHint"></p>
-          </div>
-          <div class="inspector-actions">
-            <button type="button" id="deleteEdge" class="danger">刪除連線</button>
-            <button type="button" class="quiet selectDocument">回到文件註解</button>
-          </div>
+          <div class="field"><label for="edgeLabel">標籤</label><input id="edgeLabel" type="text" placeholder="可留空"></div>
+          <div class="field"><label for="edgeComments">註解</label><textarea id="edgeComments" placeholder="每行一則註解"></textarea><p class="hint" id="edgeCommentHint"></p></div>
+          <div class="inspector-actions"><button type="button" id="deleteEdge" class="danger"><svg class="icon"><use href="#i-trash"></use></svg> 刪除</button></div>
         </section>
       </div>
     </aside>
-  </main>
 
-  <dialog id="edgeDialog">
-    <form method="dialog" id="edgeForm">
-      <div class="dialog-body">
-        <h2>新增連線</h2>
-        <div class="field"><label for="newEdgeFrom">起點</label><select id="newEdgeFrom"></select></div>
-        <div class="field"><label for="newEdgeTo">終點</label><select id="newEdgeTo"></select></div>
-        <div class="field">
-          <label for="newEdgeType">線型</label>
-          <select id="newEdgeType">
-            <option value="-->">箭頭 --&gt;</option>
-            <option value="---">實線 ---</option>
-            <option value="-.->">虛線箭頭 -.-&gt;</option>
-            <option value="==>">粗箭頭 ==&gt;</option>
-          </select>
-        </div>
-        <div class="field"><label for="newEdgeLabel">標籤</label><input id="newEdgeLabel" type="text" placeholder="可留空"></div>
+    <section class="panel code-panel" id="codePanel" aria-labelledby="code-title">
+      <div class="panel-head">
+        <div><h2 id="code-title">Mermaid code</h2><small>文字與畫布雙向同步</small></div>
+        <button type="button" id="codeClose" class="panel-close" aria-label="關閉 code 面板"><svg class="icon"><use href="#i-x"></use></svg></button>
       </div>
-      <div class="dialog-actions">
-        <button type="button" data-close="edgeDialog">取消</button>
-        <button type="submit" value="add" class="primary">新增</button>
-      </div>
-    </form>
-  </dialog>
+      <textarea id="code" aria-label="Mermaid 原始碼" spellcheck="false"></textarea>
+      <div id="warnings" class="warnings" role="status" aria-live="polite"></div>
+    </section>
+  </div>
 
   <dialog id="importDialog">
     <form method="dialog" id="importForm">
@@ -503,7 +750,15 @@ style E fill:#fff4c2`;
       model: null,
       positions: new Map(),
       selected: { kind: "document" },
-      drag: null
+      drag: null,
+      pan: null,
+      tool: "select",
+      pendingEdgeFrom: null,
+      inspectorOpen: false,
+      documentInspectorOpen: false,
+      codeOpen: false,
+      menuOpen: false,
+      viewBox: { x: 0, y: 0, width: 1000, height: 700 }
     };
 
     function nextUid(prefix) {
@@ -770,6 +1025,11 @@ style E fill:#fff4c2`;
       state.model = parseSource(source);
       if (code.value !== source) code.value = source;
       state.selected = { kind: "document" };
+      state.inspectorOpen = false;
+      state.documentInspectorOpen = false;
+      state.pendingEdgeFrom = null;
+      state.tool = "select";
+      updateToolChrome();
       if (options.layout !== false) autoLayout(false);
       renderAll();
       if (options.save !== false) persistDraft(source);
@@ -801,6 +1061,12 @@ style E fill:#fff4c2`;
       else dialog.removeAttribute("open");
     }
 
+    function closeMenu() {
+      state.menuOpen = false;
+      $("#menuPopover").classList.remove("open");
+      $("#menuButton").setAttribute("aria-expanded", "false");
+    }
+
     function renderWarnings() {
       const warnings = [...state.model.warnings];
       const pairCounts = new Map();
@@ -816,10 +1082,12 @@ style E fill:#fff4c2`;
       if (!warnings.length) {
         box.classList.remove("show");
         box.replaceChildren();
+        $("#codeToggle").classList.remove("has-warnings");
         return;
       }
       const shown = warnings.slice(0, 6);
       box.classList.add("show");
+      $("#codeToggle").classList.add("has-warnings");
       box.innerHTML = `<strong>有 ${warnings.length} 個提醒；資料都還在。</strong><ul>${shown.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}${warnings.length > shown.length ? `<li>另有 ${warnings.length - shown.length} 個提醒。</li>` : ""}</ul>`;
     }
 
@@ -957,7 +1225,10 @@ style E fill:#fff4c2`;
         }
 
         if (edge.comments.length) group.append(makeCommentBadge(midpoint.x + 18, midpoint.y - 18, edge.comments.length));
-        group.addEventListener("click", (event) => { event.stopPropagation(); selectEdge(edge.uid); });
+        group.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (state.tool === "select" || state.tool === "comment") selectEdge(edge.uid, state.tool === "comment");
+        });
         group.addEventListener("keydown", (event) => {
           if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectEdge(edge.uid); }
         });
@@ -982,7 +1253,7 @@ style E fill:#fff4c2`;
         const size = nodeSize(node);
         const selected = state.selected.kind === "node" && state.selected.id === node.id;
         const group = svgElement("g", {
-          class: `svg-node${selected ? " selected" : ""}`,
+          class: `svg-node${selected ? " selected" : ""}${state.pendingEdgeFrom === node.id ? " edge-origin" : ""}`,
           transform: `translate(${position.x} ${position.y})`, role: "button", tabindex: "0",
           "aria-label": `節點 ${node.id}，${node.label || node.id}`
         });
@@ -1011,6 +1282,7 @@ style E fill:#fff4c2`;
         group.addEventListener("pointerdown", (event) => startDrag(event, node.id, group));
         group.addEventListener("click", (event) => {
           event.stopPropagation();
+          if (state.tool !== "select") return;
           if (!state.drag || !state.drag.moved) selectNode(node.id);
         });
         group.addEventListener("keydown", (event) => {
@@ -1038,9 +1310,12 @@ style E fill:#fff4c2`;
     }
 
     function renderInspector() {
+      const inspector = $("#inspector");
       const documentSection = $("#documentInspector");
       const nodeSection = $("#nodeInspector");
       const edgeSection = $("#edgeInspector");
+      const shouldOpen = state.inspectorOpen && (state.selected.kind !== "document" || state.documentInspectorOpen);
+      inspector.classList.toggle("open", shouldOpen);
       documentSection.hidden = state.selected.kind !== "document";
       nodeSection.hidden = state.selected.kind !== "node";
       edgeSection.hidden = state.selected.kind !== "edge";
@@ -1066,6 +1341,7 @@ style E fill:#fff4c2`;
         $("#nodeLabel").setCustomValidity("");
         $("#nodeShape").value = record.shape;
         $("#nodeShape").setCustomValidity("");
+        document.querySelectorAll(".shape-option").forEach((button) => button.classList.toggle("selected", button.dataset.shape === record.shape));
         $("#nodeComments").value = record.comments.map((comment) => comment.text).join("\n");
         $("#virtualNodeHint").hidden = !record.virtual;
       } else {
@@ -1073,6 +1349,7 @@ style E fill:#fff4c2`;
         populateNodeSelect($("#edgeFrom"), record.from);
         populateNodeSelect($("#edgeTo"), record.to);
         $("#edgeType").value = record.type;
+        document.querySelectorAll(".line-option").forEach((button) => button.classList.toggle("selected", button.dataset.line === record.type));
         $("#edgeLabel").value = record.label;
         $("#edgeLabel").setCustomValidity("");
         $("#edgeComments").value = record.comments.map((comment) => comment.text).join("\n");
@@ -1086,19 +1363,36 @@ style E fill:#fff4c2`;
       renderInspector();
     }
 
-    function selectNode(id) {
+    function revealInspector(documentMode = false) {
+      state.inspectorOpen = true;
+      state.documentInspectorOpen = documentMode;
+      if (window.innerWidth <= 820 && state.codeOpen) {
+        state.codeOpen = false;
+        $("#codePanel").classList.remove("open");
+        $("#codeToggle").setAttribute("aria-expanded", "false");
+      }
+    }
+
+    function selectNode(id, focusComment = false) {
       state.selected = { kind: "node", id };
+      revealInspector(false);
       renderAll();
+      if (focusComment) requestAnimationFrame(() => $("#nodeComments").focus());
     }
 
-    function selectEdge(uid) {
+    function selectEdge(uid, focusComment = false) {
       state.selected = { kind: "edge", uid };
+      revealInspector(false);
       renderAll();
+      if (focusComment) requestAnimationFrame(() => $("#edgeComments").focus());
     }
 
-    function selectDocument() {
+    function selectDocument(openInspector = false) {
       state.selected = { kind: "document" };
+      if (openInspector) revealInspector(true);
+      else { state.documentInspectorOpen = false; state.inspectorOpen = false; }
       renderAll();
+      if (openInspector) requestAnimationFrame(() => $("#documentComments").focus());
     }
 
     function clientToSvg(clientX, clientY) {
@@ -1108,12 +1402,22 @@ style E fill:#fff4c2`;
       return point.matrixTransform(canvas.getScreenCTM().inverse());
     }
 
+    function applyViewBox() {
+      const view = state.viewBox;
+      canvas.setAttribute("viewBox", `${view.x} ${view.y} ${view.width} ${view.height}`);
+    }
+
     function startDrag(event, id, group) {
       if (event.button != null && event.button !== 0) return;
+      if (state.tool === "hand") return;
       event.stopPropagation();
+      if (state.tool === "edge") { handleEdgeNode(id); return; }
+      if (state.tool === "comment") { selectNode(id, true); return; }
+      if (state.tool !== "select") return;
       const point = clientToSvg(event.clientX, event.clientY);
       const position = state.positions.get(id);
       state.selected = { kind: "node", id };
+      revealInspector(false);
       nodesLayer.querySelectorAll(".svg-node").forEach((node) => node.classList.remove("selected"));
       group.classList.add("selected");
       renderEdges();
@@ -1125,6 +1429,16 @@ style E fill:#fff4c2`;
     }
 
     document.addEventListener("pointermove", (event) => {
+      if (state.pan && event.pointerId === state.pan.pointerId) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = state.viewBox.width / rect.width;
+        const scaleY = state.viewBox.height / rect.height;
+        state.viewBox.x = state.pan.originX - (event.clientX - state.pan.startX) * scaleX;
+        state.viewBox.y = state.pan.originY - (event.clientY - state.pan.startY) * scaleY;
+        applyViewBox();
+        event.preventDefault();
+        return;
+      }
       if (!state.drag || event.pointerId !== state.drag.pointerId) return;
       const point = clientToSvg(event.clientX, event.clientY);
       const dx = point.x - state.drag.startX;
@@ -1139,6 +1453,10 @@ style E fill:#fff4c2`;
     }, { passive: false });
 
     document.addEventListener("pointerup", (event) => {
+      if (state.pan && event.pointerId === state.pan.pointerId) {
+        state.pan = null;
+        return;
+      }
       if (!state.drag || event.pointerId !== state.drag.pointerId) return;
       const moved = state.drag.moved;
       state.drag = null;
@@ -1188,53 +1506,108 @@ style E fill:#fff4c2`;
       }
     }
 
-    function addNode() {
+    function updateToolChrome() {
+      document.querySelectorAll("[data-tool]").forEach((button) => {
+        const active = button.dataset.tool === state.tool;
+        button.classList.toggle("selected", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+      canvas.className.baseVal = `tool-${state.tool}`;
+      const hints = {
+        select: "點選物件編輯；拖曳只改目前畫布，不會寫進 Mermaid。",
+        hand: "拖曳空白處平移畫布。",
+        rect: "點一下空白處放置方框。",
+        diamond: "點一下空白處放置菱形。",
+        round: "點一下空白處放置圓角節點。",
+        pill: "點一下空白處放置膠囊節點。",
+        edge: state.pendingEdgeFrom ? `已選 ${state.pendingEdgeFrom}；再點一個節點完成連線。` : "依序點兩個節點建立連線。",
+        comment: "點物件加註解；點空白處加文件註解。"
+      };
+      $("#toolHint").textContent = hints[state.tool];
+    }
+
+    function setTool(tool) {
+      state.tool = tool;
+      if (tool !== "edge") state.pendingEdgeFrom = null;
+      updateToolChrome();
+      renderCanvas();
+    }
+
+    function addNodeAt(shape, position) {
       ensureHeader();
       const used = new Set(graphNodes().map((node) => node.id));
       let number = 1;
       while (used.has(`N${number}`)) number += 1;
       const id = `N${number}`;
       const record = {
-        uid: nextUid("node"), kind: "node", id, label: `新節點 ${number}`, shape: "rect", comments: [],
+        uid: nextUid("node"), kind: "node", id, label: `新節點 ${number}`, shape, comments: [],
         indent: "  ", raw: "", dirty: true
       };
       const lastNode = state.model.records.reduce((last, item, index) => item.kind === "node" ? index : last, -1);
       const headerIndex = state.model.records.findIndex((item) => item.kind === "header");
       state.model.records.splice(lastNode >= 0 ? lastNode + 1 : headerIndex + 1, 0, record);
+      state.positions.set(id, { x: position.x, y: position.y });
       state.selected = { kind: "node", id };
-      autoLayout(false);
+      revealInspector(false);
+      state.tool = "select";
+      updateToolChrome();
       syncFromModel();
-      $("#nodeLabel").focus();
-      $("#nodeLabel").select();
+      requestAnimationFrame(() => { $("#nodeLabel").focus(); $("#nodeLabel").select(); });
     }
 
-    function openEdgeDialog() {
-      const nodes = graphNodes();
-      if (!nodes.length) { toast("請先新增至少一個節點。 "); return; }
-      populateNodeSelect($("#newEdgeFrom"), nodes[0].id);
-      populateNodeSelect($("#newEdgeTo"), nodes[Math.min(1, nodes.length - 1)].id);
-      $("#newEdgeType").value = "-->";
-      $("#newEdgeLabel").value = "";
-      showDialog($("#edgeDialog"));
-    }
-
-    function addEdgeFromDialog() {
-      const labelField = $("#newEdgeLabel");
-      const invalid = labelField.value.includes("|") ? "連線標籤不能包含 |；它是 Mermaid 標籤的分隔符號。" : "";
-      labelField.setCustomValidity(invalid);
-      if (invalid) { labelField.reportValidity(); return false; }
+    function addEdgeBetween(from, to) {
       ensureHeader();
       const record = {
-        uid: nextUid("edge"), kind: "edge", from: $("#newEdgeFrom").value, to: $("#newEdgeTo").value,
-        type: $("#newEdgeType").value, label: $("#newEdgeLabel").value.trim(), comments: [],
+        uid: nextUid("edge"), kind: "edge", from, to, type: "-->", label: "", comments: [],
         indent: "  ", raw: "", dirty: true
       };
       const lastDefinition = state.model.records.reduce((last, item, index) => item.kind === "node" || item.kind === "edge" ? index : last, -1);
       state.model.records.splice(lastDefinition + 1, 0, record);
       state.selected = { kind: "edge", uid: record.uid };
-      autoLayout(false);
+      revealInspector(false);
+      state.pendingEdgeFrom = null;
+      state.tool = "select";
+      updateToolChrome();
       syncFromModel();
-      return true;
+      toast(`${from} → ${to} 已建立。`);
+    }
+
+    function handleEdgeNode(id) {
+      if (!state.pendingEdgeFrom) {
+        state.pendingEdgeFrom = id;
+        updateToolChrome();
+        renderCanvas();
+        return;
+      }
+      addEdgeBetween(state.pendingEdgeFrom, id);
+    }
+
+    function handleCanvasPointerDown(event) {
+      if (event.button != null && event.button !== 0) return;
+      if (state.tool === "hand") {
+        state.pan = {
+          pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+          originX: state.viewBox.x, originY: state.viewBox.y
+        };
+        return;
+      }
+      if (event.target !== canvas) return;
+      const shapes = new Set(["rect", "diamond", "round", "pill"]);
+      if (shapes.has(state.tool)) {
+        addNodeAt(state.tool, clientToSvg(event.clientX, event.clientY));
+        return;
+      }
+      if (state.tool === "comment") {
+        selectDocument(true);
+        return;
+      }
+      if (state.tool === "edge" && state.pendingEdgeFrom) {
+        state.pendingEdgeFrom = null;
+        updateToolChrome();
+        renderCanvas();
+        return;
+      }
+      selectDocument(false);
     }
 
     function deleteNode() {
@@ -1250,6 +1623,7 @@ style E fill:#fff4c2`;
       state.model.records = state.model.records.filter((record) => !remove.has(record.uid));
       state.positions.delete(node.id);
       state.selected = { kind: "document" };
+      state.inspectorOpen = false;
       autoLayout(false);
       syncFromModel();
     }
@@ -1259,6 +1633,7 @@ style E fill:#fff4c2`;
       if (!edge || !confirm(`要刪除 ${edge.from} 到 ${edge.to} 的這條連線嗎？`)) return;
       state.model.records = state.model.records.filter((record) => record.uid !== edge.uid);
       state.selected = { kind: "document" };
+      state.inspectorOpen = false;
       autoLayout(false);
       syncFromModel();
     }
@@ -1341,18 +1716,56 @@ style E fill:#fff4c2`;
       };
     }
 
-    $("#addNode").addEventListener("click", addNode);
-    $("#addEdge").addEventListener("click", openEdgeDialog);
+    document.querySelectorAll("[data-tool]").forEach((button) => button.addEventListener("click", () => setTool(button.dataset.tool)));
     $("#autoLayout").addEventListener("click", () => autoLayout(true));
-    $("#openImport").addEventListener("click", () => { $("#importText").value = code.value; showDialog($("#importDialog")); });
-    $("#loadFile").addEventListener("click", () => $("#fileInput").click());
+    $("#menuButton").addEventListener("click", () => {
+      state.menuOpen = !state.menuOpen;
+      $("#menuPopover").classList.toggle("open", state.menuOpen);
+      $("#menuButton").setAttribute("aria-expanded", String(state.menuOpen));
+    });
+    $("#openImport").addEventListener("click", () => {
+      closeMenu();
+      $("#importText").value = code.value;
+      showDialog($("#importDialog"));
+    });
+    $("#loadFile").addEventListener("click", () => { closeMenu(); $("#fileInput").click(); });
     $("#fileInput").addEventListener("change", async (event) => {
       const [file] = event.target.files;
       if (file) await handleFile(file);
       event.target.value = "";
     });
-    $("#copyMermaid").addEventListener("click", () => copyOrShow(serializeModel(state.model), "Mermaid 已複製。 "));
+    $("#copyMermaid").addEventListener("click", () => { closeMenu(); copyOrShow(serializeModel(state.model), "Mermaid 已複製。 "); });
     $("#copyAgent").addEventListener("click", () => copyOrShow(withAgentPreamble(serializeModel(state.model)), "已加入註解慣例並複製，可直接貼給 agent。 "));
+
+    $("#documentSettings").addEventListener("click", () => {
+      closeMenu();
+      selectDocument(true);
+    });
+    $("#codeToggle").addEventListener("click", () => {
+      state.codeOpen = !state.codeOpen;
+      if (state.codeOpen && window.innerWidth <= 820) {
+        state.inspectorOpen = false;
+        renderInspector();
+      }
+      $("#codePanel").classList.toggle("open", state.codeOpen);
+      $("#codeToggle").setAttribute("aria-expanded", String(state.codeOpen));
+      if (state.codeOpen) requestAnimationFrame(() => code.focus());
+    });
+    $("#codeClose").addEventListener("click", () => {
+      state.codeOpen = false;
+      $("#codePanel").classList.remove("open");
+      $("#codeToggle").setAttribute("aria-expanded", "false");
+    });
+    $("#inspectorClose").addEventListener("click", () => {
+      state.inspectorOpen = false;
+      state.documentInspectorOpen = false;
+      renderInspector();
+    });
+    document.addEventListener("pointerdown", (event) => {
+      if (!state.menuOpen) return;
+      if ($("#menuPopover").contains(event.target) || $("#menuButton").contains(event.target)) return;
+      closeMenu();
+    });
 
     code.addEventListener("input", () => {
       persistDraft(code.value);
@@ -1360,19 +1773,64 @@ style E fill:#fff4c2`;
       codeTimer = setTimeout(() => loadSource(code.value), 260);
     });
 
-    canvas.addEventListener("click", (event) => { if (event.target === canvas) selectDocument(); });
-    document.querySelectorAll(".selectDocument").forEach((button) => button.addEventListener("click", selectDocument));
-    document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => closeDialog($(`#${button.dataset.close}`))));
-
-    $("#edgeForm").addEventListener("submit", (event) => {
-      event.preventDefault();
-      if (addEdgeFromDialog()) closeDialog($("#edgeDialog"));
+    canvas.addEventListener("pointerdown", handleCanvasPointerDown);
+    canvas.addEventListener("dblclick", (event) => {
+      if (event.target === canvas && state.tool === "select") addNodeAt("rect", clientToSvg(event.clientX, event.clientY));
     });
+    document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => closeDialog($(`#${button.dataset.close}`))));
     $("#importForm").addEventListener("submit", (event) => {
       event.preventDefault();
       loadSource($("#importText").value);
       closeDialog($("#importDialog"));
       toast("已匯入文字；原草稿已更新。 ");
+    });
+
+    document.querySelectorAll(".shape-option").forEach((button) => button.addEventListener("click", () => {
+      $("#nodeShape").value = button.dataset.shape;
+      $("#nodeShape").dispatchEvent(new Event("change", { bubbles: true }));
+    }));
+    document.querySelectorAll(".line-option").forEach((button) => button.addEventListener("click", () => {
+      $("#edgeType").value = button.dataset.line;
+      $("#edgeType").dispatchEvent(new Event("change", { bubbles: true }));
+    }));
+
+    document.addEventListener("keydown", (event) => {
+      const tag = document.activeElement?.tagName;
+      const editing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || $("#importDialog").open || $("#exportDialog").open;
+      if (editing) return;
+      const tools = { "1": "select", "2": "hand", "3": "rect", "4": "diamond", "5": "round", "6": "pill", "7": "edge", "8": "comment" };
+      if (tools[event.key]) { event.preventDefault(); setTool(tools[event.key]); return; }
+      if (event.code === "Space" && !event.repeat) {
+        event.preventDefault();
+        state.toolBeforeSpace = state.tool;
+        setTool("hand");
+        return;
+      }
+      if ((event.key === "Delete" || event.key === "Backspace") && state.selected.kind !== "document") {
+        event.preventDefault();
+        state.selected.kind === "node" ? deleteNode() : deleteEdge();
+        return;
+      }
+      if (event.key === "Enter" && state.selected.kind !== "document") {
+        event.preventDefault();
+        (state.selected.kind === "node" ? $("#nodeLabel") : $("#edgeLabel")).focus();
+        return;
+      }
+      if (event.key === "Escape") {
+        closeMenu();
+        state.codeOpen = false;
+        state.inspectorOpen = false;
+        $("#codePanel").classList.remove("open");
+        setTool("select");
+        renderInspector();
+      }
+    });
+    document.addEventListener("keyup", (event) => {
+      if (event.code === "Space" && state.toolBeforeSpace) {
+        const previous = state.toolBeforeSpace;
+        state.toolBeforeSpace = null;
+        setTool(previous);
+      }
     });
 
     $("#direction").addEventListener("change", (event) => {
@@ -1456,6 +1914,8 @@ style E fill:#fff4c2`;
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) { initial = saved; restored = true; }
     } catch (_) { /* local storage unavailable */ }
+    applyViewBox();
+    updateToolChrome();
     loadSource(initial, { save: false });
     if (restored) setTimeout(() => toast("已還原這台瀏覽器上次的草稿。 "), 120);
   })();
