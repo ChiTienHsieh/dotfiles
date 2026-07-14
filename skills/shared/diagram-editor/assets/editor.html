@@ -298,16 +298,21 @@ body {
 'use strict';
 // ===== core-start =====
 // 純函式區:Mermaid flowchart 子集的 parse / serialize,不碰 DOM。
-// 不吞資料原則:看不懂的行進 doc.unknown,匯出時逐字吐回。
+// 不吞資料原則:看不懂的行以 unknown 進 doc.stream,匯出時在原位逐字吐回。
 
 const EDGE_TOKENS = { '-.->': 'dotted', '==>': 'thick', '-->': 'arrow', '---': 'line' };
 const TYPE_TOKEN = { dotted: '-.->', thick: '==>', arrow: '-->', line: '---' };
 const RESERVED_RE = /^(end|subgraph|direction|classDef|class|style|linkStyle|click|accTitle|accDescr)\b/;
 const PREAMBLE_PREFIX = '[diagram-editor]';
 
+// doc.stream 是逐行的陳述序列(node/edge 為物件參照,unknown/doccomment 為原文),
+// 匯出照 stream 原順序走——unknown 行留在原位,%%{init}%% 這類位置敏感的指令才不會失效。
 function emptyDoc() {
-  return { header: 'flowchart', dir: 'TD', nodes: [], edges: [], docComments: [], unknown: [] };
+  return { header: 'flowchart', dir: 'TD', nodes: [], edges: [], stream: [] };
 }
+function docCommentLines(doc) { return doc.stream.filter(s => s.kind === 'doccomment').map(s => s.text); }
+function unknownLines(doc) { return doc.stream.filter(s => s.kind === 'unknown').map(s => s.text); }
+function unknownHasEdgeTokens(doc) { return doc.stream.some(s => s.kind === 'unknown' && /(-\.->|==>|-->|---)/.test(s.text)); }
 
 // style/linkStyle 的屬性字串:只在讀寫個別 key 時解析,保留未知 key 原樣
 function parseProps(raw) {
@@ -392,18 +397,23 @@ function parseFlowLine(line) {
 function mergeNode(doc, n) {
   const ex = doc.nodes.find(x => x.id === n.id);
   if (!ex) {
-    doc.nodes.push({ id: n.id, shape: n.label != null ? n.shape : 'plain', label: n.label, comment: '', style: null });
-  } else if (n.label != null) {
-    ex.shape = n.shape; ex.label = n.label;
+    const node = { id: n.id, shape: n.label != null ? n.shape : 'plain', label: n.label, comment: '', style: null };
+    doc.nodes.push(node);
+    return { node, isNew: true };
   }
+  if (n.label != null) { ex.shape = n.shape; ex.label = n.label; }
+  return { node: ex, isNew: false };
 }
 
 function parseMermaid(text) {
   const doc = emptyDoc();
   const warnings = [];
-  const pending = []; // @comment / style / linkStyle 先收著,整份讀完再對回節點與邊
+  // @comment / style / linkStyle 先收著,整份讀完再對回節點與邊;
+  // 每筆 pending 在 stream 裡佔一個 placeholder,解析成功就移除、失敗就原位轉回 unknown。
+  const pending = [];
   const lines = text.split(/\r?\n/);
   let headerSeen = false;
+  let adjEdges = null; // 「緊跟在邊定義行後」的相鄰性:平行邊的 @comment 靠這個綁定,不猜
   let i = 0;
   while (i < lines.length) {
     const line = lines[i].trim();
@@ -419,32 +429,46 @@ function parseMermaid(text) {
         continue;
       }
     }
-    if (line.startsWith('%%{')) { // %%{init:...}%% 指令不是註解,原樣保留
-      doc.unknown.push(line);
+    if (line.startsWith('%%{')) { // %%{init:...}%% 指令不是註解,原位原樣保留(位置影響語意)
+      doc.stream.push({ kind: 'unknown', text: line });
       warnings.push('第 ' + lineNo + ' 行是 %%{…}%% 指令,不在支援範圍,已原樣保留');
+      adjEdges = null;
       continue;
     }
     if (line.startsWith('%%')) {
       const body = line.replace(/^%%\s*/, '');
       if (body.startsWith(PREAMBLE_PREFIX)) continue; // 「匯出給 agent」的說明行,重匯入時丟棄避免越疊越多
       const cm = body.match(/^@comment\s+([^:]+):\s*(.*)$/);
-      if (!cm) { doc.docComments.push(body); continue; }
+      if (!cm) { doc.stream.push({ kind: 'doccomment', text: body }); adjEdges = null; continue; }
       const target = cm[1].trim();
       const em = target.match(/^([A-Za-z0-9_]+)\s*(-\.->|==>|-->|---)\s*([A-Za-z0-9_]+)$/);
+      const ph = { kind: 'pending' };
       if (em) {
-        pending.push({ kind: 'edgeComment', from: em[1], type: EDGE_TOKENS[em[2]], to: em[3], text: cm[2], raw: line, lineNo });
+        doc.stream.push(ph);
+        pending.push({ kind: 'edgeComment', from: em[1], type: EDGE_TOKENS[em[2]], to: em[3], text: cm[2], raw: line, lineNo, ph, adj: adjEdges });
       } else if (/^[A-Za-z0-9_]+$/.test(target)) {
-        pending.push({ kind: 'nodeComment', id: target, text: cm[2], raw: line, lineNo });
+        doc.stream.push(ph);
+        pending.push({ kind: 'nodeComment', id: target, text: cm[2], raw: line, lineNo, ph });
       } else {
-        doc.unknown.push(line);
+        doc.stream.push({ kind: 'unknown', text: line });
         warnings.push('第 ' + lineNo + ' 行的 @comment 目標「' + target + '」看不懂,已原樣保留');
       }
-      continue;
+      continue; // @comment 行不重設相鄰性,同一條邊可以連寫多行註解
     }
     const stm = line.match(/^style\s+([A-Za-z0-9_]+)\s+(.+)$/);
-    if (stm) { pending.push({ kind: 'nodeStyle', id: stm[1], props: stm[2].trim(), raw: line, lineNo }); continue; }
+    if (stm) { // style 行也不重設相鄰性:匯出時它夾在定義行與 @comment 之間
+      const ph = { kind: 'pending' };
+      doc.stream.push(ph);
+      pending.push({ kind: 'nodeStyle', id: stm[1], props: stm[2].trim(), raw: line, lineNo, ph });
+      continue;
+    }
     const lsm = line.match(/^linkStyle\s+(\d+)\s+(.+)$/);
-    if (lsm) { pending.push({ kind: 'edgeStyle', index: +lsm[1], props: lsm[2].trim(), raw: line, lineNo }); continue; }
+    if (lsm) {
+      const ph = { kind: 'pending' };
+      doc.stream.push(ph);
+      pending.push({ kind: 'edgeStyle', index: +lsm[1], props: lsm[2].trim(), raw: line, lineNo, ph });
+      continue;
+    }
     if (/^subgraph\b/.test(line)) { // subgraph 整塊(含裡面的節點)原樣保留,避免拆散語意
       const block = [line];
       let depth = 1;
@@ -455,58 +479,87 @@ function parseMermaid(text) {
         if (l2) block.push(l2); // 空行不收,未閉合的 subgraph 才不會每輪 round-trip 多長空白
         i++;
       }
-      doc.unknown.push(block.join('\n'));
+      doc.stream.push({ kind: 'unknown', text: block.join('\n') });
       warnings.push('第 ' + lineNo + ' 行起的 subgraph 不在支援範圍,已原樣保留(裡面的節點不會出現在畫布上)');
+      adjEdges = null;
       continue;
     }
     const parsed = parseFlowLine(line);
     if (parsed) {
-      for (const n of parsed.nodes) mergeNode(doc, n);
-      for (const e of parsed.edges) doc.edges.push(e);
+      for (const n of parsed.nodes) {
+        const r = mergeNode(doc, n);
+        if (r.isNew) doc.stream.push({ kind: 'node', ref: r.node });
+      }
+      for (const e of parsed.edges) {
+        doc.edges.push(e);
+        doc.stream.push({ kind: 'edge', ref: e });
+      }
+      adjEdges = parsed.edges;
     } else {
-      doc.unknown.push(line);
+      doc.stream.push({ kind: 'unknown', text: line });
       warnings.push('第 ' + lineNo + ' 行不在支援子集,已原樣保留:' + (line.length > 50 ? line.slice(0, 50) + '…' : line));
+      adjEdges = null;
     }
   }
+  // placeholder 收尾:解析成功 → 從 stream 移除(內容會跟著目標一起匯出);
+  // 失敗 → 原位轉回 unknown,逐字保留。
+  const resolve = (ph, keepAsUnknown, raw) => {
+    const idx = doc.stream.indexOf(ph);
+    if (idx < 0) return;
+    if (keepAsUnknown) doc.stream[idx] = { kind: 'unknown', text: raw };
+    else doc.stream.splice(idx, 1);
+  };
   // mermaid 的 linkStyle 索引數的是「全部」的邊,含 subgraph 內與子集外語法定義的;
   // unknown 裡只要有邊 token,我們的邊計數就不可信,linkStyle 全數原樣保留、不掛到邊上。
-  const unknownHasEdges = doc.unknown.some(u => /(-\.->|==>|-->|---)/.test(u));
+  const unknownHasEdges = unknownHasEdgeTokens(doc);
   for (const p of pending) {
     if (p.kind === 'edgeStyle' && unknownHasEdges) {
-      doc.unknown.push(p.raw);
+      resolve(p.ph, true, p.raw);
       warnings.push('第 ' + p.lineNo + ' 行的 linkStyle 已原樣保留:子集外語法裡也有邊,索引對不準,不敢亂掛');
       continue;
     }
     if (p.kind === 'nodeComment' || p.kind === 'nodeStyle') {
       const n = doc.nodes.find(x => x.id === p.id);
       if (!n) {
-        doc.unknown.push(p.raw);
+        resolve(p.ph, true, p.raw);
         warnings.push('第 ' + p.lineNo + ' 行找不到節點 ' + p.id + ',已原樣保留');
       } else if (p.kind === 'nodeComment') {
         n.comment = n.comment ? n.comment + '\n' + p.text : p.text;
+        resolve(p.ph, false);
       } else {
         n.style = n.style ? n.style + ',' + p.props : p.props;
+        resolve(p.ph, false);
       }
     } else if (p.kind === 'edgeStyle') {
       const e = doc.edges[p.index];
       if (!e) {
-        doc.unknown.push(p.raw);
+        resolve(p.ph, true, p.raw);
         warnings.push('第 ' + p.lineNo + ' 行的 linkStyle 指到不存在的第 ' + p.index + ' 條邊,已原樣保留');
       } else {
         e.style = e.style ? e.style + ',' + p.props : p.props;
+        resolve(p.ph, false);
       }
-    } else {
-      const cands = doc.edges.filter(e => e.from === p.from && e.to === p.to);
-      if (!cands.length) {
-        doc.unknown.push(p.raw);
-        warnings.push('第 ' + p.lineNo + ' 行的註解找不到 ' + p.from + '→' + p.to + ' 這條邊,已原樣保留');
-        continue;
+    } else { // edgeComment:相鄰優先;全域唯一才綁;多條同端點的邊不猜
+      let target = null;
+      if (p.adj) {
+        const near = p.adj.filter(e => e.from === p.from && e.to === p.to);
+        target = near.find(e => e.type === p.type) || near[0] || null;
       }
-      const t = cands.find(e => e.type === p.type && !e.comment)
-        || cands.find(e => !e.comment)
-        || cands.find(e => e.type === p.type)
-        || cands[0];
-      t.comment = t.comment ? t.comment + '\n' + p.text : p.text;
+      if (!target) {
+        const cands = doc.edges.filter(e => e.from === p.from && e.to === p.to);
+        if (cands.length === 1) target = cands[0];
+        else if (!cands.length) {
+          resolve(p.ph, true, p.raw);
+          warnings.push('第 ' + p.lineNo + ' 行的註解找不到 ' + p.from + '→' + p.to + ' 這條邊,已原樣保留');
+          continue;
+        } else {
+          resolve(p.ph, true, p.raw);
+          warnings.push('第 ' + p.lineNo + ' 行的註解有 ' + cands.length + ' 條 ' + p.from + '→' + p.to + ' 的邊都可能是目標,不猜,已原樣保留(要綁定就把註解移到那條邊的定義行正下方)');
+          continue;
+        }
+      }
+      target.comment = target.comment ? target.comment + '\n' + p.text : p.text;
+      resolve(p.ph, false);
     }
   }
   return { doc, warnings };
@@ -532,20 +585,97 @@ function serializeEdge(e) {
 
 function serializeMermaid(doc) {
   const out = [doc.header + ' ' + doc.dir];
-  for (const c of doc.docComments) out.push('  %% ' + c);
-  for (const n of doc.nodes) {
+  const emitNode = n => {
     out.push('  ' + serializeNode(n));
     if (n.style) out.push('  style ' + n.id + ' ' + n.style);
     if (n.comment) for (const l of n.comment.split('\n')) out.push('  %% @comment ' + n.id + ': ' + l);
-  }
-  doc.edges.forEach((e, i) => {
+  };
+  const emitEdge = e => {
     out.push('  ' + serializeEdge(e));
     if (e.comment) for (const l of e.comment.split('\n')) out.push('  %% @comment ' + e.from + TYPE_TOKEN[e.type] + e.to + ': ' + l);
-  });
+  };
+  // 照 stream 原順序走:unknown / 文件註解留在原位;被刪掉的節點與邊直接跳過
+  const seen = new Set();
+  for (const s of doc.stream) {
+    if (s.kind === 'node') {
+      if (!doc.nodes.includes(s.ref) || seen.has(s.ref)) continue;
+      seen.add(s.ref);
+      emitNode(s.ref);
+    } else if (s.kind === 'edge') {
+      if (!doc.edges.includes(s.ref) || seen.has(s.ref)) continue;
+      seen.add(s.ref);
+      emitEdge(s.ref);
+    } else if (s.kind === 'doccomment') {
+      out.push('  %% ' + s.text);
+    } else if (s.kind === 'unknown') {
+      for (const l of s.text.split('\n')) out.push('  ' + l);
+    }
+  }
+  // GUI 新增、還沒進 stream 的節點與邊補在後面
+  for (const n of doc.nodes) if (!seen.has(n)) emitNode(n);
+  for (const e of doc.edges) if (!seen.has(e)) emitEdge(e);
   // linkStyle 依索引指邊,要等所有邊都宣告完才出現,索引照目前順序重算
   doc.edges.forEach((e, i) => { if (e.style) out.push('  linkStyle ' + i + ' ' + e.style); });
-  for (const u of doc.unknown) for (const l of u.split('\n')) out.push('  ' + l);
   return out.join('\n') + '\n';
+}
+
+// 內建 round-trip 自測:改過 parse/serialize 後,在瀏覽器 console 跑
+// window.__diagramEditor.runRoundTripTest(),pass 必須是 true 才能交付。
+const ROUND_TRIP_SOURCE = [
+  'flowchart TD',
+  '  %%{init: {"theme":"neutral"}}%%',
+  '  %% 文件層級註解',
+  '  %% @comment A-->B: 不相鄰又有多條候選,不該被綁定',
+  '  A[方框]',
+  '  style A fill:#ffc9c9,stroke:#e03131',
+  '  %% @comment A: 節點註記',
+  '  B(圓角)',
+  '  C{菱形?}',
+  '  D([膠囊])',
+  '  E',
+  '  classDef hot fill:#f96',
+  '  A -->|是| B',
+  '  %% @comment A-->B: 第一條邊的註記',
+  '  B --- C',
+  '  C -.-> D',
+  '  D ==> E',
+  '  E --> E',
+  '  A --> B',
+  '  %% @comment A-->B: 第二條平行邊的註記',
+  '  linkStyle 0 stroke:#f00',
+  '  subgraph S1[子圖]',
+  '    X --> Y',
+  '  end',
+].join('\n') + '\n';
+
+function runRoundTripTest() {
+  const r1 = parseMermaid(ROUND_TRIP_SOURCE);
+  const e1 = serializeMermaid(r1.doc);
+  const e2 = serializeMermaid(parseMermaid(e1).doc);
+  const e3 = serializeMermaid(parseMermaid(e2).doc);
+  const lines = e1.split('\n').map(l => l.trim());
+  const d = r1.doc;
+  const abEdges = d.edges.filter(e => e.from === 'A' && e.to === 'B');
+  const checks = {
+    '冪等:E(P(E(P(x)))) === E(P(x))(嚴格相等)': e1 === e2 && e2 === e3,
+    'init 指令留在原位(標頭後、節點前)': lines.indexOf('%%{init: {"theme":"neutral"}}%%') === 1
+      && lines.indexOf('%%{init: {"theme":"neutral"}}%%') < lines.indexOf('A[方框]'),
+    'classDef 原位保留(E 之後、第一條邊之前)': lines.indexOf('classDef hot fill:#f96') > lines.indexOf('E')
+      && lines.indexOf('classDef hot fill:#f96') < lines.indexOf('A -->|是| B'),
+    'subgraph 逐字保留': ['subgraph S1[子圖]', 'X --> Y', 'end'].every(l => lines.includes(l)),
+    '節點註解綁定': d.nodes.find(n => n.id === 'A').comment === '節點註記',
+    '平行邊註解靠相鄰性各綁各的': abEdges.length === 2
+      && abEdges[0].comment === '第一條邊的註記' && abEdges[1].comment === '第二條平行邊的註記',
+    '不相鄰多候選的註解不猜:原位保留+警告': lines.indexOf('%% @comment A-->B: 不相鄰又有多條候選,不該被綁定') === 3
+      && abEdges.every(e => !e.comment.includes('不該被綁定'))
+      && r1.warnings.some(w => w.includes('不猜')),
+    'style 掛回節點': d.nodes.find(n => n.id === 'A').style === 'fill:#ffc9c9,stroke:#e03131',
+    'linkStyle 防護:unknown 有邊時原樣保留不亂掛': d.edges.every(e => !e.style)
+      && lines.includes('linkStyle 0 stroke:#f00'),
+    '五種節點形狀都在': ['rect', 'round', 'diamond', 'stadium', 'plain'].every(s => d.nodes.some(n => n.shape === s)),
+    '四種邊型別都在': ['arrow', 'line', 'dotted', 'thick'].every(t => d.edges.some(e => e.type === t)),
+  };
+  return { pass: Object.values(checks).every(Boolean), checks, first: e1, second: e2 };
 }
 
 function agentPreamble() {
@@ -1034,7 +1164,7 @@ function renderProps() {
     pickIn($('pEType'), 'etype', e.type);
     swatches($('pEStroke'), STROKES, getProp(e.style, 'stroke') || '#1e1e1e',
       c => {
-        if (doc.unknown.some(u => /(-\.->|==>|-->|---)/.test(u))) {
+        if (unknownHasEdgeTokens(doc)) {
           toast('注意:子集外語法裡也有邊,這個顏色(linkStyle)在真正的 mermaid 渲染時可能對到別條邊', true);
         }
         mutateSel(ee => { ee.style = setProp(ee.style, 'stroke', c === '#1e1e1e' ? null : c); });
@@ -1053,10 +1183,10 @@ function setDirty(d) {
   $('dirtyHint').textContent = d ? '程式碼改了還沒套用——按「套用程式碼」讓畫布跟上。' : '';
 }
 function renderDrawerMeta() {
-  $('docComments').value = doc.docComments.join('\n');
-  const has = doc.unknown.length > 0;
-  $('unknownWrap').hidden = !has;
-  if (has) $('unknownBox').textContent = doc.unknown.join('\n');
+  $('docComments').value = docCommentLines(doc).join('\n');
+  const unk = unknownLines(doc);
+  $('unknownWrap').hidden = !unk.length;
+  if (unk.length) $('unknownBox').textContent = unk.join('\n');
 }
 function renderAll() { renderCanvas(); renderProps(); }
 
@@ -1229,14 +1359,16 @@ const TOOL_SHAPE = { rect: 'rect', diamond: 'diamond', stadium: 'stadium' };
 function createNodeAt(wx, wy, shape, thenEdit) {
   const id = freeId();
   positions.set(id, { x: wx, y: wy });
-  mutate(() => doc.nodes.push({ id, shape, label: '', comment: '', style: null }));
+  const node = { id, shape, label: '', comment: '', style: null };
+  mutate(() => { doc.nodes.push(node); doc.stream.push({ kind: 'node', ref: node }); });
   selection = { kind: 'node', id };
   renderAll();
   if (thenEdit) editNodeLabel(id);
   return id;
 }
 function createEdge(fromId, toId, kind) {
-  mutate(() => doc.edges.push({ from: fromId, to: toId, type: kind === 'line' ? 'line' : 'arrow', label: null, comment: '', style: null }));
+  const edge = { from: fromId, to: toId, type: kind === 'line' ? 'line' : 'arrow', label: null, comment: '', style: null };
+  mutate(() => { doc.edges.push(edge); doc.stream.push({ kind: 'edge', ref: edge }); });
   selection = { kind: 'edge', index: doc.edges.length - 1 };
   renderAll();
 }
@@ -1472,7 +1604,8 @@ function duplicateSelection() {
   const id = freeId();
   const p = positions.get(src.id);
   positions.set(id, { x: p.x + 40, y: p.y + 40 });
-  mutate(() => doc.nodes.push({ id, shape: src.shape, label: src.label, comment: src.comment, style: src.style }));
+  const node = { id, shape: src.shape, label: src.label, comment: src.comment, style: src.style };
+  mutate(() => { doc.nodes.push(node); doc.stream.push({ kind: 'node', ref: node }); });
   selection = { kind: 'node', id };
   renderAll();
 }
@@ -1576,7 +1709,11 @@ codeEl.addEventListener('input', () => setDirty(true));
 $('btnApply').addEventListener('click', () => applyCode());
 $('docComments').addEventListener('change', e => {
   const v = e.target.value.replace(/\r/g, '');
-  mutate(() => { doc.docComments = v.trim() ? v.split('\n') : []; });
+  mutate(() => {
+    doc.stream = doc.stream.filter(s => s.kind !== 'doccomment');
+    const items = v.trim() ? v.split('\n').map(text => ({ kind: 'doccomment', text })) : [];
+    doc.stream.unshift(...items); // 整批重編時移到開頭(原位保留只給沒動過的行)
+  });
 });
 $('btnImport').addEventListener('click', () => $('fileInput').click());
 $('fileInput').addEventListener('change', async e => {
@@ -1631,6 +1768,14 @@ function toast(msg, warn) {
   $('toasts').appendChild(el);
   setTimeout(() => el.remove(), warn ? 9000 : 3500);
 }
+
+// ---------- 對外 hook(console 自測與除錯用) ----------
+window.__diagramEditor = Object.freeze({
+  parse: parseMermaid,
+  serialize: serializeMermaid,
+  agentPreamble,
+  runRoundTripTest,
+});
 
 // ---------- 啟動 ----------
 window.addEventListener('resize', () => {
