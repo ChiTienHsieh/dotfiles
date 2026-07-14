@@ -1866,6 +1866,12 @@ style E fill:#fff4c2`;
       let node = selectedRecord();
       if (!node) return;
       const nextShape = event.target.value;
+      if (nextShape === "bare" && node.label !== node.id) {
+        event.target.value = node.shape;
+        toast("預設節點不能保留自訂文字；請先把文字改成節點 ID，原內容沒有變。 ");
+        renderInspector();
+        return;
+      }
       const nextLabel = nextShape === "bare" ? node.id : node.label;
       const invalid = invalidNodeLabel(nextLabel, nextShape);
       event.target.setCustomValidity(invalid);
