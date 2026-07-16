@@ -46,7 +46,9 @@ git fetch
 git status -sb
 ```
 
-Prefer `origin/main` as the source of truth for content when the local checkout is stale or diverged.
+Keep the current task branch as the working source of truth. After fetching,
+use `origin/main` only as a comparison/rebase baseline for drift; never replace
+the task branch with `origin/main` or infer task intent from the baseline.
 
 ## Related Projects
 
