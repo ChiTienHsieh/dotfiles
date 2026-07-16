@@ -45,8 +45,9 @@ claude -p --model fable --effort medium --permission-mode dontAsk \
 ```
 
 This is the only recipe eligible for implicit bounded checks. It disables model
-tools and inherited integrations; the shell supplies the complete artifact.
-Review the input first because it is still sent to Anthropic.
+tools and user/project customizations; centrally managed policy may still
+apply. The shell supplies the complete artifact. Review the input first because
+it is still sent to Anthropic.
 
 ### Repository pass: explicit headless requests only
 
