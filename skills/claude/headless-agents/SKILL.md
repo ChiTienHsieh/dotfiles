@@ -1,6 +1,6 @@
 ---
 name: headless-agents
-description: "Delegate research, analysis, or bounded parallel work to headless AI agents (Codex CLI, Gemini CLI, Claude CLI). Use when the user says 'run codex on this'、「讓 gemini 查」, explicitly requests `claude -p` workers, wants a second opinion from another model, wants to fan out investigation across models, or authorizes isolated-worktree Claude implementation. Default to read-only; mutation requires the explicit isolated-worktree contract in this skill."
+description: "Delegate one-shot, read-only research or analysis to headless AI agents (Codex CLI, Gemini CLI, Claude CLI). Use when the user explicitly asks for headless, detached, or `claude -p` workers, says 'run codex on this' or「讓 gemini 查」, or requests bounded parallel checks that need neither approval nor live steering. Generic second opinions and all file-mutating work follow worker-routing and tmux-orchestration instead."
 allowed-tools: Bash
 ---
 
@@ -11,44 +11,43 @@ allowed-tools: Bash
 Claude Code can delegate tasks to headless AI agents:
 - **Codex CLI** (OpenAI) - Strong at read-only research with `--search`
 - **Gemini CLI** (Google) - Fast read-only analysis
-- **Claude CLI** (Anthropic) - Subscription-backed analysis or explicitly
-  authorized isolated-worktree implementation with `claude -p`
+- **Claude CLI** (Anthropic) - One-shot analysis with `claude -p`
 
 Headless means no interactive terminal UI; the orchestrator still owns process
 supervision, logs, review, and integration. The default is **read-only** because
-that keeps the blast radius near zero. A user may explicitly authorize mutating
-Claude workers, but only under the isolated-worktree contract below.
+that keeps the blast radius small and matches the repository's observable-worker
+policy. Route every file-mutating task through `worker-routing` and
+`tmux-orchestration`, even when the user asks to use Claude.
 
 ## Mode Awareness (read this first)
 
-- This skill is for **normal Claude Code sessions** doing cheap, read-only,
-  detached headless work.
+- This skill is for **normal Claude Code sessions** doing bounded, read-only,
+  one-shot headless work that needs no approval or live steering.
 - If running as the **orchestrator persona** (`cldo`), or any time the work
-  **writes files** or needs to be watched/interrupted, normally route it through
+  **writes files** or needs to be watched/interrupted, route it through
   `tmux-orchestration` instead.
-- Exception: when the user directly asks for mutating `claude -p` workers, each
-  worker MUST use its own disposable worktree and branch, own a bounded,
-  non-overlapping scope, and have no permission to push, merge, deploy, mutate
-  live systems, or edit outside that worktree. The orchestrator reviews and
-  cherry-picks the resulting atomic commits.
 - Rule of thumb:
   - read-only + no network → headless is fine (the safe default).
   - read-only + network (`--search`) → headless is OK **only over trusted
     inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
     web work to a tmux surface instead.
-  - mutating without the explicit exception above → follow
-    `tmux-orchestration`, never this skill.
+  - any mutation → follow `worker-routing` and `tmux-orchestration`, never this
+    skill. A Git worktree isolates working files but is not a permission or
+    network boundary.
 
 ## When to Use Which
 
 ```
-Task Type                           Codex              Gemini          Claude Fable
----------------------------------------------------------------------------------
-Read-only research                  Thorough           Fast            Deep synthesis
-Image/multimodal analysis           -i/--image         Native support  Prompt-dependent
-Debugging analysis (read-only)      Thorough           Surface level   Strong
-Bounded implementation              tmux only          tmux only       Explicit exception
+Task Type                           Codex              Gemini          Claude
+----------------------------------------------------------------------------
+Read-only repo analysis              Supported          Supported       Supported
+Live web research                    `--search`          Provider tool   Use tmux
+Image/multimodal analysis            `-i/--image`        Provider tool   Use tmux
+File-mutating implementation         Use tmux            Use tmux        Use tmux
 ```
+
+Choose the provider and model through `codex/notes/worker-routing.md`; this
+skill only defines the safe headless mechanics.
 
 ## Codex CLI Commands
 
@@ -133,29 +132,37 @@ cat source.py | gmn -p "Analyze this code" --quiet > analysis.md
 
 ## Claude CLI Commands
 
-`claude -p` bills against the user's Claude subscription. For nested
-`claude -p` runs, use `--permission-mode auto`; `bypassPermissions` exits 1.
-Keep headless Claude read-only unless the task is moved to an observable tmux
-surface or the user explicitly authorizes the isolated-worktree exception.
+`claude -p` consumes Claude plan quota or API spend. Keep it read-only. Never
+use a bypass-permissions flag; file-mutating work belongs on an observable tmux
+surface.
 
-### Read-only Fable pass
-
-```bash
-claude -p --model fable --effort medium --permission-mode auto --tools "" \
-  "Read the supplied artifacts and return findings only. Do not edit files."
-```
-
-### Explicit isolated-worktree implementation
+### Pure artifact pass (stdin only)
 
 ```bash
-claude -p --model fable --effort medium --permission-mode auto \
-  "Work only in the assigned worktree and named file scope. Run focused tests,
-   make atomic commits, and report commit hashes. Do not push, merge, deploy,
-   touch live systems, or edit outside the worktree."
+claude -p --model fable --effort medium --permission-mode dontAsk \
+  --safe-mode --no-chrome --strict-mcp-config \
+  --mcp-config '{"mcpServers":{}}' --tools "" --no-session-persistence \
+  "Analyze the artifact from stdin and return findings only." < "$INPUT"
 ```
 
-Give each worker a distinct subsystem and name its forbidden overlaps. Preserve
-unfinished worktrees when a worker exits so another agent can salvage the diff.
+This form disables built-in tools, customizations, Chrome, and inherited MCP
+servers. The shell supplies the artifact through stdin, so the model does not
+need file tools.
+
+### Read-only repository pass
+
+```bash
+claude -p --model fable --effort medium --permission-mode dontAsk \
+  --safe-mode --no-chrome --strict-mcp-config \
+  --mcp-config '{"mcpServers":{}}' --tools "Read,Glob,Grep" \
+  --no-session-persistence \
+  "Inspect only the named repository paths and return findings. Do not edit."
+```
+
+Run this only from a trusted repository and give each worker a distinct scope.
+`Read`, `Glob`, and `Grep` can send readable repository content to Anthropic;
+exclude secrets and untrusted prompt-bearing inputs. If the task needs Bash,
+network, writes, approvals, or live steering, use tmux instead.
 
 ### Effort and quota
 
@@ -167,20 +174,17 @@ unfinished worktrees when a worker exits so another agent can salvage the diff.
 - Check the `quota` skill before expensive fan-out and after any limit error.
   Keep CodexBar commands, reset handling, and provider routing in their existing
   SSOTs rather than duplicating them here.
-- Empirical warning: three broad max-effort Fable workers exhausted one Claude
-  five-hour session window in about 20 minutes. Treat that as one observation,
-  not a stable plan entitlement or throughput promise.
 
 ## Timeout Guidelines
 
 - Minimum: 4 minutes (240000ms)
 - Research tasks: 10+ minutes (600000ms)
-- Fable implementation workers: do not call a still-running process timed out
-  before 60 minutes unless the process exits or emits an explicit fatal signal.
-  Sparse output is not a timeout; keep polling without discarding its worktree.
+- Judge progress by process state and meaningful output, not sparse stdout
+  alone. Follow `tmux-orchestration` for observation cadence and intervention;
+  do not invent a separate fixed no-progress window here.
 - `You've hit your session limit` is quota exhaustion, not a timeout. Preserve
-  partial commits and diffs, check the `quota` skill, then resume or salvage
-  with another agent according to the user's model intent.
+  captured output, check the `quota` skill, then resume or reroute according to
+  the user's model intent.
 
 ## Configuration Files
 
