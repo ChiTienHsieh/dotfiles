@@ -1,6 +1,6 @@
 ---
 name: headless-agents
-description: "Delegate bounded, one-shot, read-only checks to headless Codex or Claude CLI workers. Use when the user explicitly asks for headless, detached, `claude -p`, or `run codex` execution, or when a parallel check can be completed solely from supplied stdin with all model tools disabled. Repository tools require an explicit headless request; generic second opinions, Gemini, network-heavy work, and every file mutation follow worker-routing and tmux-orchestration instead."
+description: "Delegate bounded, one-shot, read-only checks to headless Claude CLI workers. Use when the user explicitly asks for headless, detached, or `claude -p` execution, or when a parallel check can be completed solely from supplied stdin with all model tools disabled. Repository tools require an explicit headless request; Codex/Gemini requests, generic second opinions, network-heavy work, and every file mutation follow worker-routing and tmux-orchestration instead."
 allowed-tools: Bash
 ---
 
@@ -15,55 +15,23 @@ and integration.
 - An **implicit** bounded parallel check may use only the Claude stdin recipe
   below, with all model tools disabled. The orchestrator supplies the complete
   artifact; the worker does not inspect the repository.
-- Repository inspection with `Read`, `Glob`, `Grep`, or Codex tools is available
-  only when the user explicitly asks for headless execution, `claude -p`, or a
-  named CLI worker.
+- Claude repository inspection with `Read`, `Glob`, or `Grep` is available only
+  when the user explicitly asks for headless execution or `claude -p`.
 - Generic second opinions, interactive work, approvals, Bash/network access,
   and every mutation follow `codex/notes/worker-routing.md` and
   `tmux-orchestration`.
-- Gemini CLI has no verified hard read-only mode in this setup. Route Gemini
-  requests through an observable tmux surface; `-p`, quiet output, and avoiding
-  `--yolo` do not themselves disable its file tools.
+- Codex and Gemini CLI have no verified hard-isolation recipe in this setup.
+  Route their repo and web requests through an observable tmux surface until
+  such a recipe is tested; filesystem sandboxing or avoiding permissive flags
+  does not disable inherited MCP, plugin, or external API side effects.
 
-Read-only is a **write boundary**, not path confinement or a confidentiality
-boundary. A worker may be able to read more than the prompt names, and model
-input is sent to its provider. Never expose secrets or untrusted prompt-bearing
-content. Prefer the stdin/no-tools recipe when the artifact itself is enough.
-A Git worktree and a CLI working-directory flag do not change this boundary.
-
-## Codex CLI: explicit headless requests only
-
-### Repository analysis without live web
-
-```bash
-OUTPUT="${TMPDIR:-/tmp}/codex-research.md"
-mkdir -p "$(dirname "$OUTPUT")"
-codex exec -s read-only --skip-git-repo-check -C "$REPO" \
-  -o "$OUTPUT" \
-  "Inspect only the named paths for this task. Return findings; do not edit."
-```
-
-`-s read-only` blocks model-initiated writes. `-C` selects the working
-directory; it does not confine reads to that directory. `-o` is written by the
-Codex harness so the result can still be captured under a read-only sandbox.
-Name the allowed paths in the prompt and exclude secrets from the worker's
-readable inputs.
-
-### Live web research: explicit opt-in
-
-```bash
-OUTPUT="${TMPDIR:-/tmp}/codex-websearch.md"
-mkdir -p "$(dirname "$OUTPUT")"
-codex --search exec -s read-only --skip-git-repo-check -C "$REPO" \
-  -o "$OUTPUT" \
-  "Research this bounded question and cite the sources used."
-```
-
-`--search` is a top-level flag and enables a higher-risk surface. Use it only
-when the user explicitly requested live research and the local/web inputs are
-trusted. Network access creates prompt-injection and data-disclosure risk even
-though writes remain blocked; route broad or untrusted web work through tmux.
-Never use danger or bypass flags.
+Read-only is not shorthand for side-effect-free. A filesystem read-only sandbox
+may block local writes while leaving inherited MCP servers, plugins, browser
+integrations, or external API tools active. It is also not path confinement or
+a confidentiality boundary: a worker may read more than the prompt names, and
+model input is sent to its provider. Never expose secrets or untrusted
+prompt-bearing content. Prefer the stdin/no-tools recipe when the artifact
+itself is enough; a Git worktree does not change these boundaries.
 
 ## Claude CLI
 
