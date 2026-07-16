@@ -46,8 +46,9 @@ Image/multimodal analysis            `-i/--image`        Provider tool   Use tmu
 File-mutating implementation         Use tmux            Use tmux        Use tmux
 ```
 
-Choose the provider and model through `codex/notes/worker-routing.md`; this
-skill only defines the safe headless mechanics.
+Choose the provider through `codex/notes/worker-routing.md` and the Claude
+model through `skills/claude/arbitrage/references/model-routing.md`; this skill
+only defines the safe headless mechanics.
 
 ## Codex CLI Commands
 
@@ -140,8 +141,8 @@ surface.
 
 ```bash
 claude -p --model fable --effort medium --permission-mode dontAsk \
-  --safe-mode --no-chrome --strict-mcp-config \
-  --mcp-config '{"mcpServers":{}}' --tools "" --no-session-persistence \
+  --safe-mode --no-chrome --strict-mcp-config --tools "" \
+  --no-session-persistence \
   "Analyze the artifact from stdin and return findings only." < "$INPUT"
 ```
 
@@ -153,8 +154,7 @@ need file tools.
 
 ```bash
 claude -p --model fable --effort medium --permission-mode dontAsk \
-  --safe-mode --no-chrome --strict-mcp-config \
-  --mcp-config '{"mcpServers":{}}' --tools "Read,Glob,Grep" \
+  --safe-mode --no-chrome --strict-mcp-config --tools "Read,Glob,Grep" \
   --no-session-persistence \
   "Inspect only the named repository paths and return findings. Do not edit."
 ```
@@ -166,8 +166,7 @@ network, writes, approvals, or live steering, use tmux instead.
 
 ### Effort and quota
 
-- Use `--effort medium` by default for Fable. It has been sufficient for repo
-  archaeology, architecture decisions, implementation, and salvage review.
+- Use `--effort medium` by default for Fable.
 - Use `--effort max` only for genuinely ambiguous, high-risk reasoning where
   the expected marginal quality justifies much faster quota burn. Do not launch
   several broad max-effort workers before checking live quota.
