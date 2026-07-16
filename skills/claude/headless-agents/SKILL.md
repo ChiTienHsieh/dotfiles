@@ -1,156 +1,86 @@
 ---
 name: headless-agents
-description: "Delegate one-shot, read-only research or analysis to headless AI agents (Codex CLI, Gemini CLI, Claude CLI). Use when the user explicitly asks for headless, detached, or `claude -p` workers, says 'run codex on this' or「讓 gemini 查」, or requests bounded parallel checks that need neither approval nor live steering. Generic second opinions and all file-mutating work follow worker-routing and tmux-orchestration instead."
+description: "Delegate bounded, one-shot, read-only checks to headless Codex or Claude CLI workers. Use when the user explicitly asks for headless, detached, `claude -p`, or `run codex` execution, or when a parallel check can be completed solely from supplied stdin with all model tools disabled. Repository tools require an explicit headless request; generic second opinions, Gemini, network-heavy work, and every file mutation follow worker-routing and tmux-orchestration instead."
 allowed-tools: Bash
 ---
 
 # Headless Agents Delegation
 
-## Overview
+Use headless execution only when a one-shot worker needs neither approval nor
+live steering. The orchestrator still owns process supervision, result review,
+and integration.
 
-Claude Code can delegate tasks to headless AI agents:
-- **Codex CLI** (OpenAI) - Strong at read-only research with `--search`
-- **Gemini CLI** (Google) - Fast read-only analysis
-- **Claude CLI** (Anthropic) - One-shot analysis with `claude -p`
+## Choose the surface first
 
-Headless means no interactive terminal UI; the orchestrator still owns process
-supervision, logs, review, and integration. The default is **read-only** because
-that keeps the blast radius small and matches the repository's observable-worker
-policy. Route every file-mutating task through `worker-routing` and
-`tmux-orchestration`, even when the user asks to use Claude.
+- An **implicit** bounded parallel check may use only the Claude stdin recipe
+  below, with all model tools disabled. The orchestrator supplies the complete
+  artifact; the worker does not inspect the repository.
+- Repository inspection with `Read`, `Glob`, `Grep`, or Codex tools is available
+  only when the user explicitly asks for headless execution, `claude -p`, or a
+  named CLI worker.
+- Generic second opinions, interactive work, approvals, Bash/network access,
+  and every mutation follow `codex/notes/worker-routing.md` and
+  `tmux-orchestration`.
+- Gemini CLI has no verified hard read-only mode in this setup. Route Gemini
+  requests through an observable tmux surface; `-p`, quiet output, and avoiding
+  `--yolo` do not themselves disable its file tools.
 
-## Mode Awareness (read this first)
+Read-only is a **write boundary**, not path confinement or a confidentiality
+boundary. A worker may be able to read more than the prompt names, and model
+input is sent to its provider. Never expose secrets or untrusted prompt-bearing
+content. Prefer the stdin/no-tools recipe when the artifact itself is enough.
+A Git worktree and a CLI working-directory flag do not change this boundary.
 
-- This skill is for **normal Claude Code sessions** doing bounded, read-only,
-  one-shot headless work that needs no approval or live steering.
-- If running as the **orchestrator persona** (`cldo`), or any time the work
-  **writes files** or needs to be watched/interrupted, route it through
-  `tmux-orchestration` instead.
-- Rule of thumb:
-  - read-only + no network → headless is fine (the safe default).
-  - read-only + network (`--search`) → headless is OK **only over trusted
-    inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
-    web work to a tmux surface instead.
-  - any mutation → follow `worker-routing` and `tmux-orchestration`, never this
-    skill. A Git worktree isolates working files but is not a permission or
-    network boundary.
+## Codex CLI: explicit headless requests only
 
-## When to Use Which
-
-```
-Task Type                           Codex              Gemini          Claude
-----------------------------------------------------------------------------
-Read-only repo analysis              Supported          Supported       Supported
-Live web research                    `--search`          Provider tool   Use tmux
-Image/multimodal analysis            `-i/--image`        Provider tool   Use tmux
-File-mutating implementation         Use tmux            Use tmux        Use tmux
-```
-
-Choose the provider through `codex/notes/worker-routing.md` and the Claude
-model through `skills/claude/arbitrage/references/model-routing.md`; this skill
-only defines the safe headless mechanics.
-
-## Codex CLI Commands
-
-### Research / debug — read-only, no network (default)
+### Repository analysis without live web
 
 ```bash
 OUTPUT="${TMPDIR:-/tmp}/codex-research.md"
-mkdir -p "$(dirname "$OUTPUT")"   # codex -o does NOT create missing parent dirs
-codex exec -s read-only --skip-git-repo-check \
+mkdir -p "$(dirname "$OUTPUT")"
+codex exec -s read-only --skip-git-repo-check -C "$REPO" \
   -o "$OUTPUT" \
-  "Task description...
-   Summarize findings into your final message (it is captured to the -o file)."
+  "Inspect only the named paths for this task. Return findings; do not edit."
 ```
 
-- `-s read-only` cannot modify ANY files.
-- `-o <FILE>` is written by the Codex harness, not by a model command, so it
-  works fine under `read-only` — this is how you capture results without giving
-  the agent write access.
-- No `--search` here, so the sandbox blocks network. That network-off default is
-  the real protection: even if the agent reads something sensitive, it cannot
-  exfiltrate it to an arbitrary host.
+`-s read-only` blocks model-initiated writes. `-C` selects the working
+directory; it does not confine reads to that directory. `-o` is written by the
+Codex harness so the result can still be captured under a read-only sandbox.
+Name the allowed paths in the prompt and exclude secrets from the worker's
+readable inputs.
 
-### Web research — `--search` opt-in (network ON, higher risk)
-
-Only add `--search` when the task genuinely needs the live web:
+### Live web research: explicit opt-in
 
 ```bash
-# NOTE: --search is a TOP-LEVEL flag — it goes BEFORE the `exec` subcommand.
-# `codex exec --search ...` is rejected as an unexpected argument.
-OUT="${TMPDIR:-/tmp}/codex-websearch.md"
-mkdir -p "$(dirname "$OUT")"   # codex -o does NOT create missing parent dirs
-codex --search exec -s read-only --skip-git-repo-check \
-  -o "$OUT" \
-  "Web research task..."
+OUTPUT="${TMPDIR:-/tmp}/codex-websearch.md"
+mkdir -p "$(dirname "$OUTPUT")"
+codex --search exec -s read-only --skip-git-repo-check -C "$REPO" \
+  -o "$OUTPUT" \
+  "Research this bounded question and cite the sources used."
 ```
 
-- Network ON turns "can read" into "can exfiltrate to anywhere", and opens
-  prompt-injection / SSRF paths if the agent reads untrusted content (random
-  repos, web pages, dependencies). See the orchestrator persona's reasoning.
-- Use it only over trusted inputs, and treat the result as if anything readable
-  on the machine could have left it. For heavier or less-trusted web work, prefer
-  an observable tmux surface so a human can watch.
+`--search` is a top-level flag and enables a higher-risk surface. Use it only
+when the user explicitly requested live research and the local/web inputs are
+trusted. Network access creates prompt-injection and data-disclosure risk even
+though writes remain blocked; route broad or untrusted web work through tmux.
+Never use danger or bypass flags.
 
-### Key Flags
+## Claude CLI
 
-- `-s, --sandbox <read-only|workspace-write|danger-full-access>` = sandbox policy
-- `--search` = enable live web search (turns network ON). Top-level flag: write
-  `codex --search exec ...`, NOT `codex exec --search ...`.
-- `--json` = JSONL event output
-- `-o, --output-last-message <FILE>` = final message output (works under read-only)
-- `-i, --image <FILE>` = attach image(s)
-- `-C, --cd <DIR>` = working directory root
-- `--skip-git-repo-check` = allow running outside a Git repo
-- Set the sandbox explicitly with `-s`. Never use `--dangerously-bypass-*`.
-
-## Gemini CLI Commands
-
-Gemini is NOT inherently read-only. Under a permissive approval mode
-(`--yolo`, `--approval-mode=auto_edit`/`yolo`) or in a trusted folder, its
-edit/write tools can mutate the workspace. To use it safely headless, treat it
-like Codex: drive it with a `-p` prompt and capture text via stdout redirect,
-and do NOT enable yolo / auto-edit approval modes. Anything that should change
-files goes to a tmux surface, not a headless Gemini run.
-
-### Basic Headless (read-only usage)
-```bash
-# gmn is an alias for `gemini`. Do not pass --yolo / --approval-mode=auto_edit
-# for headless read-only work.
-gmn -p "Task description" --output-format json --quiet > output.json
-```
-
-### With File Input
-```bash
-cat source.py | gmn -p "Analyze this code" --quiet > analysis.md
-```
-
-### Key Flags
-- `-p, --prompt <TEXT>`: The task/prompt
-- `-m, --model <MODEL>`: Model selection
-- `--output-format <text|json>`: Output format
-- `--quiet, -q`: Suppress spinners (essential for headless)
-
-## Claude CLI Commands
-
-`claude -p` consumes Claude plan quota or API spend. Keep it read-only. Never
-use a bypass-permissions flag; file-mutating work belongs on an observable tmux
-surface.
-
-### Pure artifact pass (stdin only)
+### Implicit-safe artifact pass: stdin, zero tools
 
 ```bash
 claude -p --model fable --effort medium --permission-mode dontAsk \
   --safe-mode --no-chrome --strict-mcp-config --tools "" \
   --no-session-persistence \
-  "Analyze the artifact from stdin and return findings only." < "$INPUT"
+  "Analyze only the artifact from stdin and return findings." < "$INPUT"
 ```
 
-This form disables built-in tools, customizations, Chrome, and inherited MCP
-servers. The shell supplies the artifact through stdin, so the model does not
-need file tools.
+This is the only recipe eligible for implicit bounded checks. It disables model
+tools and inherited integrations; the shell supplies the complete artifact.
+Review the input first because it is still sent to Anthropic.
 
-### Read-only repository pass
+### Repository pass: explicit headless requests only
 
 ```bash
 claude -p --model fable --effort medium --permission-mode dontAsk \
@@ -159,33 +89,27 @@ claude -p --model fable --effort medium --permission-mode dontAsk \
   "Inspect only the named repository paths and return findings. Do not edit."
 ```
 
-Run this only from a trusted repository and give each worker a distinct scope.
-`Read`, `Glob`, and `Grep` can send readable repository content to Anthropic;
-exclude secrets and untrusted prompt-bearing inputs. If the task needs Bash,
-network, writes, approvals, or live steering, use tmux instead.
+Run this only from a trusted repository with a narrow, explicit path scope.
+Tool allowlisting removes write tools but does not prove filesystem confinement:
+`Read`, `Glob`, and `Grep` may access other readable paths. If the task needs
+Bash, network, writes, approvals, or live steering, use tmux instead.
 
-### Effort and quota
+### Fable effort and quota
 
-- Use `--effort medium` by default for Fable.
-- Use `--effort max` only for genuinely ambiguous, high-risk reasoning where
-  the expected marginal quality justifies much faster quota burn. Do not launch
-  several broad max-effort workers before checking live quota.
-- Check the `quota` skill before expensive fan-out and after any limit error.
-  Keep CodexBar commands, reset handling, and provider routing in their existing
-  SSOTs rather than duplicating them here.
+- Use `--effort medium` by default. Reserve `max` for ambiguous, high-risk
+  reasoning whose expected benefit justifies much faster quota burn.
+- Consult the `quota` skill before expensive fan-out and after a limit error;
+  provider priority and reset handling stay in their existing SSOTs.
 
-## Timeout Guidelines
+## Supervision and completion
 
-- Minimum: 4 minutes (240000ms)
-- Research tasks: 10+ minutes (600000ms)
-- Judge progress by process state and meaningful output, not sparse stdout
-  alone. Follow `tmux-orchestration` for observation cadence and intervention;
-  do not invent a separate fixed no-progress window here.
-- `You've hit your session limit` is quota exhaustion, not a timeout. Preserve
-  captured output, check the `quota` skill, then resume or reroute according to
-  the user's model intent.
+Judge progress from process state plus meaningful output, not quiet stdout.
+Reuse the observation and intervention cadence in `tmux-orchestration` instead
+of defining a second polling policy here. Per the user's explicit expectation,
+do not label a still-running Claude worker as timed out before one hour; an
+approval wait, clear error, or confirmed no-progress state may still require the
+earlier intervention defined by that SSOT.
 
-## Configuration Files
-
-- Codex: `~/.codex/AGENTS.md`
-- Gemini: `~/.gemini/GEMINI.md`
+`You've hit your session limit` is quota exhaustion, not a timeout. Preserve
+captured output, report the exact terminal state, consult the `quota` skill,
+then resume or reroute according to the user's model intent.
