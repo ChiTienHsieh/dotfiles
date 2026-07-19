@@ -1,0 +1,41 @@
+# Personal Eval Set 框架 preflight
+
+## Learner Goal
+- 三合一（user 明說三個都要）：(1) 新模型一出，30 分鐘內判斷「對我的工作變強在哪 vs benchmark 灌水」；(2) 找能力邊界，決定哪些事放手全自動、哪些要盯；(3) 撞邊界變成可重複的好玩儀式。
+- 加碼 lens：**eval set = user 的個人護城河 (moat)** —— 每關要帶一條 moat 檢查點。
+- 深度 3（深挖細節）：版本比較、自動化排程、eval 腐化防治都要進地圖。
+- 場景：蓋在 dotfiles repo；未來 Mac 本機讓 Claude Code 讀取 Claude Code / Codex 的 local chat history 當挖題素材。這次先抽象框架＋現有 skills。
+
+## Current Level
+- Status: mastered（preflight 完課：L1–L7 七關 shotcall 全數拍板，出貨 codex/notes/personal-eval-set-plan.md）
+- Last updated: 2026-07-19
+- Confidence: high —— user 兩度自提優於選項的加碼案（A+C 混合存放、私有 submodule 分期制），並自行點出 judge alignment 校準問題（早於教學進度）。
+
+## Evidence
+- 2026-07-19: user 拒絕雙類比制既有 frame，主動要求全新類比（世界觀疲勞訊號？先觀察）。
+- 2026-07-19: 類比拍板＝**私房賽道（車廠試車手）**，user 自曝看跑跑卡丁車 (KartRider) 賽事、是爆哥粉絲 → 賽道 frame 可加 KartRider 風味（甩尾、計時、幽靈車）。專有名詞紀律比照 Vainglory：機制層直接用，具體賽道名/數據不可憑印象掰。
+
+## Decisions
+- L1 彎道形狀＝**B 規格彎（rubric replay）**：凍結任務＋輸入素材，驗收檢查表打分；A（golden test）與 C（難度階梯）視為 B 的特例。與 skill-creator `evals.json` 的 `expectations` 欄位同形。
+- L2 基建接電＝**A+C 混合（user 自提加碼案）**：skill-specific eval 放各 skill 目錄旁（`<skill>/evals/`，skill-creator 原生位置）；跨 skill／無 skill 的能力彎放中央 `evals/` 園區。兩邊共用 skill-creator schema＋grader＋benchmark。
+- 命名＝**`evals/`（複數）**：跟 vendored skill-creator 的 `evals/evals.json` 慣例一致，工具零改動直接吃。
+- L3 打分政策＝**B 分層計時**：script 硬判 → grader agent → 路感彎掛人工抽查標記。user 隨即自提關鍵問題：抽查不滿意時的校準迴圈（→ L3.5）。
+- L3.5 校準迴圈＝**A 判例庫制**：不滿意→歸檔人工判例（replay＋判決＋理由）→先升格明文 expectation、升不了才調 grader prompt→改完整本判例庫重考過關才恢復信任。user 原提案（judge alignment 盲測迭代）納為第二步。
+- L4 入庫政策＝**C-first 分期制（user 自提加碼案）**：先全私有（private remote 的 git submodule，沿 nvim submodule 前例）；累積一陣子後再議是否把 prompt/rubric 層開源、敏感素材留私有。去識別化稅延後到真的要開源那天才繳。工程註記：.gitmodules 的私有 URL 會公開露出；install.sh／外人 clone 須容忍 submodule 缺席。
+- L7 賽道養護＝**A 驗車日順檢**：驗車日尾聲附巡檢單（analyzer notes：飽和彎/非鑑別 assertion/廢路），user 當場拍板退役進名人堂／轉職 fidelity test／加難度層／除籍。彎道三種死法（飽和/洩題/路廢）與「路感彎洩題進 skill＝畢業轉職」概念 user 已接收。
+- L6 觸發制度＝**A 手動鑰匙**：user 喊驗車→管線全自動（跑三輪、收數、報告、歸檔），儀式（抽查/貼牆）留人工。B（skill 改動自動回歸受影響彎）明確列為二期。
+- L5 版本比較＝**A 圈速牆＋C 條件複賽**：benchmark 按「模型＋日期＋彎道版本」歸檔，同版本才可比，彎道改版舊幽靈作廢；意外結果（新旗艦輸幽靈）才加開新舊模型當場對撞＋blind comparator 複賽。
+
+## Known Gaps
+- （尚無）
+
+## Research Notes（2026-07-19）
+- skill-creator 已 vendored 在 `skills/claude/skill-creator/`，含完整 eval 基建：evals.json schema、grader/comparator/analyzer agents、benchmark mode（pass rate/time/tokens ± stddev）、eval-viewer。
+- Anthropic 官方 blog（claude.com/blog/improving-skill-creator...）的 skill 二分法：**capability uplift**（補模型做不到的事，模型變強會過時）vs **encoded preference**（把既有能力照個人流程/品味編排，耐久但要測 fidelity）。user 最愛的 chill/level-up/html* 幾乎全是 encoded preference 型。
+- blog 明說 benchmark mode 適合「model updates 後重跑」——正中 user 的 30 分鐘新車驗收目標。
+
+## Teaching Notes
+- 航空外殼照常當 preflight 語氣殼；概念類比另選新 frame（候選：私房賽道／木人巷／米其林密探）。
+
+## Next Suggested Levels
+- 類比拍板後出地圖骨架：eval 單位形狀 → 存放結構 → 評分方式 → 挖題管線 → 版本比較 → 排程 → 腐化防治。
