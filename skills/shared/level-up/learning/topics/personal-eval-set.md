@@ -20,6 +20,7 @@
 - L2 基建接電＝**A+C 混合（user 自提加碼案）**：skill-specific eval 放各 skill 目錄旁（`<skill>/evals/`，skill-creator 原生位置）；跨 skill／無 skill 的能力彎放中央 `evals/` 園區。兩邊共用 skill-creator schema＋grader＋benchmark。
 - 命名＝**`evals/`（複數）**：跟 vendored skill-creator 的 `evals/evals.json` 慣例一致，工具零改動直接吃。
 - L3 打分政策＝**B 分層計時**：script 硬判 → grader agent → 路感彎掛人工抽查標記。user 隨即自提關鍵問題：抽查不滿意時的校準迴圈（→ L3.5）。
+- L3.5 校準迴圈＝**A 判例庫制**：不滿意→歸檔人工判例（replay＋判決＋理由）→先升格明文 expectation、升不了才調 grader prompt→改完整本判例庫重考過關才恢復信任。user 原提案（judge alignment 盲測迭代）納為第二步。
 
 ## Known Gaps
 - （尚無）
