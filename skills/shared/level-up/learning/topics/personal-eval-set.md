@@ -7,9 +7,9 @@
 - 場景：蓋在 dotfiles repo；未來 Mac 本機讓 Claude Code 讀取 Claude Code / Codex 的 local chat history 當挖題素材。這次先抽象框架＋現有 skills。
 
 ## Current Level
-- Status: learning（preflight 進行中，Level 0 類比未定）
+- Status: mastered（preflight 完課：L1–L7 七關 shotcall 全數拍板，出貨 codex/notes/personal-eval-set-plan.md）
 - Last updated: 2026-07-19
-- Confidence: n/a
+- Confidence: high —— user 兩度自提優於選項的加碼案（A+C 混合存放、私有 submodule 分期制），並自行點出 judge alignment 校準問題（早於教學進度）。
 
 ## Evidence
 - 2026-07-19: user 拒絕雙類比制既有 frame，主動要求全新類比（世界觀疲勞訊號？先觀察）。
@@ -22,6 +22,7 @@
 - L3 打分政策＝**B 分層計時**：script 硬判 → grader agent → 路感彎掛人工抽查標記。user 隨即自提關鍵問題：抽查不滿意時的校準迴圈（→ L3.5）。
 - L3.5 校準迴圈＝**A 判例庫制**：不滿意→歸檔人工判例（replay＋判決＋理由）→先升格明文 expectation、升不了才調 grader prompt→改完整本判例庫重考過關才恢復信任。user 原提案（judge alignment 盲測迭代）納為第二步。
 - L4 入庫政策＝**C-first 分期制（user 自提加碼案）**：先全私有（private remote 的 git submodule，沿 nvim submodule 前例）；累積一陣子後再議是否把 prompt/rubric 層開源、敏感素材留私有。去識別化稅延後到真的要開源那天才繳。工程註記：.gitmodules 的私有 URL 會公開露出；install.sh／外人 clone 須容忍 submodule 缺席。
+- L7 賽道養護＝**A 驗車日順檢**：驗車日尾聲附巡檢單（analyzer notes：飽和彎/非鑑別 assertion/廢路），user 當場拍板退役進名人堂／轉職 fidelity test／加難度層／除籍。彎道三種死法（飽和/洩題/路廢）與「路感彎洩題進 skill＝畢業轉職」概念 user 已接收。
 - L6 觸發制度＝**A 手動鑰匙**：user 喊驗車→管線全自動（跑三輪、收數、報告、歸檔），儀式（抽查/貼牆）留人工。B（skill 改動自動回歸受影響彎）明確列為二期。
 - L5 版本比較＝**A 圈速牆＋C 條件複賽**：benchmark 按「模型＋日期＋彎道版本」歸檔，同版本才可比，彎道改版舊幽靈作廢；意外結果（新旗艦輸幽靈）才加開新舊模型當場對撞＋blind comparator 複賽。
 

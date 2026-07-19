@@ -21,6 +21,7 @@
 - **選用規則**：動態／協調／時機／取捨／會重置的 power curve → Vainglory；永久累積／持久狀態／新手村基礎 → 楓之谷。兩種「成長」的差別：Vainglory = 每場重置的時間窗，楓之谷 = 不重置的永久存檔。中間地帶平手 → 用 Vainglory（主力優先）。
 - **Vainglory 專有名詞紀律**：通用 MOBA 機制（打野時機、清線取捨、power spike、roam、換資源）model 很熟、直接用、不用查。但**專有名詞層**（英雄名字/技能組、確切野怪生成秒數、等級上限、道具名）model 不可憑印象掰 —— 要嘛停在機制層不點名，要嘛用 User 給的例子（User 是 top 0.1%，本身就是 ground truth），要嘛先跟 User 確認。呼應 USER.md frustrates 的 fact-drift 那條。
 - **黑名單：Roguelike 已驗證沒命中，別再用。**
+- **生造詞紀律（2026-07-19 user 明確開罵）**：類比裡自創的機構/部門名不能是 AI 硬湊複合詞（「防鋪平科」被評「三小懶覺中文」）。自創名詞要像台灣人真的會講的話（「賽道養護」OK），不確定就用平實說法，別為了可愛硬造。
 - **新候選 frame：賽車／跑跑卡丁車 (KartRider)。** User 自報看 KartRider 賽事、爆哥（台灣頂尖選手／實況主）粉絲。2026-07-19 personal-eval-set preflight 首用「私房賽道」類比獲 user 選中（"A sounds cool"）。可用機制層：甩尾、計時賽、幽靈車（跟自己舊紀錄比）、賽道熟練度。專有名詞紀律比照 Vainglory：具體賽道名、選手戰績、版本內容不可憑印象掰，要嘛停機制層要嘛先確認。效果待整段課程驗證後回寫。
 - **航空框架（preflight/debrief 專用外殼）**：user 自評「超中二 不過我喜歡」並主動延伸（AI＝機長自己處理亂流、during notes＝黑盒子、debrief＝查降落點對不對機票）。僅用於 implementation modes 的語氣外殼，教概念仍走雙類比制。2026-07-05 dogfood 實測：外殼扛住五個概念全程有效。
 - **debrief 報告不可一次倒完**（2026-07-05 user 明確糾正）：高密度 decisions-first 報告整篇送出＝無聊失敗。必須照 level-up 拆成多個 level，一關一個決策＋MCQ 分段消化。
