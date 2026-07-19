@@ -19,6 +19,7 @@
 - L1 彎道形狀＝**B 規格彎（rubric replay）**：凍結任務＋輸入素材，驗收檢查表打分；A（golden test）與 C（難度階梯）視為 B 的特例。與 skill-creator `evals.json` 的 `expectations` 欄位同形。
 - L2 基建接電＝**A+C 混合（user 自提加碼案）**：skill-specific eval 放各 skill 目錄旁（`<skill>/evals/`，skill-creator 原生位置）；跨 skill／無 skill 的能力彎放中央 `evals/` 園區。兩邊共用 skill-creator schema＋grader＋benchmark。
 - 命名＝**`evals/`（複數）**：跟 vendored skill-creator 的 `evals/evals.json` 慣例一致，工具零改動直接吃。
+- L3 打分政策＝**B 分層計時**：script 硬判 → grader agent → 路感彎掛人工抽查標記。user 隨即自提關鍵問題：抽查不滿意時的校準迴圈（→ L3.5）。
 
 ## Known Gaps
 - （尚無）
