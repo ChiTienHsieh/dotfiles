@@ -21,7 +21,8 @@
 - 命名＝**`evals/`（複數）**：跟 vendored skill-creator 的 `evals/evals.json` 慣例一致，工具零改動直接吃。
 - L3 打分政策＝**B 分層計時**：script 硬判 → grader agent → 路感彎掛人工抽查標記。user 隨即自提關鍵問題：抽查不滿意時的校準迴圈（→ L3.5）。
 - L3.5 校準迴圈＝**A 判例庫制**：不滿意→歸檔人工判例（replay＋判決＋理由）→先升格明文 expectation、升不了才調 grader prompt→改完整本判例庫重考過關才恢復信任。user 原提案（judge alignment 盲測迭代）納為第二步。
-- L4 入庫政策＝**C-first 分期制（user 自提加碼案）**：先全私有（private remote 的 git submodule，沿 nvim submodule 前例）；累積一陣子後再議是否把 prompt/rubric 層開源、敏感素材留私有。去識別化稅延後到真的要開源那天才繳。
+- L4 入庫政策＝**C-first 分期制（user 自提加碼案）**：先全私有（private remote 的 git submodule，沿 nvim submodule 前例）；累積一陣子後再議是否把 prompt/rubric 層開源、敏感素材留私有。去識別化稅延後到真的要開源那天才繳。工程註記：.gitmodules 的私有 URL 會公開露出；install.sh／外人 clone 須容忍 submodule 缺席。
+- L5 版本比較＝**A 圈速牆＋C 條件複賽**：benchmark 按「模型＋日期＋彎道版本」歸檔，同版本才可比，彎道改版舊幽靈作廢；意外結果（新旗艦輸幽靈）才加開新舊模型當場對撞＋blind comparator 複賽。
 
 ## Known Gaps
 - （尚無）
