@@ -4,6 +4,10 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| Dotfiles cross-session message guard debrief | mastered | 能區分完整 push boundary，拍板 fresh-read/fail-closed contract、atomic commits 與 full-range final review gate。 | 2026-07-22 | topics/dotfiles-cross-session-message-guard.md |
+| gu-log rebrand Git history debrief | mastered | 能排除 rename churn、辨認 interface contracts，並選擇保留歷史且集中解衝突的 main→rebrand merge 策略。 | 2026-07-22 | topics/gu-log-rebrand-history-debrief.md |
+| Codex machine actor routing | mastered | 能區分 actor address、hook lifecycle、identity logic、shared policy 與 machine overlay；正確判斷未 trust hook 的行為並完成關鍵檔案 mapping。 | 2026-07-16 | topics/codex-machine-actor-routing.md |
+| gu-log editorial taste | mastered | 能把不自然讀感拆成 source-first、explanation budget、單一中央矛盾、MoguNote 邊界與單一核心比喻，並據此判定 SP-256 應全文重寫。 | 2026-07-16 | topics/gu-log-editorial-taste.md |
 | Dedup 會後施工 preflight | mastered | 實戰課程格式首航。六關決策全拍板（兩層並用/遞移旗標/拆群復活/合約B形/權重拆帳燈號/掃描三全掃），merge＝內容整理責任是 user 自己立的原則。出貨 report-preflight-build.md。 | 2026-07-13 | topics/dedup-post-meeting-build.md |
 | Skill 規則堆積學 | mastered | 老楓道具欄類比。讀者入口判準、使用頻率分層、事故≠規則、description 觸發面全數一次通過（含綜合驗收）；四個真實修繕決策全拍板並 shipped。 | 2026-07-10 | topics/skill-rule-hygiene.md |
 | 投資配置：39w 全球股容器 | learning | 舊楓之谷類比。已懂 CFD 是對賭合約/交易對手風險。**Fable 決策已寫進 topic（VWRA 主推＋累積型＋bitcoin 上限＋分批進場），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
