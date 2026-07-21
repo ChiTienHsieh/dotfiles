@@ -117,9 +117,9 @@ Each `topics/<topic-slug>.md` should contain:
 
 Use stable topic slugs, lowercase ASCII, hyphen-separated, for example `python-async.md`, `fastapi-dependencies.md`, `llm-evals.md`.
 
-## Level 0: Analogy & Depth Selection (互動起手式)
+## Level 0: Analogy, Depth & Medium Selection (互動起手式)
 
-Before planning ANY levels, run Level 0. This is a mandatory interactive checkpoint — AI does NOT start teaching until the user chooses.
+Before locking or teaching any levels, run Level 0. This is a mandatory interactive checkpoint — AI does NOT start teaching until the user chooses. Privately sketch the likely level shapes only far enough to recommend a lesson medium; do not start the lesson.
 
 A good analogy isn't decoration — it IS the mental model: the user should finish able to **predict** what should happen, **transfer** the pattern to new situations, and **judge** whether AI output is sense or hallucinated garbage, even in unseen scenarios. Before picking, read the topic's **shape** (dynamic/static? accumulative/resettable? coordination/independent? time-sensitive/permanent?), then apply "Analogy Selection Discipline" below.
 
@@ -146,7 +146,16 @@ AI presents:
    - 2) 紮實打底 — solid mental model; can predict common cases, handle typical edge cases, and know where the model breaks down
    - 3) 深挖細節 — comprehensive mental model; can reason about tricky trade-offs, explain "why not X", and extend the model to new scenarios
 
-Then WAIT for user to choose. Do not assume. Do not proceed.
+3. **Lesson Medium Options** — use lowercase letters so they stay visually distinct from the uppercase analogy options:
+   - m) Chat Markdown — lesson content and the authoritative MCQ stay in the conversation.
+   - h) Self-contained HTML — lesson content lives in an HTML artifact; chat contains a short intro, the absolute file path, and the authoritative MCQ.
+   - a) Adaptive — start with Chat Markdown; propose HTML before switching when a later level would materially benefit.
+
+Before presenting the medium options, inspect the expected levels and mark one with ★ as the recommendation. Give one sentence explaining why, based on the lesson's actual visual structure, interaction, navigation, comparison density, code/diff readability, and switching cost. Treat the learner profile as an input, not an automatic verdict; do not recommend HTML merely because the skill supports it.
+
+The learner chooses analogy + depth + medium using uppercase analogy letters, a depth number, and a lowercase medium letter, for example `A2m`, `B1h`, or `C3a`. The recommendation is advisory. Never override the learner's choice or silently switch medium.
+
+Then WAIT for the user to choose all three dimensions. Do not assume. Do not proceed.
 
 ### Analogy Selection Discipline
 
@@ -160,7 +169,7 @@ The single home for analogy rules — picking, carrying, and verifying all live 
 
 ### After User Chooses
 
-Confirm briefly, record the chosen analogy in the topic's learning file, then proceed to "Assess and Plan" using the chosen analogy and depth. 若這個 frame 整段課程驗證有效（或明顯沒命中），回寫 `learning/user-profile.md` 讓之後的 session 重用或避開。
+Confirm briefly, record the chosen analogy, depth, and medium in the topic's learning file, then proceed to "Assess and Plan" using those choices. 若這個 frame 整段課程驗證有效（或明顯沒命中），回寫 `learning/user-profile.md` 讓之後的 session 重用或避開。
 
 ---
 
@@ -182,7 +191,7 @@ When the user asks for pre-implementation planning, post-implementation understa
 ```text
 Level N: <topic>
 ├── One short setup in chat
-├── Clear explanation or visual-first material when useful
+├── Clear explanation in the Level 0 medium
 ├── Key distinction / common mistake
 ├── MCQ or tiny application check
 └── Learning-record update after the user passes or reveals a gap
@@ -192,9 +201,15 @@ Prefer one narrow win per level. Avoid dumping the whole map when the user needs
 
 ### 3. Visual Material
 
-When the topic benefits from diagrams, comparisons, or interactive reading:
+Honor the medium selected in Level 0:
 
-- Follow the shared `html-explainer` skill for artifact structure, self-contained HTML, inline CSS/JS, no external dependencies, reviewer checks, and built-in comprehension quiz.
+- `m`: Keep lesson content and the MCQ in Chat Markdown unless the learner explicitly changes medium.
+- `h`: Render each lesson as self-contained HTML; keep the authoritative MCQ in chat so progression has one answer state.
+- `a`: Start in Chat Markdown. Before any switch to HTML, explain the concrete benefit for the upcoming level and ask the learner to approve it.
+
+When using HTML because the learner selected or approved it:
+
+- Follow the shared `html-explainer` skill for artifact requirements. Its embedded quiz is practice only; the chat MCQ remains authoritative and solely controls level progression.
 - Use zh-tw plain language and a mobile-friendly layout.
 - **Theme: match the learner's gu-log blog (Solarized Light). Red is NOT a palette colour.** Reuse these exact tokens so every level looks consistent with their blog:
   - bg `#fdf6e3`, surface/cards `#eee8d5`, surface-hover `#e5dfc9`, borders/dividers `#d3cbb7`
@@ -204,7 +219,7 @@ When the topic benefits from diagrams, comparisons, or interactive reading:
   - Cards/callouts: surface bg, 1px `#d3cbb7` border, optional 3–4px accent-coloured left border, radius 8–18px. Fonts: `Inter`, `Noto Sans TC`; zh body line-height 1.8, headings 1.3.
   - The learner may override per-session (e.g. dark mode → gu-log Dracula: bg `#282a36`, text `#cecdda`, accent `#ff79c6`); honour it but keep Solarized Light as the standing default.
 - **Beginner-acronym test:** expand every English acronym/abbreviation on first use, e.g. `IBKR（盈透證券，一家美國網路券商）`, `VT（Vanguard 全世界股票 ETF）`. When several appear, add a short glossary box up front.
-- In chat, give only a short intro plus the absolute file path. Ask the user to read it before the MCQ. (Side-agent rendering: see "Delegating HTML rendering to a side agent".)
+- In chat, give only a short intro plus the absolute file path. Ask the user to read it before the authoritative MCQ. (Side-agent rendering: see "Delegating HTML rendering to a side agent".)
 
 ## MCQ Rules
 
