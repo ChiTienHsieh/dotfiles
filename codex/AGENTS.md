@@ -35,6 +35,10 @@
 - 要推 guardrail / SSOT repo（例如 `~/dotfiles` 裡會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md）時，先 `commit`，再依 `~/dotfiles/codex/notes/worker-routing.md` 選審查者；不確定 quota 就先查。
 - 修改 prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric 等行為規則時，除了 safety review，也要做 simplify review。它要找出只針對單次事故的過窄規則、過度工程化，以及能否換成更通用的說法，並逐項回報 Keep / Simplify / Drop。只有安全問題嚴重到不能放行，或確實有明顯更簡潔的通用規則時，才要求修改。
 
+## 跨 task / session 傳訊
+- 向其他 Codex task/thread、tmux session/pane 或 agent session 傳送任何訊息前，MUST 緊鄰傳送動作先讀取收件方最新可用內容與執行狀態；先前快照、摘要、標題或記憶不得代替。
+- 若讀取失敗、內容不足以判斷，或無法確認收件方目前工作，MUST 不傳送並先回報 blocker。提醒、暫停、狀態同步與 follow-up 也不例外。
+
 ## 跨 agent 指令的簽名
 - 透過 tmux send-keys、marker file 或請使用者代送 prompt 給另一個 agent 時，結尾要附上回信地址和權限等級。回信地址是發話 pane 的 tmux pane id；裸 `%47` 就能在整個 server 內定位，發話 agent 可用 `$TMUX_PANE` 查自己。權限等級要標明「agent 委派」或「user 直接指令」。委派 prompt 裡的限制是硬邊界，收件方不能自行 override；只有使用者的直接指令可以蓋過。
 - 格式：`—— 來自 %47（orchestrator CC，委派任務；限制為硬邊界。回問：tmux send-keys -t %47）`。使用者平常直接對話不必簽名，預設就是最高權限。
