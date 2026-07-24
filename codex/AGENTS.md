@@ -24,6 +24,9 @@
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
 - 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選另一個頂尖模型提供第二意見；Claude Code 或 Codex CLI reviewer 預設用 `tmux-orchestration` 建立可觀察的 worker。
 
+## Backlog 收件
+- `issue this:` 代表只收進 backlog，不開始實作。先判斷想法的 canonical owner，不看目前 cwd：若明確屬於某個 GitHub repo 且適合公開，就 create/update canonical issue；否則 append 到 `~/Documents/Codex/BACKLOG.md`。不確定時預設放本機。記錄簡短標題、Why、Next、來源 task URL 與日期，完成後立即停止。
+
 ## 實作前後的理解檢查
 - 任務不簡單或不熟悉時，依風險決定是否在實作前、實作中與實作後檢查理解；小而安全的修改不必硬走儀式。
 - 寫程式碼前先找出會影響決策的未知資訊，例如資料模型、type/API 契約、使用者會看到的行為與架構風險。
