@@ -11,7 +11,7 @@
 | Dedup 會後施工 preflight | mastered | 實戰課程格式首航。六關決策全拍板（兩層並用/遞移旗標/拆群復活/合約B形/權重拆帳燈號/掃描三全掃），merge＝內容整理責任是 user 自己立的原則。出貨 report-preflight-build.md。 | 2026-07-13 | topics/dedup-post-meeting-build.md |
 | Skill 規則堆積學 | mastered | 老楓道具欄類比。讀者入口判準、使用頻率分層、事故≠規則、description 觸發面全數一次通過（含綜合驗收）；四個真實修繕決策全拍板並 shipped。 | 2026-07-10 | topics/skill-rule-hygiene.md |
 | 投資配置：39w 全球股容器 | learning | 舊楓之谷類比。已懂 CFD 是對賭合約/交易對手風險。**Fable 決策已寫進 topic（VWRA 主推＋累積型＋bitcoin 上限＋分批進場），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
-| Dedup 設計會議準備（討論） | learning | 公會幹部會議類比。已拍板：Q2 走 join/YAGNI、rejected 永久黏、Layer→快慢層、Carol 選項一視同仁、double-submit 答辯。未決：undo 去向(Q8)、merge 語意(Q9)、慢層選型。廢詞/AI 代號零容忍。 | 2026-07-10 | topics/dedup-meeting-prep.md |
+| Dedup 設計會議準備（討論） | learning | 已拆分送出者與受災戶身分：v1 只用 `created_by` 判 reporter 三態，受災戶關係維持 unknown；電話角色仍待團隊確認。 | 2026-07-29 | topics/dedup-meeting-prep.md |
 | gu-log editorial presentation preflight | mastered | 米其林餐廳框架。三 open questions 全拍板（sans-first／標題下小卡／全進抽屜＋TOC 細線）。品味規則：卡片質感>裸文字、UI 不用 emoji 用 SVG icon、小字要配緊行高。 | 2026-07-05 | topics/gu-log-editorial-presentation.md |
 | Implementation loop / debrief mode | mastered | 航空框架。已掌握四象限、風險觸發(看決策不看 diff 大小)、during notes 只記保守假設、heredoc 看收件人。七項決策與 shipped 全吻合。**報告要拆 level，不可一次倒完。** | 2026-07-05 | topics/implementation-understanding-loop.md |
 | html-artifacts vs html-explainer 分工 | mastered | 楓之谷商店街類比。已分清 work artifact vs 教學配方、description 路由、品名搶字眼病灶。判決 SEPARATE。自述已熟 agent skills 觸發機制。 | 2026-07-04 | topics/html-duo.md |

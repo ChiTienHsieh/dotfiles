@@ -32,6 +32,11 @@
 - 委派判斷：判斷在前、苦工在後且量大 → 委派；判斷跟苦工纏一起或只剩兩刀 → 自己動手。
 
 ## 已拍板的決策（會議素材，steers future）
+- **快層 timeout 衝突定案（2026-07-28）**：移除 `fast_timeout_ms`、200ms 預設值與後台旋鈕；後端仍保留固定的查詢安全期限，逾時就 fail-open 放行並記錄指標。HC 的會議脈絡支持移除任意的 200ms 政策值，但網路順暢不代表後端查詢永遠快速；DB lock、連線池塞車、負載尖峰或 query plan regression 仍需工程層安全期限兜底。
+- **樓層 v1/v2 邊界定案（2026-07-28）**：v1 樓層不參與候選進出，只在提示卡顯示；UI 稱「已有的求助單」，不稱「舊單」或跨層誤叫「任務單」。v2 要解析並正規化樓層；具體技術路線尚待實作前確認，建議 deterministic parser 優先、LLM structured output 只作模糊字串 fallback，任何失敗都 fail-open、不阻擋送單，且先 shadow 驗證再讓樓層成為排除候選的硬條件。
+- **快層提示 UI 決策（2026-07-28）**：採兩步 progressive disclosure。第一步只讓使用者判斷「是不是現在要回報的同一件事」，確認後才顯示留言／建議修改／更新需求。主動作不用抽象的「是，同一件事」，改成直接描述去向的「去看看這張求助單」，並讓按鈕本身就是 permalink，避免重複連結；另一個動作定案為「不是同一件事，另外開單」，輔助文字「將建立新的求助單，分開追蹤處理」，不承諾專人。候選卡 mobile-first 顯示樓層、需求數量、回報時間，手機可點開／長按、desktop 可 hover 或 keyboard focus 預覽；hover 只是 enhancement，不承載必要資訊，開連結前需保住尚未送出的表單內容。
+- **快層規則執行定案（2026-07-28）**：地圖網＋身分網合併撈有限候選，再逐 pair 判斷本人曾開／鄰居撞單關係；不在第一個命中停止，全部評完後選最強提示，其他命中保留 evidence。理由：重複類型屬於 pair 關係，不是新單本身的固定分支。
+- **送出者／受災戶身分拆分定案（2026-07-29）**：v1 只用 `created_by` 判 `reporter_relation = same | different | unknown`；active GraphQL 建單需登入且 mutation 固定填登入者 UUID，所以正常新單通常是 same/different，unknown 留給 legacy／import／未來匿名資料。`affected_person_relation` 不從現有聯絡欄位硬猜：`contact_name` required 但只是現場聯絡人自由文字，`contact_phone`／`contact_email` nullable，且沒有電話角色 contract，因此 v1 維持 unknown。unknown 仍跑地點＋時間＋類別，只提示「附近可能有相同需求」，不宣稱鄰居撞單。
 - **Q2 立場**（已寫回 SSOT §七）：單後端 + PG VM 不用為百萬人設計 → v1 走 join、先推 POC、瓶頸出現再重構。
 - **rejected pair 永久黏**（立場 1）：worker 查詢層排除；理由=錯誤不對稱哲學延伸（錯合併 >> 漏合併）。
 - **Layer 1/2 命名廢除 → 快層/慢層**：schema 全改（'fast'/'slow'、hint_outcome、rescan_needed、fast_*/slow_*、hint_accepted、pause_slow）。
@@ -39,6 +44,8 @@
 - **double-submit 答辯定稿**：前端 disable/debounce 只擋「手滑」；擋不住的（回應丟失+重送、跨裝置、NGO 批次匯入）本來就是慢層存在理由；反手建議 backend 加 idempotency key（submission_uuid + UNIQUE）。故事要挑「前端擋不住」的機制才立於不敗。
 
 ## 未定案 / 等團隊拍板
+- **會議用可拖曳快層邏輯編輯器（2026-07-29 提案）**：user 希望在 Vercel system-design site 內嵌 `diagram-editor` 式 section，以 TD flowchart 拖曳、新增／刪除整段 if-else 邏輯，會議中即時改設計。邊界已確認：只做 design-time Mermaid 編輯與匯出，絕不直接控制 production；figure-driven production 留待遙遠未來再議。現有對話中的 flowchart 只是可質疑、可迭代草稿，不是規格：它錯把「沒有同人證據」畫成「確定不同人」，逐 pair 迴圈也沒有清楚表達 iterator／收集命中／全部完成後排序三階段，後續須逐節點重畫。
+- **`contact_phone` 角色仍待團隊拍板（2026-07-28）**：user 傾向把它定義成「本單聯絡電話，可填受災戶、志工或其他已知聯絡人，並記錄角色」。最小提案為 nullable `contact_phone_role = affected_person | reporter | other`；NULL 代表舊資料／角色未知，只能聯絡、不能當去重身分訊號，不另設 `unknown` enum。`optimized-version` 現況只有 nullable 的現場／follow-up 聯絡方式，沒有角色欄位或代報表，因此尚未涵蓋；此為提案，不是已定案 contract。
 - **undo（confirmed 反悔）是紅線要求，但 SSOT 沒定 undo 後卡回哪狀態**（suggested 重審 or rejected？）→ 候選 Q8。
 - **merge 語意細究**（Task #8）：數量語意（2+2 箱=4 or 2？）、內容互補欄位合成、取代（=merge 特例）、三張成群 canonical 選法、merge 後副件被更新 → 可能產出 Q9。
 - 旋鈕（快層閘門調音台）存廢+命名留 backlog（Task #7），等 Act II 演算法討論再定，別先幫可能被砍的旋鈕打蠟。
@@ -47,6 +54,10 @@
 ## 詞彙 / 品味（硬規則）
 - **廢詞（絕不再用）**：「安心話」（user: sounds like cn, wtf）；「個資疑慮」當去重擋箭牌（Carol 證偽）；「過堂」（看不懂）→ 改「逐一確認」；「13 個案例**守住門檻**」這類翻譯腔動賓亂配（user: 懶覺中文）—— 動詞要配得上受詞，寫人話；「**待團隊決**」這類砍尾縮寫（決定→決）也中槍（user: 又是三小懶覺中文）→ 站上已改「未決問題」——內容裡的詞一律寫完整，不自創縮寫。
 - **user 對「AI 生的代號」零容忍**（Layer 1/2、情境 A/B/C、T1–T3、branch_a 全中槍）→ 新名詞一律用人話。
+- 2026-07-28 system-design HTML 全頁改寫的基準讀者已拍板為「大三資工生」：可假設懂基本 DB／API，但不熟本專案；標準 technical term 與 code token 保留，專案自創詞、會議黑話、AI 翻譯腔必須先用台灣口語講清楚。
+- 2026-07-28 technical term 規則採「午餐測試」：台灣工程師真的會講且更精準才保留，第一次出現補一句人話；刪除語意已包含的贅字，例如「固定排程的背景工作」縮成「背景排程工作」。
+- 2026-07-28 system-design HTML 資訊架構採雙層閱讀：現行做法與原因先顯示，規則、DDL、歷史紀錄放摺疊區；已讀內容也要能收成 outline，保留閱讀進度感，動畫方向為 iOS/macOS 式平順、可追蹤內容去向。
+- 2026-07-28 閱讀互動拍板：區塊右下角另設「讀完並收起」，不把一般收合誤算成讀完；完成時可有輕量 silly animation。整頁 Polaris 是 chill、好玩，同時 informative、educational，互動要引起好奇但不能蓋過技術內容。
 - 課文品味：sonnet 版太無聊 → fable 接手；課文必須場景先行、角色開口說話、劇情載知識，不是「說明文＋類比裝飾」。光復在地假資料敘事對 user 有效。
 - **故事角色名必須自帶職位**（user 拍板）：裸名（阿華／小美／老王）是白噪音，只有職位有資訊量。要嘛只用職位，要嘛用職位縮合名——user 自創：阿台=後台 admin、小幹=幹部、老工=工程師（此三名已獲批准，之後故事沿用）。
 - mock data 合理性原則：每齣戲的機制必須對得上快層/慢層規則，不能只是好笑（user 高品質 design smell：不合理的 user story 會害團隊為爛情況設計資料結構）。
