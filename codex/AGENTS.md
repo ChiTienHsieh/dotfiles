@@ -16,6 +16,11 @@
 - 技術背景：Python / FastAPI / LLM；macOS M1/M2；Python 使用 uv；bun 優先於 npm。
 - 處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH 或 GitHub AI 帳號前，先讀 `~/.codex/machine.md`。它是 `~/.config/machine.md` 的 symlink；後者才是與 Claude Code 共用的本機 SSOT，請直接改後者，因為 write-guard 會拒絕修改 symlink。這個檔案絕不能放 token 或 private key。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
 
+## 交付物
+- 交付物（報告、文件、PR 內文、計畫、PDF）要寫成自足的最終狀態：只讀這一份就完整，不需要知道它是怎麼變成現在這樣的。
+- 收到意見就直接把內容改好，不要留下草稿、版本、第幾輪修改、原本寫法或已被推翻的決定。只有使用者明確要 changelog、歷史或決策紀錄時才寫這些。
+- 上面「讓沒看過執行過程的人也看得懂」「不要自創縮寫」同樣適用於交付物。術語只在必要時用；堆術語會讓人讀不下去。
+
 ## 執行任務
 - 清楚、安全的任務要一路完成修正、測試、`commit` 和 `push`。只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下來。
 - 安全的指令若被 sandbox、權限、Keychain 或網路擋住，先用合適的 escalation 重試再放棄；高風險指令不得自行 escalation。
