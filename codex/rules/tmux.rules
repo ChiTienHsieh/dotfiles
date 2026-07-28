@@ -1,0 +1,15 @@
+# tmux controls a persistent server outside the current process sandbox.
+# Every invocation must remain visible to Guardian, including read-only queries.
+prefix_rule(
+    pattern=[["tmux", "/opt/homebrew/bin/tmux", "/usr/local/bin/tmux"]],
+    decision="prompt",
+    justification="Every tmux command must receive Guardian review before accessing the external tmux server.",
+    match=[
+        "tmux list-sessions",
+        "tmux capture-pane -p -t %23",
+        "tmux send-keys -t %23 Enter",
+        "/opt/homebrew/bin/tmux list-sessions",
+        "/opt/homebrew/bin/tmux split-window",
+        "/usr/local/bin/tmux list-sessions",
+    ],
+)

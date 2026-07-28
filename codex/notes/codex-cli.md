@@ -2,6 +2,15 @@
 
 這份檔案記錄調查過的 Codex CLI 怪癖、死路、與綁定特定版本的發現。每條都標日期，過時就刪掉。
 
+## tmux 一律經 Guardian（2026-07-29、`codex-cli 0.145.0` 驗證）
+
+- `workspace-sprin` 不允許 tmux Unix socket；Codex 直接執行或 command wrapper 中明示的任何 tmux 指令，都應在第一次呼叫時要求 scoped escalation，讓 `approvals_reviewer = "auto_review"` 的 Guardian 審查。read-only 指令也不例外。
+- 不要用 PreToolUse hook 做「sandbox 先擋，再叫 agent 升權重試」。目前 PreToolUse 不支援 `ask`，而 `deny` 後的 hook input 也無法可靠證明重試是否真的 escalated，容易形成失敗迴圈或被繞過。
+- 不對 read-only tmux 子指令開 sandbox 例外。Unix socket 權限只辨識 socket path，不理解 tmux protocol 或 subcommand；一旦 sandbox 可連 socket，同一通道也能送出改變 server 狀態的操作。
+- `codex/rules/tmux.rules` 是 outside-sandbox 的 defense in depth：明確把 tmux invocation 判成 `prompt`。真正阻止 sandbox 直連的是 permissions profile 沒有 tmux socket allowlist。
+- 不可保留 `["uv", "run"]` 這類可直接指定任意 executable 的 broad command-runner `allow` rule；`uv run tmux …` 會只匹配外層 allow 而繞過 direct-tmux prompt。需要免審的 uv workflow 應核准到固定子指令，例如 `["uv", "run", "pytest"]`。
+- 這個保證的邊界是 Codex 提交給 tool/execpolicy 的 command，包括 wrapper 中明示的 tmux；Guardian 不會攔截已核准程式內部自行產生的任意 child process。後者若也要逐次 mediation，需要 OS/socket proxy 級設計，不是 PreToolUse 或 prefix rules 能完整提供。
+
 ## CodexBar usage checks
 
 - For quota checks, prefer `codexbar usage --provider both --source cli`.

@@ -25,6 +25,7 @@
 ## 執行任務
 - 清楚、安全的任務要一路完成修正、測試、`commit` 和 `push`。只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下來。
 - 安全的指令若被 sandbox、權限、Keychain 或網路擋住，先用合適的 escalation 重試再放棄；高風險指令不得自行 escalation。
+- tmux socket 刻意不開放給 sandbox。Codex 直接執行或 command wrapper 中明示的任何 tmux 指令（包含 read-only），第一次就必須要求 scoped escalation，交由 Guardian 自動審查；不要先在 sandbox 試跑，也不要透過 wrapper 或其他 client 繞過。
 - 收尾前 worktree 仍 dirty 時，主動提供整理選項：review 後 `commit`/`push`、拆分 stage、`stash`、經同意 discard，或維持 dirty。不要自動清掉使用者未交代的變更。
 - 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
