@@ -86,31 +86,22 @@ ensure_real_dir() {
     mkdir -p "$dest"
 }
 
-configure_codex_cmux_permissions() {
+configure_codex_local_permissions() {
     local config="$1"
-    local cmux_socket_root="$HOME/.local/state/cmux"
-    local tmux_socket_private="/private/tmp/tmux-$(id -u)/default"
-    local tmux_socket_tmp="/tmp/tmux-$(id -u)/default"
 
-    /usr/bin/python3 - "$config" "$cmux_socket_root" "$tmux_socket_private" "$tmux_socket_tmp" <<'PY'
+    /usr/bin/python3 - "$config" <<'PY'
 from pathlib import Path
-import json
 import re
 import sys
 
 path = Path(sys.argv[1])
-socket_root = sys.argv[2]
-tmux_socket_private = sys.argv[3]
-tmux_socket_tmp = sys.argv[4]
 text = path.read_text()
 
-# Keep the checked-in config portable; materialize the per-user cmux socket
-# path only in the installed ~/.codex/config.toml copy.
 lines = text.splitlines()
 filtered = []
 skip = False
 for line in lines:
-    if re.match(r"^\[permissions\.workspace-(?:cmux|local-vm|sprin)(?:\.network)?\]$", line):
+    if re.match(r"^\[permissions\.workspace-(?:local-vm|sprin)(?:\.network)?\]$", line):
         skip = True
         continue
     if skip and re.match(r"^\[.*\]$", line):
@@ -146,20 +137,19 @@ else:
 
 block = f"""
 [permissions.workspace-sprin]
-description = "Workspace-write with cmux/tmux sockets and clawd-vm SSH access."
+description = "Workspace-write with clawd-vm SSH access."
 extends = ":workspace"
 
 [permissions.workspace-sprin.network]
 enabled = true
 mode = "limited"
 domains = {{ "clawd-vm" = "allow" }}
-unix_sockets = {{ {json.dumps(socket_root)} = "allow", {json.dumps(tmux_socket_private)} = "allow", {json.dumps(tmux_socket_tmp)} = "allow" }}
 """
 
 path.write_text(text.rstrip() + "\n" + block)
 PY
 
-    echo "  Configured Codex local socket access: $cmux_socket_root, $tmux_socket_private"
+    echo "  Configured Codex workspace permissions"
 }
 
 collect_symlinked_dir_entries() {
@@ -286,7 +276,6 @@ echo ""
 echo "[7/10] Installing other configurations..."
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 backup_and_link "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
-backup_and_link "$DOTFILES_DIR/cmux/cmux.performance.jsonc" "$HOME/.config/cmux/cmux.json"
 
 # Nvim (if submodule exists)
 if [ -d "$DOTFILES_DIR/nvim" ] && [ "$(ls -A "$DOTFILES_DIR/nvim" 2>/dev/null)" ]; then
@@ -365,7 +354,7 @@ backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
 # projects/hooks/desktop state); unconditional copy would clobber live drift.
 if [ ! -e "$HOME/.codex/config.toml" ]; then
     backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
-    configure_codex_cmux_permissions "$HOME/.codex/config.toml"
+    configure_codex_local_permissions "$HOME/.codex/config.toml"
 else
     echo "  ~/.codex/config.toml already exists, skipping config seed"
 fi

@@ -32,7 +32,7 @@
 - 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。
 - 不要浪費時間盲試 `tui.collapse_tool_calls`、`tui.fold_tool_calls`、`tui.tool_calls_default_collapsed` 這類看起來合理但未記載的 key；目前可用的 `[tui]` 設定主要是 notifications、animations、show_tooltips、alternate_screen、status_line、terminal_title、theme、keymap 等。
 - `hide_agent_reasoning = true` 只會壓掉 reasoning 類資訊，不等於收合 tool calls。若使用者再次問這件事，除非明確要求查最新版本，直接告知目前記錄是不支援。
-- 截至 2026-06-14、目前 installed Codex CLI 接受 `tui.animations = false`（已用 `codex --strict-config -c tui.animations=false --help` 驗證）。這可以降低 TUI spinner/animation 對 cmux terminal renderer 的壓力，但不等於收合 tool calls，也不會阻止大量 tool output 造成 redraw。
+- 截至 2026-06-14、目前 installed Codex CLI 接受 `tui.animations = false`（已用 `codex --strict-config -c tui.animations=false --help` 驗證）。這可以降低 TUI spinner/animation 的 redraw，但不等於收合 tool calls，也不會阻止大量 tool output 造成 redraw。
 
 ## TUI 終端機標題 `tui.terminal_title`（可自訂，2026-06-23、`codex 0.142.0` 驗證）
 
@@ -42,13 +42,6 @@
 - 驗證/除錯指令：`codex doctor` 會印 `title source / title items`；`CODEX_HOME=<暫存目錄> codex doctor` 可在不動正式設定下試 config。
 - 多 pane（orchestrator）場景推薦 `["run-state", "thread-title"]`：閒置/工作中狀態 + 自訂 session 名，pane 好分辨又看得出 liveness。設定在啟動時載入，**改完要重開 codex** 才生效。
 - 對照：Claude Code 的終端機標題**不可挑 item**（格式自動：spinner + session/dir 名），只能用環境變數 `CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1` 整個關掉；想塞自訂狀態文字得繞 hook 的 `terminalSequence` 或 SessionStart hook 的 `sessionTitle`。
-
-## cmux socket access in Codex sandbox
-
-- 截至 2026-06-13、`codex-cli 0.139.0`，讓 sandboxed Codex command 連到 cmux Unix socket 需要 custom permission profile，而不是只加 `sandbox_workspace_write.writable_roots`。
-- 已驗證可行的 installed `config.toml` 形狀：`default_permissions = "workspace-cmux"`，`[features] network_proxy = true`，`[permissions.workspace-cmux] extends = ":workspace"`，以及 `[permissions.workspace-cmux.network] enabled = true`, `mode = "limited"`, `unix_sockets = { "$HOME/.local/state/cmux 的絕對路徑" = "allow" }`。`codex/config.toml` 保持 portable，`install.sh` 會在 copy 到 `~/.codex/config.toml` 後用當下 `$HOME` 寫入絕對 socket path。
-- 實測 `codex sandbox -P workspace-cmux cmux ping` 會回 `PONG`；`codex sandbox -P workspace-cmux curl https://example.com` 仍會被 limited proxy 擋下，避免順手打開一般 outbound network。
-- 已踩過的死路：top-level `network.allow_unix_sockets = [...]` 會被 config parser 接受，但 `codex sandbox cmux ping` 仍會 `Operation not permitted`；`sandbox_workspace_write.network_access = true` 也不會放行 AF_UNIX socket。
 
 ## Codex.app Local Recovery (desktop / Electron)
 （從 machine.md 移來：這是 Codex.app 通用行為、非機器層級 machine 事實。）

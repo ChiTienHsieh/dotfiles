@@ -39,9 +39,6 @@ dotfiles/
 │   └── .aliases.local.template  # Machine-specific aliases
 ├── claude/
 │   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
-├── cmux/
-│   ├── cmux.default.jsonc      # cmux-generated default template
-│   └── cmux.performance.jsonc  # Installed performance profile
 ├── codex/
 │   ├── AGENTS.md        # Codex CLI instructions
 │   └── skills/.system/  # Bundled/system-managed Codex skills

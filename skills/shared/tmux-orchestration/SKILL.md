@@ -1,6 +1,6 @@
 ---
 name: tmux-orchestration
-description: "Use when running, supervising, or delegating work to interactive agents inside tmux or cmux surfaces, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, event-based completion detection, marker-file completion fallback, or safe cleanup after completion."
+description: "Use when running, supervising, or delegating work to interactive agents inside tmux, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, event-based completion detection, marker-file completion fallback, or safe cleanup after completion."
 ---
 
 # tmux Orchestration
@@ -10,12 +10,11 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 ## Core Rules
 
 - When the user asks for a Claude Code or Codex CLI reviewer, default to an observable tmux pane even for read-only work. A direct headless command is only for a clearly bounded one-shot check that needs no tool use or approval, or when the user explicitly asks for headless execution.
-- Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session, and do NOT start a new cmux session, for this co-review case.
+- Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session for this co-review case.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
 - Do not kill unrelated tmux sessions. Only close sessions created for the current task or explicitly named by the user.
-- For cmux-specific orchestration, read `references/cmux.md`; cmux is the secondary surface and this skill remains the entry point.
 
 ## Delegation Contract
 
@@ -36,6 +35,10 @@ surface will be read by another agent.
 - State the side-effect boundary up front: READ-ONLY research, or exactly which
   paths may be edited, plus "do not commit/push" when the controller verifies
   first.
+- End cross-agent prompts with the sender's tmux pane ID and authority level.
+  Format: `—— 來自 %47（orchestrator CC，委派任務；限制為硬邊界。回問：tmux send-keys -t %47）`.
+  Use `user 直接指令` instead of `委派任務` only for instructions directly
+  authorized by the user.
 - Verify load-bearing claims with cheap read-only checks: grep for leftover
   references, `git status` / `git diff --stat`, confirm files moved/deleted,
   read only the one section whose accuracy matters.
@@ -200,9 +203,8 @@ Before delegating or supervising a worker, read the shared lessons index:
 
 It is a single file of dated incident lessons, grouped by section. Open ONLY the
 section relevant to the current delegation. After the delegation finishes, if you
-learned a durable lesson, update the relevant section (or `references/cmux.md`
-when cmux-specific) — dated, distilled rules only; the general delegation
-contract stays in this SKILL.md, not there.
+learned a durable lesson, update the relevant section — dated, distilled rules
+only; the general delegation contract stays in this SKILL.md, not there.
 
 Implementation routing policy lives in the `arbitrage` skill; provider priority
 lives in `~/dotfiles/codex/notes/worker-routing.md`. This skill only

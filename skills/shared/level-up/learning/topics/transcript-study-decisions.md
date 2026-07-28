@@ -13,7 +13,7 @@
 - **分支策略**：疊同分支（與 %96 共用 tree，local merge 會害到對方 —— user 主動要求跨 pane 協調）。
 - **arbitrage 硬門檻**：>20 tool loop → Codex；驗收/放行是 CC 不可外包的職責。
 - **marker-only 硬預設 + compaction 停損線**：只有 marker 逾時/blocked 才讀 stream。監看分三層：bash watcher（免費）< Haiku babysitter（要眼睛的等待）< controller 親看（僅 steering）。
-- **deterministic helpers 三件裝**（agent-safe-read / agent-rg / drive_codex 加固）vs 再寫十條規則。保證 agent 真的用 helper 三層：內建工具不走 shell、寫進動線勝過寫規則、hook 才是強制層。
+- **deterministic helpers 三件裝**（agent-safe-read / agent-rg / agent-send-prompt）vs 再寫十條規則。保證 agent 真的用 helper 三層：內建工具不走 shell、寫進動線勝過寫規則、hook 才是強制層。
 - **新 skill 分層**：description 搶觸發會稀釋 → gu-log SOP 放 gu-log repo、dotfiles 只留薄入口（自己推導出 repo-domain 分層）。
 - **不碰 orca**：16GB 無風扇 + Electron 底噪 + 多工體驗；解封條件=買 mac-mini/studio 才重評。偵察報告存 ~/scratch/transcript-study-20260703/orca-eval。
 - **出兵**：兩路 tmux Codex worker（dotfiles 批次 / gu-log SOP worktree 隔離）。gu-log SOP ×2 過 codex review（修 P2：deploy `--file` 不存在，ground-truth 驗出 `--active-file`）→ PR #541 CI 8/8 全綠、merge 留 user。dotfiles 尾款：arbitrage Token Guardrails、lessons.md commit mutex、gu-log skill 薄入口。

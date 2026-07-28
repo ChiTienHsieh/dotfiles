@@ -27,7 +27,7 @@ Before answering a status/archive/workstream question:
 
 Good search queries include project names, obvious visible titles, and workstream keywords:
 
-- `gu-log`, `dotfiles`, `cmux`, `Mogu`, `chief`, `heartbeat`
+- `gu-log`, `dotfiles`, `Mogu`, `chief`, `heartbeat`
 - exact visible thread titles from screenshots
 - marker-worker words like `scratch`, `DONE`, `report`, `review`
 

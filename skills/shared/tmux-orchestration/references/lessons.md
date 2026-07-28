@@ -9,8 +9,8 @@ without raw logs.
 
 Use when driving an interactive agent in a tmux pane from a controller.
 
-- tmux/cmux socket access is already in the sandbox allowlist. Run commands
-  normally; only request escalation if a real socket error occurs.
+- tmux socket access is intentionally absent from `workspace-sprin`; every tmux
+  command must go through Guardian automatic approval review.
 - Launch a worker with `codex --sandbox workspace-write`. Set cwd to a writable
   scratch dir (for example under `/tmp`) when the worker must write a report
   while only reading another repo; set cwd to the target repo when the worker

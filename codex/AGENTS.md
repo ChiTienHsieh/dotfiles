@@ -31,14 +31,11 @@
 - 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選另一個頂尖模型提供第二意見；Claude Code 或 Codex CLI reviewer 預設用 `tmux-orchestration` 建立可觀察的 worker。
 
 ## Backlog 收件
-- `issue this:` 代表只收進 backlog，不開始實作。先判斷想法的 canonical owner，不看目前 cwd：若明確屬於某個 GitHub repo 且適合公開，就 create/update canonical issue；否則 append 到 `~/Documents/Codex/BACKLOG.md`。不確定時預設放本機。記錄簡短標題、Why、Next、來源 task URL 與日期，完成後立即停止。
+- `issue this:` 代表只收進 backlog、不開始實作；先讀 `~/dotfiles/codex/notes/backlog.md` 的收件規則。
 
 ## 實作前後的理解檢查
-- 任務不簡單或不熟悉時，依風險決定是否在實作前、實作中與實作後檢查理解；小而安全的修改不必硬走儀式。
-- 寫程式碼前先找出會影響決策的未知資訊，例如資料模型、type/API 契約、使用者會看到的行為與架構風險。
-- 實作中若計畫有變、採取保守假設，或做了審查者需要知道的決定，記在現有的 PR、報告或交接文件；只有很長或跨多個 agent 的交接才另開 notes file。
-- 做完資料模型、架構、使用者會看到的行為或 guardrail/SSOT 等高風險修改後，在 `push` 前主動詢問要不要做 `level-up` 的實作後小測驗。使用者可以明確跳過；`level-up` 要把這次跳過靜默記在自己的 `learning/` 目錄，但不得改變學習狀態。
-- 實作前後的教學走 `level-up` references：使用者說「preflight」代表實作前，「debrief」代表實作後。純機械式重構放在說明最後。
+- 任務不簡單、不熟悉或涉及高風險決策時，先讀 `~/dotfiles/skills/shared/level-up/references/implementation-understanding-loop.md`；小而安全的修改不硬走儀式。
+- 做完資料模型、架構、使用者可見行為或 guardrail/SSOT 修改後，在 `push` 前主動提議 `level-up` 的實作後小測驗；`preflight`／`debrief` 的流程與 skip 記錄規則以該 skill 的 references 為準。
 
 ## Guardrail / SSOT repo 審查門檻
 - 要推 guardrail / SSOT repo（例如 `~/dotfiles` 裡會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md）時，先 `commit`，再依 `~/dotfiles/codex/notes/worker-routing.md` 選審查者；不確定 quota 就先查。
@@ -49,8 +46,7 @@
 - 若讀取失敗、內容不足以判斷，或無法確認收件方目前工作，MUST 不傳送並先回報 blocker。提醒、暫停、狀態同步與 follow-up 也不例外。
 
 ## 跨 agent 指令的簽名
-- 透過 tmux send-keys、marker file 或請使用者代送 prompt 給另一個 agent 時，結尾要附上回信地址和權限等級。回信地址是發話 pane 的 tmux pane id；裸 `%47` 就能在整個 server 內定位，發話 agent 可用 `$TMUX_PANE` 查自己。權限等級要標明「agent 委派」或「user 直接指令」。委派 prompt 裡的限制是硬邊界，收件方不能自行 override；只有使用者的直接指令可以蓋過。
-- 格式：`—— 來自 %47（orchestrator CC，委派任務；限制為硬邊界。回問：tmux send-keys -t %47）`。使用者平常直接對話不必簽名，預設就是最高權限。
+- 透過 tmux、marker file 或請使用者代送 prompt 給另一個 agent 時，必須附回信 pane、權限等級與硬邊界；格式與機制以 `tmux-orchestration` skill 為準。只有使用者直接指令能蓋過委派限制。
 
 ## 記憶分層
 - 這份檔案只放需要一直載入的規則。工具怪癖、走不通的方法、綁定版本的發現與參考資料放到 lazy notes（`codex/notes/*.md`）。只有使用者明確要求時，才能改 Codex 原生 memory 或 Claude 專用 memory。

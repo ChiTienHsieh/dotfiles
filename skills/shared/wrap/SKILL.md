@@ -1,6 +1,6 @@
 ---
 name: "wrap"
-description: "Run the `wrap` workflow when the user asks to wrap up, ship the current work, check dirty worktrees, commit, push, save useful memory, and produce a concise zh-tw session summary."
+description: "Run the `wrap` workflow when the user asks to wrap up, ship the current work, check dirty worktrees, commit, push, and produce a concise zh-tw session summary."
 ---
 
 # wrap — Session Wrap-up & Ship
@@ -28,7 +28,7 @@ git branch --show-current 2>/dev/null || echo "(n/a)"
 Run the Context Commands above and read their output. In parallel, gather:
 
 1. **Tasks**: Use the current task list to check for any incomplete tasks
-2. **Memory check**: Reflect on the conversation — was there anything the user said to remember, any feedback given, any decisions made that should be saved to memory?
+2. **Memory check**: Only when the user explicitly asked to update memory, confirm that request was handled.
 3. **Docs check**: If this repo has user-facing documentation (README, AGENTS.md, docs/, etc.), consider whether this session's changes warrant a doc update. Examples:
    - New feature added but not reflected in README
    - Config or setup steps changed but docs still show old way
@@ -64,8 +64,6 @@ If docs need updating, **do it now** before committing — docs should ship with
 - **Commit uncommitted changes** — draft a good commit message, stage relevant files, commit
 - **Push to remote** — if ahead by any number of commits, push
 - **Commit + push** — if both uncommitted changes and unpushed commits exist, do both
-- **Save memory** — if something worth remembering came up, save it
-- **Drop stale stashes** — if stashes are clearly from this session's work that's already committed
 
 #### Stop and ask:
 - **Conflicts or diverged state** — surface the divergence and let the user pick rebase/merge/skip
@@ -73,36 +71,6 @@ If docs need updating, **do it now** before committing — docs should ship with
 - **Ambiguous uncommitted changes** — files that might be WIP vs. ready to ship
 - **Multiple repos touched** — confirm which ones to push
 - **Sensitive files detected** — .env, credentials, secrets in diff
-
-### Step 3.5: cmux Delegation Cleanup Check
-
-After the normal wrap actions are complete, check whether this session or prior
-agent delegation left active cmux worker surfaces behind.
-
-Use:
-
-```bash
-"$HOME/dotfiles/skills/shared/wrap/scripts/cmux_delegation_cleanup.sh" list
-```
-
-If it lists delegated surfaces, show the surface IDs and ask the user whether
-they want to close those delegated surfaces. Do not close them without asking.
-
-If the user agrees, close them peacefully:
-
-```bash
-"$HOME/dotfiles/skills/shared/wrap/scripts/cmux_delegation_cleanup.sh" close surface:N
-```
-
-or, when the user agrees to close all listed delegated surfaces:
-
-```bash
-"$HOME/dotfiles/skills/shared/wrap/scripts/cmux_delegation_cleanup.sh" close-all-active
-```
-
-The cleanup helper sends `/quit` to Codex first, sends Enter, waits briefly, and
-then runs `cmux close-surface`. Do not use Ctrl-C for this cleanup path unless
-`/quit` is unavailable and the user explicitly approves a rougher shutdown.
 
 ### Step 4: Report
 

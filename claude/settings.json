@@ -45,11 +45,7 @@
       "Bash(git branch --list:*)",
       "Bash(git config --get:*)",
       "Bash(git config --list)",
-      "Bash(trash:*)",
-      "Bash(cmux read-screen:*)",
-      "Bash(cmux tree:*)",
-      "Bash(cmux list-pane-surfaces:*)",
-      "Bash(cmux events:*)"
+      "Bash(trash:*)"
     ],
     "deny": [
       "NotebookEdit",
@@ -111,10 +107,6 @@
       "allowedDomains": [
         "github.com",
         "api.openai.com"
-      ],
-      "allowUnixSockets": [
-        "~/.local/state/cmux/cmux.sock",
-        "~/.local/state/cmux"
       ]
     },
     "filesystem": {
@@ -128,7 +120,6 @@
     },
     "excludedCommands": [
       "git",
-      "cmux",
       "tmux",
       "docker"
     ]
