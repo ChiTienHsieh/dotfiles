@@ -40,6 +40,74 @@ alias t="type"                          # Check what a command is
 alias pbc="pbcopy"                      # Copy to clipboard
 Textedit() { open -e "$@"; }            # Open in TextEdit
 
+# Recover normal Chrome when orphaned Playwright daemons keep it headless.
+chrome-recover() {
+    local daemon_pattern='@playwright/cli/node_modules/playwright-core/lib/entry/cliDaemon.js'
+    local daemon_pids=""
+    local daemon_count=0
+    local attempt=0
+
+    daemon_pids="$(pgrep -f "$daemon_pattern" 2>/dev/null)"
+
+    if [[ -n "$daemon_pids" ]]; then
+        daemon_count="$(printf '%s\n' "$daemon_pids" | awk 'NF { count++ } END { print count + 0 }')"
+        echo "Stopping ${daemon_count} Playwright browser daemon(s)..."
+
+        printf '%s\n' "$daemon_pids" | while IFS= read -r pid; do
+            [[ -n "$pid" ]] && kill -TERM "$pid"
+        done
+
+        while pgrep -f "$daemon_pattern" >/dev/null 2>&1 && (( attempt < 30 )); do
+            sleep 0.1
+            attempt=$((attempt + 1))
+        done
+
+        if pgrep -f "$daemon_pattern" >/dev/null 2>&1; then
+            echo "Stopping Chrome children held by persistent Playwright daemons..."
+            daemon_pids="$(pgrep -f "$daemon_pattern" 2>/dev/null)"
+            printf '%s\n' "$daemon_pids" | while IFS= read -r pid; do
+                [[ -n "$pid" ]] && pkill -TERM -P "$pid" 2>/dev/null
+            done
+
+            attempt=0
+            while pgrep -f "$daemon_pattern" >/dev/null 2>&1 && (( attempt < 20 )); do
+                sleep 0.1
+                attempt=$((attempt + 1))
+            done
+        fi
+
+        if pgrep -f "$daemon_pattern" >/dev/null 2>&1; then
+            echo "Force-stopping unresponsive Playwright daemons..."
+            daemon_pids="$(pgrep -f "$daemon_pattern" 2>/dev/null)"
+            printf '%s\n' "$daemon_pids" | while IFS= read -r pid; do
+                if [[ -n "$pid" ]]; then
+                    pkill -KILL -P "$pid" 2>/dev/null
+                    kill -KILL "$pid" 2>/dev/null
+                fi
+            done
+            sleep 0.2
+        fi
+
+        if pgrep -f "$daemon_pattern" >/dev/null 2>&1; then
+            echo "Unable to stop every Playwright daemon."
+            return 1
+        fi
+
+        # Give Chrome child processes a moment to exit before relaunching.
+        sleep 0.5
+    else
+        echo "No Playwright browser daemons found."
+    fi
+
+    if [[ "$(uname -s)" != "Darwin" ]]; then
+        echo "Playwright daemons stopped. Open Chrome manually on this system."
+        return 0
+    fi
+
+    echo "Opening normal Chrome..."
+    open -na "Google Chrome" --args --new-window
+}
+
 # -----------------------------------------------------------------------------
 # File operations
 # -----------------------------------------------------------------------------
