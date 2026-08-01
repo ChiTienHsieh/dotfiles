@@ -12,4 +12,5 @@
 - **重活實作**（bulk edits、多檔改動、長時間跑）→ 主力的 worker。主力是 Claude 時：會改檔的活走 tmux 裡的互動式 claude session（observable surface 慣例照舊，機制見 `tmux-orchestration`）；CC subagent（`Agent` 工具）留給不改檔的研究 / review。
 - **省著用的一邊**只在三種情況出場：輕量 review、read-only 研究（Codex 的硬條件見 orchestrator persona）、或 user 明講指定。
 - **guardrail / SSOT repo 的 reviewer**：預設主力的 fresh reviewer（fresh instance 或 subagent，含 simplify 視角）；省著用那邊只有 quota 有餘裕且 diff 小才接。
+- **大型第三方 source review**：quota 允許時使用當下可用、成本合宜且能力足夠的 fresh reviewer，reasoning effort 依範圍與風險選擇；已驗證的 runtime profile 見 `codex-cli.md`。啟動後記錄實際 model/effort；fallback 或沒有 final verdict 都必須揭露，沉默不能當 PASS。
 - **fallback 順序**：主力撞牆 → 輕量活可暫轉另一邊（仍限 review / read-only）；兩邊都撞牆 → 睡到 reset。即時餘量不要背數字，跑 `codexbar usage --provider both --source cli` 查（細節見 `quota` skill）。

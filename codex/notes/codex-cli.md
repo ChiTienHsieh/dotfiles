@@ -36,6 +36,14 @@
   ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`，
   避免重踩 `ModuleNotFoundError: yaml` 或 permission denied。
 
+## 第三方 source review model profile（2026-08-01）
+
+- 目前 Codex runtime 已驗證 `gpt-5.6-luna` 支援 `max` reasoning；它適合大型、
+  read-only 的 source／supply-chain review，啟動前仍須查 availability 與 quota。
+- 小型 diff 不要機械套用 `max`；本機 guardrail review 曾因範圍太小卻用 `max` 而
+  過度展開，改用 bounded prompt 與 `high` 更合適。實際 model、effort、fallback
+  與是否產生 final verdict 都要記錄；沒有 verdict 不能當 PASS。
+
 ## 已知的 Codex CLI 限制
 
 - 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。
