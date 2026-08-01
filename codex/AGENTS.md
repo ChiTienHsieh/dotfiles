@@ -31,6 +31,12 @@
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
 - 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選另一個頂尖模型提供第二意見；Claude Code 或 Codex CLI reviewer 預設用 `tmux-orchestration` 建立可觀察的 worker。
 
+## 實作取捨
+- 選擇能完整滿足目前需求的最簡單實作；有合適選項時，優先採用成熟且持續維護的 library，不自行重造同類元件。
+- 架構決策要能長期維護；不要把明知只能暫時運作、之後必須替換的 stopgap 當成最終交付。
+- 預設不為尚無真實使用者的舊介面或行為保留 backward compatibility；只有已有真實使用者或明確相容性 contract 的專案才把它當硬需求。若已有可能存在真實使用者的線索但狀態未確認，先確認再做 breaking change。
+- 目前已知 Pilates app 有真實使用者；Wanguard 專案可能有，尚未確認前不得假設沒有。
+
 ## Backlog 收件
 - `issue this:` 代表只收進 backlog、不開始實作；先讀 `~/dotfiles/codex/notes/backlog.md` 的收件規則。
 
