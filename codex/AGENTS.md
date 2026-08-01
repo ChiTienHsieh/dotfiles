@@ -33,8 +33,9 @@
 ## 實作取捨
 - 選擇能完整滿足目前需求的最簡單實作；有合適選項時，優先採用成熟且持續維護的 library，不自行重造同類元件。
 - 架構決策要能長期維護；不要把明知只能暫時運作、之後必須替換的 stopgap 當成最終交付。
-- 預設不為尚無真實使用者的舊介面或行為保留 backward compatibility；只有已有真實使用者或明確相容性 contract 的專案才把它當硬需求。若已有可能存在真實使用者的線索但狀態未確認，先確認再做 breaking change。
-- 目前已知 Pilates app 有真實使用者；Wanguard 專案可能有，尚未確認前不得假設沒有。
+- 預設不為尚無真實使用者的舊介面或行為保留 backward compatibility；只有已有真實使用者或明確相容性 contract 的專案才把它當硬需求。
+- 狀態未確認時先查該 repo 根目錄的 `AGENTS.md`；沒有記錄才問使用者一次，並把結論寫成一行狀態（有／沒有＋確認日期，不寫使用者身分、人數或聯絡方式），沒有 `AGENTS.md` 就建立。之後直接沿用，只有出現狀態可能改變的證據時才重新確認。問不到答案或記錄不明確就當作有真實使用者，不做 breaking change。
+- 目前已知 Pilates app 有真實使用者；Wanguard 專案狀態未確認，依上條處理。兩者狀態寫進各自 repo 後刪掉這行。
 
 ## Backlog 收件
 - `issue this:` 代表只收進 backlog、不開始實作；先讀 `~/dotfiles/codex/notes/backlog.md` 的收件規則。
