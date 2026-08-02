@@ -306,7 +306,8 @@ fi
 /usr/bin/python3 "$DOTFILES_DIR/claude/scripts/install-headless-codex.py" \
     --settings "$HOME/.claude/settings.json" \
     --template "$DOTFILES_DIR/skills/shared/headless-agents/scripts/run-codex-readonly.template.sh" \
-    --launcher "$HOME/.local/libexec/dotfiles/run-codex-readonly.sh"
+    --launcher "$HOME/.local/libexec/dotfiles/run-codex-readonly.sh" \
+    --trusted-root "$HOME"
 # machine.md: one machine-local canonical (~/.config/machine.md) shared by
 # Claude Code + Codex via symlink, so both agents always read identical
 # machine notes. Seeded once from a secret-free template, then owned locally

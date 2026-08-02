@@ -24,7 +24,8 @@ printf '{}\n' > "$settings"
 /usr/bin/python3 "$installer" \
     --settings "$settings" \
     --template "$template" \
-    --launcher "$launcher" >/dev/null
+    --launcher "$launcher" \
+    --trusted-root "$test_tmp" >/dev/null
 
 settings_tmp="$test_tmp/settings.tmp"
 jq --arg launcher_rule "Bash($launcher:*)" '

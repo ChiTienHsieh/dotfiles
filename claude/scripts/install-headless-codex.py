@@ -82,18 +82,35 @@ def atomic_write(path: Path, content: str, mode: int) -> None:
             temporary_path.unlink()
 
 
+def reject_symlink_ancestors(path: Path, trusted_root: Path) -> None:
+    try:
+        relative_parent = path.parent.relative_to(trusted_root)
+    except ValueError as exc:
+        raise SystemExit(
+            f"launcher must stay under trusted root {trusted_root}: {path}"
+        ) from exc
+
+    cursor = trusted_root
+    for component in relative_parent.parts:
+        cursor /= component
+        if cursor.is_symlink():
+            raise SystemExit(f"launcher parent must not be a symlink: {cursor}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--settings", type=Path, required=True)
     parser.add_argument("--template", type=Path, required=True)
     parser.add_argument("--launcher", type=Path, required=True)
+    parser.add_argument("--trusted-root", type=Path, required=True)
     parser.add_argument("--codex-bin")
     parser.add_argument("--claude-bin")
     args = parser.parse_args()
 
     settings = args.settings.expanduser()
     template = args.template.expanduser().resolve(strict=True)
-    launcher = args.launcher.expanduser()
+    launcher = args.launcher.expanduser().absolute()
+    trusted_root = args.trusted_root.expanduser().absolute()
     codex = executable("codex", args.codex_bin)
     claude = executable("claude", args.claude_bin)
 
@@ -101,7 +118,9 @@ def main() -> None:
     launcher_text = rendered_launcher(template, codex, claude)
     settings_mode = stat.S_IMODE(settings.stat().st_mode)
 
+    reject_symlink_ancestors(launcher, trusted_root)
     atomic_write(launcher, launcher_text, 0o700)
+    reject_symlink_ancestors(launcher, trusted_root)
     atomic_write(settings, settings_text, settings_mode)
 
     if launcher.is_symlink() or not launcher.is_file():

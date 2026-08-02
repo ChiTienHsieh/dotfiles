@@ -84,12 +84,14 @@ JSON
     --settings "$settings_fixture" \
     --template "$template_copy" \
     --launcher "$launcher" \
+    --trusted-root "$test_tmp" \
     --codex-bin "$test_tmp/trusted-bin/codex" \
     --claude-bin "$test_tmp/trusted-bin/claude" >/dev/null
 /usr/bin/python3 "$installer" \
     --settings "$settings_fixture" \
     --template "$template_copy" \
     --launcher "$launcher" \
+    --trusted-root "$test_tmp" \
     --codex-bin "$test_tmp/trusted-bin/codex" \
     --claude-bin "$test_tmp/trusted-bin/claude" >/dev/null
 
@@ -158,6 +160,7 @@ set +e
     --settings "$invalid_settings" \
     --template "$template" \
     --launcher "$test_tmp/invalid-launcher" \
+    --trusted-root "$test_tmp" \
     --codex-bin "$test_tmp/trusted-bin/codex" \
     --claude-bin "$test_tmp/trusted-bin/claude" >/dev/null 2>&1
 invalid_settings_status=$?
@@ -165,6 +168,24 @@ set -e
 if [[ "$invalid_settings_status" == "0" || -e "$test_tmp/invalid-launcher" || \
       "$(shasum -a 256 "$invalid_settings" | awk '{print $1}')" != "$invalid_digest" ]]; then
     echo "invalid settings must fail without partial writes" >&2
+    exit 1
+fi
+
+mkdir -p "$test_tmp/workspace-owned-parent"
+ln -s "$test_tmp/workspace-owned-parent" "$test_tmp/unsafe-parent"
+set +e
+/usr/bin/python3 "$installer" \
+    --settings "$settings_fixture" \
+    --template "$template" \
+    --launcher "$test_tmp/unsafe-parent/run-codex-readonly.sh" \
+    --trusted-root "$test_tmp" \
+    --codex-bin "$test_tmp/trusted-bin/codex" \
+    --claude-bin "$test_tmp/trusted-bin/claude" >/dev/null 2>&1
+symlink_ancestor_status=$?
+set -e
+if [[ "$symlink_ancestor_status" == "0" || \
+      -e "$test_tmp/workspace-owned-parent/run-codex-readonly.sh" ]]; then
+    echo "symlink launcher ancestor must be rejected without a write" >&2
     exit 1
 fi
 
