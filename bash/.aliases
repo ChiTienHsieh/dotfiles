@@ -491,8 +491,8 @@ alias plan-ant-only-cld='claude --safe-mode --permission-mode plan --tools "Read
 # -----------------------------------------------------------------------------
 # tmclean - Kill detached anonymous tmux sessions (numeric names only)
 # -----------------------------------------------------------------------------
-# Ghostty 的 cmd+t gate 每個新 tab 開一個數字名 session；關 tab 只是 detach，
-# 久了會堆積。只殺「純數字名 + detached」；named session 與 attached 一律不碰。
+# 保留給手動建立但忘記清理的匿名 session。只殺「純數字名 + detached」；
+# named session 與 attached 一律不碰。
 tmclean() {
     local name attached killed=0
     while read -r name attached; do

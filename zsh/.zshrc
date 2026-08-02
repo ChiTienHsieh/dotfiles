@@ -154,20 +154,7 @@ precmd() {
 }
 
 # -----------------------------------------------------------------------------
-# 10. Ghostty: 每個新 tab/window 自動開一個全新 tmux session
-# -----------------------------------------------------------------------------
-# 三道安全閥，缺一不可：
-#   $- == *i*        只在互動 shell 觸發（CC/Codex 的非互動 shell 連 .zshrc 都不讀，雙重絕緣）
-#   -z "$TMUX"       已在 tmux 裡就不再套一層（防巢狀）
-#   TERM_PROGRAM     只鎖 Ghostty；iTerm2/Terminal.app/VS Code 保持原樣當逃生門
-# exec = 用 tmux 取代目前的 shell，不留孤兒父行程。
-# 行為改變：關 tab = detach，匿名 session 會留在 server 上（tmux ls 清理）。
-if [[ $- == *i* && -z "$TMUX" && "$TERM_PROGRAM" == "ghostty" ]]; then
-  exec tmux new-session
-fi
-
-# -----------------------------------------------------------------------------
-# 11. Auto-generated sections (tools will add their init here)
+# 10. Auto-generated sections (tools will add their init here)
 # -----------------------------------------------------------------------------
 # - conda init
 # - nvm init
