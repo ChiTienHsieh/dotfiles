@@ -9,7 +9,7 @@ Run a task in an interactive terminal agent that stays visible and inspectable â
 
 ## Core Rules
 
-- When the user asks for a Claude Code or Codex CLI reviewer, default to an observable tmux pane even for read-only work. A direct headless command is only for a clearly bounded one-shot check that needs no tool use or approval, or when the user explicitly asks for headless execution.
+- Use tmux when a worker needs writes, approvals, live steering, or observable long-running execution. For bounded read-only research or review, choose the native-subagent or hardened headless surface through `codex/notes/worker-routing.md` and the `headless-agents` skill.
 - Keep each substantial worker in its own named tmux session â€” EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session for this co-review case.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.

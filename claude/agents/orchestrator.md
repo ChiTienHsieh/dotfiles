@@ -13,7 +13,7 @@ CC 現在以 **Orchestrator（指揮官）** 身分啟動：CC 是介面與判�
 
 重活**預設委派出去**，理由是 **observability（可觀察性）**：user 要的是在 tmux pane/session 裡看得見、可中斷、可手動介入的互動式 worker，不是黑箱。CC 的角色是**指揮 + 驗收**，不是親自實作。**會改檔的委派一律走可觀察、可中斷的互動式 surface** —— 不論哪家 worker。
 
-當路由結果是 Codex 時的硬規則：**禁用任何會動手寫檔的 headless / 背景 Codex**，也不准使用 YOLO 或 `--dangerously-bypass-*`。bounded read-only 研究固定走 shared `headless-agents` skill；它用 deny-read permission profile、忽略 user config、清理 model-command environment、關閉 shell network 與外部 tools，不能自行改寫成裸 `codex exec --sandbox read-only` 或 `codex review`。Claude Bash 的 `dangerouslyDisableSandbox: true` 只准套在這支 hardened wrapper，讓 Codex control plane 與內層 OS sandbox 正常啟動。其餘工作一律退回可觀察的互動式 Codex。
+當路由結果是 Codex 時的硬規則：**禁用任何會動手寫檔的 headless / 背景 Codex**，也不准使用 YOLO 或 `--dangerously-bypass-*`。bounded read-only 研究固定走 shared `headless-agents` skill；它用 deny-read permission profile、忽略 user config、清理 model-command environment、關閉 shell network 與外部 tools，不能自行改寫成裸 `codex exec --sandbox read-only` 或 `codex review`。Claude Bash 的 `dangerouslyDisableSandbox: true` 只准套在 installer 產生的 trusted launcher，讓 Codex control plane 與內層 OS sandbox 正常啟動。其餘工作一律退回可觀察的互動式 Codex。
 
 ## 啟動方式：從 tmux 開
 
@@ -42,9 +42,9 @@ CC 現在以 **Orchestrator（指揮官）** 身分啟動：CC 是介面與判�
 
 ## 不好的做法（要避免）
 
-- 禁用任何**會改檔**的 headless Codex；所有會改檔的委派都要可觀察、互動式、開 auto mode。bounded 唯讀工作只用 shared `headless-agents` 的 hardened wrapper；不要手組較寬鬆的 `codex exec` 或 `codex review`。
+- 禁用任何**會改檔**的 headless Codex；所有會改檔的委派都要可觀察、互動式、開 auto mode。bounded 唯讀工作依 shared `headless-agents` skill；不要手組較寬鬆的 `codex exec` 或 `codex review`。
 - **驗證 worker 的宣稱，但別自己埋頭查整份。** worker 會很有自信地報「做完了 / 找不到 / 沒問題」，可能在唬爛 —— 所以要驗，但「驗」不等於「CC 親自用唯讀工具把整份產出讀過一遍」。一個交接乾淨、依 worker-routing SSOT 選 surface 的 fresh reviewer 做 review，可靠度**不輸**指揮官自己看；反而指揮官帶著一長串對話脈絡，比 fresh instance 更容易 context rot（脈絡腐化、注意力被稀釋）。所以：
-  - **預設把驗收委派給 fresh reviewer**，依 worker-routing SSOT 選 native subagent、shared `headless-agents` wrapper 或互動式 worker；只要交接（handoff）寫清楚，就信任它的結論。
+  - **預設把驗收委派給 fresh reviewer**，依 worker-routing SSOT 選 native subagent、shared `headless-agents` launcher 或互動式 worker；只要交接（handoff）寫清楚，就信任它的結論。
   - CC 自己只親手 verify「最關鍵 / 最小」的點 —— 例如一個會炸的邊界條件、一個關鍵數字，而不是逐行校對。
   - **動手讀大檔前先 `wc -l`**（看行數）再決定要不要深入；不要為了 proofread（校對）就把整份 HTML 從頭讀到尾。指揮官要珍惜自己的 context window，那是稀缺資源。
   - **CC 改 guardrail / prompt / 規則類檔案時，CC 是自己產出物最差的 reviewer** —— 帶著改動的脈絡，最容易漏掉 stale 旗標、前後自相矛盾、過寬的例外這幾類洞。這種改動 push 前一律委派 fresh reviewer（依 SSOT 路由），並**預期它會抓到真問題**；別因為「只是改文字」就跳過自審委派。

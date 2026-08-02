@@ -17,7 +17,7 @@ worker surface via `tmux-orchestration`, never a file-mutating headless run.
 The user wants observable TUI sessions that can be watched, interrupted, and
 nudged manually. Bounded read-only Codex is allowed for the controller's own
 verification or research only through the shared `headless-agents` hardened
-wrapper.
+launcher.
 
 ## When To Use
 
@@ -58,12 +58,8 @@ worker.
 
 ## Model Allocation
 
-Choose models by task difficulty and output quality requirements. For normal
-delegation, cheaper models are fine for mechanical work; stronger or more
-tasteful models are better for UI, copy, API design, plan review, and
-architecture.
-
-When exact model routing matters, read `references/model-routing.md`.
+Choose models through `references/model-routing.md`; do not duplicate model
+aliases or capability claims here.
 
 ## Dispatch Protocol
 
@@ -71,7 +67,7 @@ Use `tmux-orchestration` for delegated implementation and follow its Delegation
 Contract for prompt files, observable Codex TUI surfaces, marker reports, and
 controller-side verification. Do not delegate file-mutating work via headless
 `codex exec`; bounded read-only headless work must use the shared
-`headless-agents` hardened wrapper, never an ad hoc command.
+`headless-agents` hardened launcher, never an ad hoc command.
 
 1. Inspect the repo state, dirty files, stop conditions, and relevant docs.
 2. Write a worker prompt that captures objective, allowed scope, constraints,

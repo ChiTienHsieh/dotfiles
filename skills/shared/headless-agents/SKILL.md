@@ -1,6 +1,6 @@
 ---
 name: headless-agents
-description: "Delegate bounded read-only research, review, extraction, or parallel investigation to Codex subagents from Claude Code or Codex. Use when the user asks for a headless agent/subagent, says 'run Codex on this', wants a fresh second opinion or parallel read-only checks, or needs isolated structured output. Prefer native Codex subagents when available; use the bundled codex exec wrapper from Claude Code or when process isolation is required. Never use this skill for file mutation or when readable workspace content cannot be sent to OpenAI."
+description: "Delegate bounded read-only research, review, extraction, or parallel investigation to Codex subagents from Claude Code or Codex. Use when the user asks for a headless agent/subagent, says 'run Codex on this', wants a fresh second opinion or parallel read-only checks, or needs isolated structured output. Prefer native Codex subagents when available; use the installed hardened Codex launcher from Claude Code or when process isolation is required. Never use this skill for file mutation or when readable workspace content cannot be sent to OpenAI."
 ---
 
 # Headless Codex Delegation
@@ -14,8 +14,9 @@ independently verifiable, and small enough to finish without live steering.
    may share the parent's trust and permission boundary. Native subagents avoid
    a nested CLI process and keep status, cancellation, and synthesis in one
    session.
-2. **Claude Code parent:** Run the bundled `scripts/run-codex-readonly.sh`.
-   This is the normal Claude -> Codex route. Invoke that exact wrapper with
+2. **Claude Code parent:** Run the installed trusted launcher at
+   `~/.local/libexec/dotfiles/run-codex-readonly.sh`. This is the normal
+   Claude -> Codex route. Invoke that exact launcher with
    Bash's `dangerouslyDisableSandbox: true`; Claude's outer sandbox otherwise
    breaks Codex's control plane and nested OS sandbox.
 3. **Codex parent needing enforced isolation:** Use the wrapper when the task
@@ -43,17 +44,15 @@ independently verifiable, and small enough to finish without live steering.
 
 ## Claude Code -> Codex wrapper
 
-Resolve `<skill-dir>` to this skill's installed directory, usually
-`~/.claude/skills/headless-agents` in Claude Code or
-`~/.codex/skills/headless-agents` in Codex.
-Claude should invoke the literal `~/.claude/...` path so the scoped Bash allow
-rule in `claude/settings.json` matches before the shell expands `~`.
+Run `~/dotfiles/install.sh` once after installing or upgrading Claude Code or
+Codex. The installer copies a reviewed launcher outside project workspaces,
+bakes in canonical executable paths, and idempotently merges only its scoped
+Bash rule into the live Claude settings. Claude should invoke the literal
+`~/.local/...` path so that rule matches before the shell expands `~`.
 
 ```bash
-~/.claude/skills/headless-agents/scripts/run-codex-readonly.sh \
+~/.local/libexec/dotfiles/run-codex-readonly.sh \
   --cwd "$PWD" \
-  --model gpt-5.6-terra \
-  --effort medium \
   -- "Review src/auth for concrete correctness risks. Cite file paths and lines."
 ```
 
@@ -66,6 +65,11 @@ does not accept caller-selected artifact paths.
 The selected workspace must be the caller's current directory or a child, so
 `cd` to the intended repository before launch. Prompt and schema files must
 also be regular, non-symlink files under that directory.
+When invoked under Claude Code, the launcher also resolves the installed
+Claude executable in its real ancestor chain and anchors the invocation to
+that process's project root. A same-command `cd` outside the project is
+rejected. If process verification fails after an upgrade, rerun the installer
+instead of weakening the check.
 
 The wrapper prepends one compact worker contract: repository facts must be
 verified with read-only tools, never guessed from names or prior knowledge. The
@@ -101,9 +105,12 @@ boundary instead of this skill.
 
 These controls bound model tools, not the Codex control plane: the CLI still
 needs HTTPS access to OpenAI to run the model. Claude Code must therefore run
-this exact reviewed wrapper outside its outer Bash sandbox. This exception is
-scoped to the wrapper; never use `dangerouslyDisableSandbox` for a raw `codex`
-command. The Codex worker's own shell network remains disabled.
+the installed launcher outside its outer Bash sandbox. The permissioned file
+is an installer-created regular copy, not the writable skill symlink; it calls
+the baked absolute Codex binary instead of resolving caller-controlled `PATH`.
+This exception is scoped to that launcher; never use
+`dangerouslyDisableSandbox` for a raw `codex` command. The Codex worker's own
+shell network remains disabled.
 Claude Code documents this parameter as a permission-gated escape hatch for
 commands incompatible with its sandbox: <https://code.claude.com/docs/en/sandboxing>.
 
@@ -140,7 +147,7 @@ choosing effort, or building an eval.
 - On failure, inspect the reported stderr and JSONL paths. Do not rerun with a
   looser sandbox.
 - If Claude Code reports control-plane or nested Seatbelt failures, confirm the
-  Bash call used `dangerouslyDisableSandbox: true` for the exact wrapper path.
+  Bash call used `dangerouslyDisableSandbox: true` for the installed launcher.
   Do not weaken the wrapper's Codex permission profile.
 - If the task grows beyond a one-shot check, stop and route it through
   `tmux-orchestration` instead of turning headless execution into a hidden

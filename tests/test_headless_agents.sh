@@ -2,7 +2,9 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-subject="$repo_root/skills/shared/headless-agents/scripts/run-codex-readonly.sh"
+shim="$repo_root/skills/shared/headless-agents/scripts/run-codex-readonly.sh"
+template="$repo_root/skills/shared/headless-agents/scripts/run-codex-readonly.template.sh"
+installer="$repo_root/claude/scripts/install-headless-codex.py"
 test_tmp="$(mktemp -d "${TMPDIR:-/tmp}/headless-agents-test.XXXXXX")"
 
 cleanup() {
@@ -12,9 +14,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$test_tmp/bin"
+mkdir -p "$test_tmp/trusted-bin" "$test_tmp/shadow-bin"
 
-cat > "$test_tmp/bin/codex" <<'MOCK'
+cat > "$test_tmp/trusted-bin/codex" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -45,7 +47,65 @@ fi
 
 printf 'mock final\n' > "$output_path"
 MOCK
-chmod +x "$test_tmp/bin/codex"
+chmod +x "$test_tmp/trusted-bin/codex"
+
+cat > "$test_tmp/trusted-bin/claude" <<'MOCK'
+#!/usr/bin/env bash
+exit 0
+MOCK
+chmod +x "$test_tmp/trusted-bin/claude"
+
+cat > "$test_tmp/shadow-bin/codex" <<'MOCK'
+#!/usr/bin/env bash
+printf 'PATH shadow executed\n' > "${SHADOW_MARKER:?}"
+exit 99
+MOCK
+chmod +x "$test_tmp/shadow-bin/codex"
+
+template_copy="$test_tmp/run-codex-readonly.template.sh"
+settings_fixture="$test_tmp/settings.json"
+launcher="$test_tmp/libexec/run-codex-readonly.sh"
+cp "$template" "$template_copy"
+mkdir -p "$(dirname "$launcher")"
+ln -s "$template_copy" "$launcher"
+cat > "$settings_fixture" <<'JSON'
+{
+  "custom": {"preserve": true},
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(~/.claude/skills/headless-agents/scripts/run-codex-readonly.sh:*)"
+    ]
+  }
+}
+JSON
+
+/usr/bin/python3 "$installer" \
+    --settings "$settings_fixture" \
+    --template "$template_copy" \
+    --launcher "$launcher" \
+    --codex-bin "$test_tmp/trusted-bin/codex" \
+    --claude-bin "$test_tmp/trusted-bin/claude" >/dev/null
+/usr/bin/python3 "$installer" \
+    --settings "$settings_fixture" \
+    --template "$template_copy" \
+    --launcher "$launcher" \
+    --codex-bin "$test_tmp/trusted-bin/codex" \
+    --claude-bin "$test_tmp/trusted-bin/claude" >/dev/null
+
+subject="$launcher"
+launcher_digest="$(shasum -a 256 "$launcher" | awk '{print $1}')"
+printf '\n# source mutation must not alter installed copy\n' >> "$template_copy"
+if [[ "$(shasum -a 256 "$launcher" | awk '{print $1}')" != "$launcher_digest" ]]; then
+    echo "installed launcher changed with its source template" >&2
+    exit 1
+fi
+if [[ -L "$launcher" || ! -f "$launcher" || ! -x "$launcher" ]]; then
+    echo "installed launcher must be a regular copy" >&2
+    exit 1
+fi
+
+export SHADOW_MARKER="$test_tmp/path-shadow-executed"
 
 assert_arg() {
     local expected="$1"
@@ -70,11 +130,53 @@ file_mode() {
     esac
 }
 
+if [[ "$(file_mode "$launcher")" != "700" ]]; then
+    echo "installed launcher mode must be 700" >&2
+    exit 1
+fi
+jq -e '
+    .custom.preserve == true and
+    ([.permissions.allow[] |
+      select(. == "Bash(~/.local/libexec/dotfiles/run-codex-readonly.sh:*)")]
+      | length) == 1 and
+    ([.permissions.allow[] |
+      select(. == "Bash(~/.claude/skills/headless-agents/scripts/run-codex-readonly.sh:*)")]
+      | length) == 0
+' "$settings_fixture" >/dev/null
+trusted_codex_real="$(cd "$test_tmp/trusted-bin" && pwd -P)/codex"
+grep -F "$trusted_codex_real" "$launcher" >/dev/null
+if grep -Eq 'command -v codex|(^|[[:space:]])codex exec' "$launcher"; then
+    echo "installed launcher still resolves Codex through caller PATH" >&2
+    exit 1
+fi
+
+invalid_settings="$test_tmp/invalid-settings.json"
+printf '{ invalid json\n' > "$invalid_settings"
+invalid_digest="$(shasum -a 256 "$invalid_settings" | awk '{print $1}')"
+set +e
+/usr/bin/python3 "$installer" \
+    --settings "$invalid_settings" \
+    --template "$template" \
+    --launcher "$test_tmp/invalid-launcher" \
+    --codex-bin "$test_tmp/trusted-bin/codex" \
+    --claude-bin "$test_tmp/trusted-bin/claude" >/dev/null 2>&1
+invalid_settings_status=$?
+set -e
+if [[ "$invalid_settings_status" == "0" || -e "$test_tmp/invalid-launcher" || \
+      "$(shasum -a 256 "$invalid_settings" | awk '{print $1}')" != "$invalid_digest" ]]; then
+    echo "invalid settings must fail without partial writes" >&2
+    exit 1
+fi
+
 export MOCK_ARGS="$test_tmp/args.txt"
 export MOCK_STDIN="$test_tmp/stdin.txt"
 export MOCK_TMPDIR_FILE="$test_tmp/runtime-tmp.txt"
 
-default_result="$(PATH="$test_tmp/bin:$PATH" "$subject" --cwd "$repo_root" -- 'Inspect README.md')"
+default_result="$(PATH="$test_tmp/shadow-bin:$PATH" "$subject" --cwd "$repo_root" -- 'Inspect README.md')"
+if [[ -e "$SHADOW_MARKER" ]]; then
+    echo "caller PATH shadow replaced the baked Codex executable" >&2
+    exit 1
+fi
 grep -F 'mock final' <<< "$default_result" >/dev/null
 grep -F '[headless-codex] output=' <<< "$default_result" >/dev/null
 grep -F 'Repository facts must be verified with read-only tools' "$MOCK_STDIN" >/dev/null
@@ -121,7 +223,7 @@ schema_file="$test_tmp/headless-boundary.schema.json"
 printf 'Return structured evidence.\n' > "$prompt_file"
 cp "$repo_root/tests/fixtures/headless-boundary.schema.json" "$schema_file"
 
-structured_result="$(cd "$test_tmp" && PATH="$test_tmp/bin:$PATH" "$subject" \
+structured_result="$(cd "$test_tmp" && PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
     --cwd "$test_tmp" \
     --model gpt-5.6-sol \
     --effort high \
@@ -142,7 +244,7 @@ grep -F 'mock-event' "$structured_trace" >/dev/null
 grep -F 'mock stderr' "$structured_stderr" >/dev/null
 
 set +e
-PATH="$test_tmp/bin:$PATH" MOCK_EXIT=42 "$subject" \
+PATH="$test_tmp/shadow-bin:$PATH" MOCK_EXIT=42 "$subject" \
     --cwd "$repo_root" \
     -- 'Expected failure' >/dev/null 2>&1
 failure_status=$?
@@ -154,7 +256,7 @@ if [[ "$failure_status" != "42" ]]; then
 fi
 
 set +e
-TMPDIR="$repo_root" PATH="$test_tmp/bin:$PATH" "$subject" \
+TMPDIR="$repo_root" PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
     --cwd "$repo_root" \
     -- 'Reject a workspace-local temp root' >/dev/null 2>&1
 workspace_tmp_status=$?
@@ -165,8 +267,21 @@ if [[ "$workspace_tmp_status" != "2" ]]; then
     exit 1
 fi
 
+mkdir -p "$test_tmp/child-workspace"
 set +e
-PATH="$test_tmp/bin:$PATH" "$subject" \
+(cd "$test_tmp" && \
+    TMPDIR="$test_tmp" PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
+        --cwd "$test_tmp/child-workspace" \
+        -- 'Reject invocation-local temp root for a child workspace') >/dev/null 2>&1
+child_workspace_tmp_status=$?
+set -e
+if [[ "$child_workspace_tmp_status" != "2" ]]; then
+    echo "expected invocation-root TMPDIR rejection for child workspace" >&2
+    exit 1
+fi
+
+set +e
+PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
     --cwd "$test_tmp" \
     -- 'Reject a workspace outside the invocation root' >/dev/null 2>&1
 outside_workspace_status=$?
@@ -178,11 +293,11 @@ if [[ "$outside_workspace_status" != "2" ]]; then
 fi
 
 set +e
-PATH="$test_tmp/bin:$PATH" "$subject" \
+PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
     --cwd "$repo_root" \
     --prompt-file "$prompt_file" >/dev/null 2>&1
 outside_prompt_status=$?
-PATH="$test_tmp/bin:$PATH" "$subject" \
+PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
     --cwd "$repo_root" \
     --schema "$schema_file" \
     -- 'Reject outside schema' >/dev/null 2>&1
@@ -194,8 +309,24 @@ if [[ "$outside_prompt_status" != "2" || "$outside_schema_status" != "2" ]]; the
     exit 1
 fi
 
+ln -s "$prompt_file" "$test_tmp/prompt-link.txt"
+ln -s "$schema_file" "$test_tmp/schema-link.json"
 set +e
-PATH="$test_tmp/bin:$PATH" "$subject" \
+(cd "$test_tmp" && PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
+    --cwd "$test_tmp" --prompt-file "$test_tmp/prompt-link.txt") >/dev/null 2>&1
+symlink_prompt_status=$?
+(cd "$test_tmp" && PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
+    --cwd "$test_tmp" --schema "$test_tmp/schema-link.json" \
+    -- 'Reject symlink schema') >/dev/null 2>&1
+symlink_schema_status=$?
+set -e
+if [[ "$symlink_prompt_status" != "2" || "$symlink_schema_status" != "2" ]]; then
+    echo "expected symlink input-file rejection" >&2
+    exit 1
+fi
+
+set +e
+PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
     --cwd "$repo_root" \
     --output "$repo_root/should-not-exist.md" \
     -- 'Custom artifact paths are unsupported' >/dev/null 2>&1
@@ -213,7 +344,7 @@ for invalid_option in \
     option_name="${invalid_option%%|*}"
     option_value="${invalid_option#*|}"
     set +e
-    PATH="$test_tmp/bin:$PATH" "$subject" \
+    PATH="$test_tmp/shadow-bin:$PATH" "$subject" \
         --cwd "$repo_root" \
         "$option_name" "$option_value" \
         -- 'Reject unsafe option input' >/dev/null 2>&1
@@ -225,11 +356,18 @@ for invalid_option in \
     fi
 done
 
-bash -n "$subject"
+bash -n "$subject" "$shim" "$template" \
+    "$repo_root/tests/test_headless_agents_live.sh" \
+    "$repo_root/tests/test_headless_agents_claude.sh"
+bash -n "$repo_root/install.sh"
+/usr/bin/python3 "$installer" --help >/dev/null
 "$subject" --help >/dev/null
 jq -e '
-    .permissions.allow |
-    index("Bash(~/.claude/skills/headless-agents/scripts/run-codex-readonly.sh:*)") != null
+    (.permissions.allow |
+      index("Bash(~/.local/libexec/dotfiles/run-codex-readonly.sh:*)") != null) and
+    (.permissions.allow |
+      index("Bash(~/.claude/skills/headless-agents/scripts/run-codex-readonly.sh:*)") == null)
 ' "$repo_root/claude/settings.json" >/dev/null
+jq empty "$repo_root/tests/fixtures/headless-boundary.schema.json"
 
 echo "headless-agents tests passed"

@@ -38,7 +38,7 @@ fi
 # -----------------------------------------------------------------------------
 STAGED_FILES=$(git diff --cached --name-only)
 SHELL_FILES_PATTERN="bash/|\.aliases|\.bashrc|\.zshrc|\.bash_profile"
-HEADLESS_FILES_PATTERN='claude/settings\.json|skills/shared/headless-agents/|tests/test_headless_agents(_live)?\.sh|tests/fixtures/headless-boundary\.schema\.json'
+HEADLESS_FILES_PATTERN='install\.sh|claude/settings\.json|claude/scripts/install-headless-codex\.py|codex/notes/codex-cli\.md|skills/shared/(headless-agents|tmux-orchestration)/|tests/test_headless_agents(_live|_claude)?\.sh|tests/fixtures/headless-boundary\.schema\.json'
 
 if echo "$STAGED_FILES" | grep -qE "$HEADLESS_FILES_PATTERN"; then
     echo "🧪 Running headless-agents tests..."

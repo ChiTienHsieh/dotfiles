@@ -1,8 +1,24 @@
 # GPT-5.6 Prompting Notes
 
-Source checked 2026-08-02: [OpenAI model guidance for GPT-5.6](https://developers.openai.com/api/docs/guides/model-guidance?model=gpt-5.6).
+Source checked 2026-08-02: [OpenAI model guidance for GPT-5.6](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6).
 Refresh the live page before changing durable guidance when current behavior
 matters.
+
+## Model and effort defaults
+
+- `gpt-5.6-sol` is the frontier-capability route; the plain `gpt-5.6` alias
+  points to Sol.
+- `gpt-5.6-terra` balances intelligence and cost, so this skill uses Terra at
+  `medium` for ordinary bounded review.
+- `gpt-5.6-luna` is for efficient high-volume work. Do not switch merely
+  because a task looks mechanical; compare representative results first.
+- The official API efforts are `none`, `low`, `medium`, `high`, `xhigh`, and
+  `max`. When tuning, hold the task fixed and compare the current effort with
+  one level lower before spending more.
+
+This wrapper deliberately disables nested multi-agent and hosted Programmatic
+Tool Calling. Repo review needs native evidence and fresh model judgment
+between tool results, so direct read-only shell calls are clearer here.
 
 ## Apply these principles
 

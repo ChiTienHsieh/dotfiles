@@ -45,7 +45,7 @@
       "Bash(git branch --list:*)",
       "Bash(git config --get:*)",
       "Bash(git config --list)",
-      "Bash(~/.claude/skills/headless-agents/scripts/run-codex-readonly.sh:*)",
+      "Bash(~/.local/libexec/dotfiles/run-codex-readonly.sh:*)",
       "Bash(trash:*)"
     ],
     "deny": [

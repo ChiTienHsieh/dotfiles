@@ -300,6 +300,13 @@ if [ ! -e "$HOME/.claude/settings.json" ]; then
     cp "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
     echo "  Seeded: $HOME/.claude/settings.json"
 fi
+# Install a fixed copy outside normal project workspaces, with canonical
+# Claude/Codex executable paths baked in, then merge only its narrow Bash rule
+# into the independently owned live settings file. Never sync the whole seed.
+/usr/bin/python3 "$DOTFILES_DIR/claude/scripts/install-headless-codex.py" \
+    --settings "$HOME/.claude/settings.json" \
+    --template "$DOTFILES_DIR/skills/shared/headless-agents/scripts/run-codex-readonly.template.sh" \
+    --launcher "$HOME/.local/libexec/dotfiles/run-codex-readonly.sh"
 # machine.md: one machine-local canonical (~/.config/machine.md) shared by
 # Claude Code + Codex via symlink, so both agents always read identical
 # machine notes. Seeded once from a secret-free template, then owned locally
