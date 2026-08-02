@@ -2,51 +2,32 @@
 
 Read this reference only when model choice materially affects delegated work,
 long-running work, quota use, or review quality. Subscription state and
-provider priority live in `~/dotfiles/codex/notes/worker-routing.md`; read
-that first. This file only ranks capability — the cost column shifts whenever
-subscriptions change.
+provider priority live in `~/dotfiles/codex/notes/worker-routing.md`; read that
+first. This file maps task shape to model role and does not maintain subjective
+numeric rankings.
 
-The cost rank below reflects actual paid cost, not list price or OpenAI quota;
-higher numbers are better.
+- When quota state might affect model choice or long-running delegation, use
+  the `quota` skill. Do not duplicate CodexBar command details here.
+- Use `gpt-5.6-terra` at `medium` for ordinary headless research, repo
+  exploration, review, and mechanical work with explicit acceptance criteria.
+- Use `gpt-5.6-luna` at `low` for simple extraction, classification, or broad
+  screening whose result is cheap to verify.
+- Use `gpt-5.6-sol` at `high` for architecture, security, difficult debugging,
+  polished user-facing work, and final-judge passes. Do not default to `max`.
+- For recurring work, compare the current effort and one level lower on the
+  same representative tasks. Keep the lower setting only when it preserves
+  task success and required evidence.
+- From Claude Code, run bounded read-only Codex work through the shared
+  `headless-agents` wrapper. File-changing Codex work stays on an observable
+  tmux surface.
+- Use Claude or Grok when cross-provider independence is materially useful,
+  especially for reviewing a Codex-authored guardrail or architecture choice.
+  Query the installed CLI for current model aliases instead of pinning
+  short-lived Claude/Grok names in this reference.
+- Prefer the model that meets the acceptance criteria with the least quota and
+  latency. Upgrade once when a cheaper route misses the bar; do not run
+  same-prompt voting fan-out without a distinct hypothesis for each worker.
 
-| Model | Cost | Intelligence | Taste |
-| --- | ---: | ---: | ---: |
-| `gpt-5.5` | 9 | 8 | 5 |
-| `sonnet-5` | 5 | 5 | 7 |
-| `opus-4.8` | 4 | 7 | 8 |
-| `fable-5` | 2 | 9 | 9 |
-
-Use these as defaults, not ceilings. If the cheaper model's output is below the
-bar, upgrade or rerun without asking first; quality matters more than the model
-price label.
-
-- When quota state might affect model choice or long-running delegation, use the
-  `quota` skill. Do not duplicate CodexBar command details here; `quota` owns
-  the safe CLI-backed usage check.
-- Treat `cost` as a local override only. For any deliverable, prefer
-  `intelligence > taste > cost`.
-- Use `gpt-5.5` for batch or mechanical work with explicit specs: data
-  analysis, migrations, log triage, and similar implementation chores.
-- Use `gpt-5.5` via `codex exec -s read-only`, or `sonnet-5` as the delegated
-  worker, for high-token but low-difficulty tasks such as computer use, browser
-  operation, repository exploration, batch file reading, and grep-style
-  investigation. Prefer `sonnet-5` for automated computer/browser operation.
-- Use `opus-4.8` or `fable-5` for user-facing deliverables that need taste,
-  including UI, copy, API design, and polished code quality.
-- Use `fable-5` or `opus-4.8` to review implementation plans, with optional
-  `gpt-5.5` as an independent third perspective.
-- Use `fable-5` for the hardest reasoning and architecture decisions.
-- Do not use Haiku.
-
-`gpt-5.5` is only available through Codex CLI: use `codex exec` or
-`codex review`; `~/.codex/config.toml` defaults to `gpt-5.5`. The Claude rows
-above are capability labels; when setting a Workflow, Agent, or frontmatter
-`model` parameter, use the accepted aliases: `sonnet`, `opus`, `haiku`, or
-`fable`. Use `fable` directly for the hardest delegation; fall back to `opus`
-only on surfaces that reject `fable`.
-
-If a Workflow or Agent needs `gpt-5.5` for read-only analysis or review,
-dispatch a lightweight Claude wrapper such as `model: 'sonnet', effort: 'low'`;
-its prompt should build the self-contained Codex prompt, run
-`codex exec -s read-only`, and return the raw output. File-changing `gpt-5.5`
-work still goes through the visible Codex surface.
+OpenAI's live GPT-5.6 guidance is summarized in
+`skills/shared/headless-agents/references/prompting-gpt-5.6.md`. Refresh the
+official guide before changing durable prompt or model guidance.

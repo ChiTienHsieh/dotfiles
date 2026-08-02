@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "workspace_read": { "type": "boolean" },
+    "outside_read_denied": { "type": "boolean" },
+    "write_denied": { "type": "boolean" },
+    "network_denied": { "type": "boolean" },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": [
+    "workspace_read",
+    "outside_read_denied",
+    "write_denied",
+    "network_denied",
+    "evidence"
+  ],
+  "additionalProperties": false
+}

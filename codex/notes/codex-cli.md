@@ -36,6 +36,13 @@
   ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`，
   避免重踩 `ModuleNotFoundError: yaml` 或 permission denied。
 
+## Headless permission profile（2026-08-02、`codex-cli 0.145.0` 驗證）
+
+- `--sandbox read-only` 會切回舊 sandbox system，不能和新的 named permission profile 混用。Claude/Codex 的 bounded headless check 固定走 shared `headless-agents` wrapper。
+- 透過多個 dotted `-c` 組 mixed `filesystem` scalar/subtable 會報 `FilesystemPermissionToml` parse error；要把整個 profile 寫成一個 TOML inline table。
+- 已用真實 GPT-5.6-Terra command trace 驗：workspace read 成功；workspace write、普通 workspace 外 read、shell network 都被拒；`--output-schema` 有生效。
+- macOS 的 scratch exception 仍能讀寫 shared `/private/tmp`，即使 profile 加了 `:tmpdir`、`:slash_tmp`、`/tmp`、`/private/tmp` deny。外包一層 `sandbox-exec` 會讓 Codex 內層 Seatbelt command 全部以 exit 71 失敗，不能當修法。含敏感 shared-temp 的任務不得走 headless；需要更強 isolation 就改用外部 VM/container 或 observable surface。
+
 ## 已知的 Codex CLI 限制
 
 - 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。

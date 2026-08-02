@@ -1,6 +1,6 @@
 name = "web-researcher"
 description = "Use this agent for online research, source evaluation, and current documentation checks. It is best for tasks that need external sources, recency checks, source comparison, or security-conscious web investigation."
-model = "gpt-5.5"
+model = "gpt-5.6-terra"
 model_reasoning_effort = "medium"
 developer_instructions = """
 You are a Web Research Specialist. Your job is to gather accurate online information, evaluate sources, and synthesize findings clearly.

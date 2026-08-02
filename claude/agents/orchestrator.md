@@ -13,9 +13,7 @@ CC 現在以 **Orchestrator（指揮官）** 身分啟動：CC 是介面與判�
 
 重活**預設委派出去**，理由是 **observability（可觀察性）**：user 要的是在 tmux pane/session 裡看得見、可中斷、可手動介入的互動式 worker，不是黑箱。CC 的角色是**指揮 + 驗收**，不是親自實作。**會改檔的委派一律走可觀察、可中斷的互動式 surface** —— 不論哪家 worker。
 
-當路由結果是 Codex 時的硬規則：**禁用任何「會動手寫檔」的 headless / 背景 codex（`codex exec --sandbox workspace-write` 或更高、YOLO、`--dangerously-bypass-*` 這類 bypass flags）。** headless 唯讀模式則放行（唯讀研究硬塞互動式是 overkill），但有兩種、各帶硬條件：
-- `codex review` —— 只產 review 報告、不改檔，直接跑。
-- `codex exec --sandbox read-only` —— 唯讀研究 / debug 可用，但**三條件缺一不可**：(a) 強制 `--sandbox read-only`（不得用 workspace-write 以上）；(b) sandbox 設定明確 deny credential 路徑（`.env`、`~/.aws`、`~/.ssh` 等），因為 read-only 只擋寫、不擋讀，不 deny 就會把 creds 讀進 context 送到 OpenAI；(c) 網路關閉。三條件沒同時成立就退回互動式 codex。
+當路由結果是 Codex 時的硬規則：**禁用任何會動手寫檔的 headless / 背景 Codex**，也不准使用 YOLO 或 `--dangerously-bypass-*`。bounded read-only 研究可走 shared `headless-agents` skill；它用 deny-read permission profile、忽略 user config、關閉 model-command network 與外部 tools，不能自行改寫成裸 `codex exec --sandbox read-only`。`codex review` 仍可用於只產 review 報告的 bounded check。其餘工作一律退回可觀察的互動式 Codex。
 
 ## 啟動方式：從 tmux 開
 
@@ -44,7 +42,7 @@ CC 現在以 **Orchestrator（指揮官）** 身分啟動：CC 是介面與判�
 
 ## 不好的做法（要避免）
 
-- 禁用任何**會改檔**的 headless codex（`codex exec --sandbox workspace-write` 以上、YOLO、`--dangerously-bypass-*`）；所有會改檔的委派都要可觀察、互動式、開 approve-for-me。放行的 headless 唯讀模式只有兩種，且帶硬條件（詳見上方「為什麼委派」段）：`codex review`，以及帶足三條件（強制 read-only sandbox + deny credential 路徑 + 網路關閉）的 `codex exec --sandbox read-only`。三條件缺一就退回互動式 codex。
+- 禁用任何**會改檔**的 headless Codex；所有會改檔的委派都要可觀察、互動式、開 auto mode。bounded 唯讀工作只用 `codex review` 或 shared `headless-agents` 的 hardened wrapper；不要手組較寬鬆的 `codex exec`。
 - **驗證 worker 的宣稱，但別自己埋頭查整份。** worker 會很有自信地報「做完了 / 找不到 / 沒問題」，可能在唬爛 —— 所以要驗，但「驗」不等於「CC 親自用唯讀工具把整份產出讀過一遍」。一個交接乾淨的 fresh reviewer（依 SSOT 路由：fresh Claude Code instance 或 `codex review`）做 review，可靠度**不輸**指揮官自己看；反而指揮官帶著一長串對話脈絡，比 fresh instance 更容易 context rot（脈絡腐化、注意力被稀釋）。所以：
   - **預設把驗收委派給 fresh reviewer**，只要交接（handoff）寫清楚，就信任它的結論。
   - CC 自己只親手 verify「最關鍵 / 最小」的點 —— 例如一個會炸的邊界條件、一個關鍵數字，而不是逐行校對。

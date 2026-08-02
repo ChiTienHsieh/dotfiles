@@ -7,6 +7,10 @@ description: "Use when checking Codex, Claude Code, or related AI CLI usage limi
 
 Use this skill to check and react to AI CLI quota before starting or continuing long-running work. The local source of truth is CodexBar CLI usage output. This skill reports live quota only; which provider to prefer for delegation is decided by `~/dotfiles/codex/notes/worker-routing.md` (the worker-routing SSOT).
 
+CodexBar's `--provider both` covers Codex and Claude Code, not Grok. If Grok
+quota affects routing, use Grok's own reported limit state; do not infer it from
+the user's subscription price.
+
 ## Quick Check
 
 Run the CLI-backed quota check from bash and allow up to 60 seconds for the result to appear:
