@@ -15,8 +15,9 @@ SSOT), not by this skill.
 On this machine, implementation is delegated to an observable interactive
 worker surface via `tmux-orchestration`, never a file-mutating headless run.
 The user wants observable TUI sessions that can be watched, interrupted, and
-nudged manually. Read-only headless Codex is fine for the controller's own
-verification or research.
+nudged manually. Bounded read-only Codex is allowed for the controller's own
+verification or research only through the shared `headless-agents` hardened
+wrapper.
 
 ## When To Use
 
@@ -69,8 +70,8 @@ When exact model routing matters, read `references/model-routing.md`.
 Use `tmux-orchestration` for delegated implementation and follow its Delegation
 Contract for prompt files, observable Codex TUI surfaces, marker reports, and
 controller-side verification. Do not delegate file-mutating work via headless
-`codex exec`; read-only headless Codex remains allowed for controller-side
-verification or research.
+`codex exec`; bounded read-only headless work must use the shared
+`headless-agents` hardened wrapper, never an ad hoc command.
 
 1. Inspect the repo state, dirty files, stop conditions, and relevant docs.
 2. Write a worker prompt that captures objective, allowed scope, constraints,

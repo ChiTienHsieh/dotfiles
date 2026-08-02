@@ -11,25 +11,38 @@ Options:
   --cwd DIR          Read-only workspace (default: current directory)
   --model MODEL      Codex model (default: gpt-5.6-terra)
   --effort LEVEL     Reasoning effort (default: medium)
-  --output FILE      Final response path
-  --trace FILE       JSONL event trace path
-  --stderr FILE      Codex stderr path
   --schema FILE      JSON Schema for the final response
   --prompt-file FILE Read the prompt from a file
   -h, --help         Show this help
 EOF
 }
 
-codex_cwd="$PWD"
+invocation_root="$(pwd -P)"
+codex_cwd="$invocation_root"
 codex_model="gpt-5.6-terra"
 codex_effort="medium"
-output_path=""
-trace_path=""
-stderr_path=""
 schema_path=""
 prompt_file=""
 prompt_text=""
 worker_contract="Repository facts must be verified with read-only tools before you answer. Do not infer them from path names or prior knowledge. If required evidence is unavailable, report that instead of guessing."
+
+resolve_input_file() {
+    local input_path="$1"
+    local input_real
+
+    if [[ -L "$input_path" ]]; then
+        echo "Input files must not be symlinks: $input_path" >&2
+        return 2
+    fi
+    input_real="$(cd "$(dirname "$input_path")" && pwd -P)/$(basename "$input_path")"
+    case "$input_real" in
+        "$invocation_root"|"$invocation_root"/*) printf '%s\n' "$input_real" ;;
+        *)
+            echo "Input files must stay under the invocation directory: $input_real" >&2
+            return 2
+            ;;
+    esac
+}
 
 while (($#)); do
     case "$1" in
@@ -43,18 +56,6 @@ while (($#)); do
             ;;
         --effort)
             codex_effort="${2:?--effort requires a level}"
-            shift 2
-            ;;
-        --output)
-            output_path="${2:?--output requires a file}"
-            shift 2
-            ;;
-        --trace)
-            trace_path="${2:?--trace requires a file}"
-            shift 2
-            ;;
-        --stderr)
-            stderr_path="${2:?--stderr requires a file}"
             shift 2
             ;;
         --schema)
@@ -102,6 +103,10 @@ if [[ -n "$prompt_file" && ! -f "$prompt_file" ]]; then
     exit 2
 fi
 
+if [[ -n "$prompt_file" ]]; then
+    prompt_file="$(resolve_input_file "$prompt_file")" || exit $?
+fi
+
 if [[ -z "$prompt_file" && -z "$prompt_text" ]]; then
     echo "A prompt is required" >&2
     exit 2
@@ -112,31 +117,44 @@ if [[ -n "$schema_path" && ! -f "$schema_path" ]]; then
     exit 2
 fi
 
-run_dir="$(mktemp -d "${TMPDIR:-/tmp}/headless-codex.XXXXXX")"
-output_path="${output_path:-$run_dir/final.md}"
-trace_path="${trace_path:-$run_dir/events.jsonl}"
-stderr_path="${stderr_path:-$run_dir/stderr.log}"
+if [[ -n "$schema_path" ]]; then
+    schema_path="$(resolve_input_file "$schema_path")" || exit $?
+fi
 
-mkdir -p "$(dirname "$output_path")" "$(dirname "$trace_path")" "$(dirname "$stderr_path")"
+case "$codex_effort" in
+    low|medium|high|xhigh|max|ultra) ;;
+    *)
+        echo "Unsupported effort: $codex_effort" >&2
+        exit 2
+        ;;
+esac
 
-workspace_root="$(cd "$codex_cwd" && pwd -P)"
-output_real="$(cd "$(dirname "$output_path")" && pwd -P)/$(basename "$output_path")"
-trace_real="$(cd "$(dirname "$trace_path")" && pwd -P)/$(basename "$trace_path")"
-stderr_real="$(cd "$(dirname "$stderr_path")" && pwd -P)/$(basename "$stderr_path")"
-
-for artifact_path in "$output_real" "$trace_real" "$stderr_real"; do
-    case "$artifact_path" in
-        "$workspace_root"|"$workspace_root"/*)
-            echo "Artifact paths must stay outside the workspace: $artifact_path" >&2
-            exit 2
-            ;;
-    esac
-done
-
-if [[ "$output_real" == "$trace_real" || "$output_real" == "$stderr_real" || "$trace_real" == "$stderr_real" ]]; then
-    echo "Output, trace, and stderr paths must be distinct" >&2
+if [[ ! "$codex_model" =~ ^[A-Za-z0-9][A-Za-z0-9._:/-]*$ ]]; then
+    echo "Invalid model name: $codex_model" >&2
     exit 2
 fi
+
+workspace_root="$(cd "$codex_cwd" && pwd -P)"
+case "$workspace_root" in
+    "$invocation_root"|"$invocation_root"/*) ;;
+    *)
+        echo "Workspace must be the invocation directory or its child: $workspace_root" >&2
+        exit 2
+        ;;
+esac
+temp_root="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
+case "$temp_root/headless-codex.placeholder" in
+    "$workspace_root"|"$workspace_root"/*)
+        echo "TMPDIR must stay outside the workspace: $temp_root" >&2
+        exit 2
+        ;;
+esac
+
+umask 077
+run_dir="$(mktemp -d "$temp_root/headless-codex.XXXXXX")"
+output_real="$run_dir/final.md"
+trace_real="$run_dir/events.jsonl"
+stderr_real="$run_dir/stderr.log"
 
 codex_args=(
     codex exec
@@ -150,7 +168,9 @@ codex_args=(
     -o "$output_real"
     -c "model_reasoning_effort=\"$codex_effort\""
     -c 'approval_policy="never"'
+    -c 'allow_login_shell=false'
     -c 'project_doc_max_bytes=0'
+    -c 'shell_environment_policy={ inherit="core", ignore_default_excludes=false, include_only=["^(HOME|LANG|LC_[A-Z_]+|LOGNAME|PATH|SHELL|TERM|TMPDIR|USER)$"] }'
     -c 'web_search="disabled"'
     -c 'default_permissions="headless-readonly"'
     -c 'permissions.headless-readonly={ description="Ephemeral workspace-only read access.", filesystem={ glob_scan_max_depth=4, ":root"="deny", ":minimal"="read", ":tmpdir"="deny", ":slash_tmp"="deny", "/tmp"="deny", "/private/tmp"="deny", "~/.aws"="deny", "~/.config"="deny", "~/.secrets"="deny", "~/.ssh"="deny", ":workspace_roots"={ "."="read", ".env"="deny", ".env.*"="deny", "**/.env"="deny", "**/.env.*"="deny" } }, network={ enabled=false } }'

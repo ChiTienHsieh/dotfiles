@@ -63,6 +63,13 @@ assert_no_arg() {
     fi
 }
 
+file_mode() {
+    case "$(uname -s)" in
+        Darwin) /usr/bin/stat -f '%Lp' "$1" ;;
+        *) stat -c '%a' "$1" ;;
+    esac
+}
+
 export MOCK_ARGS="$test_tmp/args.txt"
 export MOCK_STDIN="$test_tmp/stdin.txt"
 export MOCK_TMPDIR_FILE="$test_tmp/runtime-tmp.txt"
@@ -73,6 +80,12 @@ grep -F '[headless-codex] output=' <<< "$default_result" >/dev/null
 grep -F 'Repository facts must be verified with read-only tools' "$MOCK_STDIN" >/dev/null
 grep -Fx 'Inspect README.md' "$MOCK_STDIN" >/dev/null
 grep -E '/headless-codex\.[[:alnum:]]+$' "$MOCK_TMPDIR_FILE" >/dev/null
+default_run_dir="$(< "$MOCK_TMPDIR_FILE")"
+default_output="$(sed -n 's/^\[headless-codex\] output=\([^ ]*\) trace=.*/\1/p' <<< "$default_result")"
+if [[ "$(file_mode "$default_run_dir")" != "700" || "$(file_mode "$default_output")" != "600" ]]; then
+    echo "headless artifacts are not private" >&2
+    exit 1
+fi
 
 assert_arg exec
 assert_arg --ignore-user-config
@@ -83,7 +96,9 @@ assert_arg --json
 assert_arg gpt-5.6-terra
 assert_arg 'model_reasoning_effort="medium"'
 assert_arg 'approval_policy="never"'
+assert_arg 'allow_login_shell=false'
 assert_arg 'project_doc_max_bytes=0'
+assert_arg 'shell_environment_policy={ inherit="core", ignore_default_excludes=false, include_only=["^(HOME|LANG|LC_[A-Z_]+|LOGNAME|PATH|SHELL|TERM|TMPDIR|USER)$"] }'
 assert_arg 'web_search="disabled"'
 assert_arg 'default_permissions="headless-readonly"'
 assert_arg 'permissions.headless-readonly={ description="Ephemeral workspace-only read access.", filesystem={ glob_scan_max_depth=4, ":root"="deny", ":minimal"="read", ":tmpdir"="deny", ":slash_tmp"="deny", "/tmp"="deny", "/private/tmp"="deny", "~/.aws"="deny", "~/.config"="deny", "~/.secrets"="deny", "~/.ssh"="deny", ":workspace_roots"={ "."="read", ".env"="deny", ".env.*"="deny", "**/.env"="deny", "**/.env.*"="deny" } }, network={ enabled=false } }'
@@ -102,38 +117,33 @@ assert_no_arg --dangerously-bypass-approvals-and-sandbox
 assert_no_arg --search
 
 prompt_file="$test_tmp/prompt.txt"
-schema_file="$test_tmp/schema.json"
-output_file="$test_tmp/custom/final.json"
-trace_file="$test_tmp/custom/events.jsonl"
-stderr_file="$test_tmp/custom/stderr.log"
+schema_file="$test_tmp/headless-boundary.schema.json"
 printf 'Return structured evidence.\n' > "$prompt_file"
-printf '{"type":"object"}\n' > "$schema_file"
+cp "$repo_root/tests/fixtures/headless-boundary.schema.json" "$schema_file"
 
-PATH="$test_tmp/bin:$PATH" "$subject" \
-    --cwd "$repo_root" \
+structured_result="$(cd "$test_tmp" && PATH="$test_tmp/bin:$PATH" "$subject" \
+    --cwd "$test_tmp" \
     --model gpt-5.6-sol \
     --effort high \
-    --output "$output_file" \
-    --trace "$trace_file" \
-    --stderr "$stderr_file" \
     --schema "$schema_file" \
-    --prompt-file "$prompt_file" >/dev/null
+    --prompt-file "$prompt_file")"
 
 assert_arg gpt-5.6-sol
 assert_arg 'model_reasoning_effort="high"'
 assert_arg --output-schema
-assert_arg "$schema_file"
+schema_real="$(cd "$(dirname "$schema_file")" && pwd -P)/$(basename "$schema_file")"
+assert_arg "$schema_real"
 grep -Fx 'Return structured evidence.' "$MOCK_STDIN" >/dev/null
-grep -Fx 'mock final' "$output_file" >/dev/null
-grep -F 'mock-event' "$trace_file" >/dev/null
-grep -F 'mock stderr' "$stderr_file" >/dev/null
+structured_output="$(sed -n 's/^\[headless-codex\] output=\([^ ]*\) trace=.*/\1/p' <<< "$structured_result")"
+structured_trace="$(sed -n 's/^\[headless-codex\].* trace=\([^ ]*\) stderr=.*/\1/p' <<< "$structured_result")"
+structured_stderr="$(sed -n 's/^\[headless-codex\].* stderr=\(.*\)$/\1/p' <<< "$structured_result")"
+grep -Fx 'mock final' "$structured_output" >/dev/null
+grep -F 'mock-event' "$structured_trace" >/dev/null
+grep -F 'mock stderr' "$structured_stderr" >/dev/null
 
 set +e
 PATH="$test_tmp/bin:$PATH" MOCK_EXIT=42 "$subject" \
     --cwd "$repo_root" \
-    --output "$test_tmp/fail-final.md" \
-    --trace "$test_tmp/fail-events.jsonl" \
-    --stderr "$test_tmp/fail-stderr.log" \
     -- 'Expected failure' >/dev/null 2>&1
 failure_status=$?
 set -e
@@ -144,19 +154,82 @@ if [[ "$failure_status" != "42" ]]; then
 fi
 
 set +e
-PATH="$test_tmp/bin:$PATH" "$subject" \
+TMPDIR="$repo_root" PATH="$test_tmp/bin:$PATH" "$subject" \
     --cwd "$repo_root" \
-    --output "$repo_root/headless-test-output.md" \
-    -- 'Reject workspace artifact' >/dev/null 2>&1
-workspace_artifact_status=$?
+    -- 'Reject a workspace-local temp root' >/dev/null 2>&1
+workspace_tmp_status=$?
 set -e
 
-if [[ "$workspace_artifact_status" != "2" ]]; then
-    echo "expected workspace artifact rejection, got $workspace_artifact_status" >&2
+if [[ "$workspace_tmp_status" != "2" ]]; then
+    echo "expected workspace TMPDIR rejection, got $workspace_tmp_status" >&2
     exit 1
 fi
 
+set +e
+PATH="$test_tmp/bin:$PATH" "$subject" \
+    --cwd "$test_tmp" \
+    -- 'Reject a workspace outside the invocation root' >/dev/null 2>&1
+outside_workspace_status=$?
+set -e
+
+if [[ "$outside_workspace_status" != "2" ]]; then
+    echo "expected outside workspace rejection, got $outside_workspace_status" >&2
+    exit 1
+fi
+
+set +e
+PATH="$test_tmp/bin:$PATH" "$subject" \
+    --cwd "$repo_root" \
+    --prompt-file "$prompt_file" >/dev/null 2>&1
+outside_prompt_status=$?
+PATH="$test_tmp/bin:$PATH" "$subject" \
+    --cwd "$repo_root" \
+    --schema "$schema_file" \
+    -- 'Reject outside schema' >/dev/null 2>&1
+outside_schema_status=$?
+set -e
+
+if [[ "$outside_prompt_status" != "2" || "$outside_schema_status" != "2" ]]; then
+    echo "expected outside input-file rejection" >&2
+    exit 1
+fi
+
+set +e
+PATH="$test_tmp/bin:$PATH" "$subject" \
+    --cwd "$repo_root" \
+    --output "$repo_root/should-not-exist.md" \
+    -- 'Custom artifact paths are unsupported' >/dev/null 2>&1
+custom_artifact_status=$?
+set -e
+
+if [[ "$custom_artifact_status" != "2" || -e "$repo_root/should-not-exist.md" ]]; then
+    echo "expected custom artifact option rejection without a workspace write" >&2
+    exit 1
+fi
+
+for invalid_option in \
+    '--effort|medium"; approval_policy="on-request' \
+    '--model|gpt-5.6-terra"'; do
+    option_name="${invalid_option%%|*}"
+    option_value="${invalid_option#*|}"
+    set +e
+    PATH="$test_tmp/bin:$PATH" "$subject" \
+        --cwd "$repo_root" \
+        "$option_name" "$option_value" \
+        -- 'Reject unsafe option input' >/dev/null 2>&1
+    invalid_option_status=$?
+    set -e
+    if [[ "$invalid_option_status" != "2" ]]; then
+        echo "expected $option_name validation failure, got $invalid_option_status" >&2
+        exit 1
+    fi
+done
+
 bash -n "$subject"
 "$subject" --help >/dev/null
+jq -e '
+    .permissions.allow |
+    index("Bash(~/.claude/skills/headless-agents/scripts/run-codex-readonly.sh:*)") != null
+' "$repo_root/claude/settings.json" >/dev/null
 
 echo "headless-agents tests passed"

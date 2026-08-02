@@ -72,6 +72,7 @@ tmux capture-pane -pt SESSION_NAME -S -80
 When the user wants a Codex/Claude worker to review or brainstorm *with* the orchestrator, split a new pane in the orchestrator's current session instead of opening a new session:
 
 ```bash
+# Interactive co-review example; this is not the headless isolation boundary.
 # -h = split left/right; target the orchestrator's own session/window
 worker_pane="$(tmux split-window -h -P -F '#{pane_id}' -t SESSION_NAME -c /path/to/repo 'codex --sandbox read-only')"
 tmux capture-pane -pt "$worker_pane" -S -80

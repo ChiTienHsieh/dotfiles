@@ -32,6 +32,9 @@
   network proxy: … reserve managed loopback proxy listeners`（0.142.5 實測）——
   它要綁本機 loopback listener，sandbox 不給。固定解法：該指令用
   `dangerouslyDisableSandbox` 重跑，不用試 config 變體。
+- 這段只記錄互動式／人工啟動的相容性做法；`codex review` 沒有 shared
+  `headless-agents` 的 filesystem、environment 與 feature boundary，不得拿來取代
+  hardened headless wrapper。
 - skill 驗證固定命令：`uv run --with pyyaml python
   ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`，
   避免重踩 `ModuleNotFoundError: yaml` 或 permission denied。
@@ -40,7 +43,8 @@
 
 - `--sandbox read-only` 會切回舊 sandbox system，不能和新的 named permission profile 混用。Claude/Codex 的 bounded headless check 固定走 shared `headless-agents` wrapper。
 - 透過多個 dotted `-c` 組 mixed `filesystem` scalar/subtable 會報 `FilesystemPermissionToml` parse error；要把整個 profile 寫成一個 TOML inline table。
-- 已用真實 GPT-5.6-Terra command trace 驗：workspace read 成功；workspace write、普通 workspace 外 read、shell network 都被拒；`--output-schema` 有生效。
+- 已用真實 GPT-5.6-Terra command trace 驗：workspace read 成功；workspace write、普通 workspace 外 read、shell network 與 parent secret env 都被拒；`--output-schema` 有生效。可用 `tests/test_headless_agents_live.sh` 重跑完整 boundary smoke test。
+- Claude Code 的 outer Bash sandbox 會讓 nested Codex 出現 control-plane network error 或內層 Seatbelt 無法讀 workspace；只對 shared hardened wrapper 的 Bash call 設 `dangerouslyDisableSandbox: true`。不要把同一例外套到裸 `codex` command。
 - macOS 的 scratch exception 仍能讀寫 shared `/private/tmp`，即使 profile 加了 `:tmpdir`、`:slash_tmp`、`/tmp`、`/private/tmp` deny。外包一層 `sandbox-exec` 會讓 Codex 內層 Seatbelt command 全部以 exit 71 失敗，不能當修法。含敏感 shared-temp 的任務不得走 headless；需要更強 isolation 就改用外部 VM/container 或 observable surface。
 
 ## 已知的 Codex CLI 限制
