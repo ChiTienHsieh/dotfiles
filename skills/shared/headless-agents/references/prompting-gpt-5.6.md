@@ -15,10 +15,9 @@ matters.
 - The official API efforts are `none`, `low`, `medium`, `high`, `xhigh`, and
   `max`. When tuning, hold the task fixed and compare the current effort with
   one level lower before spending more.
-
-This wrapper deliberately disables nested multi-agent and hosted Programmatic
-Tool Calling. Repo review needs native evidence and fresh model judgment
-between tool results, so direct read-only shell calls are clearer here.
+- The Codex CLI wrapper currently accepts `low` through `max` plus `ultra`, but
+  not API-only `none`. Treat those as separate surfaces rather than assuming
+  every API effort is a valid CLI value.
 
 ## Apply these principles
 

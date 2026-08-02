@@ -17,9 +17,6 @@ numeric rankings.
 - For recurring work, compare the current effort and one level lower on the
   same representative tasks. Keep the lower setting only when it preserves
   task success and required evidence.
-- From Claude Code, run bounded read-only Codex work through the shared
-  `headless-agents` launcher. File-changing Codex work stays on an observable
-  tmux surface.
 - Use Claude or Grok when cross-provider independence is materially useful,
   especially for reviewing a Codex-authored guardrail or architecture choice.
   Query the installed CLI for current model aliases instead of pinning

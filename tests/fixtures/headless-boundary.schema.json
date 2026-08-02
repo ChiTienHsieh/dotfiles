@@ -3,6 +3,7 @@
   "properties": {
     "workspace_read": { "type": "boolean" },
     "outside_read_denied": { "type": "boolean" },
+    "artifact_read_denied": { "type": "boolean" },
     "env_files_denied": { "type": "boolean" },
     "write_denied": { "type": "boolean" },
     "network_denied": { "type": "boolean" },
@@ -15,6 +16,7 @@
   "required": [
     "workspace_read",
     "outside_read_denied",
+    "artifact_read_denied",
     "env_files_denied",
     "write_denied",
     "network_denied",

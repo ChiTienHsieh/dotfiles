@@ -1,11 +1,15 @@
-#!/usr/bin/env bash
+#!/bin/bash -p
 set -euo pipefail
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
 
 # Replaced with shell-quoted, canonical executable paths by
 # claude/scripts/install-headless-codex.py. This template is never the
 # permissioned launcher itself.
 codex_bin=@CODEX_BIN@
 claude_bin=@CLAUDE_BIN@
+artifact_root=@ARTIFACT_ROOT@
+launcher_real="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
 
 usage() {
     cat <<'EOF'
@@ -80,6 +84,12 @@ if [[ ! -x "$codex_bin" || -d "$codex_bin" ]]; then
     echo "Rerun the dotfiles installer to refresh the headless launcher." >&2
     exit 127
 fi
+if [[ ! -d "$artifact_root" || -L "$artifact_root" || \
+      "$(cd "$artifact_root" && pwd -P)" != "$artifact_root" ]]; then
+    echo "Trusted artifact root is unavailable: $artifact_root" >&2
+    echo "Rerun the dotfiles installer to refresh the headless runtime." >&2
+    exit 127
+fi
 
 invocation_root="$(pwd -P)"
 claude_project_root="$(find_claude_project_root || true)"
@@ -97,6 +107,15 @@ if [[ -n "$claude_project_root" ]]; then
             exit 2
             ;;
     esac
+    for protected_runtime in \
+        "$launcher_real" "$codex_bin" "$claude_bin" "$artifact_root"; do
+        case "$protected_runtime" in
+            "$claude_project_root"|"$claude_project_root"/*)
+                echo "Trusted runtime is inside the Claude project root: $protected_runtime" >&2
+                exit 2
+                ;;
+        esac
+    done
 fi
 
 codex_cwd="$invocation_root"
@@ -110,6 +129,9 @@ worker_contract="Repository facts must be verified with read-only tools before y
 resolve_input_file() {
     local input_path="$1"
     local input_real
+    local relative_input
+    local component
+    local -a input_components
 
     if [[ -L "$input_path" ]]; then
         echo "Input files must not be symlinks: $input_path" >&2
@@ -117,12 +139,23 @@ resolve_input_file() {
     fi
     input_real="$(cd "$(dirname "$input_path")" && pwd -P)/$(basename "$input_path")"
     case "$input_real" in
-        "$invocation_root"|"$invocation_root"/*) printf '%s\n' "$input_real" ;;
+        "$workspace_root"|"$workspace_root"/*) ;;
         *)
-            echo "Input files must stay under the invocation directory: $input_real" >&2
+            echo "Input files must stay under the selected workspace: $input_real" >&2
             return 2
             ;;
     esac
+    relative_input="${input_real#"$workspace_root"/}"
+    IFS='/' read -r -a input_components <<< "$relative_input"
+    for component in "${input_components[@]}"; do
+        case "$component" in
+            .env|.env.*)
+                echo "Input files must not be .env files: $input_real" >&2
+                return 2
+                ;;
+        esac
+    done
+    printf '%s\n' "$input_real"
 }
 
 while (($#)); do
@@ -169,6 +202,28 @@ if [[ ! -d "$codex_cwd" ]]; then
     exit 2
 fi
 
+workspace_root="$(cd "$codex_cwd" && pwd -P)"
+case "$workspace_root" in
+    "$invocation_root"|"$invocation_root"/*) ;;
+    *)
+        echo "Workspace must be the invocation directory or its child: $workspace_root" >&2
+        exit 2
+        ;;
+esac
+codex_cwd="$workspace_root"
+case "$artifact_root" in
+    "$workspace_root"|"$workspace_root"/*)
+        echo "Artifact root must stay outside the selected workspace: $artifact_root" >&2
+        exit 2
+        ;;
+esac
+case "$workspace_root" in
+    "$artifact_root"|"$artifact_root"/*)
+        echo "Workspace must stay outside the trusted artifact root: $workspace_root" >&2
+        exit 2
+        ;;
+esac
+
 if [[ -n "$prompt_file" && -n "$prompt_text" ]]; then
     echo "Use either --prompt-file or -- PROMPT, not both" >&2
     exit 2
@@ -210,14 +265,6 @@ if [[ ! "$codex_model" =~ ^[A-Za-z0-9][A-Za-z0-9._:/-]*$ ]]; then
     exit 2
 fi
 
-workspace_root="$(cd "$codex_cwd" && pwd -P)"
-case "$workspace_root" in
-    "$invocation_root"|"$invocation_root"/*) ;;
-    *)
-        echo "Workspace must be the invocation directory or its child: $workspace_root" >&2
-        exit 2
-        ;;
-esac
 temp_root="$(cd "${TMPDIR:-/tmp}" && pwd -P)"
 case "$temp_root/headless-codex.placeholder" in
     "$invocation_root"|"$invocation_root"/*)
@@ -227,14 +274,23 @@ case "$temp_root/headless-codex.placeholder" in
 esac
 
 umask 077
-run_dir="$(mktemp -d "$temp_root/headless-codex.XXXXXX")"
+run_dir="$(mktemp -d "$artifact_root/headless-codex.XXXXXX")"
+scratch_dir="$(mktemp -d "$temp_root/headless-codex-scratch.XXXXXX")"
 output_real="$run_dir/final.md"
 trace_real="$run_dir/events.jsonl"
 stderr_real="$run_dir/stderr.log"
 
+cleanup_scratch() {
+    case "$scratch_dir" in
+        "$temp_root"/headless-codex-scratch.*) /bin/rm -rf -- "$scratch_dir" ;;
+    esac
+}
+trap cleanup_scratch EXIT
+
 codex_args=(
     "$codex_bin" exec
     --ignore-user-config
+    --ignore-rules
     --strict-config
     --ephemeral
     --skip-git-repo-check
@@ -249,7 +305,7 @@ codex_args=(
     -c 'shell_environment_policy={ inherit="core", ignore_default_excludes=false, include_only=["^(HOME|LANG|LC_[A-Z_]+|LOGNAME|PATH|SHELL|TERM|TMPDIR|USER)$"] }'
     -c 'web_search="disabled"'
     -c 'default_permissions="headless-readonly"'
-    -c 'permissions.headless-readonly={ description="Ephemeral workspace-only read access.", filesystem={ glob_scan_max_depth=4, ":root"="deny", ":minimal"="read", ":tmpdir"="deny", ":slash_tmp"="deny", "/tmp"="deny", "/private/tmp"="deny", "~/.aws"="deny", "~/.config"="deny", "~/.secrets"="deny", "~/.ssh"="deny", ":workspace_roots"={ "."="read", ".env"="deny", ".env.*"="deny", "**/.env"="deny", "**/.env.*"="deny" } }, network={ enabled=false } }'
+    -c 'permissions.headless-readonly={ description="Ephemeral workspace-only read access.", filesystem={ glob_scan_max_depth=4, ":root"="deny", ":minimal"="read", ":tmpdir"="deny", ":slash_tmp"="deny", "/tmp"="deny", "/private/tmp"="deny", @ARTIFACT_ROOT_TOML@="deny", "~/.aws"="deny", "~/.config"="deny", "~/.secrets"="deny", "~/.ssh"="deny", ":workspace_roots"={ "."="read", ".env"="deny", ".env.*"="deny", "**/.env"="deny", "**/.env.*"="deny" } }, network={ enabled=false } }'
     --disable apps
     --disable browser_use
     --disable computer_use
@@ -266,7 +322,18 @@ codex_args=(
     --disable workspace_dependencies
 )
 
-codex_runner=(/usr/bin/env "TMPDIR=$run_dir")
+codex_runner=(
+    /usr/bin/env -i
+    "HOME=${HOME:?HOME is required}"
+    "PATH=$PATH"
+    "TMPDIR=$scratch_dir"
+)
+for preserved_name in LANG LC_ALL LC_CTYPE LC_MESSAGES LOGNAME SHELL TERM USER; do
+    preserved_value="${!preserved_name-}"
+    if [[ -n "$preserved_value" ]]; then
+        codex_runner+=("$preserved_name=$preserved_value")
+    fi
+done
 
 if [[ -n "$schema_path" ]]; then
     codex_args+=(--output-schema "$schema_path")
@@ -288,6 +355,20 @@ else
     else
         codex_status=$?
     fi
+fi
+
+cleanup_scratch
+trap - EXIT
+
+for trusted_artifact in "$trace_real" "$stderr_real"; do
+    if [[ -L "$trusted_artifact" || ! -f "$trusted_artifact" ]]; then
+        echo "Headless Codex produced an unsafe artifact: $trusted_artifact" >&2
+        exit 1
+    fi
+done
+if [[ -e "$output_real" && ( -L "$output_real" || ! -f "$output_real" ) ]]; then
+    echo "Headless Codex produced an unsafe final output: $output_real" >&2
+    exit 1
 fi
 
 if ((codex_status != 0)); then

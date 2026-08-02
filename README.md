@@ -4,6 +4,10 @@ Personal dotfiles for Unix systems. Managed with symlinks.
 
 ## Quick Start
 
+The full agent setup requires both `claude` and `codex` on `PATH`. Install and
+authenticate those CLIs before running this repo's installer; it bakes their
+canonical executable paths into the trusted headless runtime.
+
 ```bash
 # Clone the repo
 git clone --recursive https://github.com/ChiTienHsieh/dotfiles.git ~/dotfiles

@@ -66,6 +66,36 @@ run_case_raw_stdin() {
   fi
 }
 
+run_unsandboxed_case() {
+  local desc="$1"
+  local command="$2"
+  local dangerous="$3"
+  local expect="$4"
+
+  case_num=$((case_num + 1))
+  local payload
+  payload=$(python3 -c '
+import json, sys
+print(json.dumps({"tool_input": {
+    "command": sys.argv[1],
+    "dangerouslyDisableSandbox": sys.argv[2] == "true",
+}}))
+' "$command" "$dangerous")
+
+  local output
+  output=$(printf '%s' "$payload" | python3 "$HOOK")
+  local got="allow"
+  if printf '%s' "$output" | grep -q '"permissionDecision": *"deny"'; then
+    got="deny"
+  fi
+  if [ "$got" = "$expect" ]; then
+    echo "PASS [$case_num] $desc"
+  else
+    echo "FAIL [$case_num] $desc (expected=$expect got=$got output=$output)"
+    fail_count=$((fail_count + 1))
+  fi
+}
+
 # --- Rule A: capture-pane polling loops --------------------------------
 
 run_case \
@@ -299,6 +329,80 @@ EOF" \
 run_case \
   "allow: echo data containing long tmux send-keys payload" \
   "echo \"tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'\"" \
+  "allow"
+
+# --- Rule D: unsandboxed executable allowlist ---------------------------
+
+run_unsandboxed_case \
+  "allow: installed headless launcher may disable outer sandbox" \
+  '~/.local/libexec/dotfiles/run-codex-readonly.sh --cwd "$PWD" -- "Review README.md"' \
+  "true" \
+  "allow"
+
+run_unsandboxed_case \
+  "deny: playwright-cli cannot borrow the Codex exception" \
+  'playwright-cli snapshot' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "deny: raw codex exec cannot disable outer sandbox" \
+  'codex exec -- "Review this repo"' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "deny: raw codex review cannot disable outer sandbox" \
+  'codex review --commit HEAD' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "deny: compound command cannot borrow launcher exception" \
+  'cd /private/tmp && ~/.local/libexec/dotfiles/run-codex-readonly.sh --cwd .' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "allow: ordinary sandboxed raw Codex is outside Rule D" \
+  'codex exec -- "Review this repo"' \
+  "false" \
+  "allow"
+
+run_unsandboxed_case \
+  "deny: newline cannot append a command to launcher exception" \
+  $'~/.local/libexec/dotfiles/run-codex-readonly.sh --cwd . -- Review_README\necho unsafe' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "deny: backticks cannot execute inside launcher arguments" \
+  '~/.local/libexec/dotfiles/run-codex-readonly.sh --cwd . -- `echo unsafe`' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "deny: command substitution cannot execute inside launcher arguments" \
+  '~/.local/libexec/dotfiles/run-codex-readonly.sh --cwd . -- $(echo unsafe)' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "deny: malformed launcher command fails closed" \
+  '~/.local/libexec/dotfiles/run-codex-readonly.sh --cwd . -- "unfinished' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "deny: compound playwright command cannot borrow exception" \
+  'playwright-cli snapshot; codex exec -- Review' \
+  "true" \
+  "deny"
+
+run_unsandboxed_case \
+  "allow: quoted prompt punctuation is data" \
+  '~/.local/libexec/dotfiles/run-codex-readonly.sh --cwd . -- "Review foo(); then report"' \
+  "true" \
   "allow"
 
 # --- Fail-open ------------------------------------------------------------

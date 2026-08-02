@@ -14,14 +14,18 @@ tmux-orchestration helper scripts instead of being hand-rolled:
   Rule C: hand-written `tmux send-keys` with a long quoted prompt payload
           -> use agent-send-prompt.sh, which verifies paste and submit.
 
+  Rule D: `dangerouslyDisableSandbox` is limited to reviewed executables.
+
 Reads the PreToolUse payload from stdin as JSON, inspects
 `tool_input.command`, and prints a deny decision as JSON on stdout when a
 rule matches. Any parsing failure or unexpected shape fails OPEN (exit 0,
-no output) so a bug in this hook can never block Bash entirely.
+no output) so a bug in this hook can never block Bash entirely. Once a valid
+unsandboxed Bash payload reaches Rule D, malformed shell syntax fails closed.
 """
 
 import json
 import re
+import shlex
 import sys
 
 WATCH_MARKER_HINT = (
@@ -46,6 +50,18 @@ AGENT_SEND_PROMPT_HINT = (
     "PANE 'ONE-LINE PROMPT' so the paste and Enter submission are verified. "
     "Short keys such as Enter/BTab and short commands are allowed."
 )
+
+UNSANDBOXED_COMMAND_HINT = (
+    "dangerouslyDisableSandbox is allowed only for the installed headless Codex "
+    "launcher. Use the hardened launcher for bounded Codex work; route other "
+    "sandbox-incompatible commands through an approved interactive workflow."
+)
+
+TRUSTED_CODEX_LAUNCHER = "~/.local/libexec/dotfiles/run-codex-readonly.sh"
+TRUSTED_UNSANDBOXED_EXECUTABLES = {
+    TRUSTED_CODEX_LAUNCHER,
+}
+SHELL_CONTROL_CHARS = frozenset("();<>|&")
 
 # A capture-pane INSIDE a loop body: between `do` and a later `done`.
 # Scoping to the do...done span (instead of "loop keyword anywhere +
@@ -265,11 +281,37 @@ def check_long_tmux_send_keys_payload(command):
     return False
 
 
+def check_untrusted_unsandboxed(command, dangerously_disable_sandbox):
+    if dangerously_disable_sandbox is not True:
+        return False
+    # shlex treats newlines as ordinary whitespace and does not interpret
+    # backticks. Both can start command execution before or after the trusted
+    # launcher, so reject them before token inspection.
+    if "\n" in command or "\r" in command or "`" in command:
+        return True
+    try:
+        lexer = shlex.shlex(command, posix=True, punctuation_chars="();<>|&")
+        lexer.whitespace_split = True
+        lexer.commenters = ""
+        tokens = list(lexer)
+    except Exception:
+        return True
+    if not tokens or any(set(token) <= SHELL_CONTROL_CHARS for token in tokens):
+        return True
+    return tokens[0] not in TRUSTED_UNSANDBOXED_EXECUTABLES
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
-        command = payload.get("tool_input", {}).get("command")
+        tool_input = payload.get("tool_input", {})
+        command = tool_input.get("command")
         if not isinstance(command, str) or not command:
+            return 0
+        if check_untrusted_unsandboxed(
+            command, tool_input.get("dangerouslyDisableSandbox")
+        ):
+            deny(UNSANDBOXED_COMMAND_HINT)
             return 0
         if check_long_tmux_send_keys_payload(command):
             deny(AGENT_SEND_PROMPT_HINT)

@@ -301,12 +301,18 @@ if [ ! -e "$HOME/.claude/settings.json" ]; then
     echo "  Seeded: $HOME/.claude/settings.json"
 fi
 # Install a fixed copy outside normal project workspaces, with canonical
-# Claude/Codex executable paths baked in, then merge only its narrow Bash rule
-# into the independently owned live settings file. Never sync the whole seed.
+# Claude/Codex executable paths baked in, then merge its narrow Bash rule and
+# command-aware guard hook into the independently owned live settings file.
+# Never sync the whole seed.
+# shellcheck disable=SC2088 # Claude needs the literal tilde form for rule matching.
 /usr/bin/python3 "$DOTFILES_DIR/claude/scripts/install-headless-codex.py" \
     --settings "$HOME/.claude/settings.json" \
     --template "$DOTFILES_DIR/skills/shared/headless-agents/scripts/run-codex-readonly.template.sh" \
     --launcher "$HOME/.local/libexec/dotfiles/run-codex-readonly.sh" \
+    --launcher-command '~/.local/libexec/dotfiles/run-codex-readonly.sh' \
+    --guard-source "$DOTFILES_DIR/claude/hooks/bash-helper-guard.py" \
+    --guard-destination "$HOME/.local/libexec/dotfiles/bash-helper-guard.py" \
+    --artifact-root "$HOME/.local/state/dotfiles/headless-codex" \
     --trusted-root "$HOME"
 # machine.md: one machine-local canonical (~/.config/machine.md) shared by
 # Claude Code + Codex via symlink, so both agents always read identical

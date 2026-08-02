@@ -62,7 +62,7 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "python3 ~/.claude/hooks/bash-helper-guard.py"}
+          {"type": "command", "command": "/usr/bin/python3 -I ~/.local/libexec/dotfiles/bash-helper-guard.py"}
         ]
       }
     ]

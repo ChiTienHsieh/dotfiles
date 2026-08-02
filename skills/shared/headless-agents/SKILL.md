@@ -45,9 +45,10 @@ independently verifiable, and small enough to finish without live steering.
 ## Claude Code -> Codex wrapper
 
 Run `~/dotfiles/install.sh` once after installing or upgrading Claude Code or
-Codex. The installer copies a reviewed launcher outside project workspaces,
-bakes in canonical executable paths, and idempotently merges only its scoped
-Bash rule into the live Claude settings. Claude should invoke the literal
+Codex. The installer copies a reviewed launcher and its Bash guard outside
+ordinary project workspaces, bakes in canonical executable paths, and
+idempotently merges their scoped entries into the live Claude settings. Claude
+should invoke the literal
 `~/.local/...` path so that rule matches before the shell expands `~`.
 
 ```bash
@@ -60,16 +61,20 @@ The wrapper prints only the final answer plus artifact paths. It stores the
 full JSONL event stream separately so the parent does not waste context on
 Codex progress events. Use `--prompt-file FILE` for long prompts and
 `--schema FILE` when the result must match a JSON Schema.
-Artifacts always go to a private per-run directory outside `--cwd`; the wrapper
-does not accept caller-selected artifact paths.
+Artifacts always go to a private, model-denied per-run directory beneath the
+installer-owned state root `~/.local/state/dotfiles/headless-codex`, outside
+`--cwd`; model-writable scratch uses a separate disposable directory. The
+wrapper does not accept caller-selected artifact paths.
 The selected workspace must be the caller's current directory or a child, so
 `cd` to the intended repository before launch. Prompt and schema files must
-also be regular, non-symlink files under that directory.
+also be regular, non-symlink files inside the selected workspace; any `.env` or
+`.env.*` path component is rejected before the launcher reads it.
 When invoked under Claude Code, the launcher also resolves the installed
 Claude executable in its real ancestor chain and anchors the invocation to
 that process's project root. A same-command `cd` outside the project is
-rejected. If process verification fails after an upgrade, rerun the installer
-instead of weakening the check.
+rejected, as is a project root broad enough to make the launcher or baked
+Claude/Codex binaries workspace-writable. If verification fails after an
+upgrade, rerun the installer instead of weakening the check.
 
 The wrapper prepends one compact worker contract: repository facts must be
 verified with read-only tools, never guessed from names or prior knowledge. The
@@ -82,10 +87,11 @@ The wrapper intentionally does not use `--sandbox read-only`. That flag selects
 Codex's older sandbox system and would bypass the narrower permission profile.
 Instead, every run:
 
-- ignores user config and project/global `AGENTS.md` content while retaining
-  Codex authentication, so the delegated prompt must be self-contained;
-- runs ephemerally with approval policy `never`, non-login shells, and only
-  Codex's core command environment instead of parent token/key variables;
+- ignores user config, execpolicy rules, and project/global `AGENTS.md` content
+  while retaining Codex authentication, so the prompt must be self-contained;
+- launches Codex with a clean allowlisted control environment, then runs
+  ephemerally with approval policy `never`, non-login model shells, and no
+  parent token/key variables;
 - denies filesystem reads by default, then reopens only minimal runtime paths
   and the selected workspace as read-only, with `.env` and common home
   credential paths carved back out;
@@ -95,24 +101,35 @@ Instead, every run:
   hooks, memories, goals, skill search, and nested multi-agent tools;
 - writes the final output and trace only through the trusted Codex harness.
 
-The worker may mutate its disposable per-run scratch directory. It must not be
-treated as a zero-write process; the enforced promise is no workspace writes,
-ordinary outside-workspace reads, or shell network. On macOS with Codex 0.145,
-the platform scratch exception still permits access to shared `/private/tmp`
-despite deny entries. Never put secrets there before a headless run. A task that
-needs strict shared-temp confidentiality must use a stronger external isolation
-boundary instead of this skill.
+The worker may mutate its disposable per-run scratch directory, which is
+removed when the run ends and is separate from trusted output artifacts. It
+must not be treated as a zero-write process; the enforced promise is no
+workspace writes, ordinary outside-workspace reads, or shell network. On macOS
+with Codex 0.145, the platform scratch exception still permits access to shared
+`/private/tmp` despite deny entries. Never put secrets there before a headless
+run. A task that needs strict shared-temp confidentiality must use a stronger
+external isolation boundary instead of this skill.
 
 These controls bound model tools, not the Codex control plane: the CLI still
 needs HTTPS access to OpenAI to run the model. Claude Code must therefore run
 the installed launcher outside its outer Bash sandbox. The permissioned file
-is an installer-created regular copy, not the writable skill symlink; it calls
-the baked absolute Codex binary instead of resolving caller-controlled `PATH`.
-This exception is scoped to that launcher; never use
+and the enforcing guard are installer-created regular copies, not writable
+skill symlinks. The launcher uses an absolute interpreter, resets `PATH`, and
+calls the baked absolute Codex binary. The guard runs through the install-time
+Python path in isolated mode. This exception is scoped to that launcher; never use
 `dangerouslyDisableSandbox` for a raw `codex` command. The Codex worker's own
-shell network remains disabled.
+shell network remains disabled. Claude's Bash PreToolUse guard enforces the
+unsandboxed executable allowlist instead of leaving raw Codex to auto-mode
+classification.
 Claude Code documents this parameter as a permission-gated escape hatch for
 commands incompatible with its sandbox: <https://code.claude.com/docs/en/sandboxing>.
+
+Do not start Claude with a project root that contains the installed runtime,
+or add the runtime directory through `--add-dir` or sandbox `allowWrite`.
+The launcher rejects a containing project root, but deliberate expansion of
+Claude's writable boundary invalidates the trust model; rerun the installer
+and adversarial live tests after changing those settings or upgrading either
+CLI.
 
 The load-bearing rule is simple: use the wrapper only when every readable byte
 under `--cwd` is allowed to be sent to OpenAI. The `.env` and home credential
@@ -123,7 +140,7 @@ use stronger isolation. Never add bypass flags.
 
 The operational default is `gpt-5.6-terra` at `medium`. Read
 `references/prompting-gpt-5.6.md` before choosing Luna/Sol, changing effort, or
-tuning a recurring workflow.
+tuning a recurring workflow, reusable prompt, or eval.
 
 ## Prompt contract
 
@@ -136,8 +153,6 @@ Keep the prompt lean and state each rule once. Include:
 5. exact output shape and stopping condition.
 
 Do not ask for hidden chain-of-thought or prescribe every mechanical step.
-Read `references/prompting-gpt-5.6.md` when designing a reusable prompt,
-choosing effort, or building an eval.
 
 ## Completion and failure handling
 
