@@ -1,7 +1,8 @@
 # Keep every change under explicit review by the repository owner.
 * @ChiTienHsieh
 
-# Protect the controls that decide what may merge.
+# These are redundant while the catch-all has one owner, but keep control-plane
+# ownership explicit if collaborators are added later.
 /.github/CODEOWNERS @ChiTienHsieh
 /.github/workflows/ @ChiTienHsieh
 /AGENTS.md @ChiTienHsieh

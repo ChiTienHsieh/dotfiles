@@ -27,59 +27,50 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Check shell syntax
+      - name: Validate shell and JavaScript
         shell: bash
         run: |
           set -euo pipefail
-          bash_files=(
-            install.sh
-            bash/.bash_profile
-            bash/.bash_prompt
-            bash/.bashrc
-            claude/hooks/test-bash-helper-guard.sh
-            claude/statusline.sh
-            codex/bin/clawd-ssh
-            codex/bin/clawd-vm-observe
-            skills/shared/daily-loop/scripts/mine_transcripts.sh
-            skills/shared/tmux-orchestration/scripts/agent-rg.sh
-            skills/shared/tmux-orchestration/scripts/agent-safe-read.sh
-            skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh
-            skills/shared/tmux-orchestration/scripts/agent-watch-marker.sh
-            templates/.aliases.local.template
-            templates/.secrets.template
-            tmux/claude-cache-status.sh
-          )
-          zsh_files=(
-            bash/.aliases
-            hooks/pre-commit
-            tests/test_aliases.sh
-            zsh/.zshenv
-            zsh/.zshrc
-          )
+          command -v bash
+          command -v node
+          command -v shellcheck
+          command -v sh
+          command -v zsh
+
+          bash_files=()
+          sh_files=()
+          zsh_files=()
+          while IFS= read -r -d '' file; do
+            [ -f "${file}" ] || continue
+            first_line="$(head -n 1 "${file}" || true)"
+            case "${first_line}" in
+              *bash*) bash_files+=("${file}") ;;
+              *zsh*) zsh_files+=("${file}") ;;
+              *' sh'|*'/sh') sh_files+=("${file}") ;;
+            esac
+            case "${file}" in
+              bash/.bash_profile|bash/.bash_prompt|bash/.bashrc|templates/.secrets.template)
+                bash_files+=("${file}")
+                ;;
+              bash/.aliases|zsh/.zshenv|zsh/.zshrc)
+                zsh_files+=("${file}")
+                ;;
+            esac
+          done < <(git ls-files -z)
+
           bash -n "${bash_files[@]}"
+          sh -n "${sh_files[@]}"
           zsh -n "${zsh_files[@]}"
 
-      - name: Run ShellCheck
-        shell: bash
-        run: |
-          set -euo pipefail
-          bash_files=(
-            install.sh
-            bash/.bash_profile
-            bash/.bash_prompt
-            bash/.bashrc
-            claude/hooks/test-bash-helper-guard.sh
-            claude/statusline.sh
-            codex/bin/clawd-ssh
-            codex/bin/clawd-vm-observe
-            skills/shared/daily-loop/scripts/mine_transcripts.sh
-            skills/shared/tmux-orchestration/scripts/agent-rg.sh
-            skills/shared/tmux-orchestration/scripts/agent-safe-read.sh
-            skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh
-            skills/shared/tmux-orchestration/scripts/agent-watch-marker.sh
-            tmux/claude-cache-status.sh
-          )
-          shellcheck --severity=error --shell=bash "${bash_files[@]}"
+          shellcheck_files=()
+          for file in "${bash_files[@]}"; do
+            # This Bash/Zsh compatibility file has two known SC2145 findings;
+            # behavior tests cover it until those functions are refactored.
+            [ "${file}" = bash/.aliases ] || shellcheck_files+=("${file}")
+          done
+          shellcheck --severity=error --shell=bash "${shellcheck_files[@]}"
+
+          git ls-files -z '*.mjs' | xargs -0 -r -n 1 node --check
 
       - name: Validate JSON, TOML, and YAML
         shell: bash
@@ -111,7 +102,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git ls-files -z '*.py' | xargs -0 -r python3 -m py_compile
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          import subprocess
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z", "*.py"]
+          ).split(b"\0")
+          for raw_path in tracked:
+              if not raw_path:
+                  continue
+              path = Path(raw_path.decode())
+              compile(path.read_bytes(), str(path), "exec", ast.PyCF_ONLY_AST)
+          PY
 
       - name: Run behavior tests
         shell: bash
@@ -127,7 +131,7 @@ jobs:
           smoke_home="${RUNNER_TEMP}/dotfiles-home"
           mkdir -p "${smoke_home}"
           HOME="${smoke_home}" TMPDIR="${RUNNER_TEMP}" ./install.sh
-          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=all)"
 
   secret-scan:
     name: secret-scan
@@ -160,6 +164,8 @@ jobs:
           persist-credentials: false
 
       - name: Audit GitHub Actions workflows
+        # TODO: Add actionlint after it recognizes GitHub's documented
+        # copilot-requests permission instead of rejecting the workflow.
         uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
         with:
           advanced-security: false
