@@ -12,27 +12,25 @@ from set_thread_title import set_thread_title
 from stop_dirty_worktree import build_dirty_worktree_followup, track_touched_worktrees
 
 
-TITLE_CHECKPOINT = """Thread-title checkpoint (Codex CLI):
+TITLE_CHECKPOINT = """Thread 標題檢查：
 
-Classify the current thread by the user's next required action. Update the title only when one of these meaningful states applies:
-- ⏸️: blocked by data, permission, CI, deployment, or another prerequisite that needs user help.
-- ⏳: waiting only for a simple user choice.
-- 🔎: the user needs to understand important context or a trade-off.
-- 📦: no unfinished responsibility or important learning remains; the thread is worth archiving.
+依使用者下一步，只在以下狀態改名：
+- ⏸️：缺資料、權限、CI、部署或前置條件，需使用者協助。
+- ⏳：只等使用者做簡單選擇。
+- 🔎：使用者需理解重要背景或取捨。
+- 📦：沒有未完成責任或重要學習，值得封存。
 
-Never treat agent stop, idle, a final answer, or a local-only commit as enough for 📦. If the agent should keep working and the user does not need to act, do not rename the thread.
+停止、閒置、已有 final answer 或只有本機 commit，都不足以標 📦。若 agent 應繼續工作且使用者無須行動，不改名。
 
-When renaming, create concise Traditional Chinese in exactly this format:
-<one emoji> <where>｜<user purpose>｜<progress>
+標題使用台灣繁中，格式：
+<一個 emoji> <repo／project／最小可辨識範圍>｜<使用者目的>｜<進度>
+技術識別字保留原文；目標 24–32 字，最多 40 字。
 
-Put the repo, project, or smallest recognizable scope in <where>. Keep identifiers and technical proper nouns unchanged. Aim for 24–32 characters; 40 is the hard cap.
-
-If the built-in `apply_patch` tool is available, use it exactly once to replace the complete contents of this prepared data file with only the title and one trailing newline:
+若有 `apply_patch`，只能呼叫一次，把以下檔案的完整內容改成只有標題與一個結尾換行：
 {request_path}
+目前內容是 `NO_TITLE_REQUEST`。不得用 shell 寫檔。工具或檔案不可用就略過；patch 失敗只警告一次。
 
-The file currently contains `NO_TITLE_REQUEST`. Put the title only in the patch data. Never use Bash, a shell command, or shell redirection to write the title. When this Stop-hook continuation finishes, the hook consumes and validates the private data file, then applies it through only the stable Codex app-server method `thread/name/set`; this is the non-interactive equivalent of the CLI user's `/rename` command.
-
-This automation may set a title only. Never archive, unarchive, delete, or otherwise change thread lifecycle state. 📦 is merely a recommendation that the user may archive later. If `apply_patch` or the prepared file is unavailable, skip quietly. If the one patch attempt fails, mention one concise non-blocking warning. This continuation was already created by the Stop hook; do not request another continuation or retry.
+只能改標題；📦 只是封存建議，不得自行封存。
 """
 
 
@@ -50,7 +48,7 @@ def apply_queued_title(payload: dict[str, object]) -> dict[str, object]:
     except (OSError, ValueError, RuntimeError):
         return {
             "continue": True,
-            "systemMessage": "Thread title update failed; continuing without retry.",
+            "systemMessage": "Thread 標題更新失敗；已略過。",
         }
     return {"continue": True}
 
@@ -64,18 +62,17 @@ def build_stop_result(payload: dict[str, object]) -> dict[str, object]:
     try:
         request_path = str(prepare_title_request(thread_id))
     except (OSError, ValueError, RuntimeError):
-        request_path = "UNAVAILABLE — skip the title update quietly"
+        request_path = "無法使用，略過標題更新"
     reasons = [
         TITLE_CHECKPOINT.format(request_path=request_path)
     ]
     dirty_reason = build_dirty_worktree_followup(payload)
     if dirty_reason:
-        reasons.append(f"Dirty-worktree checkpoint:\n\n{dirty_reason}")
+        reasons.append(dirty_reason)
 
     reasons.append(
-        "If the dirty-worktree checkpoint requires user-visible cleanup options, provide only "
-        "those options after the title attempt. Otherwise do not repeat or expand the assistant's "
-        "previous final answer."
+        "若有「工作區整理」，完成標題檢查後只補整理選項；否則不要重述或擴寫上一則 "
+        "final answer。"
     )
     return {"decision": "block", "reason": "\n\n".join(reasons)}
 

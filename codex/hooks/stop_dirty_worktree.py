@@ -248,22 +248,19 @@ def build_dirty_worktree_followup(payload: dict[str, object]) -> str | None:
         shown = "\n".join(status_lines[:30])
         omitted = len(status_lines) - 30
         if omitted > 0:
-            shown += f"\n... and {omitted} more path(s)"
-        sections.append(f"Repository: {root}\nCurrent status:\n{shown}")
+            shown += f"\n……另有 {omitted} 個 path"
+        sections.append(f"Repository：{root}\n目前狀態：\n{shown}")
 
     if len(dirty_roots) > 5:
-        sections.append(f"... and {len(dirty_roots) - 5} more dirty worktree(s)")
+        sections.append(f"……另有 {len(dirty_roots) - 5} 個 dirty worktree")
 
     return (
-        "One or more git worktrees touched in this session are dirty. Before ending the conversation, "
-        "offer the user a concise way to organize it.\n\n"
+        "工作區整理：本次碰過的 Git worktree 尚有未提交變更。\n\n"
         + "\n\n".join(sections)
         + "\n\n"
-        "Do not automatically commit, stash, revert, or delete anything unless the user "
-        "already asked for that. In the final response, offer suitable options such as: "
-        "review related changes and commit/push if appropriate; split or stage related "
-        "changes; stash or save a patch; discard only with explicit approval; or keep "
-        "the worktree dirty / ignore for now if the user intentionally wants that."
+        "結束前在 final response 提供精簡整理選項。除非使用者已授權，不得自行 "
+        "commit、stash、revert 或 delete。可選：review 後 commit/push、拆分 stage、"
+        "stash/patch、經同意 discard，或保留 dirty。"
     )
 
 

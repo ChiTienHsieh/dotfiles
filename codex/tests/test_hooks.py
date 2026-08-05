@@ -170,13 +170,14 @@ class StopDispatcherTests(unittest.TestCase):
             result = stop_dispatcher.build_stop_result(self.payload)
         self.assertEqual(result["decision"], "block")
         reason = str(result["reason"])
-        self.assertIn("Thread-title checkpoint", reason)
-        self.assertIn("thread/name/set", reason)
+        self.assertIn("Thread 標題檢查", reason)
         self.assertIn("apply_patch", reason)
         self.assertIn("/tmp/title-request.txt", reason)
         self.assertNotIn("--title", reason)
         self.assertIn("24–32", reason)
-        self.assertIn("Never archive", reason)
+        self.assertIn("只能改標題", reason)
+        self.assertNotIn("thread/name/set", reason)
+        self.assertLess(len(stop_dispatcher.TITLE_CHECKPOINT), 750)
         self.assertNotIn("stop_hook_active", reason)
         prepare.assert_called_once_with(self.payload["session_id"])
 
@@ -210,19 +211,19 @@ class StopDispatcherTests(unittest.TestCase):
             result = stop_dispatcher.build_stop_result(payload)
         self.assertEqual(result["continue"], True)
         self.assertNotIn("decision", result)
-        self.assertIn("without retry", str(result["systemMessage"]))
+        self.assertIn("已略過", str(result["systemMessage"]))
 
     def test_dirty_policy_is_composed_into_same_reason(self) -> None:
         with mock.patch.object(
             stop_dispatcher,
             "build_dirty_worktree_followup",
-            return_value="Offer cleanup choices.",
+            return_value="工作區整理：提供整理選項。",
         ):
             result = stop_dispatcher.build_stop_result(self.payload)
         reason = str(result["reason"])
-        self.assertEqual(reason.count("Thread-title checkpoint"), 1)
-        self.assertEqual(reason.count("Dirty-worktree checkpoint"), 1)
-        self.assertIn("Offer cleanup choices.", reason)
+        self.assertEqual(reason.count("Thread 標題檢查"), 1)
+        self.assertEqual(reason.count("工作區整理"), 2)
+        self.assertIn("提供整理選項。", reason)
 
     def test_post_tool_use_tracks_without_continuation(self) -> None:
         payload = {**self.payload, "hook_event_name": "PostToolUse"}
@@ -233,6 +234,26 @@ class StopDispatcherTests(unittest.TestCase):
 
 
 class DirtyWorktreeCompatibilityTests(unittest.TestCase):
+    def test_dirty_prompt_is_lean_zh_tw(self) -> None:
+        root = Path("/tmp/repo")
+        payload = {"last_assistant_message": "done", "cwd": str(root)}
+        with mock.patch.object(
+            stop_dirty_worktree, "load_tracked_roots", return_value={root}
+        ), mock.patch.object(
+            stop_dirty_worktree, "git_root_for_path", return_value=root
+        ), mock.patch.object(
+            stop_dirty_worktree,
+            "dirty_roots_for",
+            return_value=[(root, [" M file.txt"])],
+        ):
+            reason = stop_dirty_worktree.build_dirty_worktree_followup(payload)
+        self.assertIsNotNone(reason)
+        self.assertIn("工作區整理", reason)
+        self.assertIn("目前狀態", reason)
+        self.assertIn("除非使用者已授權，不得自行", reason)
+        self.assertIn("保留 dirty", reason)
+        self.assertNotIn("One or more git worktrees", reason)
+
     def test_level_up_checkpoint_skips_dirty_prompt(self) -> None:
         message = "Level 4\n**問題:** pick one\nA) a\nB) b\nC) c\nD) d"
         payload = {"last_assistant_message": message, "cwd": "/tmp"}
