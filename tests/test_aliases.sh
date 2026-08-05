@@ -97,8 +97,8 @@ done
 # Test 5: wheredef can find itself
 # =============================================================================
 info "Testing wheredef functionality..."
-output=$(HOME="$EMPTY_HOME" zsh -c "source '$ALIASES_FILE' && wheredef trash" 2>&1)
-if echo "$output" | grep -q "\.aliases"; then
+output=$(HOME="$DOTFILES_DIR/bash" zsh -c "source '$ALIASES_FILE' && wheredef trash" 2>&1)
+if [[ "$output" == "$ALIASES_FILE":* ]]; then
     pass "wheredef found trash in .aliases"
 else
     fail "wheredef couldn't find trash"
