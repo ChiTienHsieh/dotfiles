@@ -41,16 +41,27 @@ class ThreadTitleValidationTests(unittest.TestCase):
             set_thread_title.validate_title(title)
 
     def test_protocol_uses_name_set_only(self) -> None:
-        payload = set_thread_title.protocol_messages(
+        messages = set_thread_title.protocol_request_messages(
             "019fcfbd-8a09-7c31-ba17-8ac72a59d44d",
             "📦 dotfiles｜自動改 thread 名｜測試完成",
         )
-        messages = [json.loads(line) for line in payload.splitlines()]
         self.assertEqual(
             [message["method"] for message in messages],
             ["initialize", "initialized", "thread/name/set"],
         )
-        self.assertNotIn("thread/archive", payload)
+        self.assertNotIn("thread/archive", json.dumps(messages))
+
+    def test_rejects_unsafe_or_blank_display_fields(self) -> None:
+        invalid = (
+            "📦 repo｜目的\t注入｜完成",
+            "📦 repo｜目的\u2028注入｜完成",
+            "📦 repo｜\u2066目的｜完成",
+            "📦   ｜目的｜完成",
+            "📦 repo｜   ｜完成",
+        )
+        for title in invalid:
+            with self.subTest(title=title), self.assertRaises(ValueError):
+                set_thread_title.validate_title(title)
 
     @mock.patch.object(set_thread_title.shutil, "which", return_value="/usr/bin/codex")
     @mock.patch.object(set_thread_title, "wait_for_response")
@@ -104,12 +115,38 @@ class ThreadTitleRequestTests(unittest.TestCase):
             "REQUEST_ROOT",
             Path(temporary_directory) / "requests",
         ):
-            request_thread_title.queue_title_request(thread_id, title)
+            request_path = request_thread_title.prepare_title_request(thread_id)
+            request_path.write_text(title + "\n", encoding="utf-8")
             self.assertEqual(
                 request_thread_title.take_title_request(thread_id),
                 (thread_id, title),
             )
             self.assertIsNone(request_thread_title.take_title_request(thread_id))
+
+    def test_unedited_request_is_a_quiet_skip(self) -> None:
+        thread_id = "019fcfbd-8a09-7c31-ba17-8ac72a59d44d"
+        with tempfile.TemporaryDirectory() as temporary_directory, mock.patch.object(
+            request_thread_title,
+            "REQUEST_ROOT",
+            Path(temporary_directory) / "requests",
+        ):
+            request_thread_title.prepare_title_request(thread_id)
+            self.assertIsNone(request_thread_title.take_title_request(thread_id))
+
+    def test_shell_metacharacters_are_only_data(self) -> None:
+        thread_id = "019fcfbd-8a09-7c31-ba17-8ac72a59d44d"
+        title = "📦 repo｜處理 user's input｜$(id);完成"
+        with tempfile.TemporaryDirectory() as temporary_directory, mock.patch.object(
+            request_thread_title,
+            "REQUEST_ROOT",
+            Path(temporary_directory) / "requests",
+        ):
+            request_path = request_thread_title.prepare_title_request(thread_id)
+            request_path.write_text(title + "\n", encoding="utf-8")
+            self.assertEqual(
+                request_thread_title.take_title_request(thread_id),
+                (thread_id, title),
+            )
 
 
 class StopDispatcherTests(unittest.TestCase):
@@ -125,17 +162,23 @@ class StopDispatcherTests(unittest.TestCase):
     def test_first_stop_requests_exactly_one_checkpoint(self) -> None:
         with mock.patch.object(
             stop_dispatcher, "build_dirty_worktree_followup", return_value=None
-        ), mock.patch.object(stop_dispatcher, "clear_title_request") as clear:
+        ), mock.patch.object(
+            stop_dispatcher,
+            "prepare_title_request",
+            return_value=Path("/tmp/title-request.txt"),
+        ) as prepare:
             result = stop_dispatcher.build_stop_result(self.payload)
         self.assertEqual(result["decision"], "block")
         reason = str(result["reason"])
         self.assertIn("Thread-title checkpoint", reason)
         self.assertIn("thread/name/set", reason)
-        self.assertIn("request_thread_title.py", reason)
+        self.assertIn("apply_patch", reason)
+        self.assertIn("/tmp/title-request.txt", reason)
+        self.assertNotIn("--title", reason)
         self.assertIn("24–32", reason)
         self.assertIn("Never archive", reason)
         self.assertNotIn("stop_hook_active", reason)
-        clear.assert_called_once_with(self.payload["session_id"])
+        prepare.assert_called_once_with(self.payload["session_id"])
 
     def test_second_stop_is_unconditionally_allowed(self) -> None:
         payload = {**self.payload, "stop_hook_active": True}

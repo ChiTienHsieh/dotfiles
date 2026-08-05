@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import time
+import unicodedata
 from typing import BinaryIO
 
 
@@ -35,6 +36,14 @@ def validate_title(title: str) -> str:
         raise ValueError(
             "title must match: <⏸️|⏳|🔎|📦> <where>｜<user purpose>｜<progress>"
         )
+    if any(unicodedata.category(character).startswith("C") for character in title):
+        raise ValueError("title contains a control or invisible formatting character")
+    if any(character in {"\u2028", "\u2029"} for character in title):
+        raise ValueError("title contains a Unicode line separator")
+    fields = title.split("｜")
+    fields[0] = fields[0].split(" ", 1)[1]
+    if any(not field.strip() for field in fields):
+        raise ValueError("title fields must contain visible text")
     return title
 
 
@@ -58,11 +67,6 @@ def protocol_request_messages(thread_id: str, title: str) -> list[dict[str, obje
             "params": {"threadId": thread_id, "name": title},
         },
     ]
-
-
-def protocol_messages(thread_id: str, title: str) -> str:
-    messages = protocol_request_messages(thread_id, title)
-    return "".join(json.dumps(message, ensure_ascii=False) + "\n" for message in messages)
 
 
 def send_message(stream: BinaryIO, message: dict[str, object]) -> None:

@@ -60,6 +60,7 @@ dotfiles/
 1. **Edit `~/.secrets`** - Add your API keys (this file is never committed)
 2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
 3. **Skills** - `skills/shared/` is installed into Claude Code, Codex, and `.agents`; `skills/codex/` and `skills/claude/` are installed only into their matching tools
+4. **Codex hooks** - Start a new Codex CLI session, open `/hooks`, review the global `PostToolUse` and `Stop` commands, then trust them explicitly. The installer never writes or bypasses hook trust.
 
 ## Files NOT Tracked
 

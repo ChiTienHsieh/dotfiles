@@ -6,7 +6,7 @@
 ## Current Level
 - Status: familiar
 - Last updated: 2026-08-05
-- Confidence: preflight 產品與架構決策已落地，unit 與 trusted standalone CLI end-to-end 驗證通過
+- Confidence: preflight 產品與架構決策已落地，adversarial unit 與 trusted standalone CLI end-to-end 驗證通過
 
 ## Evidence
 - 2026-08-05: 選擇航空塔台類比、深度 2（紮實打底）、Chat Markdown；成功標準是每次完成 task 都自動改成精準標題。
@@ -21,8 +21,9 @@
 - 2026-08-05: 拍板以單一 Stop dispatcher 組合 dirty-worktree 與 thread-title 兩套獨立 policy，輸出唯一一次 continuation，避免多個 matching Stop commands 並行產生競爭 prompt。
 - 2026-08-05: 拍板 title 初版長度以 24–32 個字元為目標、40 為 hard cap；明確保留上線後依 sidebar 實際讀感迭代的空間。
 - 2026-08-05: 拍板 capability-aware fail-open：rename capability 不存在時安靜跳過，工具存在但失敗時只顯示一次簡短警告；title failure 不得阻止 task 收尾、不得開第二條 retry continuation、不得觸發 archive。
-- 2026-08-05: 實作時發現 model sandbox 不能讓 nested app-server 寫入 `~/.codex`；改由 model 寫入 private one-shot temp request，第二次 Stop 在 hook host 取走後套用。這是同一條 Stop chain 的暫態 handoff，不是 cooldown、lock 或跨 turn idempotency state。
-- 2026-08-05: 完成 15 項 unit tests、global symlink、TUI `/hooks` trust，以及不帶 bypass flag 的 standalone `codex exec` end-to-end；確認只有一次 continuation，並從 persisted session index 讀回繁中三段式標題。
+- 2026-08-05: 實作時發現 model sandbox 不能讓 nested app-server 寫入 `~/.codex`；改由 hook host 準備 private one-shot temp request，model 只用 structured `apply_patch` 寫 raw title data，第二次 Stop 再取走套用。這是同一條 Stop chain 的暫態 handoff，不是 cooldown、lock 或跨 turn idempotency state。
+- 2026-08-05: Safety review 找到 raw title 插入 shell syntax 的 command-injection 邊界；移除 model-side shell transport，補 apostrophe、shell metacharacter、control、Unicode line separator 與空白欄位 regression tests。
+- 2026-08-05: 完成 18 項 unit tests、global symlink、TUI `/hooks` trust，以及不帶 bypass flag 的 standalone `codex exec` end-to-end；確認只有一次 continuation、模型事件為 structured `file_change`，並從 persisted session index 讀回繁中三段式標題。
 
 ## Known Gaps
 - 使用者不使用 IDE，因此只驗證 standalone CLI；Codex App 與 IDE surface 未納入本次範圍。

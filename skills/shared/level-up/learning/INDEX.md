@@ -4,7 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
-| Codex task 完成自動改 thread title preflight | familiar | 拍板 meaningful-state taxonomy 與 one-shot guard；已完成 15 項 unit tests、trusted CLI end-to-end 及 persisted title 讀回。 | 2026-08-05 | topics/codex-thread-title-hook-preflight.md |
+| Codex task 完成自動改 thread title preflight | familiar | 拍板 meaningful-state taxonomy 與 one-shot guard；已完成 18 項 adversarial unit tests、trusted CLI end-to-end 及 persisted title 讀回。 | 2026-08-05 | topics/codex-thread-title-hook-preflight.md |
 | Dotfiles cross-session message guard debrief | mastered | 能區分完整 push boundary，拍板 fresh-read/fail-closed contract、atomic commits 與 full-range final review gate。 | 2026-07-22 | topics/dotfiles-cross-session-message-guard.md |
 | gu-log rebrand Git history debrief | mastered | 能排除 rename churn、辨認 interface contracts，並選擇保留歷史且集中解衝突的 main→rebrand merge 策略。 | 2026-07-22 | topics/gu-log-rebrand-history-debrief.md |
 | Codex machine actor routing | mastered | 能區分 actor address、hook lifecycle、identity logic、shared policy 與 machine overlay；正確判斷未 trust hook 的行為並完成關鍵檔案 mapping。 | 2026-07-16 | topics/codex-machine-actor-routing.md |

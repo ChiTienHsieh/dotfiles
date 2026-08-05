@@ -17,8 +17,9 @@
   `thread/name/set`，接受 `threadId` 與 `name`，可更新 loaded thread 或 persisted rollout。
 - Standalone CLI 的 model 不保證擁有 Codex App 注入的 `set_thread_title` tool，也不能假裝
   自己在 TUI 輸入 `/rename`。受限 model command 也不能直接讓 nested app-server 寫入
-  `~/.codex`。已驗證的 Stop-hook 流程是：model 只把 validated title request 寫到 private
-  temp file；第二次 Stop（hook host、非 model sandbox）取走 request，再由
+  `~/.codex`。已驗證的 Stop-hook 流程是：hook host 先準備 private temp data file，model
+  只用 structured `apply_patch` 寫入 raw title data，不把 title 插進 shell syntax；第二次
+  Stop（hook host、非 model sandbox）取走並驗證 request，再由
   `codex app-server --stdio` 送 `thread/name/set`。
 - `thread/name/set` 與 `/rename` 改的是同一個 user-facing thread name；差別在入口與
   live UI event。已用受信任的 global Stop hook 跑過 standalone `codex exec` end-to-end，
