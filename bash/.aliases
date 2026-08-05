@@ -508,4 +508,6 @@ tmclean() {
 # -----------------------------------------------------------------------------
 # Source machine-specific aliases (not tracked in dotfiles)
 # -----------------------------------------------------------------------------
-[ -f ~/.aliases.local ] && source ~/.aliases.local
+if [ -f ~/.aliases.local ]; then
+    source ~/.aliases.local
+fi

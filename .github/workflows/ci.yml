@@ -1,0 +1,219 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    name: deterministic-validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends zsh
+
+      - name: Validate shell and JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v bash
+          command -v node
+          command -v shellcheck
+          command -v sh
+          command -v zsh
+
+          bash_files=()
+          sh_files=()
+          zsh_files=()
+          while IFS= read -r -d '' file; do
+            [ -f "${file}" ] || continue
+            first_line="$(head -n 1 "${file}" || true)"
+            case "${first_line}" in
+              '#!'*bash*) bash_files+=("${file}") ;;
+              '#!'*zsh*) zsh_files+=("${file}") ;;
+              '#!'*' sh'|'#!'*'/sh') sh_files+=("${file}") ;;
+            esac
+            case "${file}" in
+              bash/.bash_profile|bash/.bashrc|templates/.secrets.template)
+                bash_files+=("${file}")
+                ;;
+              bash/.aliases|zsh/.zshenv|zsh/.zshrc)
+                zsh_files+=("${file}")
+                ;;
+            esac
+          done < <(git ls-files -z)
+
+          if [ "${#bash_files[@]}" -gt 0 ]; then
+            bash -n "${bash_files[@]}"
+          fi
+          if [ "${#sh_files[@]}" -gt 0 ]; then
+            sh -n "${sh_files[@]}"
+          fi
+          if [ "${#zsh_files[@]}" -gt 0 ]; then
+            zsh -n "${zsh_files[@]}"
+          fi
+
+          shellcheck_files=()
+          for file in "${bash_files[@]}"; do
+            [ "${file}" = bash/.aliases ] || shellcheck_files+=("${file}")
+          done
+          shellcheck --severity=error --shell=bash "${shellcheck_files[@]}"
+          # Keep full-file coverage while excluding its two known compatibility
+          # findings until the backup helpers are refactored.
+          shellcheck --severity=error --shell=bash --exclude=SC2145 bash/.aliases
+
+          git ls-files -z '*.js' '*.cjs' '*.mjs' | xargs -0 -r -n 1 node --check
+
+      - name: Validate JSON, TOML, and YAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          import tomllib
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z", "*.json", "*.toml"]
+          ).split(b"\0")
+          for raw_path in tracked:
+              if not raw_path:
+                  continue
+              path = Path(raw_path.decode())
+              with path.open("rb") as handle:
+                  if path.suffix == ".json":
+                      json.load(handle)
+                  else:
+                      tomllib.load(handle)
+          PY
+          git ls-files -z '*.yml' '*.yaml' |
+            xargs -0 -r ruby -e 'require "yaml"; ARGV.each { |file| YAML.parse_file(file) }' --
+
+      - name: Compile Python
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          import subprocess
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z", "*.py"]
+          ).split(b"\0")
+          for raw_path in tracked:
+              if not raw_path:
+                  continue
+              path = Path(raw_path.decode())
+              compile(path.read_bytes(), str(path), "exec", ast.PyCF_ONLY_AST)
+          PY
+
+      - name: Run behavior tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          zsh tests/test_aliases.sh
+          bash claude/hooks/test-bash-helper-guard.sh
+
+      - name: Smoke-test installation in an isolated home
+        shell: bash
+        run: |
+          set -euo pipefail
+          smoke_home="${RUNNER_TEMP}/dotfiles-home"
+          mkdir -p "${smoke_home}"
+          HOME="${smoke_home}" TMPDIR="${RUNNER_TEMP}" ./install.sh
+          worktree_status="$(git status --porcelain --untracked-files=all)"
+          if [ -n "${worktree_status}" ]; then
+            printf '%s\n' "${worktree_status}"
+            exit 1
+          fi
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'true'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+          GITLEAKS_VERSION: 8.30.1
+
+  workflow-security:
+    name: workflow-security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Audit GitHub Actions workflows
+        # TODO: Add actionlint after it recognizes GitHub's documented
+        # copilot-requests permission instead of rejecting the workflow.
+        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
+        with:
+          advanced-security: false
+          annotations: true
+          collect: workflows
+          inputs: .github/workflows
+          min-confidence: medium
+          min-severity: medium
+          online-audits: false
+          version: 1.28.0
+
+  ci-gate:
+    name: ci-gate
+    if: ${{ always() }}
+    needs:
+      - validation
+      - secret-scan
+      - workflow-security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require every deterministic check
+        env:
+          SECRET_SCAN_RESULT: ${{ needs.secret-scan.result }}
+          VALIDATION_RESULT: ${{ needs.validation.result }}
+          WORKFLOW_SECURITY_RESULT: ${{ needs.workflow-security.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${VALIDATION_RESULT}" = success
+          test "${SECRET_SCAN_RESULT}" = success
+          test "${WORKFLOW_SECURITY_RESULT}" = success
