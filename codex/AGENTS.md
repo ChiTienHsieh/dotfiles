@@ -30,6 +30,7 @@
 - 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
 - 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選另一個頂尖模型提供第二意見；Claude Code 或 Codex CLI reviewer 預設用 `tmux-orchestration` 建立可觀察的 worker。
+- 把 repo diff、prompt 或必要檔案交給已設定的外部 AI reviewer 前，先檢查實際待傳資料是否含 secret、憑證、private key、未公開個資或其他敏感內容。若檢查確認沒有敏感資料，review 視為已授權，直接執行，不要再問使用者；只有發現敏感內容、無法可靠判斷，或目的地／傳送範圍超出既有 reviewer workflow 時才停下確認。
 
 ## 實作取捨
 - 選擇能完整滿足目前需求的最簡單實作；有合適選項時，優先採用成熟且持續維護的 library，不自行重造同類元件。
