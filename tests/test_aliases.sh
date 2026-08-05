@@ -14,6 +14,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 ALIASES_FILE="$DOTFILES_DIR/bash/.aliases"
+EMPTY_HOME="$SCRIPT_DIR/fixtures/nonexistent-home"
 
 # Colors
 RED='\033[0;31m'
@@ -24,6 +25,8 @@ NC='\033[0m' # No Color
 pass() { echo "${GREEN}✓${NC} $1"; }
 fail() { echo "${RED}✗${NC} $1"; exit 1; }
 info() { echo "${YELLOW}→${NC} $1"; }
+
+[ ! -e "$EMPTY_HOME" ] || fail "Expected isolated HOME to be absent: $EMPTY_HOME"
 
 # =============================================================================
 # Test 1: Syntax check
@@ -38,8 +41,8 @@ fi
 # =============================================================================
 # Test 2: Source without error
 # =============================================================================
-info "Testing source..."
-if zsh -c "source '$ALIASES_FILE'" 2>/dev/null; then
+info "Testing source with no local aliases..."
+if HOME="$EMPTY_HOME" zsh -c "source '$ALIASES_FILE'" 2>/dev/null; then
     pass "Source OK"
 else
     fail "Failed to source $ALIASES_FILE"
@@ -64,7 +67,7 @@ EXPECTED_FUNCTIONS=(
 
 info "Checking expected functions..."
 for func in "${EXPECTED_FUNCTIONS[@]}"; do
-    if zsh -c "source '$ALIASES_FILE' && type $func" &>/dev/null; then
+    if HOME="$EMPTY_HOME" zsh -c "source '$ALIASES_FILE' && type $func" &>/dev/null; then
         pass "Function: $func"
     else
         fail "Missing function: $func"
@@ -83,7 +86,7 @@ EXPECTED_ALIASES=(
 
 info "Checking expected aliases..."
 for ali in "${EXPECTED_ALIASES[@]}"; do
-    if zsh -c "source '$ALIASES_FILE' && alias $ali" &>/dev/null; then
+    if HOME="$EMPTY_HOME" zsh -c "source '$ALIASES_FILE' && alias $ali" &>/dev/null; then
         pass "Alias: $ali"
     else
         fail "Missing alias: $ali"
@@ -94,7 +97,7 @@ done
 # Test 5: wheredef can find itself
 # =============================================================================
 info "Testing wheredef functionality..."
-output=$(zsh -c "source '$ALIASES_FILE' && wheredef trash" 2>&1)
+output=$(HOME="$EMPTY_HOME" zsh -c "source '$ALIASES_FILE' && wheredef trash" 2>&1)
 if echo "$output" | grep -q "\.aliases"; then
     pass "wheredef found trash in .aliases"
 else
