@@ -27,6 +27,13 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
+      - name: Install validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends zsh
+
       - name: Validate shell and JavaScript
         shell: bash
         run: |
