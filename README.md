@@ -43,7 +43,9 @@ dotfiles/
 │   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
 ├── codex/
 │   ├── AGENTS.md        # Codex CLI instructions
-│   └── skills/.system/  # Bundled/system-managed Codex skills
+│   ├── config.toml      # Portable first-install seed
+│   ├── hooks.json       # Global Codex lifecycle hook registration
+│   └── hooks/           # Stop dispatcher and bounded hook policies
 ├── skills/
 │   ├── shared/          # User-authored skills installed for Claude Code + Codex
 │   ├── codex/           # User-authored Codex-only skills

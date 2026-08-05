@@ -7,11 +7,12 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from json import JSONDecodeError
 from pathlib import Path
 
-TRACK_DIR = Path("/private/tmp/codex-dirty-worktrees")
+TRACK_DIR = Path(tempfile.gettempdir()) / "codex-dirty-worktrees"
 
 
 def run_git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -152,7 +153,7 @@ def absolute_paths_in(value: object) -> set[Path]:
     return paths
 
 
-def record_touched_worktrees(payload: dict[str, object]) -> int:
+def track_touched_worktrees(payload: dict[str, object]) -> None:
     roots = load_tracked_roots(payload.get("session_id"))
 
     cwd = Path(str(payload.get("cwd") or ".")).expanduser()
@@ -166,6 +167,10 @@ def record_touched_worktrees(payload: dict[str, object]) -> int:
             roots.add(root)
 
     save_tracked_roots(payload.get("session_id"), roots)
+
+
+def record_touched_worktrees(payload: dict[str, object]) -> int:
+    track_touched_worktrees(payload)
     return emit({"continue": True})
 
 
@@ -221,6 +226,47 @@ def emit(payload: dict[str, object]) -> int:
     return 0
 
 
+def build_dirty_worktree_followup(payload: dict[str, object]) -> str | None:
+    if already_offered_cleanup(payload.get("last_assistant_message")):
+        return None
+
+    if looks_like_level_up_checkpoint(payload.get("last_assistant_message")):
+        return None
+
+    roots = load_tracked_roots(payload.get("session_id"))
+    cwd = Path(str(payload.get("cwd") or ".")).expanduser()
+    cwd_root = git_root_for_path(cwd)
+    if cwd_root:
+        roots.add(cwd_root)
+
+    dirty_roots = dirty_roots_for(roots)
+    if not dirty_roots:
+        return None
+
+    sections: list[str] = []
+    for root, status_lines in dirty_roots[:5]:
+        shown = "\n".join(status_lines[:30])
+        omitted = len(status_lines) - 30
+        if omitted > 0:
+            shown += f"\n... and {omitted} more path(s)"
+        sections.append(f"Repository: {root}\nCurrent status:\n{shown}")
+
+    if len(dirty_roots) > 5:
+        sections.append(f"... and {len(dirty_roots) - 5} more dirty worktree(s)")
+
+    return (
+        "One or more git worktrees touched in this session are dirty. Before ending the conversation, "
+        "offer the user a concise way to organize it.\n\n"
+        + "\n\n".join(sections)
+        + "\n\n"
+        "Do not automatically commit, stash, revert, or delete anything unless the user "
+        "already asked for that. In the final response, offer suitable options such as: "
+        "review related changes and commit/push if appropriate; split or stage related "
+        "changes; stash or save a patch; discard only with explicit approval; or keep "
+        "the worktree dirty / ignore for now if the user intentionally wants that."
+    )
+
+
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
@@ -234,48 +280,13 @@ def main() -> int:
     if event_name != "Stop":
         return emit({"continue": True})
 
-    if payload.get("stop_hook_active"):
+    already_continued_by_stop_hook = payload.get("stop_hook_active") is True
+    if already_continued_by_stop_hook:
         return emit({"continue": True})
 
-    if already_offered_cleanup(payload.get("last_assistant_message")):
+    reason = build_dirty_worktree_followup(payload)
+    if reason is None:
         return emit({"continue": True})
-
-    if looks_like_level_up_checkpoint(payload.get("last_assistant_message")):
-        return emit({"continue": True})
-
-    roots = load_tracked_roots(payload.get("session_id"))
-    cwd = Path(str(payload.get("cwd") or ".")).expanduser()
-    cwd_root = git_root_for_path(cwd)
-    if cwd_root:
-        roots.add(cwd_root)
-
-    dirty_roots = dirty_roots_for(roots)
-
-    if not dirty_roots:
-        return emit({"continue": True})
-
-    sections: list[str] = []
-    for root, status_lines in dirty_roots[:5]:
-        shown = "\n".join(status_lines[:30])
-        omitted = len(status_lines) - 30
-        if omitted > 0:
-            shown += f"\n... and {omitted} more path(s)"
-        sections.append(f"Repository: {root}\nCurrent status:\n{shown}")
-
-    if len(dirty_roots) > 5:
-        sections.append(f"... and {len(dirty_roots) - 5} more dirty worktree(s)")
-
-    reason = (
-        "One or more git worktrees touched in this session are dirty. Before ending the conversation, "
-        "offer the user a concise way to organize it.\n\n"
-        + "\n\n".join(sections)
-        + "\n\n"
-        "Do not automatically commit, stash, revert, or delete anything unless the user "
-        "already asked for that. In the final response, offer suitable options such as: "
-        "review related changes and commit/push if appropriate; split or stage related "
-        "changes; stash or save a patch; discard only with explicit approval; or keep "
-        "the worktree dirty / ignore for now if the user intentionally wants that."
-    )
 
     return emit({"decision": "block", "reason": reason})
 

@@ -11,6 +11,19 @@
 - 不可保留 `["uv", "run"]` 這類可直接指定任意 executable 的 broad command-runner `allow` rule；`uv run tmux …` 會只匹配外層 allow 而繞過 direct-tmux prompt。需要免審的 uv workflow 應核准到固定子指令，例如 `["uv", "run", "pytest"]`。
 - 這個保證的邊界是 Codex 提交給 tool/execpolicy 的 command，包括 wrapper 中明示的 tmux；Guardian 不會攔截已核准程式內部自行產生的任意 child process。後者若也要逐次 mediation，需要 OS/socket proxy 級設計，不是 PreToolUse 或 prefix rules 能完整提供。
 
+## CLI thread rename（2026-08-05、`codex 0.145.0` 驗證）
+
+- TUI 的 `/rename` 是使用者入口；app-server 的對應 operation 是穩定的
+  `thread/name/set`，接受 `threadId` 與 `name`，可更新 loaded thread 或 persisted rollout。
+- Standalone CLI 的 model 不保證擁有 Codex App 注入的 `set_thread_title` tool，也不能假裝
+  自己在 TUI 輸入 `/rename`。受限 model command 也不能直接讓 nested app-server 寫入
+  `~/.codex`。已驗證的 Stop-hook 流程是：model 只把 validated title request 寫到 private
+  temp file；第二次 Stop（hook host、非 model sandbox）取走 request，再由
+  `codex app-server --stdio` 送 `thread/name/set`。
+- `thread/name/set` 與 `/rename` 改的是同一個 user-facing thread name；差別在入口與
+  live UI event。已用受信任的 global Stop hook 跑過 standalone `codex exec` end-to-end，
+  並從 `session_index.jsonl` 讀回更新後名稱；同一個互動 TUI 當下是否立即重繪仍未驗證。
+
 ## CodexBar usage checks
 
 - For quota checks, prefer `codexbar usage --provider both --source cli`.
