@@ -44,12 +44,12 @@ jobs:
             [ -f "${file}" ] || continue
             first_line="$(head -n 1 "${file}" || true)"
             case "${first_line}" in
-              *bash*) bash_files+=("${file}") ;;
-              *zsh*) zsh_files+=("${file}") ;;
-              *' sh'|*'/sh') sh_files+=("${file}") ;;
+              '#!'*bash*) bash_files+=("${file}") ;;
+              '#!'*zsh*) zsh_files+=("${file}") ;;
+              '#!'*' sh'|'#!'*'/sh') sh_files+=("${file}") ;;
             esac
             case "${file}" in
-              bash/.bash_profile|bash/.bash_prompt|bash/.bashrc|templates/.secrets.template)
+              bash/.bash_profile|bash/.bashrc|templates/.secrets.template)
                 bash_files+=("${file}")
                 ;;
               bash/.aliases|zsh/.zshenv|zsh/.zshrc)
@@ -58,19 +58,26 @@ jobs:
             esac
           done < <(git ls-files -z)
 
-          bash -n "${bash_files[@]}"
-          sh -n "${sh_files[@]}"
-          zsh -n "${zsh_files[@]}"
+          if [ "${#bash_files[@]}" -gt 0 ]; then
+            bash -n "${bash_files[@]}"
+          fi
+          if [ "${#sh_files[@]}" -gt 0 ]; then
+            sh -n "${sh_files[@]}"
+          fi
+          if [ "${#zsh_files[@]}" -gt 0 ]; then
+            zsh -n "${zsh_files[@]}"
+          fi
 
           shellcheck_files=()
           for file in "${bash_files[@]}"; do
-            # This Bash/Zsh compatibility file has two known SC2145 findings;
-            # behavior tests cover it until those functions are refactored.
             [ "${file}" = bash/.aliases ] || shellcheck_files+=("${file}")
           done
           shellcheck --severity=error --shell=bash "${shellcheck_files[@]}"
+          # Keep full-file coverage while excluding its two known compatibility
+          # findings until the backup helpers are refactored.
+          shellcheck --severity=error --shell=bash --exclude=SC2145 bash/.aliases
 
-          git ls-files -z '*.mjs' | xargs -0 -r -n 1 node --check
+          git ls-files -z '*.js' '*.cjs' '*.mjs' | xargs -0 -r -n 1 node --check
 
       - name: Validate JSON, TOML, and YAML
         shell: bash
@@ -131,7 +138,11 @@ jobs:
           smoke_home="${RUNNER_TEMP}/dotfiles-home"
           mkdir -p "${smoke_home}"
           HOME="${smoke_home}" TMPDIR="${RUNNER_TEMP}" ./install.sh
-          test -z "$(git status --porcelain --untracked-files=all)"
+          worktree_status="$(git status --porcelain --untracked-files=all)"
+          if [ -n "${worktree_status}" ]; then
+            printf '%s\n' "${worktree_status}"
+            exit 1
+          fi
 
   secret-scan:
     name: secret-scan

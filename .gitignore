@@ -9,6 +9,7 @@ ai_chatroom/
 
 # Generated run artifacts
 output/
+__pycache__/
 
 # Local overrides (machine-specific, not tracked)
 *.local
