@@ -61,6 +61,7 @@ dotfiles/
 2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
 3. **Skills** - `skills/shared/` is installed into Claude Code, Codex, and `.agents`; `skills/codex/` and `skills/claude/` are installed only into their matching tools
 4. **Codex hooks** - Start a new Codex CLI session, open `/hooks`, review the global `PostToolUse` and `Stop` commands, then trust them explicitly. The installer never writes or bypasses hook trust.
+5. **Machine-specific Git settings** - Put credential helpers or host-only Git overrides in optional `~/.gitconfig.local`; the tracked config includes it last.
 
 ## Files NOT Tracked
 
@@ -68,6 +69,7 @@ These files are created from templates but not tracked in git:
 
 - `~/.secrets` - API keys and tokens
 - `~/.aliases.local` - Machine-specific aliases
+- `~/.gitconfig.local` - Machine-specific Git settings
 
 ## Updating
 
