@@ -1,0 +1,9 @@
+# Keep every change under explicit review by the repository owner.
+* @ChiTienHsieh
+
+# Protect the controls that decide what may merge.
+/.github/CODEOWNERS @ChiTienHsieh
+/.github/workflows/ @ChiTienHsieh
+/AGENTS.md @ChiTienHsieh
+/codex/AGENTS.md @ChiTienHsieh
+/claude/CLAUDE.md @ChiTienHsieh

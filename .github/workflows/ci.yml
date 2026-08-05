@@ -1,0 +1,195 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    name: deterministic-validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Check shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash_files=(
+            install.sh
+            bash/.bash_profile
+            bash/.bash_prompt
+            bash/.bashrc
+            claude/hooks/test-bash-helper-guard.sh
+            claude/statusline.sh
+            codex/bin/clawd-ssh
+            codex/bin/clawd-vm-observe
+            skills/shared/daily-loop/scripts/mine_transcripts.sh
+            skills/shared/tmux-orchestration/scripts/agent-rg.sh
+            skills/shared/tmux-orchestration/scripts/agent-safe-read.sh
+            skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh
+            skills/shared/tmux-orchestration/scripts/agent-watch-marker.sh
+            templates/.aliases.local.template
+            templates/.secrets.template
+            tmux/claude-cache-status.sh
+          )
+          zsh_files=(
+            bash/.aliases
+            hooks/pre-commit
+            tests/test_aliases.sh
+            zsh/.zshenv
+            zsh/.zshrc
+          )
+          bash -n "${bash_files[@]}"
+          zsh -n "${zsh_files[@]}"
+
+      - name: Run ShellCheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash_files=(
+            install.sh
+            bash/.bash_profile
+            bash/.bash_prompt
+            bash/.bashrc
+            claude/hooks/test-bash-helper-guard.sh
+            claude/statusline.sh
+            codex/bin/clawd-ssh
+            codex/bin/clawd-vm-observe
+            skills/shared/daily-loop/scripts/mine_transcripts.sh
+            skills/shared/tmux-orchestration/scripts/agent-rg.sh
+            skills/shared/tmux-orchestration/scripts/agent-safe-read.sh
+            skills/shared/tmux-orchestration/scripts/agent-send-prompt.sh
+            skills/shared/tmux-orchestration/scripts/agent-watch-marker.sh
+            tmux/claude-cache-status.sh
+          )
+          shellcheck --severity=error --shell=bash "${bash_files[@]}"
+
+      - name: Validate JSON, TOML, and YAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          import tomllib
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z", "*.json", "*.toml"]
+          ).split(b"\0")
+          for raw_path in tracked:
+              if not raw_path:
+                  continue
+              path = Path(raw_path.decode())
+              with path.open("rb") as handle:
+                  if path.suffix == ".json":
+                      json.load(handle)
+                  else:
+                      tomllib.load(handle)
+          PY
+          git ls-files -z '*.yml' '*.yaml' |
+            xargs -0 -r ruby -e 'require "yaml"; ARGV.each { |file| YAML.parse_file(file) }' --
+
+      - name: Compile Python
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-files -z '*.py' | xargs -0 -r python3 -m py_compile
+
+      - name: Run behavior tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          zsh tests/test_aliases.sh
+          bash claude/hooks/test-bash-helper-guard.sh
+
+      - name: Smoke-test installation in an isolated home
+        shell: bash
+        run: |
+          set -euo pipefail
+          smoke_home="${RUNNER_TEMP}/dotfiles-home"
+          mkdir -p "${smoke_home}"
+          HOME="${smoke_home}" TMPDIR="${RUNNER_TEMP}" ./install.sh
+          git diff --exit-code
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'true'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+          GITLEAKS_VERSION: 8.30.1
+
+  workflow-security:
+    name: workflow-security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Audit GitHub Actions workflows
+        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
+        with:
+          advanced-security: false
+          annotations: true
+          collect: workflows
+          inputs: .github/workflows
+          min-confidence: medium
+          min-severity: medium
+          online-audits: false
+          version: 1.28.0
+
+  ci-gate:
+    name: ci-gate
+    if: ${{ always() }}
+    needs:
+      - validation
+      - secret-scan
+      - workflow-security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require every deterministic check
+        env:
+          SECRET_SCAN_RESULT: ${{ needs.secret-scan.result }}
+          VALIDATION_RESULT: ${{ needs.validation.result }}
+          WORKFLOW_SECURITY_RESULT: ${{ needs.workflow-security.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${VALIDATION_RESULT}" = success
+          test "${SECRET_SCAN_RESULT}" = success
+          test "${WORKFLOW_SECURITY_RESULT}" = success
