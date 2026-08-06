@@ -11,6 +11,12 @@
 - 不可保留 `["uv", "run"]` 這類可直接指定任意 executable 的 broad command-runner `allow` rule；`uv run tmux …` 會只匹配外層 allow 而繞過 direct-tmux prompt。需要免審的 uv workflow 應核准到固定子指令，例如 `["uv", "run", "pytest"]`。
 - 這個保證的邊界是 Codex 提交給 tool/execpolicy 的 command，包括 wrapper 中明示的 tmux；Guardian 不會攔截已核准程式內部自行產生的任意 child process。後者若也要逐次 mediation，需要 OS/socket proxy 級設計，不是 PreToolUse 或 prefix rules 能完整提供。
 
+## tmux worker lifecycle hook
+
+- `install.sh` 會把 repo 的 `codex/hooks.json` merge 進 live `~/.codex/hooks.json`，保留其他 app-managed hooks；不要直接整檔 symlink 或覆寫 live 檔。
+- `track_tmux_workers.py` 只接受 `tmux-orchestration` 定義的 canonical lifecycle receipt 來維護 per-session ledger；`Stop` 發現未處理 worker 時只提醒並擋一次，不呼叫 tmux、不終止程序，所以所有 tmux 操作仍走 Guardian。custom tmux socket（例如 `tmux -L ...`）不會自動追蹤。
+- Hook 設定只在 Codex session 啟動時載入。首次安裝或 command 變更後要重開 Codex，並用 `/hooks` review／trust 這個 non-managed command hook；既有 session 不會中途取得新 hook。
+
 ## CodexBar usage checks
 
 - For quota checks, prefer `codexbar usage --provider both --source cli`.

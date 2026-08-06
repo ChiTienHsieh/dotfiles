@@ -363,6 +363,8 @@ fi
 backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
+/usr/bin/python3 "$DOTFILES_DIR/codex/hooks/install_hooks.py" \
+    "$DOTFILES_DIR/codex/hooks.json" "$HOME/.codex/hooks.json"
 mkdir -p "$HOME/.codex/rules"
 for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
     [ -f "$rule" ] || continue

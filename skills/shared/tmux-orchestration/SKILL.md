@@ -15,6 +15,7 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
 - Do not kill unrelated tmux sessions. Only close sessions created for the current task or explicitly named by the user.
+- The controller that creates a worker owns its lifecycle. Before ending the task, every created target must be closed or explicitly retained with a reason.
 
 ## Delegation Contract
 
@@ -54,8 +55,15 @@ surface will be read by another agent.
 For a Claude writer or reviewer session, start Claude Code interactively inside tmux:
 
 ```bash
-tmux new-session -d -s SESSION_NAME -c /path/to/worktree 'claude --model opus --permission-mode auto --allowedTools Read,Write,Edit,MultiEdit'
+tmux new-session -d -P \
+  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \
+  -s SESSION_NAME -c /path/to/worktree \
+  'claude --model opus --permission-mode auto --allowedTools Read,Write,Edit,MultiEdit'
 ```
+
+When the lifecycle hook is installed, tmux generates the open receipt directly
+from the session it created. Keep `-P`, the exact `-F` format, and a literal
+session name; do not replace the receipt with a separate `printf`.
 
 Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. Adjust model and allowed tools only when the task requires it. Do not use bypass or danger flags.
 
@@ -73,11 +81,13 @@ When the user wants a Codex/Claude worker to review or brainstorm *with* the orc
 
 ```bash
 # -h = split left/right; target the orchestrator's own session/window
-worker_pane="$(tmux split-window -h -P -F '#{pane_id}' -t SESSION_NAME -c /path/to/repo 'codex --sandbox read-only')"
-tmux capture-pane -pt "$worker_pane" -S -80
+tmux split-window -h -P -F 'CODEX_TMUX_WORKER_OPEN=pane:#{pane_id}' \
+  -t SESSION_NAME -c /path/to/repo 'codex --sandbox read-only'
 ```
 
 Both panes then live in one window, side-by-side, so the user can watch the worker and the orchestrator together.
+Read the exact pane ID from the returned marker, then capture that pane in a
+separate command. Never close the whole session when the worker is only a pane.
 
 ## Claude Auto Mode
 
@@ -163,13 +173,48 @@ Keep start, wait, read-status, and cleanup as separate commands. Never bundle
 cleanup actions such as `pkill`, reset, or clean with status queries in the same
 Bash call.
 
-When the worker is no longer needed:
+Immediately before cleanup, capture the worker's latest state and confirm its
+report, marker, or other result has been accepted. Low CPU usage or an idle
+prompt is not proof of completion.
+
+When a standalone worker session is no longer needed:
 
 ```bash
 tmux kill-session -t SESSION_NAME
 ```
 
-If killing a tmux session needs escalation, request it.
+When a side-by-side worker pane is no longer needed:
+
+```bash
+tmux kill-pane -t %42
+```
+
+Print the closed marker only after the exact target is gone. If another actor
+already closed it, verify absence with `tmux has-session` for a session or
+`tmux display-message` for a pane, then print the same closed marker. Keep that
+verification separate from the cleanup command.
+
+Use these exact absence receipts after the cleanup command succeeds (or when
+the target was already absent):
+
+```bash
+tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
+tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
+```
+
+The lifecycle hook accepts only these canonical default-server command shapes;
+custom tmux sockets such as `tmux -L ...` are not tracked automatically.
+
+Before the controller's final response, resolve every worker it opened:
+
+- Close accepted or obsolete workers and verify they are absent.
+- For a worker that must keep running, tell the user why with
+  `保留中的 tmux worker：TARGET（REASON）`; include every retained target.
+- Never use `pkill`, a wildcard, or an age-only reaper for lifecycle cleanup.
+
+The Codex `Stop` hook only reminds and blocks once when tracked workers remain;
+it never calls tmux or terminates a process. All tmux commands still require the
+normal scoped escalation and Guardian review.
 
 ## Reviving a dead session
 
@@ -178,7 +223,9 @@ A tmux session is destroyed the moment its last pane's **root** process exits. L
 **Cushion pattern (crash-proof; prefer for long-lived agents):** make a shell the pane root, then run the agent as its child. When the agent dies you drop back to the shell, the session survives, and the error stays on screen.
 
 ```bash
-tmux new-session -d -s SESSION_NAME -c /path/to/repo      # shell is the pane root
+tmux new-session -d -P \
+  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \
+  -s SESSION_NAME -c /path/to/repo                         # shell is the pane root
 tmux send-keys -t SESSION_NAME 'claude --resume <uuid>'   # agent runs as a child
 tmux send-keys -t SESSION_NAME Enter
 ```
