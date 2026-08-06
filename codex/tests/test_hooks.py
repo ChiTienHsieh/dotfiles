@@ -24,29 +24,30 @@ import stop_dispatcher  # noqa: E402
 class ThreadTitleValidationTests(unittest.TestCase):
     def test_accepts_all_supported_states(self) -> None:
         for emoji in ("⏸️", "⏳", "🔎", "📦"):
-            title = f"{emoji} dotfiles｜自動改 thread 名｜測試完成"
+            title = f"{emoji} dotfiles | 自動改 thread 名 | 測試完成"
             self.assertEqual(set_thread_title.validate_title(title), title)
 
     def test_rejects_wrong_shape_or_emoji(self) -> None:
         invalid = (
-            "✅ dotfiles｜自動改名｜完成",
-            "📦 dotfiles｜只有兩欄",
-            "📦 dotfiles｜太｜多｜欄",
-            "📦 dotfiles | 自動改名 | 完成",
+            "✅ dotfiles | 自動改名 | 完成",
+            "📦 dotfiles | 只有兩欄",
+            "📦 dotfiles | 太 | 多 | 欄",
+            "📦 dotfiles｜自動改名｜完成",
+            "📦 dotfiles|自動改名|完成",
         )
         for title in invalid:
             with self.subTest(title=title), self.assertRaises(ValueError):
                 set_thread_title.validate_title(title)
 
     def test_enforces_hard_cap(self) -> None:
-        title = "📦 dotfiles｜自動改名｜" + ("完" * 40)
+        title = "📦 dotfiles | 自動改名 | " + ("完" * 40)
         with self.assertRaisesRegex(ValueError, "hard cap"):
             set_thread_title.validate_title(title)
 
     def test_protocol_uses_name_set_only(self) -> None:
         messages = set_thread_title.protocol_request_messages(
             "019fcfbd-8a09-7c31-ba17-8ac72a59d44d",
-            "📦 dotfiles｜自動改 thread 名｜測試完成",
+            "📦 dotfiles | 自動改 thread 名 | 測試完成",
         )
         self.assertEqual(
             [message["method"] for message in messages],
@@ -56,11 +57,12 @@ class ThreadTitleValidationTests(unittest.TestCase):
 
     def test_rejects_unsafe_or_blank_display_fields(self) -> None:
         invalid = (
-            "📦 repo｜目的\t注入｜完成",
-            "📦 repo｜目的\u2028注入｜完成",
-            "📦 repo｜\u2066目的｜完成",
-            "📦   ｜目的｜完成",
-            "📦 repo｜   ｜完成",
+            "📦 repo | 目的\t注入 | 完成",
+            "📦 repo | 目的\u2028注入 | 完成",
+            "📦 repo | \u2066目的 | 完成",
+            "📦    | 目的 | 完成",
+            "📦 repo |     | 完成",
+            "📦 repo  | 目的 | 完成",
         )
         for title in invalid:
             with self.subTest(title=title), self.assertRaises(ValueError):
@@ -80,7 +82,7 @@ class ThreadTitleValidationTests(unittest.TestCase):
         wait.side_effect = [{"id": 0, "result": {}}, {"id": 1, "result": {}}]
         set_thread_title.set_thread_title(
             "019fcfbd-8a09-7c31-ba17-8ac72a59d44d",
-            "📦 dotfiles｜自動改 thread 名｜測試完成",
+            "📦 dotfiles | 自動改 thread 名 | 測試完成",
         )
         command = popen.call_args.args[0]
         self.assertEqual(command, ["/usr/bin/codex", "app-server", "--stdio"])
@@ -105,14 +107,14 @@ class ThreadTitleValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "not found"):
             set_thread_title.set_thread_title(
                 "019fcfbd-8a09-7c31-ba17-8ac72a59d44d",
-                "📦 dotfiles｜自動改 thread 名｜測試完成",
+                "📦 dotfiles | 自動改 thread 名 | 測試完成",
             )
 
 
 class ThreadTitleRequestTests(unittest.TestCase):
     def test_private_request_round_trip_is_one_shot(self) -> None:
         thread_id = "019fcfbd-8a09-7c31-ba17-8ac72a59d44d"
-        title = "📦 dotfiles｜自動改 thread 名｜測試完成"
+        title = "📦 dotfiles | 自動改 thread 名 | 測試完成"
         with tempfile.TemporaryDirectory() as temporary_directory, mock.patch.object(
             request_thread_title,
             "REQUEST_ROOT",
@@ -138,7 +140,7 @@ class ThreadTitleRequestTests(unittest.TestCase):
 
     def test_shell_metacharacters_are_only_data(self) -> None:
         thread_id = "019fcfbd-8a09-7c31-ba17-8ac72a59d44d"
-        title = "📦 repo｜處理 user's input｜$(id);完成"
+        title = "📦 repo | 處理 user's input | $(id);完成"
         with tempfile.TemporaryDirectory() as temporary_directory, mock.patch.object(
             request_thread_title,
             "REQUEST_ROOT",
@@ -331,6 +333,17 @@ class StopDispatcherTests(unittest.TestCase):
         self.assertIn("/tmp/title-request.txt", reason)
         self.assertNotIn("--title", reason)
         self.assertIn("24–32", reason)
+        self.assertIn(
+            "合格範例：`📦 dotfiles | 精簡 hook prompt | 完成`",
+            reason,
+        )
+        example = "📦 dotfiles | 精簡 hook prompt | 完成"
+        self.assertEqual(set_thread_title.validate_title(example), example)
+        self.assertLessEqual(len(example), 32)
+        self.assertIn("開頭只能有一個上述狀態 emoji", reason)
+        self.assertIn("語意須和第三段進度一致", reason)
+        self.assertIn("恰有兩個 ` | `", reason)
+        self.assertIn("不得使用全形 `｜`", reason)
         self.assertIn("只能改標題", reason)
         self.assertNotIn("thread/name/set", reason)
         self.assertLess(len(stop_dispatcher.TITLE_CHECKPOINT), 750)
@@ -351,7 +364,10 @@ class StopDispatcherTests(unittest.TestCase):
 
     def test_second_stop_applies_one_queued_title(self) -> None:
         payload = {**self.payload, "stop_hook_active": True}
-        request = (payload["session_id"], "📦 dotfiles｜自動改 thread 名｜測試完成")
+        request = (
+            payload["session_id"],
+            "📦 dotfiles | 自動改 thread 名 | 測試完成",
+        )
         with mock.patch.object(
             stop_dispatcher, "take_title_request", return_value=request
         ), mock.patch.object(stop_dispatcher, "set_thread_title") as set_title:

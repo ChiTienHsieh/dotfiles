@@ -17,7 +17,7 @@ from typing import BinaryIO
 
 
 TITLE_PATTERN = re.compile(
-    r"^(?:⏸️|⏳|🔎|📦) [^｜\r\n]+｜[^｜\r\n]+｜[^｜\r\n]+$"
+    r"^(?:⏸️|⏳|🔎|📦) [^|｜\r\n]+ \| [^|｜\r\n]+ \| [^|｜\r\n]+$"
 )
 THREAD_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 HARD_TITLE_LIMIT = 40
@@ -34,16 +34,16 @@ def validate_title(title: str) -> str:
         raise ValueError(f"title exceeds the {HARD_TITLE_LIMIT}-character hard cap")
     if not TITLE_PATTERN.fullmatch(title):
         raise ValueError(
-            "title must match: <⏸️|⏳|🔎|📦> <where>｜<user purpose>｜<progress>"
+            "title must match: <⏸️|⏳|🔎|📦> <where> | <user purpose> | <progress>"
         )
     if any(unicodedata.category(character).startswith("C") for character in title):
         raise ValueError("title contains a control or invisible formatting character")
     if any(character in {"\u2028", "\u2029"} for character in title):
         raise ValueError("title contains a Unicode line separator")
-    fields = title.split("｜")
+    fields = title.split(" | ")
     fields[0] = fields[0].split(" ", 1)[1]
-    if any(not field.strip() for field in fields):
-        raise ValueError("title fields must contain visible text")
+    if any(not field.strip() or field != field.strip() for field in fields):
+        raise ValueError("title fields must contain trimmed visible text")
     return title
 
 
