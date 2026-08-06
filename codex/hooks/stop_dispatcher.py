@@ -29,7 +29,9 @@ TITLE_CHECKPOINT = """Thread 標題檢查：
 送出前確認：只有一行、恰有兩個 ` | `、不得使用全形 `｜`，且三段都不是空白。
 技術識別字保留原文；目標 24–32 字，最多 40 字。
 
-若有 `apply_patch`，只能呼叫一次，把以下檔案的完整內容改成只有標題與一個結尾換行：
+若有 `codex_app__set_thread_title`，直接以完整標題改目前 task（省略 `threadId`）；成功後不要寫 fallback file。
+
+只有該 tool 不可用時才走 fallback：若有 `apply_patch`，只能呼叫一次，把以下檔案的完整內容改成只有標題與一個結尾換行：
 {request_path}
 目前內容是 `NO_TITLE_REQUEST`。不得用 shell 寫檔。工具或檔案不可用就略過；patch 失敗只警告一次。
 

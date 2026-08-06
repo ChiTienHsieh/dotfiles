@@ -329,7 +329,13 @@ class StopDispatcherTests(unittest.TestCase):
         self.assertEqual(result["decision"], "block")
         reason = str(result["reason"])
         self.assertIn("Thread 標題檢查", reason)
+        self.assertIn("codex_app__set_thread_title", reason)
+        self.assertIn("省略 `threadId`", reason)
         self.assertIn("apply_patch", reason)
+        self.assertLess(
+            reason.index("codex_app__set_thread_title"),
+            reason.index("只有該 tool 不可用時才走 fallback"),
+        )
         self.assertIn("/tmp/title-request.txt", reason)
         self.assertNotIn("--title", reason)
         self.assertIn("24–32", reason)
