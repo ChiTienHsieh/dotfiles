@@ -198,7 +198,10 @@ def bash_command(tool_input: object) -> str | None:
 def canonical_open_targets(command: str | None, kind: str) -> set[str]:
     action = "new-session" if kind == "session" else "split-window"
     targets: set[str] = set()
-    if command is None or re.search(r"[&|;<>\r\n]|`|\$\(", command):
+    if command is None:
+        return targets
+    command = re.sub(r"\\\r?\n", "", command)
+    if re.search(r"[&|;<>\r\n]|`|\$\(", command):
         return targets
     try:
         tokens = shlex.split(command)
