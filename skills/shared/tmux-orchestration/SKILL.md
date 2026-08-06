@@ -223,7 +223,9 @@ A tmux session is destroyed the moment its last pane's **root** process exits. L
 **Cushion pattern (crash-proof; prefer for long-lived agents):** make a shell the pane root, then run the agent as its child. When the agent dies you drop back to the shell, the session survives, and the error stays on screen.
 
 ```bash
-tmux new-session -d -s SESSION_NAME -c /path/to/repo      # shell is the pane root
+tmux new-session -d -P \
+  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \
+  -s SESSION_NAME -c /path/to/repo                         # shell is the pane root
 tmux send-keys -t SESSION_NAME 'claude --resume <uuid>'   # agent runs as a child
 tmux send-keys -t SESSION_NAME Enter
 ```

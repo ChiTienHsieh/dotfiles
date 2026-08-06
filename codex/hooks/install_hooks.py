@@ -14,6 +14,9 @@ from pathlib import Path
 
 MANAGED_COMMAND = '/usr/bin/python3 "$HOME/.codex/bin/track_tmux_workers.py"'
 HANDLER_TYPES = {"command", "prompt", "agent"}
+TOP_LEVEL_FIELDS = {"description", "hooks"}
+STRING_HANDLER_FIELDS = {"commandWindows", "command_windows", "statusMessage"}
+INTEGER_HANDLER_FIELDS = {"timeout", "additionalContextLimit"}
 
 
 class HookConfigError(ValueError):
@@ -35,6 +38,14 @@ def load_json(path: Path, *, missing_ok: bool = False) -> dict[str, object]:
 
 
 def validate_hook_structure(config: dict[str, object], label: str) -> None:
+    unknown_top_level = set(config) - TOP_LEVEL_FIELDS
+    if unknown_top_level:
+        raise HookConfigError(
+            f"unsupported top-level fields in {label}: {sorted(unknown_top_level)}"
+        )
+    description = config.get("description")
+    if description is not None and not isinstance(description, str):
+        raise HookConfigError(f"hook description in {label} must be a string")
     hooks = config.get("hooks")
     if not isinstance(hooks, dict):
         raise HookConfigError(f"expected a top-level hooks object in {label}")
@@ -53,6 +64,27 @@ def validate_hook_structure(config: dict[str, object], label: str) -> None:
                 if item["type"] == "command" and not isinstance(item.get("command"), str):
                     raise HookConfigError(
                         f"command hook for {event!r} in {label} has no command string"
+                    )
+                for field in STRING_HANDLER_FIELDS:
+                    value = item.get(field)
+                    if value is not None and not isinstance(value, str):
+                        raise HookConfigError(
+                            f"{field} for {event!r} in {label} must be a string"
+                        )
+                for field in INTEGER_HANDLER_FIELDS:
+                    value = item.get(field)
+                    if value is not None and (
+                        isinstance(value, bool)
+                        or not isinstance(value, int)
+                        or value < 0
+                    ):
+                        raise HookConfigError(
+                            f"{field} for {event!r} in {label} must be a non-negative integer"
+                        )
+                async_value = item.get("async")
+                if async_value is not None and not isinstance(async_value, bool):
+                    raise HookConfigError(
+                        f"async for {event!r} in {label} must be a boolean"
                     )
 
 

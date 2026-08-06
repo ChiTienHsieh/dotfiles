@@ -10,6 +10,8 @@ import re
 import shlex
 import sys
 import tempfile
+from contextlib import contextmanager
+from fcntl import LOCK_EX, LOCK_UN, flock
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Iterator
@@ -57,6 +59,27 @@ def session_track_path(session_id: object) -> Path | None:
         return None
     digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()
     return TRACK_DIR / f"{digest}.json"
+
+
+@contextmanager
+def ledger_lock(session_id: object) -> Iterator[None]:
+    path = session_track_path(session_id)
+    if not path:
+        yield
+        return
+
+    try:
+        TRACK_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+        lock_path = path.with_suffix(".lock")
+        with lock_path.open("a+", encoding="utf-8") as handle:
+            os.chmod(lock_path, 0o600)
+            flock(handle.fileno(), LOCK_EX)
+            try:
+                yield
+            finally:
+                flock(handle.fileno(), LOCK_UN)
+    except OSError as exc:
+        raise LedgerError(f"cannot lock tmux worker ledger {path}: {exc}") from exc
 
 
 def valid_worker(kind: str, target: str) -> bool:
@@ -165,39 +188,45 @@ def option_value(tokens: list[str], option: str) -> str | None:
     return tokens[index + 1]
 
 
-def canonical_open_targets(tool_input: object, kind: str) -> set[str]:
+def bash_command(tool_input: object) -> str | None:
+    if not isinstance(tool_input, dict):
+        return None
+    command = tool_input.get("command")
+    return command if isinstance(command, str) else None
+
+
+def canonical_open_targets(command: str | None, kind: str) -> set[str]:
     action = "new-session" if kind == "session" else "split-window"
     targets: set[str] = set()
-    for command in strings_in(tool_input):
-        if re.search(r"&&|\|\||;|`|\$\(", command):
-            continue
-        try:
-            tokens = shlex.split(command)
-        except ValueError:
-            continue
-        if len(tokens) < 2 or tokens[0] != "tmux" or tokens[1] != action:
-            continue
-        if "-P" not in tokens or option_value(tokens, "-F") != OPEN_FORMATS[kind]:
-            continue
-        if kind == "pane":
-            targets.add("*")
-            continue
-        target = option_value(tokens, "-s")
-        if target and valid_worker(kind, target):
-            targets.add(target)
+    if command is None or re.search(r"&&|\|\||;|`|\$\(", command):
+        return targets
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return targets
+    if len(tokens) < 2 or tokens[0] != "tmux" or tokens[1] != action:
+        return targets
+    if "-P" not in tokens or option_value(tokens, "-F") != OPEN_FORMATS[kind]:
+        return targets
+    if kind == "pane":
+        targets.add("*")
+        return targets
+    target = option_value(tokens, "-s")
+    if target and valid_worker(kind, target):
+        targets.add(target)
     return targets
 
 
-def canonical_closed_targets(tool_input: object, kind: str) -> set[str]:
+def canonical_closed_targets(command: str | None, kind: str) -> set[str]:
     receipt_re = (
         SESSION_CLOSED_RECEIPT_RE if kind == "session" else PANE_CLOSED_RECEIPT_RE
     )
-    targets: set[str] = set()
-    for command in strings_in(tool_input):
-        match = receipt_re.fullmatch(command)
-        if match and match.group("target") == match.group("marker"):
-            targets.add(match.group("target"))
-    return targets
+    if command is None:
+        return set()
+    match = receipt_re.fullmatch(command)
+    if match and match.group("target") == match.group("marker"):
+        return {match.group("target")}
+    return set()
 
 
 def lifecycle_markers(tool_response: object) -> set[tuple[str, str, str]]:
@@ -211,10 +240,11 @@ def lifecycle_markers(tool_response: object) -> set[tuple[str, str, str]]:
 
 
 def marker_matches_command(tool_input: object, state: str, kind: str, target: str) -> bool:
+    command = bash_command(tool_input)
     if state == "OPEN":
-        open_targets = canonical_open_targets(tool_input, kind)
+        open_targets = canonical_open_targets(command, kind)
         return "*" in open_targets or target in open_targets
-    return target in canonical_closed_targets(tool_input, kind)
+    return target in canonical_closed_targets(command, kind)
 
 
 def record_lifecycle(payload: dict[str, object]) -> int:
@@ -227,25 +257,23 @@ def record_lifecycle(payload: dict[str, object]) -> int:
         return emit({"continue": True})
 
     try:
-        workers = load_workers(payload.get("session_id"))
+        with ledger_lock(payload.get("session_id")):
+            workers = load_workers(payload.get("session_id"))
+            changed = False
+
+            for state, kind, target in markers:
+                worker = (kind, target)
+                if state == "OPEN" and worker not in workers:
+                    workers.add(worker)
+                    changed = True
+                elif state == "CLOSED" and worker in workers:
+                    workers.remove(worker)
+                    changed = True
+
+            if changed:
+                save_workers(payload.get("session_id"), workers)
     except LedgerError as exc:
         return post_tool_tracking_error(str(exc))
-    changed = False
-
-    for state, kind, target in markers:
-        worker = (kind, target)
-        if state == "OPEN" and worker not in workers:
-            workers.add(worker)
-            changed = True
-        elif state == "CLOSED" and worker in workers:
-            workers.remove(worker)
-            changed = True
-
-    if changed:
-        try:
-            save_workers(payload.get("session_id"), workers)
-        except LedgerError as exc:
-            return post_tool_tracking_error(str(exc))
     return emit({"continue": True})
 
 
@@ -269,7 +297,8 @@ def stop_guard(payload: dict[str, object]) -> int:
     if payload.get("stop_hook_active"):
         return emit({"continue": True})
     try:
-        workers = load_workers(payload.get("session_id"))
+        with ledger_lock(payload.get("session_id")):
+            workers = load_workers(payload.get("session_id"))
     except LedgerError as exc:
         return emit(
             {
@@ -288,13 +317,35 @@ def stop_guard(payload: dict[str, object]) -> int:
         return emit({"continue": True})
 
     shown = "\n".join(f"- {kind}: {target}" for kind, target in sorted(workers))
+    cleanup_commands: list[str] = []
+    for kind, target in sorted(workers):
+        if kind == "session":
+            cleanup_commands.extend(
+                [
+                    f"tmux kill-session -t {target}",
+                    f"tmux has-session -t {target} 2>/dev/null || printf '%s\\n' "
+                    f"'CODEX_TMUX_WORKER_CLOSED=session:{target}'",
+                ]
+            )
+        else:
+            cleanup_commands.extend(
+                [
+                    f"tmux kill-pane -t {target}",
+                    f"tmux display-message -p -t {target} '#{{pane_id}}' >/dev/null "
+                    f"2>&1 || printf '%s\\n' "
+                    f"'CODEX_TMUX_WORKER_CLOSED=pane:{target}'",
+                ]
+            )
+    cleanup = "\n".join(cleanup_commands)
     reason = (
         "This Codex task still owns unresolved tmux workers:\n"
         f"{shown}\n\n"
         "Before ending, read each worker's latest pane state. If its result has been "
         "accepted, close the exact session or pane with an explicit tmux command under "
-        "the normal Guardian escalation, emit its CODEX_TMUX_WORKER_CLOSED marker only "
-        "after success, and verify it is gone. Never use pkill or a wildcard. If a worker "
+        "the normal Guardian escalation, then run its matching canonical absence receipt "
+        "as a separate command. Use these exact commands for the tracked targets:\n"
+        f"{cleanup}\n\n"
+        "Never use pkill or a wildcard. If a worker "
         "must intentionally remain active, tell the user why using the exact phrase "
         "'保留中的 tmux worker：<target>（<reason>）'. This hook must not call tmux or "
         "terminate processes itself."
