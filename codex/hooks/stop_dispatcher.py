@@ -53,8 +53,29 @@ def apply_queued_title(payload: dict[str, object]) -> dict[str, object]:
     return {"continue": True}
 
 
+def has_explicitly_null_transcript_path(payload: dict[str, object]) -> bool:
+    """Return true only when the hook payload explicitly reports a null path."""
+    return "transcript_path" in payload and payload["transcript_path"] is None
+
+
 def build_stop_result(payload: dict[str, object]) -> dict[str, object]:
     already_continued_by_stop_hook = payload.get("stop_hook_active") is True
+
+    # Side chats are ephemeral forks and expose a null transcript_path, but a
+    # persisted transcript-path lookup failure can do the same. Skip only the
+    # inapplicable title checkpoint; retain dirty-worktree safety on first Stop.
+    if has_explicitly_null_transcript_path(payload):
+        if already_continued_by_stop_hook:
+            return {"continue": True}
+        dirty_reason = build_dirty_worktree_followup(payload)
+        if not dirty_reason:
+            return {"continue": True}
+        return {
+            "decision": "block",
+            "reason": dirty_reason
+            + "\n\n完成工作區整理後，只補整理選項；不要重述或擴寫上一則 final answer。",
+        }
+
     if already_continued_by_stop_hook:
         return apply_queued_title(payload)
 

@@ -248,10 +248,72 @@ class StopDispatcherTests(unittest.TestCase):
         self.payload = {
             "hook_event_name": "Stop",
             "session_id": "019fcfbd-8a09-7c31-ba17-8ac72a59d44d",
+            "transcript_path": "/tmp/rollout.jsonl",
             "cwd": "/tmp",
             "stop_hook_active": False,
             "last_assistant_message": "done",
         }
+
+    def test_side_chat_without_dirty_worktree_skips_stop_checkpoint(self) -> None:
+        payload = {**self.payload, "transcript_path": None}
+        with mock.patch.object(
+            stop_dispatcher, "prepare_title_request"
+        ) as prepare, mock.patch.object(
+            stop_dispatcher, "build_dirty_worktree_followup", return_value=None
+        ) as dirty, mock.patch.object(
+            stop_dispatcher, "take_title_request"
+        ) as take:
+            result = stop_dispatcher.build_stop_result(payload)
+        self.assertEqual(result, {"continue": True})
+        prepare.assert_not_called()
+        dirty.assert_called_once_with(payload)
+        take.assert_not_called()
+
+    def test_side_chat_second_stop_does_not_apply_queued_title(self) -> None:
+        payload = {
+            **self.payload,
+            "transcript_path": None,
+            "stop_hook_active": True,
+        }
+        with mock.patch.object(
+            stop_dispatcher, "apply_queued_title"
+        ) as apply_title, mock.patch.object(
+            stop_dispatcher, "build_dirty_worktree_followup"
+        ) as dirty:
+            result = stop_dispatcher.build_stop_result(payload)
+        self.assertEqual(result, {"continue": True})
+        apply_title.assert_not_called()
+        dirty.assert_not_called()
+
+    def test_side_chat_retains_dirty_worktree_safety_prompt(self) -> None:
+        payload = {**self.payload, "transcript_path": None}
+        with mock.patch.object(
+            stop_dispatcher,
+            "build_dirty_worktree_followup",
+            return_value="工作區整理：提供整理選項。",
+        ), mock.patch.object(stop_dispatcher, "prepare_title_request") as prepare:
+            result = stop_dispatcher.build_stop_result(payload)
+        self.assertEqual(result["decision"], "block")
+        reason = str(result["reason"])
+        self.assertIn("工作區整理：提供整理選項。", reason)
+        self.assertNotIn("Thread 標題檢查", reason)
+        prepare.assert_not_called()
+
+    def test_missing_transcript_field_does_not_guess_side_chat(self) -> None:
+        payload = {
+            key: value
+            for key, value in self.payload.items()
+            if key != "transcript_path"
+        }
+        with mock.patch.object(
+            stop_dispatcher, "build_dirty_worktree_followup", return_value=None
+        ), mock.patch.object(
+            stop_dispatcher,
+            "prepare_title_request",
+            return_value=Path("/tmp/title-request.txt"),
+        ):
+            result = stop_dispatcher.build_stop_result(payload)
+        self.assertEqual(result["decision"], "block")
 
     def test_first_stop_requests_exactly_one_checkpoint(self) -> None:
         with mock.patch.object(

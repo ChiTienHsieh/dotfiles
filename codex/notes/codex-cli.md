@@ -24,6 +24,12 @@
 - `thread/name/set` 與 `/rename` 改的是同一個 user-facing thread name；差別在入口與
   live UI event。已用受信任的 global Stop hook 跑過 standalone `codex exec` end-to-end，
   並從 `session_index.jsonl` 讀回更新後名稱；同一個互動 TUI 當下是否立即重繪仍未驗證。
+- Side conversation 在 0.145.0 是 `ephemeral = true` 的 fork，本身不能改名，也不建立
+  persisted rollout；Stop hook payload 沒有專用的 side-chat flag，但會明確帶
+  `transcript_path: null`。這不是 side-chat 專用訊號：persisted transcript path 查詢失敗
+  也可能是 `null`。global dispatcher 因此只在欄位明確為 `null` 時略過不適用的標題
+  checkpoint；若有 dirty worktree 仍保留整理提醒。欄位缺失或其他不明狀態不猜測，
+  仍走完整原流程。
 
 ## CodexBar usage checks
 
