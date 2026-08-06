@@ -1,5 +1,7 @@
 # Dotfiles
 
+[![CI](https://github.com/ChiTienHsieh/dotfiles/actions/workflows/ci.yml/badge.svg)](https://github.com/ChiTienHsieh/dotfiles/actions/workflows/ci.yml)
+
 Personal dotfiles for Unix systems. Managed with symlinks.
 
 ## Quick Start
