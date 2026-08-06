@@ -6,6 +6,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -57,11 +58,17 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         self.addCleanup(setattr, tracker, "TRACK_DIR", self.original_track_dir)
         self.session_id = "codex-session-1"
 
-    def post(self, command: str, response: str) -> dict[str, object]:
+    def post(
+        self, command: str, response: str, *, description: str | None = None
+    ) -> dict[str, object]:
+        tool_input = {"command": command}
+        if description is not None:
+            tool_input["description"] = description
         payload = {
             "hook_event_name": "PostToolUse",
             "session_id": self.session_id,
-            "tool_input": {"command": command},
+            "tool_name": "Bash",
+            "tool_input": tool_input,
             "tool_response": response,
         }
         output = StringIO()
@@ -152,6 +159,46 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         self.post(command, "CODEX_TMUX_WORKER_OPEN=session:review-one\n")
         self.assertEqual(tracker.load_workers(self.session_id), set())
 
+    def test_ignores_canonical_receipt_in_description(self) -> None:
+        tracker.save_workers(self.session_id, {("session", "review-one")})
+        self.post(
+            "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'",
+            "CODEX_TMUX_WORKER_CLOSED=session:review-one\n",
+            description=self.SESSION_CLOSE,
+        )
+        self.assertEqual(
+            tracker.load_workers(self.session_id), {("session", "review-one")}
+        )
+
+    def test_tracks_cushion_session_launch(self) -> None:
+        command = (
+            "tmux new-session -d -P "
+            "-F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' "
+            "-s cushion-one -c /tmp"
+        )
+        self.post(command, "CODEX_TMUX_WORKER_OPEN=session:cushion-one\n")
+        self.assertEqual(
+            tracker.load_workers(self.session_id), {("session", "cushion-one")}
+        )
+
+    def test_record_lifecycle_waits_for_per_session_lock(self) -> None:
+        tracker.save_workers(self.session_id, {("session", "review-one")})
+        second_open = self.SESSION_OPEN.replace("review-one", "review-two")
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            with tracker.ledger_lock(self.session_id):
+                future = pool.submit(
+                    self.post,
+                    second_open,
+                    "CODEX_TMUX_WORKER_OPEN=session:review-two\n",
+                )
+                with self.assertRaises(TimeoutError):
+                    future.result(timeout=0.05)
+            future.result(timeout=1)
+        self.assertEqual(
+            tracker.load_workers(self.session_id),
+            {("session", "review-one"), ("session", "review-two")},
+        )
+
     def test_capture_output_cannot_claim_worker_was_closed(self) -> None:
         tracker.save_workers(self.session_id, {("session", "review-one")})
         self.post(
@@ -167,6 +214,7 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         decision = self.stop("Done.")
         self.assertEqual(decision["decision"], "block")
         self.assertIn("review-one", decision["reason"])
+        self.assertIn(self.SESSION_CLOSE, decision["reason"])
 
     def test_stop_allows_explicit_retention_with_target(self) -> None:
         tracker.save_workers(self.session_id, {("session", "review-one")})
@@ -194,6 +242,7 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         decision = self.stop("保留中的 tmux worker：review-one（仍在跑測試）")
         self.assertEqual(decision["decision"], "block")
         self.assertIn("%42", decision["reason"])
+        self.assertIn(self.PANE_CLOSE, decision["reason"])
 
     def test_stop_does_not_accept_retention_without_reason(self) -> None:
         tracker.save_workers(self.session_id, {("session", "review-one")})
@@ -246,6 +295,7 @@ class HookInstallerTests(unittest.TestCase):
     def test_merge_preserves_unmanaged_hooks_and_is_idempotent(self) -> None:
         manifest = installer.load_json(MANIFEST_PATH)
         live = {
+            "description": "app-managed hooks",
             "hooks": {
                 "Stop": [
                     {
@@ -269,6 +319,7 @@ class HookInstallerTests(unittest.TestCase):
         twice = installer.merge_hooks(once, manifest)
         self.assertEqual(once, twice)
         text = json.dumps(once)
+        self.assertEqual(once["description"], "app-managed hooks")
         self.assertIn("third-party-hook", text)
         self.assertEqual(text.count("track_tmux_workers.py"), 2)
 
@@ -306,6 +357,42 @@ class HookInstallerTests(unittest.TestCase):
         manifest = installer.load_json(MANIFEST_PATH)
         with self.assertRaises(installer.HookConfigError):
             installer.merge_hooks(live, manifest)
+
+    def test_rejects_invalid_optional_handler_field_types(self) -> None:
+        manifest = installer.load_json(MANIFEST_PATH)
+        bad_values = {
+            "timeout": "not-a-number",
+            "async": "false",
+            "statusMessage": 42,
+            "additionalContextLimit": -1,
+            "commandWindows": False,
+        }
+        for field, value in bad_values.items():
+            with self.subTest(field=field):
+                live = {
+                    "hooks": {
+                        "Stop": [
+                            {
+                                "hooks": [
+                                    {
+                                        "type": "command",
+                                        "command": "third-party-hook",
+                                        field: value,
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+                with self.assertRaises(installer.HookConfigError):
+                    installer.merge_hooks(live, manifest)
+
+    def test_rejects_invalid_top_level_metadata(self) -> None:
+        manifest = installer.load_json(MANIFEST_PATH)
+        with self.assertRaises(installer.HookConfigError):
+            installer.merge_hooks({"description": 42, "hooks": {}}, manifest)
+        with self.assertRaises(installer.HookConfigError):
+            installer.merge_hooks({"unknown": "value", "hooks": {}}, manifest)
 
 
 if __name__ == "__main__":
