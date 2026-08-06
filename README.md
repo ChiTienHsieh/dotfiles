@@ -4,6 +4,8 @@
 
 Personal dotfiles for Unix systems. Managed with symlinks.
 
+Prerequisite: Python 3.11 or newer must be available as `python3` on `PATH`.
+
 ## Quick Start
 
 ```bash

@@ -8,13 +8,9 @@ import os
 import re
 import stat
 import tempfile
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-
-try:
-    import tomllib
-except ModuleNotFoundError:  # Python < 3.11; install.sh also supports older macOS.
-    tomllib = None
 
 
 @dataclass(frozen=True)
@@ -155,8 +151,7 @@ def upsert_toml(text: str, policy: Policy) -> str:
             ]
 
     result = "\n".join(lines).rstrip() + "\n"
-    if tomllib is not None:
-        tomllib.loads(result)
+    tomllib.loads(result)
     return result
 
 

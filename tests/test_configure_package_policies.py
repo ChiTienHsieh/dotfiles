@@ -6,7 +6,6 @@ import tempfile
 import tomllib
 import unittest
 from pathlib import Path
-from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -128,7 +127,7 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "not a regular file"):
                 self.configure(home)
 
-    def test_bun_inline_comment_header_works_without_runtime_tomllib(self) -> None:
+    def test_bun_inline_comment_header_remains_valid(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             home = Path(temporary_directory)
             bun_path = home / ".bunfig.toml"
@@ -136,8 +135,7 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
                 '[install] # Bun settings\nregistry = "https://registry.example.invalid/"\n',
                 encoding="utf-8",
             )
-            with mock.patch.object(configure_package_policies, "tomllib", None):
-                self.configure(home)
+            self.configure(home)
             parsed = tomllib.loads(bun_path.read_text(encoding="utf-8"))
             self.assertEqual(parsed["install"]["minimumReleaseAge"], 604800)
             self.assertEqual(bun_path.read_text().count("[install]"), 1)
