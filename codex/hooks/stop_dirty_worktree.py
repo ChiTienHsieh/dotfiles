@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -12,7 +13,15 @@ import time
 from json import JSONDecodeError
 from pathlib import Path
 
-TRACK_DIR = Path(tempfile.gettempdir()) / "codex-dirty-worktrees"
+from private_temp_state import (
+    atomic_write_private,
+    ensure_private_directory,
+    read_private_text,
+    validate_private_file,
+)
+
+
+TRACK_DIR = Path(tempfile.gettempdir()) / f"codex-dirty-worktrees-{os.getuid()}"
 
 
 def run_git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -49,11 +58,14 @@ def session_track_path(session_id: object) -> Path | None:
 
 def load_tracked_roots(session_id: object) -> set[Path]:
     path = session_track_path(session_id)
-    if not path or not path.exists():
+    if not path:
         return set()
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, JSONDecodeError):
+        content = read_private_text(path)
+        if content is None:
+            return set()
+        data = json.loads(content)
+    except (OSError, RuntimeError, JSONDecodeError):
         return set()
     roots = data.get("roots") if isinstance(data, dict) else None
     if not isinstance(roots, list):
@@ -66,36 +78,39 @@ def save_tracked_roots(session_id: object, roots: set[Path]) -> None:
     if not path:
         return
     try:
-        TRACK_DIR.mkdir(parents=True, exist_ok=True)
-        path.write_text(
+        atomic_write_private(
+            path,
             json.dumps({"roots": sorted(str(root) for root in roots)}, indent=2) + "\n",
-            encoding="utf-8",
         )
-    except OSError:
+    except (OSError, RuntimeError):
         return
 
 
 def recent_track_paths(hours: float = 12) -> list[Path]:
     try:
-        paths = list(TRACK_DIR.glob("*.json"))
-    except OSError:
+        paths = list(ensure_private_directory(TRACK_DIR).glob("*.json"))
+    except (OSError, RuntimeError):
         return []
 
     cutoff = time.time() - (hours * 60 * 60)
     recent: list[Path] = []
     for path in paths:
         try:
-            if path.stat().st_mtime >= cutoff:
+            metadata = validate_private_file(path)
+            if metadata.st_mtime >= cutoff:
                 recent.append(path)
-        except OSError:
+        except (OSError, RuntimeError):
             continue
-    return sorted(recent, key=lambda path: path.stat().st_mtime, reverse=True)
+    return sorted(recent, key=lambda path: path.lstat().st_mtime, reverse=True)
 
 
 def load_roots_from_track_path(path: Path) -> set[Path]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, JSONDecodeError):
+        content = read_private_text(path)
+        if content is None:
+            return set()
+        data = json.loads(content)
+    except (OSError, RuntimeError, JSONDecodeError):
         return set()
     roots = data.get("roots") if isinstance(data, dict) else None
     if not isinstance(roots, list):

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -12,6 +14,7 @@ CODEX_DIR = Path(__file__).resolve().parents[1]
 HOOKS_DIR = CODEX_DIR / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
 
+import private_temp_state  # noqa: E402
 import request_thread_title  # noqa: E402
 import set_thread_title  # noqa: E402
 import stop_dirty_worktree  # noqa: E402
@@ -147,6 +150,97 @@ class ThreadTitleRequestTests(unittest.TestCase):
                 request_thread_title.take_title_request(thread_id),
                 (thread_id, title),
             )
+
+    def test_rejects_symlink_request_file_without_touching_target(self) -> None:
+        thread_id = "019fcfbd-8a09-7c31-ba17-8ac72a59d44d"
+        with tempfile.TemporaryDirectory() as temporary_directory, mock.patch.object(
+            request_thread_title,
+            "REQUEST_ROOT",
+            Path(temporary_directory) / "requests",
+        ):
+            path = request_thread_title.request_path(thread_id)
+            target = Path(temporary_directory) / "target.txt"
+            target.write_text("keep\n", encoding="utf-8")
+            path.symlink_to(target)
+            with self.assertRaisesRegex(RuntimeError, "unsafe"):
+                request_thread_title.take_title_request(thread_id)
+            self.assertEqual(target.read_text(encoding="utf-8"), "keep\n")
+            self.assertFalse(path.exists())
+
+
+class PrivateTempStateTests(unittest.TestCase):
+    def test_rejects_precreated_symlink_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            parent = Path(temporary_directory)
+            target = parent / "target"
+            target.mkdir()
+            root = parent / "state"
+            root.symlink_to(target, target_is_directory=True)
+            with self.assertRaisesRegex(RuntimeError, "not owned"):
+                private_temp_state.ensure_private_directory(root)
+
+    def test_corrects_same_owner_directory_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory) / "state"
+            root.mkdir(mode=0o755)
+            private_temp_state.ensure_private_directory(root)
+            self.assertEqual(stat.S_IMODE(root.stat().st_mode), 0o700)
+
+    def test_atomic_write_replaces_symlink_without_following_it(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory) / "state"
+            private_temp_state.ensure_private_directory(root)
+            target = Path(temporary_directory) / "target.txt"
+            target.write_text("keep\n", encoding="utf-8")
+            path = root / "session.json"
+            path.symlink_to(target)
+            private_temp_state.atomic_write_private(path, "private\n")
+            self.assertFalse(path.is_symlink())
+            self.assertEqual(path.read_text(encoding="utf-8"), "private\n")
+            self.assertEqual(target.read_text(encoding="utf-8"), "keep\n")
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+
+    def test_rejects_wrong_owner_metadata(self) -> None:
+        metadata = mock.Mock(st_mode=stat.S_IFREG | 0o600, st_uid=os.getuid() + 1)
+        with mock.patch.object(Path, "lstat", return_value=metadata):
+            with self.assertRaisesRegex(RuntimeError, "unsafe"):
+                private_temp_state.validate_private_file(Path("/tmp/state.json"))
+
+
+class DirtyWorktreeStateTests(unittest.TestCase):
+    def test_private_atomic_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory, mock.patch.object(
+            stop_dirty_worktree,
+            "TRACK_DIR",
+            Path(temporary_directory) / "tracked",
+        ):
+            roots = {Path("/tmp/repo-a"), Path("/tmp/repo-b")}
+            stop_dirty_worktree.save_tracked_roots("session", roots)
+            path = stop_dirty_worktree.session_track_path("session")
+            self.assertIsNotNone(path)
+            assert path is not None
+            self.assertEqual(stat.S_IMODE(path.parent.stat().st_mode), 0o700)
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+            self.assertEqual(stop_dirty_worktree.load_tracked_roots("session"), roots)
+
+    def test_recent_scan_ignores_symlinks_and_public_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory, mock.patch.object(
+            stop_dirty_worktree,
+            "TRACK_DIR",
+            Path(temporary_directory) / "tracked",
+        ):
+            root = private_temp_state.ensure_private_directory(
+                stop_dirty_worktree.TRACK_DIR
+            )
+            safe = root / "safe.json"
+            private_temp_state.atomic_write_private(safe, '{"roots": []}\n')
+            public = root / "public.json"
+            public.write_text('{"roots": []}\n', encoding="utf-8")
+            public.chmod(0o644)
+            target = Path(temporary_directory) / "target.json"
+            target.write_text('{"roots": []}\n', encoding="utf-8")
+            (root / "link.json").symlink_to(target)
+            self.assertEqual(stop_dirty_worktree.recent_track_paths(), [safe])
 
 
 class StopDispatcherTests(unittest.TestCase):

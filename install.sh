@@ -274,11 +274,10 @@ echo ""
 # Other configurations
 # -----------------------------------------------------------------------------
 echo "[7/10] Installing other configurations..."
-backup_and_link "$DOTFILES_DIR/bun/.bunfig.toml" "$HOME/.bunfig.toml"
+/usr/bin/python3 "$DOTFILES_DIR/scripts/configure_package_policies.py" \
+    --home "$HOME" --repo-root "$DOTFILES_DIR"
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 backup_and_link "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
-backup_and_link "$DOTFILES_DIR/npm/.npmrc" "$HOME/.npmrc"
-backup_and_link "$DOTFILES_DIR/pnpm/.config/pnpm/rc" "$HOME/.config/pnpm/rc"
 
 # Nvim (if submodule exists)
 if [ -d "$DOTFILES_DIR/nvim" ] && [ "$(ls -A "$DOTFILES_DIR/nvim" 2>/dev/null)" ]; then

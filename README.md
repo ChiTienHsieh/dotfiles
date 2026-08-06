@@ -28,7 +28,7 @@ dotfiles/
 │   ├── .bash_prompt     # Terminal prompt styling
 │   └── .aliases         # Aliases and functions
 ├── bun/
-│   └── .bunfig.toml     # Global Bun package-manager safeguards
+│   └── .bunfig.toml     # Seed for local Bun safeguards
 ├── git/
 │   ├── .gitconfig       # Git configuration
 │   └── .config/git/ignore  # Global gitignore
@@ -54,9 +54,9 @@ dotfiles/
 │   └── claude/          # User-authored Claude Code-only skills
 ├── nvim/                # Neovim config (git submodule)
 ├── npm/
-│   └── .npmrc            # Global npm package-manager safeguards
+│   └── .npmrc            # Seed for local npm safeguards
 ├── pnpm/
-│   └── .config/pnpm/rc   # Global pnpm package-manager safeguards
+│   └── .config/pnpm/rc   # Seed for local pnpm safeguards
 ├── install.sh           # Installation script
 └── README.md
 ```
@@ -76,6 +76,7 @@ These files are created from templates but not tracked in git:
 - `~/.secrets` - API keys and tokens
 - `~/.aliases.local` - Machine-specific aliases
 - `~/.gitconfig.local` - Machine-specific Git settings
+- `~/.bunfig.toml`, `~/.npmrc`, `~/.config/pnpm/rc` - Real local files; the installer preserves registry credentials and only upserts the tracked release-age policy
 
 ## Updating
 

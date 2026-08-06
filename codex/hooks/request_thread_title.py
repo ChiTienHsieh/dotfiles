@@ -4,10 +4,14 @@
 from __future__ import annotations
 
 import os
-import stat
 import tempfile
 from pathlib import Path
 
+from private_temp_state import (
+    atomic_write_private,
+    ensure_private_directory,
+    read_private_text,
+)
 from set_thread_title import validate_thread_id, validate_title
 
 
@@ -16,13 +20,7 @@ NO_TITLE_REQUEST = "NO_TITLE_REQUEST\n"
 
 
 def request_directory() -> Path:
-    REQUEST_ROOT.mkdir(mode=0o700, parents=False, exist_ok=True)
-    metadata = REQUEST_ROOT.lstat()
-    if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != os.getuid():
-        raise RuntimeError("thread-title request directory is not owned by this user")
-    if stat.S_IMODE(metadata.st_mode) != 0o700:
-        REQUEST_ROOT.chmod(0o700)
-    return REQUEST_ROOT
+    return ensure_private_directory(REQUEST_ROOT)
 
 
 def request_path(thread_id: str) -> Path:
@@ -33,19 +31,7 @@ def prepare_title_request(thread_id: str) -> Path:
     thread_id = validate_thread_id(thread_id)
     directory = request_directory()
     destination = directory / f"{thread_id}.txt"
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{thread_id}.", dir=directory)
-    temporary = Path(temporary_name)
-    try:
-        os.fchmod(descriptor, 0o600)
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            descriptor = -1
-            stream.write(NO_TITLE_REQUEST)
-        temporary.replace(destination)
-    except BaseException:
-        if descriptor >= 0:
-            os.close(descriptor)
-        temporary.unlink(missing_ok=True)
-        raise
+    atomic_write_private(destination, NO_TITLE_REQUEST)
     return destination
 
 
@@ -53,16 +39,11 @@ def take_title_request(thread_id: str) -> tuple[str, str] | None:
     thread_id = validate_thread_id(thread_id)
     path = request_path(thread_id)
     try:
-        metadata = path.lstat()
-    except FileNotFoundError:
-        return None
-    if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid():
-        raise RuntimeError("thread-title request file is unsafe")
-
-    try:
-        content = path.read_text(encoding="utf-8")
+        content = read_private_text(path)
     finally:
         path.unlink(missing_ok=True)
+    if content is None:
+        return None
     if content == NO_TITLE_REQUEST:
         return None
     if content.endswith("\n"):
