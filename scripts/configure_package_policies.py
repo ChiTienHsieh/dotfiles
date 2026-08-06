@@ -11,6 +11,11 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python < 3.11; install.sh also supports older macOS.
+    tomllib = None
+
 
 @dataclass(frozen=True)
 class Policy:
@@ -94,10 +99,17 @@ def upsert_toml(text: str, policy: Policy) -> str:
         raise RuntimeError("TOML policy requires a section")
 
     lines = text.splitlines()
-    section_pattern = re.compile(rf"^\s*\[{re.escape(policy.section)}\]\s*$")
-    child_pattern = re.compile(rf"^\s*\[{re.escape(policy.section)}\.")
-    header_pattern = re.compile(r"^\s*\[[^]]+\]\s*$")
-    key_pattern = re.compile(rf"^\s*{re.escape(policy.key)}\s*=.*$")
+    section_name = re.escape(policy.section)
+    section_key = rf'(?:{section_name}|"{section_name}"|\'{section_name}\')'
+    section_pattern = re.compile(
+        rf"^\s*\[\s*{section_key}\s*\]\s*(?:#.*)?$"
+    )
+    child_pattern = re.compile(rf"^\s*\[\s*{section_key}\s*\.")
+    header_pattern = re.compile(r"^\s*\[\[?")
+    key_name = re.escape(policy.key)
+    key_pattern = re.compile(
+        rf'^\s*(?:{key_name}|"{key_name}"|\'{key_name}\')\s*=.*$'
+    )
 
     section_start = next(
         (index for index, line in enumerate(lines) if section_pattern.match(line)),
@@ -142,7 +154,10 @@ def upsert_toml(text: str, policy: Policy) -> str:
                 f"{policy.key} = {policy.value}",
             ]
 
-    return "\n".join(lines).rstrip() + "\n"
+    result = "\n".join(lines).rstrip() + "\n"
+    if tomllib is not None:
+        tomllib.loads(result)
+    return result
 
 
 def atomic_write_private(destination: Path, text: str) -> None:

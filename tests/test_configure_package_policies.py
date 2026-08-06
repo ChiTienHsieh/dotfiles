@@ -6,6 +6,7 @@ import tempfile
 import tomllib
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -126,6 +127,40 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
             (home / ".bunfig.toml").mkdir()
             with self.assertRaisesRegex(RuntimeError, "not a regular file"):
                 self.configure(home)
+
+    def test_bun_inline_comment_header_works_without_runtime_tomllib(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            home = Path(temporary_directory)
+            bun_path = home / ".bunfig.toml"
+            bun_path.write_text(
+                '[install] # Bun settings\nregistry = "https://registry.example.invalid/"\n',
+                encoding="utf-8",
+            )
+            with mock.patch.object(configure_package_policies, "tomllib", None):
+                self.configure(home)
+            parsed = tomllib.loads(bun_path.read_text(encoding="utf-8"))
+            self.assertEqual(parsed["install"]["minimumReleaseAge"], 604800)
+            self.assertEqual(bun_path.read_text().count("[install]"), 1)
+
+    def test_bun_array_table_ends_install_section(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            home = Path(temporary_directory)
+            bun_path = home / ".bunfig.toml"
+            bun_path.write_text(
+                "[install]\n"
+                'registry = "https://registry.example.invalid/"\n'
+                "[[install.security.scanner]]\n"
+                'package = "scanner"\n'
+                "minimumReleaseAge = 1\n",
+                encoding="utf-8",
+            )
+            self.configure(home)
+            parsed = tomllib.loads(bun_path.read_text(encoding="utf-8"))
+            self.assertEqual(parsed["install"]["minimumReleaseAge"], 604800)
+            self.assertEqual(
+                parsed["install"]["security"]["scanner"][0]["minimumReleaseAge"],
+                1,
+            )
 
 
 if __name__ == "__main__":
