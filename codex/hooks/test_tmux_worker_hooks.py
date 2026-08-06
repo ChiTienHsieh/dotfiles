@@ -32,8 +32,8 @@ installer = load_module("install_hooks", INSTALLER_PATH)
 
 class TmuxWorkerTrackerTests(unittest.TestCase):
     SESSION_OPEN = (
-        "tmux new-session -d -P "
-        "-F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' "
+        "tmux new-session -d -P \\\n"
+        "  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \\\n"
         "-s review-one -c /tmp 'claude --model opus'"
     )
     SESSION_CLOSE = (
@@ -41,8 +41,8 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'"
     )
     PANE_OPEN = (
-        "tmux split-window -h -P "
-        "-F 'CODEX_TMUX_WORKER_OPEN=pane:#{pane_id}' "
+        "tmux split-window -h -P \\\n"
+        "  -F 'CODEX_TMUX_WORKER_OPEN=pane:#{pane_id}' \\\n"
         "-t controller -c /tmp 'codex --sandbox read-only'"
     )
     PANE_CLOSE = (
@@ -179,8 +179,8 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
 
     def test_tracks_cushion_session_launch(self) -> None:
         command = (
-            "tmux new-session -d -P "
-            "-F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' "
+            "tmux new-session -d -P \\\n"
+            "  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \\\n"
             "-s cushion-one -c /tmp"
         )
         self.post(command, "CODEX_TMUX_WORKER_OPEN=session:cushion-one\n")
