@@ -12,7 +12,8 @@ from json import JSONDecodeError
 from pathlib import Path
 
 
-MANAGED_COMMAND_MARKER = "track_tmux_workers.py"
+MANAGED_COMMAND = '/usr/bin/python3 "$HOME/.codex/bin/track_tmux_workers.py"'
+HANDLER_TYPES = {"command", "prompt", "agent"}
 
 
 class HookConfigError(ValueError):
@@ -33,11 +34,33 @@ def load_json(path: Path, *, missing_ok: bool = False) -> dict[str, object]:
     return data
 
 
+def validate_hook_structure(config: dict[str, object], label: str) -> None:
+    hooks = config.get("hooks")
+    if not isinstance(hooks, dict):
+        raise HookConfigError(f"expected a top-level hooks object in {label}")
+    for event, groups in hooks.items():
+        if not isinstance(event, str) or not isinstance(groups, list):
+            raise HookConfigError(f"hook event {event!r} in {label} must be a list")
+        for group in groups:
+            if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
+                raise HookConfigError(f"hook groups for {event!r} in {label} are malformed")
+            matcher = group.get("matcher")
+            if matcher is not None and not isinstance(matcher, str):
+                raise HookConfigError(f"hook matcher for {event!r} in {label} must be a string")
+            for item in group["hooks"]:
+                if not isinstance(item, dict) or item.get("type") not in HANDLER_TYPES:
+                    raise HookConfigError(f"hook handler for {event!r} in {label} is malformed")
+                if item["type"] == "command" and not isinstance(item.get("command"), str):
+                    raise HookConfigError(
+                        f"command hook for {event!r} in {label} has no command string"
+                    )
+
+
 def is_managed_hook(item: object) -> bool:
     return (
         isinstance(item, dict)
-        and isinstance(item.get("command"), str)
-        and MANAGED_COMMAND_MARKER in item["command"]
+        and item.get("type") == "command"
+        and item.get("command") == MANAGED_COMMAND
     )
 
 
@@ -67,6 +90,7 @@ def strip_managed_groups(config: dict[str, object]) -> None:
 
 
 def validate_manifest(manifest: dict[str, object]) -> None:
+    validate_hook_structure(manifest, "managed hook manifest")
     hooks = manifest["hooks"]
     assert isinstance(hooks, dict)
     managed_count = 0
@@ -87,6 +111,7 @@ def validate_manifest(manifest: dict[str, object]) -> None:
 def merge_hooks(
     live: dict[str, object], manifest: dict[str, object]
 ) -> dict[str, object]:
+    validate_hook_structure(live, "live hooks config")
     validate_manifest(manifest)
     merged = json.loads(json.dumps(live))
     strip_managed_groups(merged)

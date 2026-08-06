@@ -55,13 +55,15 @@ surface will be read by another agent.
 For a Claude writer or reviewer session, start Claude Code interactively inside tmux:
 
 ```bash
-tmux new-session -d -s SESSION_NAME -c /path/to/worktree 'claude --model opus --permission-mode auto --allowedTools Read,Write,Edit,MultiEdit' \
-  && printf '%s\n' 'CODEX_TMUX_WORKER_OPEN=session:SESSION_NAME'
+tmux new-session -d -P \
+  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \
+  -s SESSION_NAME -c /path/to/worktree \
+  'claude --model opus --permission-mode auto --allowedTools Read,Write,Edit,MultiEdit'
 ```
 
-Keep the session name literal in both places. When the lifecycle hook is
-installed, the marker lets Codex associate this worker with the controller that
-opened it; print it only after `tmux new-session` succeeds.
+When the lifecycle hook is installed, tmux generates the open receipt directly
+from the session it created. Keep `-P`, the exact `-F` format, and a literal
+session name; do not replace the receipt with a separate `printf`.
 
 Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. Adjust model and allowed tools only when the task requires it. Do not use bypass or danger flags.
 
@@ -178,21 +180,30 @@ prompt is not proof of completion.
 When a standalone worker session is no longer needed:
 
 ```bash
-tmux kill-session -t SESSION_NAME \
-  && printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
+tmux kill-session -t SESSION_NAME
 ```
 
 When a side-by-side worker pane is no longer needed:
 
 ```bash
-tmux kill-pane -t %42 \
-  && printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
+tmux kill-pane -t %42
 ```
 
 Print the closed marker only after the exact target is gone. If another actor
 already closed it, verify absence with `tmux has-session` for a session or
 `tmux display-message` for a pane, then print the same closed marker. Keep that
 verification separate from the cleanup command.
+
+Use these exact absence receipts after the cleanup command succeeds (or when
+the target was already absent):
+
+```bash
+tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
+tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
+```
+
+The lifecycle hook accepts only these canonical default-server command shapes;
+custom tmux sockets such as `tmux -L ...` are not tracked automatically.
 
 Before the controller's final response, resolve every worker it opened:
 
