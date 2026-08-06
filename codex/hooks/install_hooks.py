@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+"""Merge dotfiles-owned Codex hooks into the live hooks.json safely."""
+
+from __future__ import annotations
+
+import json
+import os
+import stat
+import sys
+import tempfile
+from json import JSONDecodeError
+from pathlib import Path
+
+
+MANAGED_COMMAND_MARKER = "track_tmux_workers.py"
+
+
+class HookConfigError(ValueError):
+    pass
+
+
+def load_json(path: Path, *, missing_ok: bool = False) -> dict[str, object]:
+    if missing_ok and not path.exists():
+        return {"hooks": {}}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise HookConfigError(f"hook config not found: {path}") from exc
+    except JSONDecodeError as exc:
+        raise HookConfigError(f"invalid JSON in {path}: {exc}") from exc
+    if not isinstance(data, dict) or not isinstance(data.get("hooks"), dict):
+        raise HookConfigError(f"expected a top-level hooks object in {path}")
+    return data
+
+
+def is_managed_hook(item: object) -> bool:
+    return (
+        isinstance(item, dict)
+        and isinstance(item.get("command"), str)
+        and MANAGED_COMMAND_MARKER in item["command"]
+    )
+
+
+def strip_managed_groups(config: dict[str, object]) -> None:
+    hooks = config["hooks"]
+    assert isinstance(hooks, dict)
+    for event, raw_groups in list(hooks.items()):
+        if not isinstance(raw_groups, list):
+            continue
+        kept_groups: list[object] = []
+        for raw_group in raw_groups:
+            if not isinstance(raw_group, dict):
+                kept_groups.append(raw_group)
+                continue
+            raw_items = raw_group.get("hooks")
+            if not isinstance(raw_items, list):
+                kept_groups.append(raw_group)
+                continue
+            group = dict(raw_group)
+            group["hooks"] = [item for item in raw_items if not is_managed_hook(item)]
+            if group["hooks"]:
+                kept_groups.append(group)
+        if kept_groups:
+            hooks[event] = kept_groups
+        else:
+            hooks.pop(event, None)
+
+
+def validate_manifest(manifest: dict[str, object]) -> None:
+    hooks = manifest["hooks"]
+    assert isinstance(hooks, dict)
+    managed_count = 0
+    for raw_groups in hooks.values():
+        if not isinstance(raw_groups, list):
+            raise HookConfigError("manifest hook events must contain group lists")
+        for raw_group in raw_groups:
+            if not isinstance(raw_group, dict) or not isinstance(raw_group.get("hooks"), list):
+                raise HookConfigError("manifest hook groups must contain hook lists")
+            for item in raw_group["hooks"]:
+                if not is_managed_hook(item):
+                    raise HookConfigError("manifest contains an unmanaged hook command")
+                managed_count += 1
+    if managed_count == 0:
+        raise HookConfigError("manifest contains no managed hooks")
+
+
+def merge_hooks(
+    live: dict[str, object], manifest: dict[str, object]
+) -> dict[str, object]:
+    validate_manifest(manifest)
+    merged = json.loads(json.dumps(live))
+    strip_managed_groups(merged)
+
+    merged_hooks = merged["hooks"]
+    manifest_hooks = manifest["hooks"]
+    assert isinstance(merged_hooks, dict)
+    assert isinstance(manifest_hooks, dict)
+    for event, groups in manifest_hooks.items():
+        assert isinstance(groups, list)
+        merged_hooks.setdefault(event, [])
+        if not isinstance(merged_hooks[event], list):
+            raise HookConfigError(f"live hook event {event!r} is not a list")
+        merged_hooks[event].extend(json.loads(json.dumps(groups)))
+    return merged
+
+
+def write_atomic(path: Path, config: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600
+    temp_name: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent, delete=False
+        ) as handle:
+            temp_name = handle.name
+            json.dump(config, handle, indent=2, ensure_ascii=False)
+            handle.write("\n")
+        os.chmod(temp_name, mode)
+        os.replace(temp_name, path)
+    finally:
+        if temp_name:
+            try:
+                Path(temp_name).unlink(missing_ok=True)
+            except OSError:
+                pass
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) != 3:
+        print(f"usage: {argv[0]} MANIFEST LIVE_HOOKS_JSON", file=sys.stderr)
+        return 2
+    manifest_path = Path(argv[1]).expanduser()
+    live_path = Path(argv[2]).expanduser()
+    try:
+        manifest = load_json(manifest_path)
+        live = load_json(live_path, missing_ok=True)
+        merged = merge_hooks(live, manifest)
+        if merged == live:
+            print(f"  Codex hooks already current: {live_path}")
+            return 0
+        write_atomic(live_path, merged)
+    except (HookConfigError, OSError) as exc:
+        print(f"install_hooks.py: {exc}", file=sys.stderr)
+        return 1
+    print(f"  Configured Codex hooks: {live_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

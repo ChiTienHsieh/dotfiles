@@ -1,7 +1,17 @@
 {
-  "description": "Global Codex CLI dirty-worktree checkpoint and tracking.",
+  "description": "Global Codex CLI dirty-worktree checkpoint and tmux worker tracking.",
   "hooks": {
     "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$HOME/.codex/bin/track_tmux_workers.py\"",
+            "timeout": 5,
+            "statusMessage": "Tracking tmux workers"
+          }
+        ]
+      },
       {
         "hooks": [
           {
@@ -13,6 +23,16 @@
       }
     ],
     "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$HOME/.codex/bin/track_tmux_workers.py\"",
+            "timeout": 5,
+            "statusMessage": "Checking tmux worker cleanup"
+          }
+        ]
+      },
       {
         "hooks": [
           {
