@@ -53,6 +53,10 @@ dotfiles/
 │   ├── codex/           # User-authored Codex-only skills
 │   └── claude/          # User-authored Claude Code-only skills
 ├── nvim/                # Neovim config (git submodule)
+├── npm/
+│   └── .npmrc            # Global npm package-manager safeguards
+├── pnpm/
+│   └── .config/pnpm/rc   # Global pnpm package-manager safeguards
 ├── install.sh           # Installation script
 └── README.md
 ```

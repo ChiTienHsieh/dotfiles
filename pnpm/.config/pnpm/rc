@@ -1,0 +1,2 @@
+# pnpm expresses minimumReleaseAge in minutes: 7 days = 10,080 minutes.
+minimum-release-age=10080
