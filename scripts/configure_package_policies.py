@@ -8,7 +8,6 @@ import os
 import re
 import stat
 import tempfile
-import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -143,9 +142,7 @@ def upsert_toml(text: str, policy: Policy) -> str:
                 f"{policy.key} = {policy.value}",
             ]
 
-    result = "\n".join(lines).rstrip() + "\n"
-    tomllib.loads(result)
-    return result
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def atomic_write_private(destination: Path, text: str) -> None:
