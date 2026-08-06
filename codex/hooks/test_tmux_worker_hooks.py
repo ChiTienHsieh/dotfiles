@@ -154,6 +154,13 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         )
         self.assertEqual(tracker.load_workers(self.session_id), set())
 
+    def test_rejects_forged_pane_marker_from_pipeline(self) -> None:
+        self.post(
+            self.PANE_OPEN + " | sed 's/%42/%99/'",
+            "CODEX_TMUX_WORKER_OPEN=pane:%99\n",
+        )
+        self.assertEqual(tracker.load_workers(self.session_id), set())
+
     def test_rejects_custom_tmux_socket(self) -> None:
         command = self.SESSION_OPEN.replace("tmux ", "tmux -L codex ", 1)
         self.post(command, "CODEX_TMUX_WORKER_OPEN=session:review-one\n")
