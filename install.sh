@@ -274,6 +274,7 @@ echo ""
 # Other configurations
 # -----------------------------------------------------------------------------
 echo "[7/10] Installing other configurations..."
+backup_and_link "$DOTFILES_DIR/bun/.bunfig.toml" "$HOME/.bunfig.toml"
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 backup_and_link "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 

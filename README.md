@@ -27,6 +27,8 @@ dotfiles/
 │   ├── .bashrc          # Non-login shell config
 │   ├── .bash_prompt     # Terminal prompt styling
 │   └── .aliases         # Aliases and functions
+├── bun/
+│   └── .bunfig.toml     # Global Bun package-manager safeguards
 ├── git/
 │   ├── .gitconfig       # Git configuration
 │   └── .config/git/ignore  # Global gitignore

@@ -1,0 +1,3 @@
+[install]
+# Delay new npm package releases for seven days to reduce supply-chain risk.
+minimumReleaseAge = 604800
