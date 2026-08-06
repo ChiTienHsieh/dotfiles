@@ -14,7 +14,7 @@
 ## tmux worker lifecycle hook
 
 - `install.sh` 會把 repo 的 `codex/hooks.json` merge 進 live `~/.codex/hooks.json`，保留其他 app-managed hooks；不要直接整檔 symlink 或覆寫 live 檔。
-- `track_tmux_workers.py` 只從 `PostToolUse` 的成功 lifecycle marker 維護 per-session ledger；`Stop` 發現未處理 worker 時只提醒並擋一次，不呼叫 tmux、不終止程序，所以所有 tmux 操作仍走 Guardian。
+- `track_tmux_workers.py` 只接受 `tmux-orchestration` 定義的 canonical lifecycle receipt 來維護 per-session ledger；`Stop` 發現未處理 worker 時只提醒並擋一次，不呼叫 tmux、不終止程序，所以所有 tmux 操作仍走 Guardian。custom tmux socket（例如 `tmux -L ...`）不會自動追蹤。
 - Hook 設定只在 Codex session 啟動時載入。首次安裝或 command 變更後要重開 Codex，並用 `/hooks` review／trust 這個 non-managed command hook；既有 session 不會中途取得新 hook。
 
 ## CLI thread rename（2026-08-05、`codex 0.145.0` 驗證；2026-08-07 更新）
