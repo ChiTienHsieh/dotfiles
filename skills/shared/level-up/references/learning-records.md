@@ -2,15 +2,6 @@
 
 Use persistent records to shape future teaching, never as learner-facing output.
 
-## Contents
-
-- Silent output boundary
-- Read before teaching
-- Evidence and skip events
-- Index/topic shapes
-- Profile updates
-- Privacy and safety
-
 ## Silent Output Boundary
 
 Keep two channels strictly separate:
