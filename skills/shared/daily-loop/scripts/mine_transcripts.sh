@@ -2,9 +2,9 @@
 # mine_transcripts.sh — distill the last N hours of Claude Code + Codex CLI
 # transcripts into a compact, token-cheap digest for the daily-loop skill.
 #
-# This is a DATA EXTRACTOR ONLY. It aggregates (counts) and samples (truncated
-# snippets); it never proposes changes and never touches any config. All
-# judgment is left to the LLM that reads the digest.
+# This is a DATA EXTRACTOR. It aggregates (counts) and samples (truncated
+# snippets); it never proposes changes or touches config. With --checkpoint it
+# also records which sessions this run consumed. All judgment stays with the LLM.
 #
 # macOS-targeted: relies on BSD `date -v` and `find -newermt`. Pure bash + jq.
 set -euo pipefail
@@ -16,6 +16,7 @@ MAX_SNIPPETS=40      # global cap on verbatim user-message snippets
 SNIPPET_CHARS=240    # per-snippet truncation
 SOURCE=all           # all | claude | codex
 STATE_FILE="${HOME}/scratch/daily-loop/state.jsonl"
+CHECKPOINT=0
 DEBUG=0
 
 CLAUDE_ROOT="${HOME}/.claude/projects"
@@ -33,8 +34,9 @@ Options:
   --max-snippets N     Global cap on verbatim user snippets (default 40)
   --snippet-chars N    Truncate each snippet to N chars (default 240)
   --source all|claude|codex   Restrict source (default all)
-  --state FILE         Prior-proposal state log to diff against
+  --state FILE         State log to read and optionally checkpoint
                        (default ~/scratch/daily-loop/state.jsonl)
+  --checkpoint         Append this run's session keys to the state log
   --debug              Print candidate file list + counts to stderr
   -h, --help           Show this help
 
@@ -52,6 +54,7 @@ while [ "$#" -gt 0 ]; do
     --snippet-chars) SNIPPET_CHARS="${2:?}"; shift 2 ;;
     --source)        SOURCE="${2:?}"; shift 2 ;;
     --state)         STATE_FILE="${2:?}"; shift 2 ;;
+    --checkpoint)    CHECKPOINT=1; shift ;;
     --debug)         DEBUG=1; shift ;;
     -h|--help)       usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -281,12 +284,11 @@ done
 
 dbg "session summaries: $(wc -l < "$SESS_TMP" | tr -d ' ')"
 
-# ---- prior-state fingerprints (sessions already digested before) -----------
-# We surface "new sessions not seen in a prior digest" as a soft signal. The
-# state log is owned by the skill; here we only read it (best effort).
+# ---- prior run checkpoints --------------------------------------------------
+# Run records use source-prefixed keys so Claude and Codex IDs cannot collide.
 PRIOR_SESSIONS='[]'
 if [ -f "$STATE_FILE" ]; then
-  PRIOR_SESSIONS="$(jq -s -c '[ .[] | .session? // empty ] | unique' "$STATE_FILE" 2>/dev/null || echo '[]')"
+  PRIOR_SESSIONS="$(jq -s -c '[ .[] | select(.kind? == "run") | .sessions[]? ] | unique' "$STATE_FILE" 2>/dev/null || echo '[]')"
 fi
 
 # ---- aggregate --------------------------------------------------------------
@@ -303,7 +305,8 @@ def mergecounts(f): reduce (.[] | f | to_entries[]) as $e ({}; .[$e.key] += $e.v
       user_turns: ( [ $sessions[].user_turns ] | add // 0 ),
       tools: mergecounts(.tools),
       errorish: ( [ $sessions[].errorish ] | add // 0 ),
-      new_sessions: ( [ $sessions[].session | select(. as $x | ($prior | index($x)) | not) ] | length )
+      new_sessions: ( [ $sessions[] | ("\(.source):\(.session)")
+                        | select(. as $x | ($prior | index($x)) | not) ] | length )
     },
     projects: (
       [ $sessions | group_by(.cwd)[]
@@ -345,12 +348,10 @@ AGG="$(jq -s \
 # ---- output -----------------------------------------------------------------
 if [ "$FORMAT" = "json" ]; then
   printf '%s\n' "$AGG"
-  exit 0
-fi
-
-# Markdown rendering, driven from the aggregate JSON. The per-project snippet
-# count is budgeted so the total stays under --max-snippets.
-read -r -d '' MD_JQ <<'JQ' || true
+else
+  # Markdown rendering, driven from the aggregate JSON. The per-project snippet
+  # count is budgeted so the total stays under --max-snippets.
+  read -r -d '' MD_JQ <<'JQ' || true
 # args: $maxsnip
 def commas(o): [ o | to_entries | sort_by(-.value) | .[] | "\(.key)×\(.value)" ] | join(", ");
 ( .projects | length ) as $np
@@ -395,4 +396,16 @@ def commas(o): [ o | to_entries | sort_by(-.value) | .[] | "\(.key)×\(.value)" 
       else "- Claude Read paths over 3×: (none)" end )
 JQ
 
-printf '%s\n' "$AGG" | jq -r --argjson maxsnip "$MAX_SNIPPETS" "$MD_JQ"
+  printf '%s\n' "$AGG" | jq -r --argjson maxsnip "$MAX_SNIPPETS" "$MD_JQ"
+fi
+
+if [ "$CHECKPOINT" -eq 1 ]; then
+  CURRENT_SESSIONS="$(jq -s -c '[ .[] | ("\(.source):\(.session)") ] | unique' "$SESS_TMP")"
+  NEW_SESSIONS="$(jq -nc --argjson current "$CURRENT_SESSIONS" \
+    --argjson prior "$PRIOR_SESSIONS" '$current - $prior')"
+  if [ "$(jq 'length' <<<"$NEW_SESSIONS")" -gt 0 ]; then
+    mkdir -p "$(dirname "$STATE_FILE")"
+    jq -nc --arg ts "$NOW_UTC" --argjson sessions "$NEW_SESSIONS" \
+      '{kind:"run",ts:$ts,sessions:$sessions}' >>"$STATE_FILE"
+  fi
+fi
