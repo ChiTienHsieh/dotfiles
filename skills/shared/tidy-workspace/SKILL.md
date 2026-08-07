@@ -8,7 +8,8 @@ description: "Tidy and synchronize Git workspaces without ending the session. Us
 Resolve this skill's directory, then run
 `scripts/inspect-workspace.sh [REPO_DIR ...]` with the current repo and every
 repo touched this session. It also includes `~/dotfiles`, deduplicates Git
-roots, and runs normal `git fetch`; it never runs pull, commit, push, or delete.
+roots, and runs non-interactive `git fetch`; it never runs pull, commit, push,
+or delete.
 Treat `NEXT=` as a recommendation, not authorization. A non-zero exit is a
 blocker.
 

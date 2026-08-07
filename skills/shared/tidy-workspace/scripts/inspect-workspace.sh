@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Run normal git fetch and print the evidence needed to reconcile a workspace.
+# Run non-interactive git fetch and print evidence to reconcile a workspace.
 # Its only mutation is the configured ref and object updates performed by fetch;
 # it never invokes add, commit, merge, rebase, pull, push, stash, clean, or reset.
 
@@ -46,14 +46,7 @@ inspect_repo() {
     return
   }
   if [ -n "$remotes" ]; then
-    ssh_command=${GIT_SSH_COMMAND:-}
-    if [ -z "$ssh_command" ]; then
-      ssh_command=$(git -C "$repo_root" config --get core.sshCommand 2>/dev/null) || ssh_command=ssh
-    fi
-    if [ -z "$ssh_command" ]; then
-      ssh_command=ssh
-    fi
-    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false GIT_SSH_COMMAND="$ssh_command -o BatchMode=yes" git -C "$repo_root" fetch --quiet; then
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false GIT_SSH_COMMAND='ssh -o BatchMode=yes' git -C "$repo_root" fetch --quiet; then
       printf 'FETCH=ok\n'
     else
       printf 'FETCH=failed\nNEXT=stop:fetch-failed\n'
