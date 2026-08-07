@@ -12,6 +12,11 @@
 2. 更新 `install.sh` 建 symlink。
 3. 需要的話更新 `README.md` 結構圖。
 
+## Git configuration
+- Portable defaults stay in tracked `git/.gitconfig`.
+- Machine-specific credential helpers and host-only overrides go in untracked `~/.gitconfig.local`, which the tracked config includes last.
+- For multi-valued settings such as `credential.helper`, reset with an empty value before the machine-specific helper.
+
 ## 測試變更
 - Shell config 改完：`source ~/.zshrc`（或 alias `src`）。
 - tmux 改完：`tmux source-file ~/.tmux.conf`（或 tmux 內 prefix + `:source-file`）。

@@ -1,0 +1,3 @@
+# Seed only: install.sh upserts this value into a local real file.
+# pnpm expresses minimumReleaseAge in minutes: 7 days = 10,080 minutes.
+minimum-release-age=10080

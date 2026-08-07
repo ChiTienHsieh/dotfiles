@@ -4,6 +4,8 @@
 
 Personal dotfiles for Unix systems. Managed with symlinks.
 
+Prerequisite: Python 3.11 or newer must be available as `python3` on `PATH`.
+
 ## Quick Start
 
 ```bash
@@ -27,6 +29,8 @@ dotfiles/
 │   ├── .bashrc          # Non-login shell config
 │   ├── .bash_prompt     # Terminal prompt styling
 │   └── .aliases         # Aliases and functions
+├── bun/
+│   └── .bunfig.toml     # Seed for local Bun safeguards
 ├── git/
 │   ├── .gitconfig       # Git configuration
 │   └── .config/git/ignore  # Global gitignore
@@ -43,12 +47,18 @@ dotfiles/
 │   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
 ├── codex/
 │   ├── AGENTS.md        # Codex CLI instructions
-│   └── skills/.system/  # Bundled/system-managed Codex skills
+│   ├── config.toml      # Portable first-install seed
+│   ├── hooks.json       # Global Codex lifecycle hook registration
+│   └── hooks/           # Stop dispatcher and bounded hook policies
 ├── skills/
 │   ├── shared/          # User-authored skills installed for Claude Code + Codex
 │   ├── codex/           # User-authored Codex-only skills
 │   └── claude/          # User-authored Claude Code-only skills
 ├── nvim/                # Neovim config (git submodule)
+├── npm/
+│   └── .npmrc            # Seed for local npm safeguards
+├── pnpm/
+│   └── .config/pnpm/rc   # Seed for local pnpm safeguards
 ├── install.sh           # Installation script
 └── README.md
 ```
@@ -58,6 +68,8 @@ dotfiles/
 1. **Edit `~/.secrets`** - Add your API keys (this file is never committed)
 2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
 3. **Skills** - `skills/shared/` is installed into Claude Code, Codex, and `.agents`; `skills/codex/` and `skills/claude/` are installed only into their matching tools
+4. **Codex hooks** - Start a new Codex CLI session, open `/hooks`, review the global `PostToolUse` and `Stop` commands, then trust them explicitly. The installer never writes or bypasses hook trust.
+5. **Machine-specific Git settings** - Put credential helpers or host-only Git overrides in optional `~/.gitconfig.local`; the tracked config includes it last.
 
 ## Files NOT Tracked
 
@@ -65,6 +77,8 @@ These files are created from templates but not tracked in git:
 
 - `~/.secrets` - API keys and tokens
 - `~/.aliases.local` - Machine-specific aliases
+- `~/.gitconfig.local` - Machine-specific Git settings
+- `~/.bunfig.toml`, `~/.npmrc`, `~/.config/pnpm/rc` - Real local files; the installer preserves registry credentials and only upserts the tracked release-age policy
 
 ## Updating
 

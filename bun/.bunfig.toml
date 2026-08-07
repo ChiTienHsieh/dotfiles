@@ -1,0 +1,4 @@
+[install]
+# Seed only: install.sh upserts this value into a local real file.
+# Delay new npm package releases for seven days to reduce supply-chain risk.
+minimumReleaseAge = 604800

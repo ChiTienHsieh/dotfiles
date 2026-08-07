@@ -12,6 +12,12 @@ set -e  # Exit on error
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+DOTFILES_PYTHON="$(command -v python3 || true)"
+
+if [ -z "$DOTFILES_PYTHON" ] || ! "$DOTFILES_PYTHON" -c 'import tomllib' >/dev/null 2>&1; then
+    echo "ERROR: install.sh requires Python 3.11 or newer on PATH." >&2
+    exit 1
+fi
 
 echo "=========================================="
 echo "  Dotfiles Installation"
@@ -89,7 +95,7 @@ ensure_real_dir() {
 configure_codex_local_permissions() {
     local config="$1"
 
-    /usr/bin/python3 - "$config" <<'PY'
+    "$DOTFILES_PYTHON" - "$config" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -274,6 +280,8 @@ echo ""
 # Other configurations
 # -----------------------------------------------------------------------------
 echo "[7/10] Installing other configurations..."
+"$DOTFILES_PYTHON" "$DOTFILES_DIR/scripts/configure_package_policies.py" \
+    --home "$HOME" --repo-root "$DOTFILES_DIR"
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 backup_and_link "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 
@@ -363,6 +371,8 @@ fi
 backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
+backup_and_link "$DOTFILES_DIR/codex/hooks" "$HOME/.codex/hooks"
+backup_and_link "$DOTFILES_DIR/codex/hooks.json" "$HOME/.codex/hooks.json"
 mkdir -p "$HOME/.codex/rules"
 for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
     [ -f "$rule" ] || continue

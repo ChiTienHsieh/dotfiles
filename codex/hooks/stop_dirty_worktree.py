@@ -4,14 +4,24 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from json import JSONDecodeError
 from pathlib import Path
 
-TRACK_DIR = Path("/private/tmp/codex-dirty-worktrees")
+from private_temp_state import (
+    atomic_write_private,
+    ensure_private_directory,
+    read_private_text,
+    validate_private_file,
+)
+
+
+TRACK_DIR = Path(tempfile.gettempdir()) / f"codex-dirty-worktrees-{os.getuid()}"
 
 
 def run_git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -48,11 +58,14 @@ def session_track_path(session_id: object) -> Path | None:
 
 def load_tracked_roots(session_id: object) -> set[Path]:
     path = session_track_path(session_id)
-    if not path or not path.exists():
+    if not path:
         return set()
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, JSONDecodeError):
+        content = read_private_text(path)
+        if content is None:
+            return set()
+        data = json.loads(content)
+    except (OSError, RuntimeError, JSONDecodeError):
         return set()
     roots = data.get("roots") if isinstance(data, dict) else None
     if not isinstance(roots, list):
@@ -65,36 +78,39 @@ def save_tracked_roots(session_id: object, roots: set[Path]) -> None:
     if not path:
         return
     try:
-        TRACK_DIR.mkdir(parents=True, exist_ok=True)
-        path.write_text(
+        atomic_write_private(
+            path,
             json.dumps({"roots": sorted(str(root) for root in roots)}, indent=2) + "\n",
-            encoding="utf-8",
         )
-    except OSError:
+    except (OSError, RuntimeError):
         return
 
 
 def recent_track_paths(hours: float = 12) -> list[Path]:
     try:
-        paths = list(TRACK_DIR.glob("*.json"))
-    except OSError:
+        paths = list(ensure_private_directory(TRACK_DIR).glob("*.json"))
+    except (OSError, RuntimeError):
         return []
 
     cutoff = time.time() - (hours * 60 * 60)
     recent: list[Path] = []
     for path in paths:
         try:
-            if path.stat().st_mtime >= cutoff:
+            metadata = validate_private_file(path)
+            if metadata.st_mtime >= cutoff:
                 recent.append(path)
-        except OSError:
+        except (OSError, RuntimeError):
             continue
-    return sorted(recent, key=lambda path: path.stat().st_mtime, reverse=True)
+    return sorted(recent, key=lambda path: path.lstat().st_mtime, reverse=True)
 
 
 def load_roots_from_track_path(path: Path) -> set[Path]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, JSONDecodeError):
+        content = read_private_text(path)
+        if content is None:
+            return set()
+        data = json.loads(content)
+    except (OSError, RuntimeError, JSONDecodeError):
         return set()
     roots = data.get("roots") if isinstance(data, dict) else None
     if not isinstance(roots, list):
@@ -152,7 +168,7 @@ def absolute_paths_in(value: object) -> set[Path]:
     return paths
 
 
-def record_touched_worktrees(payload: dict[str, object]) -> int:
+def track_touched_worktrees(payload: dict[str, object]) -> None:
     roots = load_tracked_roots(payload.get("session_id"))
 
     cwd = Path(str(payload.get("cwd") or ".")).expanduser()
@@ -166,6 +182,10 @@ def record_touched_worktrees(payload: dict[str, object]) -> int:
             roots.add(root)
 
     save_tracked_roots(payload.get("session_id"), roots)
+
+
+def record_touched_worktrees(payload: dict[str, object]) -> int:
+    track_touched_worktrees(payload)
     return emit({"continue": True})
 
 
@@ -221,6 +241,44 @@ def emit(payload: dict[str, object]) -> int:
     return 0
 
 
+def build_dirty_worktree_followup(payload: dict[str, object]) -> str | None:
+    if already_offered_cleanup(payload.get("last_assistant_message")):
+        return None
+
+    if looks_like_level_up_checkpoint(payload.get("last_assistant_message")):
+        return None
+
+    roots = load_tracked_roots(payload.get("session_id"))
+    cwd = Path(str(payload.get("cwd") or ".")).expanduser()
+    cwd_root = git_root_for_path(cwd)
+    if cwd_root:
+        roots.add(cwd_root)
+
+    dirty_roots = dirty_roots_for(roots)
+    if not dirty_roots:
+        return None
+
+    sections: list[str] = []
+    for root, status_lines in dirty_roots[:5]:
+        shown = "\n".join(status_lines[:30])
+        omitted = len(status_lines) - 30
+        if omitted > 0:
+            shown += f"\n……另有 {omitted} 個 path"
+        sections.append(f"Repository：{root}\n目前狀態：\n{shown}")
+
+    if len(dirty_roots) > 5:
+        sections.append(f"……另有 {len(dirty_roots) - 5} 個 dirty worktree")
+
+    return (
+        "工作區整理：本次碰過的 Git worktree 尚有未提交變更。\n\n"
+        + "\n\n".join(sections)
+        + "\n\n"
+        "結束前在 final response 提供精簡整理選項。除非使用者已授權，不得自行 "
+        "commit、stash、revert 或 delete。可選：review 後 commit/push、拆分 stage、"
+        "stash/patch、經同意 discard，或保留 dirty。"
+    )
+
+
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
@@ -234,48 +292,13 @@ def main() -> int:
     if event_name != "Stop":
         return emit({"continue": True})
 
-    if payload.get("stop_hook_active"):
+    already_continued_by_stop_hook = payload.get("stop_hook_active") is True
+    if already_continued_by_stop_hook:
         return emit({"continue": True})
 
-    if already_offered_cleanup(payload.get("last_assistant_message")):
+    reason = build_dirty_worktree_followup(payload)
+    if reason is None:
         return emit({"continue": True})
-
-    if looks_like_level_up_checkpoint(payload.get("last_assistant_message")):
-        return emit({"continue": True})
-
-    roots = load_tracked_roots(payload.get("session_id"))
-    cwd = Path(str(payload.get("cwd") or ".")).expanduser()
-    cwd_root = git_root_for_path(cwd)
-    if cwd_root:
-        roots.add(cwd_root)
-
-    dirty_roots = dirty_roots_for(roots)
-
-    if not dirty_roots:
-        return emit({"continue": True})
-
-    sections: list[str] = []
-    for root, status_lines in dirty_roots[:5]:
-        shown = "\n".join(status_lines[:30])
-        omitted = len(status_lines) - 30
-        if omitted > 0:
-            shown += f"\n... and {omitted} more path(s)"
-        sections.append(f"Repository: {root}\nCurrent status:\n{shown}")
-
-    if len(dirty_roots) > 5:
-        sections.append(f"... and {len(dirty_roots) - 5} more dirty worktree(s)")
-
-    reason = (
-        "One or more git worktrees touched in this session are dirty. Before ending the conversation, "
-        "offer the user a concise way to organize it.\n\n"
-        + "\n\n".join(sections)
-        + "\n\n"
-        "Do not automatically commit, stash, revert, or delete anything unless the user "
-        "already asked for that. In the final response, offer suitable options such as: "
-        "review related changes and commit/push if appropriate; split or stage related "
-        "changes; stash or save a patch; discard only with explicit approval; or keep "
-        "the worktree dirty / ignore for now if the user intentionally wants that."
-    )
 
     return emit({"decision": "block", "reason": reason})
 

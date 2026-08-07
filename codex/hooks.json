@@ -1,0 +1,28 @@
+{
+  "description": "Global Codex CLI dirty-worktree checkpoint and tracking.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env python3 \"$HOME/.codex/hooks/stop_dirty_worktree.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/env python3 \"$HOME/.codex/hooks/stop_dirty_worktree.py\"",
+            "timeout": 30,
+            "statusMessage": "Checking worktrees"
+          }
+        ]
+      }
+    ]
+  }
+}
