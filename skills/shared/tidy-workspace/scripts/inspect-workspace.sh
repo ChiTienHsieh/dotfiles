@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Run normal git fetch and print the evidence needed to reconcile a workspace.
-# This script never stages, commits, merges, rebases, pulls, pushes, stashes,
-# deletes, or directly changes the worktree, index, local branches, or worktrees.
+# Its only mutation is the configured ref and object updates performed by fetch;
+# it never invokes add, commit, merge, rebase, pull, push, stash, clean, or reset.
 
 set -u
 
@@ -46,7 +46,14 @@ inspect_repo() {
     return
   }
   if [ -n "$remotes" ]; then
-    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false git -C "$repo_root" fetch --quiet; then
+    ssh_command=${GIT_SSH_COMMAND:-}
+    if [ -z "$ssh_command" ]; then
+      ssh_command=$(git -C "$repo_root" config --get core.sshCommand 2>/dev/null) || ssh_command=ssh
+    fi
+    if [ -z "$ssh_command" ]; then
+      ssh_command=ssh
+    fi
+    if GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/usr/bin/false SSH_ASKPASS=/usr/bin/false GIT_SSH_COMMAND="$ssh_command -o BatchMode=yes" git -C "$repo_root" fetch --quiet; then
       printf 'FETCH=ok\n'
     else
       printf 'FETCH=failed\nNEXT=stop:fetch-failed\n'
@@ -57,14 +64,20 @@ inspect_repo() {
     printf 'FETCH=skipped:no-remote\n'
   fi
 
-  branch=$(git -C "$repo_root" symbolic-ref --quiet --short HEAD 2>/dev/null) || branch=
-  if [ -n "$branch" ]; then
+  inspection_failed=0
+  branch=$(git -C "$repo_root" symbolic-ref --quiet --short HEAD 2>/dev/null)
+  branch_status=$?
+  if [ "$branch_status" -eq 0 ]; then
     printf 'HEAD=branch:%s\n' "$branch"
-  else
+  elif [ "$branch_status" -eq 1 ]; then
+    branch=
     printf 'HEAD=detached\n'
+  else
+    branch=
+    inspection_failed=1
+    printf 'HEAD=unknown\n'
   fi
 
-  inspection_failed=0
   if git_dir=$(git -C "$repo_root" rev-parse --absolute-git-dir 2>/dev/null); then
     operation=none
     if [ -e "$git_dir/MERGE_HEAD" ]; then
@@ -114,6 +127,7 @@ inspect_repo() {
     if upstream=$(git -C "$repo_root" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null); then
       upstream_label=$upstream
     else
+      upstream=
       configured_remote=$(git -C "$repo_root" config --get "branch.$branch.remote" 2>/dev/null)
       remote_status=$?
       configured_merge=$(git -C "$repo_root" config --get "branch.$branch.merge" 2>/dev/null)
@@ -134,7 +148,6 @@ inspect_repo() {
     printf 'UPSTREAM=%s\n' "$upstream_label"
     counts=$(git -C "$repo_root" rev-list --left-right --count 'HEAD...@{upstream}' 2>/dev/null) || {
       printf 'AHEAD=unknown\nBEHIND=unknown\n'
-      exit_code=1
       inspection_failed=1
       counts=
     }
@@ -147,30 +160,35 @@ inspect_repo() {
     printf 'UPSTREAM=%s\nAHEAD=unknown\nBEHIND=unknown\n' "$upstream_label"
   fi
 
-  outgoing_commits='(unavailable: no upstream)'
-  outgoing_stat='(unavailable: no upstream)'
+  if [ "$upstream_label" = unknown ]; then
+    outgoing_commits='(unavailable: upstream unknown)'
+    outgoing_stat='(unavailable: upstream unknown)'
+  else
+    outgoing_commits='(unavailable: no upstream)'
+    outgoing_stat='(unavailable: no upstream)'
+  fi
   if [ -n "$upstream" ]; then
     outgoing_commits=$(git -C "$repo_root" log --oneline '@{upstream}..HEAD' 2>&1) || {
       outgoing_commits='(failed)'
       inspection_failed=1
-      exit_code=1
     }
     outgoing_stat=$(git -C "$repo_root" diff --stat '@{upstream}..HEAD' 2>&1) || {
       outgoing_stat='(failed)'
       inspection_failed=1
-      exit_code=1
     }
   fi
   stashes=$(git -C "$repo_root" stash list 2>&1) || {
     stashes='(failed)'
     inspection_failed=1
-    exit_code=1
   }
   worktrees=$(git -C "$repo_root" worktree list 2>&1) || {
     worktrees='(failed)'
     inspection_failed=1
-    exit_code=1
   }
+
+  if [ "$inspection_failed" -eq 1 ]; then
+    exit_code=1
+  fi
 
   next=none
   if [ "$inspection_failed" -eq 1 ]; then
