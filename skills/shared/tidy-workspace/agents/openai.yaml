@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tidy Workspace"
+  short_description: "整理 Git workspace 並執行完整 wrap 收尾"
+  default_prompt: "使用 $tidy-workspace 整理目前 Git workspace，並完成完整的 $wrap 收尾流程。"
