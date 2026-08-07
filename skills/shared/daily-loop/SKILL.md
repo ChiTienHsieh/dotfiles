@@ -29,9 +29,10 @@ frequency hints, not conclusions. Run `mine_transcripts.sh --help` for options.
 
 ### 1. Read prior proposals
 
-Read the `kind:"proposal"` records in
-`$HOME/scratch/daily-loop/state.jsonl`; a missing file is normal. Do not repeat
-an idea already recorded unless the digest shows clear material recurrence.
+Read proposal history in `$HOME/scratch/daily-loop/state.jsonl`: current records
+use `kind:"proposal"`; legacy proposal records may omit `kind` but have both
+`fingerprint` and `status`. A missing file is normal. Do not repeat an idea
+already recorded unless the digest shows clear material recurrence.
 
 ### 2. Find candidates
 

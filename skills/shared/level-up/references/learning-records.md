@@ -58,8 +58,9 @@ that can change a future lesson:
 - `skip_for_now`: intentionally deferred scope.
 
 Record evidence at concept level: demonstrated concepts, corrected
-misconceptions, unresolved gaps, and self-reported prior knowledge. Record the
-learner's concrete goal and the substance of confirmed shotcall decisions.
+misconceptions, unresolved gaps, and self-reported prior knowledge. Record an
+abstract, teaching-relevant version of the learner's goal and confirmed
+shotcall decisions, never identifying or sensitive personal details.
 
 Do not record level numbers, MCQ option letters, correct-answer positions, XP,
 or other session-only mechanics. They do not shape teaching and can leak future
@@ -119,5 +120,6 @@ future session can reuse or avoid it.
 
 ## Privacy and Safety
 
-Never store secrets, tokens, client-specific facts, private code snippets, or
-long chat transcripts. Keep evidence minimal and teaching-relevant.
+Never store secrets, tokens, client-specific facts, private code snippets,
+identifying career details, financial or health information, family details, or
+long chat transcripts. Keep evidence minimal, abstract, and teaching-relevant.

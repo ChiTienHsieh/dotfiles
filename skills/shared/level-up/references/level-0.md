@@ -59,7 +59,8 @@ silently switch medium.
 
 ## Wait and Continue
 
-Wait until the learner gives the goal and all three choices. Then confirm
-briefly, record the goal and choices silently, and build the course map around
-them. If an adaptive course would later benefit from HTML, explain the concrete
-benefit and ask before switching.
+Wait until the learner gives all three choices. Use a concrete goal when they
+provide one; otherwise use the standard mental-model lens without blocking.
+Then confirm briefly, record the lens and choices silently, and build the course
+map around them. If an adaptive course would later benefit from HTML, explain
+the concrete benefit and ask before switching.

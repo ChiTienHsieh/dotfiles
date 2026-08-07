@@ -51,7 +51,7 @@ Classify a learner question without derailing the course:
 - **Insert before current level:** reveals a missing prerequisite.
 - **Defer:** advanced extension better taught later.
 - **Spin off:** deserves a separate course. Offer a teacher agent through
-  `tmux-orchestration` in quiz mode while the main preflight continues.
+  `tmux-orchestration` in quiz mode while the main session continues.
 
 Update the task plan with inserted or deferred levels. Do not advance past an
 unresolved prerequisite.

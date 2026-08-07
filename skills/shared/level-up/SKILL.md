@@ -50,8 +50,9 @@ directly here; do not depend on one reference to route to another.
 1. Read the learning index, learner profile, and relevant topic evidence.
 2. Select implementation references when the request is preflight/debrief work;
    otherwise use normal teaching mode.
-3. Run Level 0 before locking the course. Wait for the learner's goal plus
-   analogy, depth, and medium choice.
+3. Run Level 0 before locking the course. Wait for analogy, depth, and medium;
+   use the stated goal when provided, otherwise use the standard mental-model
+   lens.
 4. Build or update the task plan when the tool exists. Start with one narrow
    level and adapt when answers reveal gaps or prerequisites.
 5. Teach one concept or decision through the selected analogy and medium.
@@ -66,15 +67,16 @@ directly here; do not depend on one reference to route to another.
 ## Non-Negotiable Guardrails
 
 - Keep all bookkeeping off every user-visible surface, including progress and
-  status messages. Never expose paths, record updates, gaps, level bookkeeping,
-  option letters, or model tags.
+  status messages. Never expose record paths or updates, `Known Gaps`, level
+  bookkeeping, stored option-letter history, or model tags.
 - Ask one substantive MCQ or shotcall at a time. A batch of questions is not a
   level-up interaction.
 - The chat question is the sole authority for progression. Any quiz embedded in
   HTML is practice only and cannot advance the learner.
 - Never override or silently change the learner's analogy, depth, medium, or
   stated goal. Ask at the Level 0 checkpoint or before an adaptive medium switch.
-- Record only evidence that can improve future teaching. Never store secrets,
+- Record only minimal, abstract evidence that can improve future teaching.
+  Never store secrets, identifying or sensitive personal details,
   client-specific facts, private code, tokens, or long transcripts.
 - For a skipped preflight/debrief, record only the silent workflow event; do not
   alter topic mastery or index status.

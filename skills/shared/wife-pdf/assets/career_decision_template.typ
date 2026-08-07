@@ -1,6 +1,6 @@
 // 字體設定
 #set text(font: ("PingFang TC", "Heiti TC", "Noto Sans CJK TC"), size: 11pt, lang: "zh")
-#set page(margin: (x: 2cm, y: 1.8cm))
+#set page(width: 180mm, height: 240mm, margin: (x: 1.6cm, y: 1.5cm))
 #set par(leading: 0.7em, justify: true)
 
 // 標題樣式
@@ -83,6 +83,8 @@
 #card([選項 B｜立即改變], [好處是更快接近目標；代價是不確定性較高。])
 #card([選項 C｜設定觀察期], [先收集關鍵資訊，再於明確日期重新決定。])
 
+#pagebreak()
+
 == 怎麼比較？
 
 #block(breakable: false)[
@@ -115,7 +117,7 @@
   )
 ]
 
-== 接下來的時間表 #h(0.3em) (•̀ᴗ•́)و
+== 接下來的時間表 #h(0.3em) (°▽°)
 
 #block(
   fill: luma(248),

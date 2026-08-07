@@ -36,7 +36,7 @@ Options:
   --source all|claude|codex   Restrict source (default all)
   --state FILE         State log to read and optionally checkpoint
                        (default ~/scratch/daily-loop/state.jsonl)
-  --checkpoint         Append this run's session keys to the state log
+  --checkpoint         Append newly seen source-prefixed session keys
   --debug              Print candidate file list + counts to stderr
   -h, --help           Show this help
 

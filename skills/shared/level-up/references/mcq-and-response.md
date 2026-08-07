@@ -59,7 +59,7 @@ Make the learner reason instead of reading the shape of the answer:
 - Accept a better out-of-list option or principle and record its substance as
   the decision.
 - Record the decision content, never the option letter.
-- Ask one shotcall per turn. The learner explicitly rejected batched decisions.
+- Ask one shotcall per turn.
 
 ## Respond to a Quiz
 
