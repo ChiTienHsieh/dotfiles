@@ -121,7 +121,7 @@ class DirtyWorktreeCompatibilityTests(unittest.TestCase):
 
 
 class HookConfigurationTests(unittest.TestCase):
-    def test_global_config_uses_only_dirty_worktree_hook(self) -> None:
+    def test_global_config_combines_dirty_worktree_and_tmux_hooks(self) -> None:
         config = json.loads((CODEX_DIR / "hooks.json").read_text(encoding="utf-8"))
         hooks = config["hooks"]
         self.assertEqual(set(hooks), {"PostToolUse", "Stop"})
@@ -131,9 +131,12 @@ class HookConfigurationTests(unittest.TestCase):
             for group in event
             for handler in group["hooks"]
         ]
-        self.assertEqual(len(commands), 2)
-        self.assertTrue(
-            all("stop_dirty_worktree.py" in command for command in commands)
+        self.assertEqual(len(commands), 4)
+        self.assertEqual(
+            sum("stop_dirty_worktree.py" in command for command in commands), 2
+        )
+        self.assertEqual(
+            sum("track_tmux_workers.py" in command for command in commands), 2
         )
         self.assertTrue(all("thread_title" not in command for command in commands))
 

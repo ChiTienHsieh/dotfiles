@@ -3,6 +3,7 @@
 ## Learner Goal
 - Preflight 導讀 openspec change `improve-article-editorial-presentation`（PR #548），理解三個 scope（typography／首屏 metadata／底部工具收斂）與決策點，形成「同意哪些、要改哪些」結論回給 orchestrator（%29）。
 - User 明講：沒有 before/after prototype 看不懂改版提案 → 教材必須帶視覺對照（live 截圖 + 互動 mock）。
+- 2026-07-24 debrief：先從零補回這次 MR 的問題背景與目的，再判斷是否值得 merge；使用米其林餐廳框架、深度 1、Chat Markdown。
 
 ## Status
 - mastered（MCQ 6/6 first-try；三個 open questions 全拍板）。
@@ -12,6 +13,8 @@
 
 ## 已掌握（概念）
 - 修正量測後病因不是「字太小」，而是招牌氣勢/章節呼吸/行政資訊音量與動線。
+- 2026-07-24 debrief：能從零辨認 #689 的核心病因是有用功能以同等視覺重量堆疊，讓文章像後台；不是全站字體太小，也不是應刪除 provenance。
+- 2026-07-24 debrief：能正確辨認 shipped structure 是 source 持續可見、technical provenance 收進可及的原生抽屜、reader actions 重組；並主動要求 preview 與 production URL 做 UI 驗收。
 - CJK 字型檔上萬字符要 subset，是中文特有成本。
 - 來源只進 HTML metadata 給爬蟲 = 違反可及性。
 - chrome 判準 = 是否與內容卡共用視覺文法（撞衫理論）。

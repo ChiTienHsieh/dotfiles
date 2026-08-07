@@ -95,6 +95,8 @@ SAVEHIST=10000
 # -----------------------------------------------------------------------------
 # 6. Completion system
 # -----------------------------------------------------------------------------
+# Grok completions must be on fpath before compinit builds its dump.
+[ -d "$HOME/.grok/completions/zsh" ] && fpath=("$HOME/.grok/completions/zsh" $fpath)
 autoload -Uz compinit && compinit -u
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'  # Case-insensitive completion
 zstyle ':completion:*' menu select                    # Menu-style completion
@@ -162,3 +164,7 @@ precmd() {
 
 # bun completions
 [ -s "/Users/shroom/.bun/_bun" ] && source "/Users/shroom/.bun/_bun"
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+# <<< grok installer <<<
