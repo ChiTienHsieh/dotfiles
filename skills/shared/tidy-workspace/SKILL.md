@@ -8,7 +8,7 @@ Preserve unrelated work from the user or other agents.
 ## Inspect
 
 First confirm the directory is a Git repo; otherwise skip it and inspect repos
-touched this session. Run the relevant checks in each repo:
+touched this session. Fetch first, then run the relevant checks in each repo:
 
 ```bash
 git rev-parse --is-inside-work-tree
@@ -23,8 +23,8 @@ git worktree list
 /usr/bin/python3 "$HOME/dotfiles/codex/hooks/stop_dirty_worktree.py" --dirty-report --cwd "$PWD"
 ```
 
-Fetch before deciding whether the branch is ahead, behind, or diverged. Review
-the full upstream-to-HEAD outgoing range and diff before changing anything.
+Use only the post-fetch results to classify the branch. Review the full
+upstream-to-HEAD outgoing range and diff before changing anything.
 
 ## Reconcile
 

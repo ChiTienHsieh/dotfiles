@@ -8,7 +8,9 @@ description: "Finish the current session. Use when the user invokes $wrap or ask
 2. Update user-facing docs when this session changed setup, commands,
    architecture, or behavior.
 3. Read `../tidy-workspace/SKILL.md` completely and follow it for every repo
-   touched this session. That skill is the Git workflow SSOT.
+   touched this session. Also check `~/dotfiles` when present because edits
+   through home-directory symlinks may evade the dirty-worktree tracker. That
+   skill is the Git workflow SSOT.
 4. Give a concise zh-TW summary of what was completed, verified, committed, and
    pushed, plus any remaining decision or blocker.
 
