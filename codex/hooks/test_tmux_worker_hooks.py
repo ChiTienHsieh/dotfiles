@@ -314,7 +314,12 @@ class HookInstallerTests(unittest.TestCase):
                             },
                             {
                                 "type": "command",
-                                "command": installer.MANAGED_COMMAND,
+                                "command": installer.TMUX_WORKER_COMMAND,
+                                "timeout": 1,
+                            },
+                            {
+                                "type": "command",
+                                "command": installer.DIRTY_WORKTREE_COMMAND,
                                 "timeout": 1,
                             },
                         ]
@@ -329,6 +334,7 @@ class HookInstallerTests(unittest.TestCase):
         self.assertEqual(once["description"], "app-managed hooks")
         self.assertIn("third-party-hook", text)
         self.assertEqual(text.count("track_tmux_workers.py"), 2)
+        self.assertEqual(text.count("stop_dirty_worktree.py"), 2)
 
     def test_invalid_live_json_is_not_overwritten(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

@@ -12,7 +12,11 @@ from json import JSONDecodeError
 from pathlib import Path
 
 
-MANAGED_COMMAND = '/usr/bin/python3 "$HOME/.codex/bin/track_tmux_workers.py"'
+TMUX_WORKER_COMMAND = '/usr/bin/python3 "$HOME/.codex/bin/track_tmux_workers.py"'
+DIRTY_WORKTREE_COMMAND = (
+    '/usr/bin/env python3 "$HOME/.codex/hooks/stop_dirty_worktree.py"'
+)
+MANAGED_COMMANDS = {TMUX_WORKER_COMMAND, DIRTY_WORKTREE_COMMAND}
 HANDLER_TYPES = {"command", "prompt", "agent"}
 TOP_LEVEL_FIELDS = {"description", "hooks"}
 STRING_HANDLER_FIELDS = {"commandWindows", "command_windows", "statusMessage"}
@@ -92,7 +96,7 @@ def is_managed_hook(item: object) -> bool:
     return (
         isinstance(item, dict)
         and item.get("type") == "command"
-        and item.get("command") == MANAGED_COMMAND
+        and item.get("command") in MANAGED_COMMANDS
     )
 
 
