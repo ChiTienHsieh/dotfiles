@@ -1,57 +1,40 @@
 ---
 name: tidy-workspace
-description: "Tidy and synchronize a Git workspace. Use when the user invokes $tidy-workspace or asks to tidy, clean, pull, sync, or reconcile a repo, worktree, stash, local commits, and its remote without wrapping the whole session."
+description: "Tidy and synchronize Git workspaces without ending the session. Use for $tidy-workspace or requests to clean, pull, sync, or reconcile repos, worktrees, stashes, local commits, and remotes."
 ---
 
 ## Inspect
 
-First confirm the directory is a Git repo; otherwise skip it and inspect repos
-touched this session. Fetch first, then run the relevant checks in each repo:
+Resolve this skill's directory, then run
+`scripts/inspect-workspace.sh [REPO_DIR ...]` with the current repo and every
+repo touched this session. It also includes `~/dotfiles`, deduplicates Git
+roots, and runs non-interactive `git fetch`; it never runs pull, commit, push,
+or delete.
+Treat `NEXT=` as a recommendation, not authorization. A non-zero exit is a
+blocker.
 
-```bash
-git rev-parse --is-inside-work-tree
-git status
-git rev-list --left-right --count HEAD...@{upstream}
-git log --oneline @{upstream}..HEAD
-git diff --stat @{upstream}..HEAD
-git stash list
-git worktree list
-/usr/bin/python3 "$HOME/dotfiles/codex/hooks/stop_dirty_worktree.py" --dirty-report --cwd "$PWD"
-```
+## Act
 
-Review the full upstream-to-HEAD outgoing range and diff before changing
-anything.
-
-## Reconcile
-
-- Clean and behind only: fast-forward with `git pull --ff-only`.
-- In-scope dirty changes: review, test as appropriate, commit, then sync and
-  push.
-- Ahead only: push only after confirming every outgoing commit belongs to the
-  requested scope and the destination is correct. Otherwise preserve it and
-  ask. If the remote protects the branch, use its normal PR flow and follow CI.
-- No upstream: confirm the intended remote and branch before setting one or
-  pushing.
-- Detached HEAD or any in-progress Git operation—including merge, rebase,
-  cherry-pick, revert, `git am`, or bisect: stop and ask.
-- Diverged history, conflicts, ambiguous WIP, sensitive files, or unclear
-  ownership: stop and ask.
-- Before commit or push, inspect staged, unstaged, and outgoing diffs for
-  secrets, credentials, private keys, non-public personal data, and private
-  machine details. Treat unknown repo visibility conservatively.
+- `review-dirty`: inspect staged and unstaged diffs; test and commit in-scope
+  changes only, then rerun the script.
+- `pull-ff-only`: run `git pull --ff-only`, then rerun the script.
+- `review-outgoing`: inspect the full outgoing range and diff, confirm ownership
+  and destination, then push through the repo's PR and CI flow when required.
+- `stop:*`, sensitive files, ambiguous work, or unclear ownership: stop and ask.
+- Before commit or push, check all relevant diffs for secrets, credentials,
+  private keys, non-public personal data, and private machine details. Treat
+  unknown repo visibility conservatively.
 - Never discard, reset, force-push, run `git clean`, delete untracked files,
-  drop stashes, remove worktrees, or delete local/remote branches or tags
-  without explicit authorization. Never disturb another agent's worktree.
+  drop stashes, remove worktrees, or delete branches or tags without explicit
+  authorization. Never disturb another agent's worktree.
 
-Treat proven temporary, stale, or merged items as cleanup candidates only; that
-evidence is not deletion authorization. Leave unrelated changes, commits,
-stashes, branches, and worktrees in place and report them.
+Leave unrelated work in place. Temporary, stale, or merged means cleanup
+candidate, not authorized deletion.
 
 ## Report
 
 - repos and branches inspected;
-- commits, pulls, pushes, PRs, or cleanup completed;
-- tests or CI results;
-- anything deliberately preserved or still needing a decision.
+- actions, tests, and CI completed;
+- preserved work or decisions still needed.
 
 If everything was already synchronized and clean, say so directly.
