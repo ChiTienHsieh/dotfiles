@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import stat
 import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
@@ -12,10 +14,10 @@ from io import StringIO
 from pathlib import Path
 
 
-HOOKS_DIR = Path(__file__).resolve().parent
-TRACKER_PATH = HOOKS_DIR.parent / "bin" / "track_tmux_workers.py"
-INSTALLER_PATH = HOOKS_DIR / "install_hooks.py"
-MANIFEST_PATH = HOOKS_DIR.parent / "hooks.json"
+CODEX_DIR = Path(__file__).resolve().parents[1]
+TRACKER_PATH = CODEX_DIR / "bin" / "track_tmux_workers.py"
+INSTALLER_PATH = CODEX_DIR / "hooks" / "install_hooks.py"
+MANIFEST_PATH = CODEX_DIR / "hooks.json"
 
 
 def load_module(name: str, path: Path):
@@ -230,17 +232,6 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             {"continue": True},
         )
 
-    def test_stop_allows_english_retention_with_every_target(self) -> None:
-        tracker.save_workers(
-            self.session_id,
-            {("session", "review-one"), ("pane", "%42")},
-        )
-        message = (
-            "Retained tmux worker: review-one (still reviewing)\n"
-            "Retained tmux worker: %42 (waiting for CI)"
-        )
-        self.assertEqual(self.stop(message), {"continue": True})
-
     def test_stop_requires_retention_for_every_target(self) -> None:
         tracker.save_workers(
             self.session_id,
@@ -297,6 +288,33 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         self.assertNotEqual(first_path, second_path)
         self.assertNotIn("codex-session-1", first_path.name)
 
+    def test_track_directory_is_private_and_user_scoped(self) -> None:
+        tracker.TRACK_DIR.chmod(0o755)
+        tracker.save_workers(self.session_id, {("session", "review-one")})
+        self.assertEqual(stat.S_IMODE(tracker.TRACK_DIR.stat().st_mode), 0o700)
+        self.assertIn(
+            f"codex-tmux-workers-{os.getuid()}", str(tracker.DEFAULT_TRACK_DIR)
+        )
+
+    def test_rejects_symlinked_ledger(self) -> None:
+        path = tracker.session_track_path(self.session_id)
+        assert path is not None
+        target = tracker.TRACK_DIR / "attacker.json"
+        target.write_text('{"workers": []}\n', encoding="utf-8")
+        path.symlink_to(target)
+        with self.assertRaises(tracker.LedgerError):
+            tracker.load_workers(self.session_id)
+
+    def test_rejects_symlinked_lock(self) -> None:
+        path = tracker.session_track_path(self.session_id)
+        assert path is not None
+        target = tracker.TRACK_DIR / "attacker.lock"
+        target.write_text("", encoding="utf-8")
+        path.with_suffix(".lock").symlink_to(target)
+        with self.assertRaises(tracker.LedgerError):
+            with tracker.ledger_lock(self.session_id):
+                pass
+
 
 class HookInstallerTests(unittest.TestCase):
     def test_merge_preserves_unmanaged_hooks_and_is_idempotent(self) -> None:
@@ -346,6 +364,28 @@ class HookInstallerTests(unittest.TestCase):
                 )
             self.assertEqual(result, 1)
             self.assertEqual(live_path.read_text(encoding="utf-8"), "not json\n")
+
+    def test_symlinked_live_config_is_migrated_to_private_real_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            target_path = Path(tempdir) / "repo-hooks.json"
+            original = MANIFEST_PATH.read_text(encoding="utf-8")
+            target_path.write_text(original, encoding="utf-8")
+            live_path = Path(tempdir) / "live-hooks.json"
+            live_path.symlink_to(target_path)
+
+            with redirect_stdout(StringIO()):
+                result = installer.main(
+                    ["install_hooks.py", str(MANIFEST_PATH), str(live_path)]
+                )
+
+            self.assertEqual(result, 0)
+            self.assertFalse(live_path.is_symlink())
+            self.assertEqual(stat.S_IMODE(live_path.stat().st_mode), 0o600)
+            self.assertEqual(
+                json.loads(live_path.read_text(encoding="utf-8")),
+                json.loads(original),
+            )
+            self.assertEqual(target_path.read_text(encoding="utf-8"), original)
 
     def test_structurally_invalid_live_config_is_not_overwritten(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

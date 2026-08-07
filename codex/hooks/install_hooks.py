@@ -167,7 +167,10 @@ def merge_hooks(
 
 def write_atomic(path: Path, config: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600
+    if path.is_symlink():
+        mode = 0o600
+    else:
+        mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600
     temp_name: str | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -196,7 +199,7 @@ def main(argv: list[str]) -> int:
         manifest = load_json(manifest_path)
         live = load_json(live_path, missing_ok=True)
         merged = merge_hooks(live, manifest)
-        if merged == live:
+        if merged == live and not live_path.is_symlink():
             print(f"  Codex hooks already current: {live_path}")
             return 0
         write_atomic(live_path, merged)

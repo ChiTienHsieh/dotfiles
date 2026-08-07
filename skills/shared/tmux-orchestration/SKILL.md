@@ -174,8 +174,8 @@ cleanup actions such as `pkill`, reset, or clean with status queries in the same
 Bash call.
 
 Immediately before cleanup, capture the worker's latest state and confirm its
-report, marker, or other result has been accepted. Low CPU usage or an idle
-prompt is not proof of completion.
+report, marker, or other result has been accepted. An idle prompt is not proof
+of completion.
 
 When a standalone worker session is no longer needed:
 
@@ -210,7 +210,6 @@ Before the controller's final response, resolve every worker it opened:
 - Close accepted or obsolete workers and verify they are absent.
 - For a worker that must keep running, tell the user why with
   `保留中的 tmux worker：TARGET（REASON）`; include every retained target.
-- Never use `pkill`, a wildcard, or an age-only reaper for lifecycle cleanup.
 
 The Codex `Stop` hook only reminds and blocks once when tracked workers remain;
 it never calls tmux or terminates a process. All tmux commands still require the

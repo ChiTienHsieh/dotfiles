@@ -372,8 +372,10 @@ backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
 backup_and_link "$DOTFILES_DIR/codex/hooks" "$HOME/.codex/hooks"
-/usr/bin/python3 "$DOTFILES_DIR/codex/hooks/install_hooks.py" \
-    "$DOTFILES_DIR/codex/hooks.json" "$HOME/.codex/hooks.json"
+if ! "$DOTFILES_PYTHON" "$DOTFILES_DIR/codex/hooks/install_hooks.py" \
+    "$DOTFILES_DIR/codex/hooks.json" "$HOME/.codex/hooks.json"; then
+    echo "  Warning: Codex hooks were not updated; continuing installation" >&2
+fi
 mkdir -p "$HOME/.codex/rules"
 for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
     [ -f "$rule" ] || continue

@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shlex
+import stat
 import sys
 import tempfile
 from contextlib import contextmanager
@@ -16,11 +17,22 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Iterator
 
+HOOKS_DIR = Path(__file__).resolve().parents[1] / "hooks"
+sys.path.insert(0, str(HOOKS_DIR))
 
+from private_temp_state import (  # noqa: E402
+    atomic_write_private,
+    ensure_private_directory,
+    read_private_text,
+    validate_private_file,
+)
+
+
+DEFAULT_TRACK_DIR = Path(tempfile.gettempdir()) / f"codex-tmux-workers-{os.getuid()}"
 TRACK_DIR = Path(
     os.environ.get(
         "CODEX_TMUX_WORKER_TRACK_DIR",
-        str(Path(os.environ.get("TMPDIR", "/private/tmp")) / "codex-tmux-workers"),
+        str(DEFAULT_TRACK_DIR),
     )
 )
 MARKER_RE = re.compile(
@@ -68,18 +80,28 @@ def ledger_lock(session_id: object) -> Iterator[None]:
         yield
         return
 
+    descriptor = -1
     try:
-        TRACK_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+        ensure_private_directory(TRACK_DIR)
         lock_path = path.with_suffix(".lock")
-        with lock_path.open("a+", encoding="utf-8") as handle:
-            os.chmod(lock_path, 0o600)
+        flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(lock_path, flags, 0o600)
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid():
+            raise RuntimeError("tmux worker lock file is unsafe")
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "a+", encoding="utf-8") as handle:
+            descriptor = -1
             flock(handle.fileno(), LOCK_EX)
             try:
                 yield
             finally:
                 flock(handle.fileno(), LOCK_UN)
-    except OSError as exc:
+    except (OSError, RuntimeError) as exc:
         raise LedgerError(f"cannot lock tmux worker ledger {path}: {exc}") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
 
 
 def valid_worker(kind: str, target: str) -> bool:
@@ -92,11 +114,14 @@ def valid_worker(kind: str, target: str) -> bool:
 
 def load_workers(session_id: object) -> set[tuple[str, str]]:
     path = session_track_path(session_id)
-    if not path or not path.exists():
+    if not path:
         return set()
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, JSONDecodeError) as exc:
+        content = read_private_text(path)
+        if content is None:
+            return set()
+        data = json.loads(content)
+    except (OSError, RuntimeError, JSONDecodeError) as exc:
         raise LedgerError(f"cannot read tmux worker ledger {path}: {exc}") from exc
 
     raw_workers = data.get("workers") if isinstance(data, dict) else None
@@ -126,29 +151,20 @@ def save_workers(session_id: object, workers: set[tuple[str, str]]) -> None:
 
     try:
         if not workers:
+            try:
+                validate_private_file(path)
+            except FileNotFoundError:
+                return
             path.unlink(missing_ok=True)
             return
-        TRACK_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
         payload = {
             "workers": [
                 {"kind": kind, "target": target}
                 for kind, target in sorted(workers)
             ]
         }
-        temp_name: str | None = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", encoding="utf-8", dir=TRACK_DIR, delete=False
-            ) as handle:
-                temp_name = handle.name
-                json.dump(payload, handle, indent=2)
-                handle.write("\n")
-            os.chmod(temp_name, 0o600)
-            os.replace(temp_name, path)
-        finally:
-            if temp_name:
-                Path(temp_name).unlink(missing_ok=True)
-    except OSError as exc:
+        atomic_write_private(path, json.dumps(payload, indent=2) + "\n")
+    except (OSError, RuntimeError) as exc:
         raise LedgerError(f"cannot write tmux worker ledger {path}: {exc}") from exc
 
 
@@ -287,8 +303,7 @@ def message_retains_all_workers(
         return False
     return all(
         re.search(
-            rf"(?:保留中的 tmux worker：|Retained tmux worker:)\s*"
-            rf"{re.escape(target)}\s*[（(][^）)]+[）)]",
+            rf"保留中的 tmux worker：\s*{re.escape(target)}\s*[（(][^）)]+[）)]",
             message,
         )
         is not None
