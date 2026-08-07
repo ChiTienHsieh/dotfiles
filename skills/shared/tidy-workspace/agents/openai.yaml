@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tidy Workspace"
+  short_description: "安全整理、檢查並同步目前的 Git workspace"
+  default_prompt: "使用 $tidy-workspace 檢查、整理並同步目前的 Git workspace；保留其他 agent 的工作。"
