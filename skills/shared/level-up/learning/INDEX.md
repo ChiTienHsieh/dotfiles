@@ -6,6 +6,9 @@
 | --- | --- | --- | --- | --- |
 | Codex task 完成自動改 thread title preflight | familiar | 拍板 meaningful-state taxonomy 與 one-shot guard；已完成 18 項 adversarial unit tests、trusted CLI end-to-end 及 persisted title 讀回。 | 2026-08-05 | topics/codex-thread-title-hook-preflight.md |
 | gu-log ShroomDog’s Choice preflight | learning | 目標是 chat-first 決策、OpenSpec 留在幕後並完成 production 功能；選擇米其林類比、深度 2、Adaptive medium。 | 2026-08-01 | topics/gu-log-shroomdog-choice-preflight.md |
+| tmux Guardian guardrail debrief | learning | 目標是確認今天的 guardrail 決策合理；已選 Vainglory、紮實打底、Chat Markdown，待逐關驗證。 | 2026-07-30 | topics/tmux-guardian-guardrail-debrief.md |
+| Pilates UI refinement debrief | mastered | 能區分 local QA、部署與上線後驗證，拍板低 friction composer，並決定部署後才邀請太太用假資料試玩。 | 2026-07-30 | topics/pilates-ui-refinement-debrief.md |
+| gu-log agent instructions cleanup | mastered | 拍板 issue-only intention brief、薄 Tier-0 SSOT，以及只刪已落地／未使用／可復原 branches 的 value-based pruning。 | 2026-07-24 | topics/gu-log-agent-instructions-cleanup.md |
 | Dotfiles cross-session message guard debrief | mastered | 能區分完整 push boundary，拍板 fresh-read/fail-closed contract、atomic commits 與 full-range final review gate。 | 2026-07-22 | topics/dotfiles-cross-session-message-guard.md |
 | gu-log rebrand Git history debrief | mastered | 能排除 rename churn、辨認 interface contracts，並選擇保留歷史且集中解衝突的 main→rebrand merge 策略。 | 2026-07-22 | topics/gu-log-rebrand-history-debrief.md |
 | Codex machine actor routing | mastered | 能區分 actor address、hook lifecycle、identity logic、shared policy 與 machine overlay；正確判斷未 trust hook 的行為並完成關鍵檔案 mapping。 | 2026-07-16 | topics/codex-machine-actor-routing.md |
@@ -13,7 +16,7 @@
 | Dedup 會後施工 preflight | mastered | 實戰課程格式首航。六關決策全拍板（兩層並用/遞移旗標/拆群復活/合約B形/權重拆帳燈號/掃描三全掃），merge＝內容整理責任是 user 自己立的原則。出貨 report-preflight-build.md。 | 2026-07-13 | topics/dedup-post-meeting-build.md |
 | Skill 規則堆積學 | mastered | 老楓道具欄類比。讀者入口判準、使用頻率分層、事故≠規則、description 觸發面全數一次通過（含綜合驗收）；四個真實修繕決策全拍板並 shipped。 | 2026-07-10 | topics/skill-rule-hygiene.md |
 | 投資配置：39w 全球股容器 | learning | 舊楓之谷類比。已懂 CFD 是對賭合約/交易對手風險。**Fable 決策已寫進 topic（VWRA 主推＋累積型＋bitcoin 上限＋分批進場），Opus 接手帶 user 逐關重走決策點；數字全部先查證再講。** | 2026-07-06 | topics/invest-global-allocation.md |
-| Dedup 設計會議準備（討論） | learning | 已拆分送出者與受災戶身分：v1 只用 `created_by` 判 reporter 三態，受災戶關係維持 unknown；電話角色仍待團隊確認。 | 2026-07-29 | topics/dedup-meeting-prep.md |
+| Dedup 設計會議準備（討論） | learning | 快層 v1 已刪同帳號歷史查詢；三訊號只作 ranking，top 1 達 `hint_threshold` 才提示；half-life／權重／門檻改用 recall-first data-driven evaluation。 | 2026-07-30 | topics/dedup-meeting-prep.md |
 | gu-log editorial presentation preflight | mastered | 米其林餐廳框架。三 open questions 全拍板（sans-first／標題下小卡／全進抽屜＋TOC 細線）。品味規則：卡片質感>裸文字、UI 不用 emoji 用 SVG icon、小字要配緊行高。 | 2026-07-05 | topics/gu-log-editorial-presentation.md |
 | Implementation loop / debrief mode | mastered | 航空框架。已掌握四象限、風險觸發(看決策不看 diff 大小)、during notes 只記保守假設、heredoc 看收件人。七項決策與 shipped 全吻合。**報告要拆 level，不可一次倒完。** | 2026-07-05 | topics/implementation-understanding-loop.md |
 | html-artifacts vs html-explainer 分工 | mastered | 楓之谷商店街類比。已分清 work artifact vs 教學配方、description 路由、品名搶字眼病灶。判決 SEPARATE。自述已熟 agent skills 觸發機制。 | 2026-07-04 | topics/html-duo.md |
