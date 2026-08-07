@@ -11,25 +11,22 @@
 - 不可保留 `["uv", "run"]` 這類可直接指定任意 executable 的 broad command-runner `allow` rule；`uv run tmux …` 會只匹配外層 allow 而繞過 direct-tmux prompt。需要免審的 uv workflow 應核准到固定子指令，例如 `["uv", "run", "pytest"]`。
 - 這個保證的邊界是 Codex 提交給 tool/execpolicy 的 command，包括 wrapper 中明示的 tmux；Guardian 不會攔截已核准程式內部自行產生的任意 child process。後者若也要逐次 mediation，需要 OS/socket proxy 級設計，不是 PreToolUse 或 prefix rules 能完整提供。
 
-## CLI thread rename（2026-08-05、`codex 0.145.0` 驗證）
+## CLI thread rename（2026-08-05、`codex 0.145.0` 驗證；2026-08-07 更新）
 
 - TUI 的 `/rename` 是使用者入口；app-server 的對應 operation 是穩定的
   `thread/name/set`，接受 `threadId` 與 `name`，可更新 loaded thread 或 persisted rollout。
 - Standalone CLI 的 model 不保證擁有 Codex App 注入的 `set_thread_title` tool，也不能假裝
   自己在 TUI 輸入 `/rename`。受限 model command 也不能直接讓 nested app-server 寫入
-  `~/.codex`。已驗證的 Stop-hook 流程是：hook host 先準備 private temp data file，model
-  只用 structured `apply_patch` 寫入 raw title data，不把 title 插進 shell syntax；第二次
-  Stop（hook host、非 model sandbox）取走並驗證 request，再由
-  `codex app-server --stdio` 送 `thread/name/set`。
+  `~/.codex`。曾驗證可用的 private temp-file Stop-hook fallback 已於 2026-08-07 移除：
+  它會在正常 final answer 後產生可見 continuation，使 task 難以閱讀。現在由 `name-task`
+  skill 在有工具時改名；沒有工具時只提出標題，由使用者用 `/rename` 套用。
 - `thread/name/set` 與 `/rename` 改的是同一個 user-facing thread name；差別在入口與
-  live UI event。已用受信任的 global Stop hook 跑過 standalone `codex exec` end-to-end，
-  並從 `session_index.jsonl` 讀回更新後名稱；同一個互動 TUI 當下是否立即重繪仍未驗證。
+  live UI event。舊 Stop hook 曾用 standalone `codex exec` end-to-end 驗證 persisted rename；
+  同一個互動 TUI 當下是否立即重繪仍未驗證。
 - Side conversation 在 0.145.0 是 `ephemeral = true` 的 fork，本身不能改名，也不建立
   persisted rollout；Stop hook payload 沒有專用的 side-chat flag，但會明確帶
   `transcript_path: null`。這不是 side-chat 專用訊號：persisted transcript path 查詢失敗
-  也可能是 `null`。global dispatcher 因此只在欄位明確為 `null` 時略過不適用的標題
-  checkpoint；若有 dirty worktree 仍保留整理提醒。欄位缺失或其他不明狀態不猜測，
-  仍走完整原流程。
+  也可能是 `null`。標題 Stop hook 已移除，因此目前不再需要依這個欄位猜測或分流。
 
 ## CodexBar usage checks
 
