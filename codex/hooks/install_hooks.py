@@ -167,10 +167,6 @@ def merge_hooks(
 
 def write_atomic(path: Path, config: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_symlink():
-        mode = 0o600
-    else:
-        mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600
     temp_name: str | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -179,7 +175,7 @@ def write_atomic(path: Path, config: dict[str, object]) -> None:
             temp_name = handle.name
             json.dump(config, handle, indent=2, ensure_ascii=False)
             handle.write("\n")
-        os.chmod(temp_name, mode)
+        os.chmod(temp_name, 0o600)
         os.replace(temp_name, path)
     finally:
         if temp_name:
@@ -187,6 +183,18 @@ def write_atomic(path: Path, config: dict[str, object]) -> None:
                 Path(temp_name).unlink(missing_ok=True)
             except OSError:
                 pass
+
+
+def is_private_file(path: Path) -> bool:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        return False
+    return (
+        stat.S_ISREG(metadata.st_mode)
+        and metadata.st_uid == os.getuid()
+        and stat.S_IMODE(metadata.st_mode) == 0o600
+    )
 
 
 def main(argv: list[str]) -> int:
@@ -199,7 +207,7 @@ def main(argv: list[str]) -> int:
         manifest = load_json(manifest_path)
         live = load_json(live_path, missing_ok=True)
         merged = merge_hooks(live, manifest)
-        if merged == live and not live_path.is_symlink():
+        if merged == live and is_private_file(live_path):
             print(f"  Codex hooks already current: {live_path}")
             return 0
         write_atomic(live_path, merged)

@@ -86,6 +86,7 @@ tmux split-window -h -P -F 'CODEX_TMUX_WORKER_OPEN=pane:#{pane_id}' \
 ```
 
 Both panes then live in one window, side-by-side, so the user can watch the worker and the orchestrator together.
+
 Read the exact pane ID from the returned marker, then capture that pane in a
 separate command. Never close the whole session when the worker is only a pane.
 
@@ -189,13 +190,9 @@ When a side-by-side worker pane is no longer needed:
 tmux kill-pane -t %42
 ```
 
-Print the closed marker only after the exact target is gone. If another actor
-already closed it, verify absence with `tmux has-session` for a session or
-`tmux display-message` for a pane, then print the same closed marker. Keep that
-verification separate from the cleanup command.
-
-Use these exact absence receipts after the cleanup command succeeds (or when
-the target was already absent):
+After cleanup—or if another actor already closed the target—run the matching
+absence receipt below in a separate command. It verifies that the exact target
+is gone before printing the closed marker:
 
 ```bash
 tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'

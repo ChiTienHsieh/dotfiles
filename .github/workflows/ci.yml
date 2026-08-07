@@ -152,6 +152,7 @@ jobs:
           HOME="${smoke_home}" TMPDIR="${RUNNER_TEMP}" ./install.sh
           test -f "${smoke_home}/.codex/hooks.json"
           test ! -L "${smoke_home}/.codex/hooks.json"
+          test "$(stat -c '%a' "${smoke_home}/.codex/hooks.json")" = 600
           for config in \
             "${smoke_home}/.bunfig.toml" \
             "${smoke_home}/.npmrc" \

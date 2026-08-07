@@ -387,6 +387,20 @@ class HookInstallerTests(unittest.TestCase):
             )
             self.assertEqual(target_path.read_text(encoding="utf-8"), original)
 
+    def test_equal_permissive_live_config_is_rewritten_private(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            live_path = Path(tempdir) / "hooks.json"
+            live_path.write_text(MANIFEST_PATH.read_text(encoding="utf-8"))
+            live_path.chmod(0o644)
+
+            with redirect_stdout(StringIO()):
+                result = installer.main(
+                    ["install_hooks.py", str(MANIFEST_PATH), str(live_path)]
+                )
+
+            self.assertEqual(result, 0)
+            self.assertEqual(stat.S_IMODE(live_path.stat().st_mode), 0o600)
+
     def test_structurally_invalid_live_config_is_not_overwritten(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             live_path = Path(tempdir) / "hooks.json"
