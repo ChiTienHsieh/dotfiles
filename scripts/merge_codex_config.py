@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import select
 import stat
@@ -28,8 +29,9 @@ class AppServerError(RuntimeError):
 class AppServer:
     def __init__(self, command: tuple[str, ...] = ("codex", "app-server", "--stdio")):
         self.command = command
-        self.process: subprocess.Popen[str] | None = None
+        self.process: subprocess.Popen[bytes] | None = None
         self.next_id = 1
+        self.stdout_buffer = bytearray()
 
     def __enter__(self) -> AppServer:
         try:
@@ -37,9 +39,7 @@ class AppServer:
                 self.command,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
+                bufsize=0,
             )
         except FileNotFoundError as exc:
             raise AppServerError("Codex CLI is not installed or not on PATH") from exc
@@ -69,7 +69,10 @@ class AppServer:
         if self.process is None:
             return
         if self.process.stdin is not None:
-            self.process.stdin.close()
+            try:
+                self.process.stdin.close()
+            except BrokenPipeError:
+                pass
         if self.process.poll() is None:
             self.process.terminate()
             try:
@@ -77,11 +80,14 @@ class AppServer:
             except subprocess.TimeoutExpired:
                 self.process.kill()
                 self.process.wait(timeout=5)
+        if self.process.stdout is not None:
+            self.process.stdout.close()
 
     def _send(self, message: dict[str, object]) -> None:
         if self.process is None or self.process.stdin is None:
             raise AppServerError("Codex app-server is not running")
-        self.process.stdin.write(json.dumps(message, separators=(",", ":")) + "\n")
+        payload = json.dumps(message, separators=(",", ":")).encode() + b"\n"
+        self.process.stdin.write(payload)
         self.process.stdin.flush()
 
     def _receive(self, response_id: int, method: str) -> object:
@@ -90,35 +96,39 @@ class AppServer:
 
         deadline = time.monotonic() + 20
         while True:
+            newline = self.stdout_buffer.find(b"\n")
+            if newline >= 0:
+                raw_line = bytes(self.stdout_buffer[:newline])
+                del self.stdout_buffer[: newline + 1]
+                try:
+                    message = json.loads(raw_line)
+                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                    raise AppServerError(
+                        "Codex app-server returned invalid JSON"
+                    ) from exc
+                if message.get("id") != response_id:
+                    continue
+                if "error" in message:
+                    error = message["error"]
+                    if isinstance(error, dict):
+                        code = error.get("code", "unknown")
+                        text = error.get("message", "unknown error")
+                        raise AppServerError(f"{method} failed ({code}): {text}")
+                    raise AppServerError(f"{method} failed")
+                return message.get("result")
+
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise AppServerError(f"Codex app-server timed out during {method}")
-            readable, _, _ = select.select([self.process.stdout], [], [], remaining)
+            descriptor = self.process.stdout.fileno()
+            readable, _, _ = select.select([descriptor], [], [], remaining)
             if not readable:
                 raise AppServerError(f"Codex app-server timed out during {method}")
 
-            line = self.process.stdout.readline()
-            if not line:
-                detail = ""
-                if self.process.poll() is not None and self.process.stderr is not None:
-                    detail = self.process.stderr.read(1000).strip()
-                suffix = f": {detail}" if detail else ""
-                raise AppServerError(f"Codex app-server exited during {method}{suffix}")
-
-            try:
-                message = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise AppServerError("Codex app-server returned invalid JSON") from exc
-            if message.get("id") != response_id:
-                continue
-            if "error" in message:
-                error = message["error"]
-                if isinstance(error, dict):
-                    code = error.get("code", "unknown")
-                    text = error.get("message", "unknown error")
-                    raise AppServerError(f"{method} failed ({code}): {text}")
-                raise AppServerError(f"{method} failed")
-            return message.get("result")
+            chunk = os.read(descriptor, 65536)
+            if not chunk:
+                raise AppServerError(f"Codex app-server exited during {method}")
+            self.stdout_buffer.extend(chunk)
 
     def request(self, method: str, params: dict[str, object]) -> object:
         response_id = self.next_id

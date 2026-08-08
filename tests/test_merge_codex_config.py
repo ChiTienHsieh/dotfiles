@@ -146,6 +146,26 @@ class MergeCodexConfigTests(unittest.TestCase):
             )
             self.assertEqual(stat.S_IMODE(destination.stat().st_mode), 0o600)
 
+    def test_rpc_receiver_keeps_read_ahead_response_with_notification(self) -> None:
+        child = (
+            "import json, sys, time\n"
+            "messages = ["
+            "{'id': 0, 'result': {}}, "
+            "{'method': 'notice', 'params': {}}, "
+            "{'id': 1, 'result': {'ok': True}}]\n"
+            "payload = ''.join(json.dumps(item) + '\\n' for item in messages)\n"
+            "sys.stdout.write(payload)\n"
+            "sys.stdout.flush()\n"
+            "time.sleep(30)\n"
+        )
+
+        with merge_codex_config.AppServer(
+            (sys.executable, "-u", "-c", child)
+        ) as client:
+            result = client.request("probe", {})
+
+        self.assertEqual(result, {"ok": True})
+
     def test_noop_preserves_multiline_runtime_content(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             portable, destination = self.make_files(Path(temporary_directory))
