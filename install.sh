@@ -367,9 +367,13 @@ if [ ! -e "$HOME/.codex/config.toml" ]; then
 else
     echo "  ~/.codex/config.toml already exists, skipping config seed"
 fi
-"$DOTFILES_PYTHON" "$DOTFILES_DIR/scripts/merge_codex_config.py" \
-    --portable "$DOTFILES_DIR/codex/config.portable.toml" \
-    --destination "$HOME/.codex/config.toml"
+if command -v codex >/dev/null 2>&1; then
+    "$DOTFILES_PYTHON" "$DOTFILES_DIR/scripts/merge_codex_config.py" \
+        --portable "$DOTFILES_DIR/codex/config.portable.toml" \
+        --destination "$HOME/.codex/config.toml"
+else
+    echo "  Warning: codex CLI not found; portable config sync skipped" >&2
+fi
 # machine.md symlinks to the shared canonical (~/.config/machine.md) seeded in
 # the Claude Code step above — same file both agents read, no divergence.
 backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"

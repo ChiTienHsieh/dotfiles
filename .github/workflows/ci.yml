@@ -154,19 +154,6 @@ jobs:
           test -f "${smoke_home}/.codex/hooks.json"
           test ! -L "${smoke_home}/.codex/hooks.json"
           test "$(stat -c '%a' "${smoke_home}/.codex/hooks.json")" = 600
-          python3 - "${smoke_home}/.codex/config.toml" <<'PY'
-          import sys
-          import tomllib
-
-          with open(sys.argv[1], "rb") as config_file:
-              agents = tomllib.load(config_file)["agents"]
-          assert agents == {
-              "enabled": True,
-              "max_concurrent_threads_per_session": 100,
-              "default_subagent_model": "gpt-5.6-luna",
-              "default_subagent_reasoning_effort": "max",
-          }
-          PY
           for config in \
             "${smoke_home}/.bunfig.toml" \
             "${smoke_home}/.npmrc" \

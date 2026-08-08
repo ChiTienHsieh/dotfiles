@@ -2,6 +2,13 @@
 
 這份檔案記錄調查過的 Codex CLI 怪癖、死路、與綁定特定版本的發現。每條都標日期，過時就刪掉。
 
+## Portable config sync（2026-08-08、`codex-cli 0.145.0` 官方文件與 live RPC 驗證）
+
+- `~/.codex/config.toml` 會累積 projects 與 app/runtime state，保持為本機實體檔；Git 只追蹤 `codex/config.portable.toml` 裡明確納管的穩定 defaults。
+- `scripts/merge_codex_config.py` 透過 app-server `config/read` 取得 user layer `version`，再用單次 `config/batchWrite` + `expectedVersion` 寫入；不要自己用 regex 編輯 TOML。
+- `expectedVersion` 會拒絕 stale write，已驗證失敗時 config bytes 不變；same-value batch write 也不會改變 bytes。
+- `config/batchWrite.filePath` 不能當通用 TOML editor 寫任意 `/tmp` 檔；app-server 會以 `configLayerReadonly` 拒絕非 user config layer。
+
 ## tmux 一律經 Guardian（2026-07-29、`codex-cli 0.145.0` 驗證）
 
 - `workspace-sprin` 不允許 tmux Unix socket；Codex 直接執行或 command wrapper 中明示的任何 tmux 指令，都應在第一次呼叫時要求 scoped escalation，讓 `approvals_reviewer = "auto_review"` 的 Guardian 審查。read-only 指令也不例外。

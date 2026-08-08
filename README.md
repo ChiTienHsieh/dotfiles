@@ -79,7 +79,7 @@ These files are created from templates but not tracked in git:
 - `~/.secrets` - API keys and tokens
 - `~/.aliases.local` - Machine-specific aliases
 - `~/.gitconfig.local` - Machine-specific Git settings
-- `~/.codex/config.toml` - Runtime-owned Codex state; `install.sh` preserves it and only upserts keys from `codex/config.portable.toml`
+- `~/.codex/config.toml` - Runtime-owned Codex state; when the Codex CLI is installed, `install.sh` uses its atomic config RPC to upsert only keys from `codex/config.portable.toml`
 - `~/.bunfig.toml`, `~/.npmrc`, `~/.config/pnpm/rc` - Real local files; the installer preserves registry credentials and only upserts the tracked release-age policy
 
 ## Updating

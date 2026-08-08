@@ -1,5 +1,5 @@
-# Git-tracked Codex settings that install.sh overlays onto the runtime-owned
-# ~/.codex/config.toml. Keep this file small and limited to stable preferences.
+# Git-tracked Codex settings that install.sh syncs through the Codex app-server
+# into runtime-owned ~/.codex/config.toml. Keep this limited to stable defaults.
 
 [agents]
 enabled = true
