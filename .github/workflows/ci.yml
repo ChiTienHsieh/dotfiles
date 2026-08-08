@@ -136,6 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 codex/tests/test_hooks.py -v
+          python3 codex/tests/test_task_delegation_registry.py -v
           python3 codex/tests/test_tmux_worker_hooks.py -v
           python3 tests/test_configure_package_policies.py -v
           zsh tests/test_aliases.sh

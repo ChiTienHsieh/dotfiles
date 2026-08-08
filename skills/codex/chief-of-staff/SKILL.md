@@ -86,17 +86,15 @@ Delegation is not fire-and-forget. If this thread creates or continues another C
 
 Required loop:
 
-1. Record the delegated `threadId`, title/purpose, expected output, and source thread.
-2. Put a return instruction in the delegated prompt:
-   - include the source thread id when known
-   - ask the worker to send a concise completion message back to the source thread if thread tools are available
-   - ask the worker to leave a short final answer with `safe to push`, `needs fix`, `blocked`, or equivalent verdict
-3. Poll with `read_thread` after delegation instead of waiting for the user to report that it finished.
-4. If the worker completes, read its final answer, act on the verdict, and archive the worker thread when it is no longer needed.
-5. If the worker is still running when this turn must end, say explicitly:
+1. Use the `codex-task-return` skill for the full callback, receipt, and recovery contract.
+2. Keep the delegated `threadId`/`hostId`, title/purpose, expected output, and source task in the source context; the private registry stores only minimal ids/status/cursors.
+3. Put the qualified source endpoint and `completed`/`blocked`/`needs-attention` callback instruction in the delegated prompt.
+4. Register the ready child and use one bounded `wait_threads` call with its cursor. Do not repeatedly poll `read_thread`.
+5. When callback or wait returns, fresh-read the child, act on its verdict, and acknowledge the deterministic event. Archive only when the user explicitly requested archive cleanup.
+6. If the worker is still running when this turn must end, say explicitly:
    - which delegated thread is still running
    - what it is expected to return
-   - when/how this Chief of Staff thread will check it again
+   - that the child callback will wake this source and `recover-source` can rebuild the wait after restart
 
 Never make the user act as the message bus between delegated Codex threads. If a review worker finishes and this thread misses it, that is a Chief of Staff failure, not a user task.
 

@@ -2,6 +2,12 @@
 
 這份檔案記錄調查過的 Codex CLI 怪癖、死路、與綁定特定版本的發現。每條都標日期，過時就刪掉。
 
+## Codex App delegated-task return（2026-08-09、desktop `26.803.41515`／`codex-cli 0.147.0` 驗證）
+
+- `Stop`／`SessionEnd` 都不是另一個 App task 的 completion callback；`SessionEnd` 可能到 archive/delete、正常關閉或無 client 開啟且 idle 30 分鐘才發生，不能偽裝成 delegation hook。
+- App 注入的 `wait_threads` 能 event-wait completion／needs-attention，`send_message_to_thread` 才能用 follow-up input 真正喚醒 idle source；source/child callback、cursor、receipt 與 restart recovery 的 canonical contract 在 `codex/notes/codex-task-delegation.md`，執行時使用 `codex-task-return` skill。
+- Private registry 是 app-coordination helper，不是 hook；不得把它加進 `codex/hooks.json`、Stop dispatcher 或 live hooks。
+
 ## tmux 一律經 Guardian（2026-07-29、`codex-cli 0.145.0` 驗證）
 
 - `workspace-sprin` 不允許 tmux Unix socket；Codex 直接執行或 command wrapper 中明示的任何 tmux 指令，都應在第一次呼叫時要求 scoped escalation，讓 `approvals_reviewer = "auto_review"` 的 Guardian 審查。read-only 指令也不例外。
