@@ -25,6 +25,10 @@ surface will be read by another agent.
 - Marker-file 完工合約: every delegated worker writes a report to PATH and ends
   it with one exact MARKER line; the controller polls the marker, not terminal
   visual state. Contract fields: mode (read-only / write-new-only / edit-allowed), allowed paths, forbidden actions, report path, marker, authority signature.
+- A Codex worker whose thread is visible in the Codex app must end its final
+  turn with a finished-state title via `name-task` (normally `📦`). If it has no
+  title tool, it reports the suggested title and the controller applies it with
+  `/rename` in that pane before closing it.
 - Use fixed nouns "CC" and "user", never 你/我 — a relative pronoun flips
   referent when a different agent reads the prompt.
 - Put long instructions in a file; keep the send-line a one-liner pointing at
@@ -175,8 +179,10 @@ cleanup actions such as `pkill`, reset, or clean with status queries in the same
 Bash call.
 
 Immediately before cleanup, capture the worker's latest state and confirm its
-report, marker, or other result has been accepted. An idle prompt is not proof
-of completion.
+report, marker, or other result has been accepted. Neither a marker nor an idle
+prompt proves the lifecycle is finished — a marker only proves the artifact is
+ready. Let the final turn and its title cleanup land, or diagnose what is
+pending.
 
 When a standalone worker session is no longer needed:
 
