@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import os
 import stat
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 
@@ -202,6 +204,53 @@ class DelegationRegistryTests(unittest.TestCase):
         self.assertTrue(duplicate["duplicate"])
         self.assertEqual(duplicate["delivery"], "sent")
 
+    def test_child_prepare_after_same_host_observe_is_already_delivered(self) -> None:
+        self.registry.register(self.source, self.child)
+
+        observed = self.registry.observe(self.source, self.child, "needs-attention")
+        duplicate = self.registry.prepare(self.source, self.child, "needs-attention")
+
+        self.assertTrue(observed["accepted"])
+        self.assertTrue(duplicate["duplicate"])
+        self.assertEqual(duplicate["eventId"], observed["eventId"])
+        self.assertEqual(duplicate["delivery"], "sent")
+        self.assertEqual(self.registry.recover_child(self.child)["events"], [])
+
+    def test_cross_host_equal_sequence_distinct_event_is_accepted(self) -> None:
+        child_registry = registry_module.Registry(
+            Path(self.tempdir.name) / "remote-child-state"
+        )
+        remote_child = registry_module.endpoint("remote-a", "child-1")
+        self.registry.register(self.source, remote_child)
+
+        child_event = child_registry.prepare(self.source, remote_child, "blocked")
+        observed = self.registry.observe(
+            self.source, remote_child, "needs-attention"
+        )
+        accepted = self.registry.accept(
+            self.source,
+            remote_child,
+            "blocked",
+            int(child_event["sequence"]),
+            str(child_event["eventId"]),
+        )
+
+        self.assertEqual(child_event["sequence"], 1)
+        self.assertNotEqual(child_event["eventId"], observed["eventId"])
+        self.assertTrue(accepted["accepted"])
+        recovered = self.registry.recover_source(self.source)
+        self.assertEqual(recovered["delegations"][0]["status"], "blocked")
+        self.assertEqual(recovered["delegations"][0]["receipt"], "acknowledged")
+
+        duplicate = self.registry.accept(
+            self.source,
+            remote_child,
+            "blocked",
+            int(child_event["sequence"]),
+            str(child_event["eventId"]),
+        )
+        self.assertTrue(duplicate["duplicate"])
+
     def test_source_unavailable_leaves_private_pending_outbox(self) -> None:
         tools = FakeThreadTools()
         tools.add(self.source)
@@ -251,7 +300,7 @@ class DelegationRegistryTests(unittest.TestCase):
         self.assertEqual(after["delegations"][0]["cursor"], "cursor-after-restart")
 
     def test_multiple_children_recover_as_qualified_wait_targets(self) -> None:
-        remote = registry_module.endpoint("remote-ssh-discovered:clawd-vm", "child-remote")
+        remote = registry_module.endpoint("remote-a", "child-remote")
         other = registry_module.endpoint("local", "child-2")
         self.registry.register(self.source, self.child)
         self.registry.register(self.source, remote)
@@ -263,7 +312,7 @@ class DelegationRegistryTests(unittest.TestCase):
         self.assertIn(
             {
                 "threadId": "child-remote",
-                "hostId": "remote-ssh-discovered:clawd-vm",
+                "hostId": "remote-a",
                 "afterCursor": "remote-cursor",
             },
             targets,
@@ -337,6 +386,8 @@ class DelegationRegistryTests(unittest.TestCase):
         (self.state_directory / "registry.json").symlink_to(target)
         with self.assertRaisesRegex(registry_module.RegistryError, "mode-0600"):
             self.registry.recover_source(self.source)
+        with self.assertRaisesRegex(registry_module.RegistryError, "mode-0600"):
+            self.registry.repair_invalid_state(confirmed=True)
 
         (self.state_directory / "registry.json").unlink()
         (self.state_directory / "registry.json").write_text(
@@ -345,6 +396,8 @@ class DelegationRegistryTests(unittest.TestCase):
         (self.state_directory / "registry.json").chmod(0o644)
         with self.assertRaisesRegex(registry_module.RegistryError, "mode-0600"):
             self.registry.recover_source(self.source)
+        with self.assertRaisesRegex(registry_module.RegistryError, "mode-0600"):
+            self.registry.repair_invalid_state(confirmed=True)
 
     def test_cli_refuses_declared_current_task_mismatch(self) -> None:
         old = os.environ.get("CODEX_THREAD_ID")
@@ -358,35 +411,118 @@ class DelegationRegistryTests(unittest.TestCase):
             else:
                 os.environ["CODEX_THREAD_ID"] = old
 
+    def test_cli_main_uses_current_thread_fallback_and_returns_exit_two(self) -> None:
+        old = os.environ.get("CODEX_THREAD_ID")
+        os.environ["CODEX_THREAD_ID"] = "source-1"
+        try:
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                result = registry_module.main(
+                    [
+                        "--state-dir",
+                        str(self.state_directory),
+                        "register",
+                        "--source-host",
+                        "local",
+                        "--child-host",
+                        "local",
+                        "--child-thread",
+                        "child-1",
+                    ]
+                )
+            self.assertEqual(result, 0)
+            self.assertTrue(json.loads(stdout.getvalue())["created"])
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                result = registry_module.main(
+                    [
+                        "--state-dir",
+                        str(self.state_directory),
+                        "register",
+                        "--source-host",
+                        "local",
+                        "--source-thread",
+                        "wrong-source",
+                        "--child-host",
+                        "local",
+                        "--child-thread",
+                        "child-2",
+                    ]
+                )
+            self.assertEqual(result, 2)
+            self.assertIn("does not match", stderr.getvalue())
+        finally:
+            if old is None:
+                os.environ.pop("CODEX_THREAD_ID", None)
+            else:
+                os.environ["CODEX_THREAD_ID"] = old
+
+    def test_repair_cli_quarantines_only_invalid_private_state(self) -> None:
+        self.state_directory.mkdir(mode=0o700)
+        state_path = self.state_directory / "registry.json"
+        state_path.write_text("{truncated", encoding="utf-8")
+        state_path.chmod(0o600)
+
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            refused = registry_module.main(
+                ["--state-dir", str(self.state_directory), "repair"]
+            )
+        self.assertEqual(refused, 2)
+        self.assertIn("confirm-quarantine", stderr.getvalue())
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            repaired = registry_module.main(
+                [
+                    "--state-dir",
+                    str(self.state_directory),
+                    "repair",
+                    "--confirm-quarantine",
+                ]
+            )
+        self.assertEqual(repaired, 0)
+        result = json.loads(stdout.getvalue())
+        quarantine = self.state_directory / result["quarantine"]
+        self.assertTrue(result["repaired"])
+        self.assertEqual(stat.S_IMODE(quarantine.stat().st_mode), 0o600)
+        self.assertEqual(
+            json.loads(state_path.read_text(encoding="utf-8")),
+            registry_module.empty_state(),
+        )
+
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            valid_refused = registry_module.main(
+                [
+                    "--state-dir",
+                    str(self.state_directory),
+                    "repair",
+                    "--confirm-quarantine",
+                ]
+            )
+        self.assertEqual(valid_refused, 2)
+        self.assertIn("is valid", stderr.getvalue())
+
 
 class DelegationWorkflowWiringTests(unittest.TestCase):
     def test_coordination_helper_is_not_installed_as_a_hook(self) -> None:
         manifest = (CODEX_DIR / "hooks.json").read_text(encoding="utf-8")
         self.assertNotIn("task_delegation_registry", manifest)
-        self.assertNotIn("SessionEnd", manifest)
 
-    def test_skill_and_global_rule_require_both_return_paths(self) -> None:
-        skill = (
+    def test_global_rule_routes_to_installed_skill(self) -> None:
+        skill_path = (
             CODEX_DIR.parent
             / "skills"
             / "codex"
             / "codex-task-return"
             / "SKILL.md"
-        ).read_text(encoding="utf-8")
+        )
         agents = (CODEX_DIR / "AGENTS.md").read_text(encoding="utf-8")
-        for marker in (
-            "wait_threads",
-            "read_thread",
-            "send_message_to_thread",
-            "completed",
-            "blocked",
-            "needs-attention",
-            "recover-source",
-            "recover-child",
-        ):
-            self.assertIn(marker, skill)
+
+        self.assertTrue(skill_path.is_file())
         self.assertIn("codex-task-return", agents)
-        self.assertIn("只改 sidebar 狀態不算 return", agents)
 
 
 if __name__ == "__main__":

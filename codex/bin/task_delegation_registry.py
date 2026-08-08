@@ -17,6 +17,7 @@ import re
 import stat
 import sys
 import tempfile
+import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
@@ -239,7 +240,7 @@ class Registry:
         self.lock_path = self.directory / "registry.lock"
 
     @contextmanager
-    def locked_state(self, *, write: bool) -> Iterator[dict[str, object]]:
+    def locked(self) -> Iterator[None]:
         ensure_private_directory(self.directory)
         flags = os.O_RDWR | os.O_CREAT
         if hasattr(os, "O_NOFOLLOW"):
@@ -249,13 +250,40 @@ class Registry:
             os.fchmod(descriptor, 0o600)
             validate_private_file(self.lock_path)
             fcntl.flock(descriptor, fcntl.LOCK_EX)
+            yield
+        finally:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+            os.close(descriptor)
+
+    @contextmanager
+    def locked_state(self, *, write: bool) -> Iterator[dict[str, object]]:
+        with self.locked():
             state = load_state(self.path)
             yield state
             if write:
                 write_state_atomic(self.path, state)
-        finally:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
-            os.close(descriptor)
+
+    def repair_invalid_state(self, *, confirmed: bool) -> dict[str, object]:
+        """Quarantine a private but unreadable registry and start empty."""
+        if not confirmed:
+            raise RegistryError("repair requires --confirm-quarantine")
+        with self.locked():
+            try:
+                validate_private_file(self.path)
+            except FileNotFoundError as exc:
+                raise RegistryError("delegation registry does not exist") from exc
+            try:
+                validate_state(json.loads(self.path.read_text(encoding="utf-8")))
+            except (json.JSONDecodeError, RegistryError) as exc:
+                quarantine = self.directory / f"registry.invalid-{time.time_ns()}.json"
+                self.path.replace(quarantine)
+                write_state_atomic(self.path, empty_state())
+                return {
+                    "repaired": True,
+                    "quarantine": quarantine.name,
+                    "reason": str(exc),
+                }
+            raise RegistryError("delegation registry is valid; repair refused")
 
     @staticmethod
     def _record_for(
@@ -341,7 +369,14 @@ class Registry:
                 assert isinstance(outbox, dict)
                 existing = outbox.get(last_event_id)
                 if not isinstance(existing, dict):
-                    raise RegistryError("delegation event is missing from the local outbox")
+                    existing = {
+                        "eventId": last_event_id,
+                        "sequence": record["sequence"],
+                        "source": source,
+                        "child": child,
+                        "status": status_value,
+                        "delivery": "sent",
+                    }
                 result = dict(existing)
                 result["duplicate"] = True
                 result["message"] = event_message(existing)
@@ -416,12 +451,18 @@ class Registry:
             if record is None:
                 raise RegistryError("source has no registered delegation for this child")
             accepted_sequence = int(record["lastAcceptedSequence"])
-            if sequence <= accepted_sequence:
-                duplicate = sequence == accepted_sequence and record.get("lastEventId") == event_id
+            if sequence < accepted_sequence:
                 return {
                     "accepted": False,
-                    "duplicate": duplicate,
-                    "stale": not duplicate,
+                    "duplicate": False,
+                    "stale": True,
+                    "eventId": event_id,
+                }
+            if sequence == accepted_sequence and record.get("lastEventId") == event_id:
+                return {
+                    "accepted": False,
+                    "duplicate": True,
+                    "stale": False,
                     "eventId": event_id,
                 }
             record.update(
@@ -632,6 +673,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     recover_child_parser = commands.add_parser("recover-child")
     add_child(recover_child_parser, current=True)
+
+    repair_parser = commands.add_parser("repair")
+    repair_parser.add_argument("--confirm-quarantine", action="store_true")
     return parser
 
 
@@ -681,6 +725,8 @@ def main(argv: list[str] | None = None) -> int:
             child = endpoint_from_args(args, "child", current=True)
             require_current(child, "child")
             result = registry.recover_child(child)
+        elif args.command == "repair":
+            result = registry.repair_invalid_state(confirmed=args.confirm_quarantine)
         else:  # pragma: no cover - argparse enforces the choices.
             raise RegistryError("unsupported command")
     except (OSError, RegistryError) as exc:

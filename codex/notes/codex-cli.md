@@ -5,7 +5,7 @@
 ## Codex App delegated-task return（2026-08-09、desktop `26.803.41515`／`codex-cli 0.147.0` 驗證）
 
 - `Stop`／`SessionEnd` 都不是另一個 App task 的 completion callback；`SessionEnd` 可能到 archive/delete、正常關閉或無 client 開啟且 idle 30 分鐘才發生，不能偽裝成 delegation hook。
-- App 注入的 `wait_threads` 能 event-wait completion／needs-attention，`send_message_to_thread` 才能用 follow-up input 真正喚醒 idle source；source/child callback、cursor、receipt 與 restart recovery 的 canonical contract 在 `codex/notes/codex-task-delegation.md`，執行時使用 `codex-task-return` skill。
+- App thread tools 的能力邊界與 canonical return contract 見 `codex/notes/codex-task-delegation.md`；執行時使用 `codex-task-return` skill。
 - Private registry 是 app-coordination helper，不是 hook；不得把它加進 `codex/hooks.json`、Stop dispatcher 或 live hooks。
 
 ## tmux 一律經 Guardian（2026-07-29、`codex-cli 0.145.0` 驗證）

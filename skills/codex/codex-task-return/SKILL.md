@@ -16,6 +16,9 @@ Use `$HOME/.codex/bin/task_delegation_registry.py` only for minimal private
 receipts. It never calls App APIs. Do not add a hook, daemon, tmux worker, raw
 App database reader, or high-frequency poller.
 
+For the capability evidence, event contract, and failure/recovery table, read
+`codex/notes/codex-task-delegation.md` in the dotfiles repo.
+
 ## Establish the contract
 
 Before creating the child:
@@ -122,10 +125,29 @@ If `wait_threads` reports a terminal/attention state before a callback arrives,
 fresh-read the child, handle it, then record the observed state with `observe`.
 This makes a later copy of the same callback a duplicate.
 
+```bash
+python3 "$HOME/.codex/bin/task_delegation_registry.py" observe \
+  --source-host '<source-host>' \
+  --child-host '<child-host>' \
+  --child-thread '<child-thread>' \
+  --status '<status>'
+```
+
 Never echo a delegation event back to the child. A normal source-to-child
 follow-up still requires a fresh child read. When work resumes after an
-attention state, run `resume --as-role source` in the source and ask the child
-to run `resume --as-role child`; the next event then gets a new sequence.
+attention state, both roles record the transition; the next event then gets a
+new sequence:
+
+```bash
+python3 "$HOME/.codex/bin/task_delegation_registry.py" resume \
+  --source-host '<source-host>' \
+  --source-thread '<source-thread>' \
+  --child-host '<child-host>' \
+  --child-thread '<child-thread>' \
+  --as-role source
+```
+
+Ask the child to run the same command with `--as-role child`.
 
 ## Restart and duplicate recovery
 
@@ -155,6 +177,18 @@ snapshot is the recovery path for a send/receipt crash window.
 
 Repeated `prepare`, `mark-sent`, and `accept` calls are idempotent. Ignore an
 accepted duplicate or older sequence. Never auto-archive or delete either task.
+
+If every command rejects a private registry as malformed or unsupported, use
+the explicit repair only after recording the affected task IDs elsewhere:
+
+```bash
+python3 "$HOME/.codex/bin/task_delegation_registry.py" repair \
+  --confirm-quarantine
+```
+
+This keeps the invalid mode-0600 file beside the new empty registry. Rebuild
+source registrations from the source conversations and take immediate
+`wait_threads` snapshots; do not delete the quarantined copy automatically.
 
 ## User-facing behavior
 

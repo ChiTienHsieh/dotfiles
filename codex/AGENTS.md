@@ -52,7 +52,7 @@
 - 修改 prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric 等行為規則時，除了 safety review，也要做 simplify review。它要找出只針對單次事故的過窄規則、過度工程化，以及能否換成更通用的說法，並逐項回報 Keep / Simplify / Drop。只有安全問題嚴重到不能放行，或確實有明顯更簡潔的通用規則時，才要求修改。
 
 ## 跨 task / session 傳訊
-- 使用 Codex App 的 `create_thread`／`fork_thread` 委派工作時，MUST 使用 `codex-task-return` skill：來源 task 註冊 qualified source/child、以 `wait_threads` 等待，child 用 `completed`／`blocked`／`needs-attention` callback 真正喚醒來源；只改 sidebar 狀態不算 return。
+- 使用 Codex App 的 `create_thread`／`fork_thread` 委派工作時，MUST 使用 `codex-task-return` skill；只改 sidebar 狀態不算 return。
 - 向其他 Codex task/thread、tmux session/pane 或 agent session 傳送任何訊息前，MUST 緊鄰傳送動作先讀取收件方最新可用內容與執行狀態；先前快照、摘要、標題或記憶不得代替。
 - 若讀取失敗、內容不足以判斷，或無法確認收件方目前工作，MUST 不傳送並先回報 blocker。提醒、暫停、狀態同步與 follow-up 也不例外。
 

@@ -87,11 +87,7 @@ Delegation is not fire-and-forget. If this thread creates or continues another C
 Required loop:
 
 1. Use the `codex-task-return` skill for the full callback, receipt, and recovery contract.
-2. Keep the delegated `threadId`/`hostId`, title/purpose, expected output, and source task in the source context; the private registry stores only minimal ids/status/cursors.
-3. Put the qualified source endpoint and `completed`/`blocked`/`needs-attention` callback instruction in the delegated prompt.
-4. Register the ready child and use one bounded `wait_threads` call with its cursor. Do not repeatedly poll `read_thread`.
-5. When callback or wait returns, fresh-read the child, act on its verdict, and acknowledge the deterministic event. Archive only when the user explicitly requested archive cleanup.
-6. If the worker is still running when this turn must end, say explicitly:
+2. Do not repeatedly poll `read_thread`. If the worker is still running when this turn must end, say explicitly:
    - which delegated thread is still running
    - what it is expected to return
    - that the child callback will wake this source and `recover-source` can rebuild the wait after restart

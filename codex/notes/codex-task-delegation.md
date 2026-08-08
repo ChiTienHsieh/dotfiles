@@ -57,6 +57,10 @@ does not contain prompts, final answers, browser data, tokens, or personal data.
 The source always fresh-reads the child because the callback is only a wake
 signal.
 
+`eventId` is an idempotency key, not an authentication token. Fresh-read is an
+agent-enforced App-tool ordering rule; the registry cannot independently prove
+that a read happened because it deliberately has no App API access.
+
 ## Delivery and recovery semantics
 
 The protocol is at-least-once wake delivery with idempotent handling:
@@ -82,6 +86,7 @@ Failure behavior is conservative:
 | Older delayed event | Lower accepted sequence is stale and ignored |
 | Multiple children | Registry keeps independent qualified records; wait in batches of eight |
 | Same thread or conflicting source | Registry rejects self-notification and rebinding |
+| Malformed or unsupported private registry | Explicit `repair --confirm-quarantine` preserves the invalid mode-0600 file, starts empty, then sources rebuild registrations and snapshot children |
 
 `notLoaded` is a normal runtime state, not an unavailable source: a successful
 fresh read permits the child to send and wake it. A read error, missing exact
@@ -101,6 +106,11 @@ State is host-local, not synchronized. Both endpoints are host-qualified, and
 each participating host needs the helper installed. For a remote child, its
 outbox survives on that host while the source registry and `wait_threads`
 snapshot independently reconcile the child from the source host.
+
+The registry currently retains settled delegation and outbox metadata so old
+receipts remain auditable; there is no automatic prune. Repair never deletes its
+quarantined input, and no workflow should remove it without an explicit cleanup
+decision.
 
 The helper does not call App APIs, poll, archive, delete, or send messages. The
 `codex-task-return` skill owns the App-tool sequence and the always-loaded
