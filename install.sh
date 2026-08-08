@@ -386,12 +386,14 @@ ensure_real_dir "$HOME/.agents/skills"
 # NOTE: codex/skills/.system was removed from the repo — codex-cli manages and
 # updates its own system skills under ~/.codex/skills/.system; vendoring a
 # snapshot here only re-installs stale copies over the live ones.
+# Keep ~/.codex/skills links for Codex surfaces that still use the legacy path.
 for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
     is_linkable_skill_dir "$skill" || continue
     backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
 done
 prune_stale_dotfiles_links "$HOME/.codex/skills"
-for skill in "$DOTFILES_DIR"/skills/shared/*; do
+# Current Codex releases discover user-level skills from ~/.agents/skills.
+for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
     is_linkable_skill_dir "$skill" || continue
     backup_and_link "$skill" "$HOME/.agents/skills/$(basename "$skill")"
 done

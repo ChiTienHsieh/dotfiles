@@ -28,10 +28,9 @@
 - **During**：如果偏離 plan、做保守假設、或遇到會影響 review 的決策，記在既有 PR body / report / handoff note；長任務或多 agent 接力才開獨立 notes。
 - **Post**：用 during 的決策紀錄加上 diff 當素材，產出 decisions-first 理解報告與 quiz。
 
-## 路由
+## Mode Boundaries
 
-口語觸發詞（user 的慣用叫法）：**preflight** ＝ pre-implementation，**debrief** ＝ post-implementation。
-
-- Pre-implementation coaching（「preflight」「run preflight」）：讀 `pre-implementation.md`。
-- Post-implementation understanding 或 merge/push 前 quiz（「debrief」「debrief time」）：讀 `post-implementation.md`。
-- during notes 是一般 implementation 行為，不是純教學；只在需要形成 post quiz 素材時拉進來。
+`SKILL.md` 的 Reference Router 直接選擇各 mode；本檔不再路由其他
+reference。口語觸發詞：**preflight** ＝ pre-implementation，**debrief** ＝
+post-implementation。During notes 是一般 implementation 行為，不是純教學；
+只在需要形成 post quiz 素材時拉進來。
