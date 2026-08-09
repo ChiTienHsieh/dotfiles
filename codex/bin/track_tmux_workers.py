@@ -45,16 +45,11 @@ OPEN_FORMATS = {
     "session": "CODEX_TMUX_WORKER_OPEN=session:#{session_name}",
     "pane": "CODEX_TMUX_WORKER_OPEN=pane:#{pane_id}",
 }
-SESSION_CLOSED_RECEIPT_RE = re.compile(
-    r"^\s*tmux\s+has-session\s+-t\s+(?P<target>[A-Za-z0-9_.-]+)"
-    r"\s+2>/dev/null\s+\|\|\s+printf\s+'%s\\n'\s+"
-    r"'CODEX_TMUX_WORKER_CLOSED=session:(?P<marker>[A-Za-z0-9_.-]+)'\s*$"
+SESSION_CLOSED_MARKER_RE = re.compile(
+    r"'CODEX_TMUX_WORKER_CLOSED=session:(?P<target>[A-Za-z0-9_.-]+)'"
 )
-PANE_CLOSED_RECEIPT_RE = re.compile(
-    r"^\s*tmux\s+list-panes\s+-a\s+-F\s+'#\{pane_id\}'\s+2>/dev/null"
-    r"\s+\|\s+grep\s+-Fx\s+--\s+'(?P<target>%[0-9]+)'\s+>/dev/null"
-    r"\s+\|\|\s+printf\s+'%s\\n'\s+"
-    r"'CODEX_TMUX_WORKER_CLOSED=pane:(?P<marker>%[0-9]+)'\s*$"
+PANE_CLOSED_MARKER_RE = re.compile(
+    r"'CODEX_TMUX_WORKER_CLOSED=pane:(?P<target>%[0-9]+)'"
 )
 
 
@@ -240,24 +235,53 @@ def canonical_open_targets(command: str | None, kind: str) -> set[str]:
 
 
 def canonical_closed_targets(command: str | None, kind: str) -> set[str]:
-    receipt_re = (
-        SESSION_CLOSED_RECEIPT_RE if kind == "session" else PANE_CLOSED_RECEIPT_RE
-    )
     if command is None:
         return set()
-    match = receipt_re.fullmatch(command)
-    if match and match.group("target") == match.group("marker"):
-        return {match.group("target")}
-    return set()
+    marker_re = SESSION_CLOSED_MARKER_RE if kind == "session" else PANE_CLOSED_MARKER_RE
+    match = marker_re.search(command)
+    if not match:
+        return set()
+    target = match.group("target")
+    expected = (
+        session_closed_receipt_command(target)
+        if kind == "session"
+        else pane_closed_receipt_command(target)
+    )
+    return {target} if command == expected else set()
+
+
+def _closed_receipt_command(
+    *, list_args: str, format_field: str, target: str, marker: str
+) -> str:
+    return (
+        f"codex_tmux_targets=$(tmux {list_args} -F '#{{{format_field}}}' 2>/dev/null) && {{ "
+        "printf '%s\\n' \"$codex_tmux_targets\" | "
+        f"grep -Fx -- '{target}' >/dev/null; codex_tmux_grep_status=$?; "
+        "if [ \"$codex_tmux_grep_status\" -eq 1 ]; then "
+        f"printf '%s\\n' '{marker}'; "
+        "else [ \"$codex_tmux_grep_status\" -eq 0 ]; fi; }"
+    )
+
+
+def session_closed_receipt_command(target: str) -> str:
+    if not SESSION_RE.fullmatch(target):
+        raise ValueError("invalid tmux session target")
+    return _closed_receipt_command(
+        list_args="list-sessions",
+        format_field="session_name",
+        target=target,
+        marker=f"CODEX_TMUX_WORKER_CLOSED=session:{target}",
+    )
 
 
 def pane_closed_receipt_command(target: str) -> str:
     if not PANE_RE.fullmatch(target):
         raise ValueError("invalid tmux pane target")
-    return (
-        "tmux list-panes -a -F '#{pane_id}' 2>/dev/null | "
-        f"grep -Fx -- '{target}' >/dev/null || printf '%s\\n' "
-        f"'CODEX_TMUX_WORKER_CLOSED=pane:{target}'"
+    return _closed_receipt_command(
+        list_args="list-panes -a",
+        format_field="pane_id",
+        target=target,
+        marker=f"CODEX_TMUX_WORKER_CLOSED=pane:{target}",
     )
 
 
@@ -354,8 +378,7 @@ def stop_guard(payload: dict[str, object]) -> int:
             cleanup_commands.extend(
                 [
                     f"tmux kill-session -t {target}",
-                    f"tmux has-session -t {target} 2>/dev/null || printf '%s\\n' "
-                    f"'CODEX_TMUX_WORKER_CLOSED=session:{target}'",
+                    session_closed_receipt_command(target),
                 ]
             )
         else:

@@ -40,8 +40,11 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         "-s review-one -c /tmp 'claude --model opus'"
     )
     SESSION_CLOSE = (
-        "tmux has-session -t review-one 2>/dev/null || "
-        "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'"
+        "codex_tmux_targets=$(tmux list-sessions -F '#{session_name}' 2>/dev/null) && { "
+        "printf '%s\\n' \"$codex_tmux_targets\" | grep -Fx -- 'review-one' >/dev/null; "
+        "codex_tmux_grep_status=$?; if [ \"$codex_tmux_grep_status\" -eq 1 ]; then "
+        "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'; "
+        "else [ \"$codex_tmux_grep_status\" -eq 0 ]; fi; }"
     )
     PANE_OPEN = (
         "tmux split-window -h -P \\\n"
@@ -49,9 +52,11 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         "-t controller -c /tmp 'codex --sandbox read-only'"
     )
     PANE_CLOSE = (
-        "tmux list-panes -a -F '#{pane_id}' 2>/dev/null | "
-        "grep -Fx -- '%42' >/dev/null || "
-        "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'"
+        "codex_tmux_targets=$(tmux list-panes -a -F '#{pane_id}' 2>/dev/null) && { "
+        "printf '%s\\n' \"$codex_tmux_targets\" | grep -Fx -- '%42' >/dev/null; "
+        "codex_tmux_grep_status=$?; if [ \"$codex_tmux_grep_status\" -eq 1 ]; then "
+        "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'; "
+        "else [ \"$codex_tmux_grep_status\" -eq 0 ]; fi; }"
     )
 
     def setUp(self) -> None:
@@ -128,20 +133,39 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         )
         self.assertEqual(tracker.load_workers(self.session_id), set())
 
-    def test_pane_receipt_checks_list_output_not_display_message_exit(self) -> None:
+    def test_receipts_fail_closed_on_query_and_grep_errors(self) -> None:
         fake_bin = Path(self.tempdir.name) / "bin"
         fake_bin.mkdir()
         fake_tmux = fake_bin / "tmux"
         fake_tmux.write_text(
             "#!/bin/sh\n"
             "case \"$1\" in\n"
-            "  list-panes) printf '%%41\\n%%43\\n' ;;\n"
+            "  list-panes)\n"
+            "    [ \"$CODEX_TEST_TMUX_FAIL\" = 1 ] && exit 2\n"
+            "    printf '%%41\\n%%43\\n' ;;\n"
+            "  list-sessions)\n"
+            "    [ \"$CODEX_TEST_TMUX_FAIL\" = 1 ] && exit 2\n"
+            "    printf 'review-other\\n' ;;\n"
             "  display-message) exit 0 ;;\n"
             "  *) exit 2 ;;\n"
             "esac\n",
             encoding="utf-8",
         )
         fake_tmux.chmod(0o700)
+        real_grep = subprocess.run(
+            ["/bin/sh", "-c", "command -v grep"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        fake_grep = fake_bin / "grep"
+        fake_grep.write_text(
+            "#!/bin/sh\n"
+            "[ \"$CODEX_TEST_GREP_FAIL\" = 1 ] && exit 2\n"
+            f"exec '{real_grep}' \"$@\"\n",
+            encoding="utf-8",
+        )
+        fake_grep.chmod(0o700)
         environment = dict(os.environ)
         environment["PATH"] = f"{fake_bin}:{environment['PATH']}"
 
@@ -167,6 +191,48 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         self.assertEqual(present.returncode, 0)
         self.assertEqual(present.stdout, "")
 
+        for failure_variable in ("CODEX_TEST_TMUX_FAIL", "CODEX_TEST_GREP_FAIL"):
+            failed_environment = dict(environment)
+            failed_environment[failure_variable] = "1"
+            failure = subprocess.run(
+                ["/bin/sh", "-c", self.PANE_CLOSE],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=failed_environment,
+            )
+            self.assertNotEqual(failure.returncode, 0)
+            self.assertEqual(failure.stdout, "")
+            tracker.save_workers(self.session_id, {("pane", "%42")})
+            self.post(self.PANE_CLOSE, failure.stdout)
+            self.assertEqual(
+                tracker.load_workers(self.session_id), {("pane", "%42")}
+            )
+
+        session_missing = subprocess.run(
+            ["/bin/sh", "-c", self.SESSION_CLOSE],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        self.assertEqual(session_missing.returncode, 0)
+        self.assertEqual(
+            session_missing.stdout,
+            "CODEX_TMUX_WORKER_CLOSED=session:review-one\n",
+        )
+        session_query_failure_environment = dict(environment)
+        session_query_failure_environment["CODEX_TEST_TMUX_FAIL"] = "1"
+        session_query_failure = subprocess.run(
+            ["/bin/sh", "-c", self.SESSION_CLOSE],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=session_query_failure_environment,
+        )
+        self.assertNotEqual(session_query_failure.returncode, 0)
+        self.assertEqual(session_query_failure.stdout, "")
+
         legacy = (
             "tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || "
             "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'"
@@ -190,6 +256,15 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "invalid"):
             tracker.pane_closed_receipt_command("%42;touch-bad")
+
+        session_command = tracker.session_closed_receipt_command("review-one")
+        self.assertEqual(session_command, self.SESSION_CLOSE)
+        self.assertEqual(
+            tracker.canonical_closed_targets(session_command, "session"),
+            {"review-one"},
+        )
+        with self.assertRaisesRegex(ValueError, "invalid"):
+            tracker.session_closed_receipt_command("review-one;touch-bad")
 
     def test_ignores_marker_without_matching_tmux_action(self) -> None:
         self.post(

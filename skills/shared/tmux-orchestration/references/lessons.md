@@ -44,7 +44,7 @@ Failure patterns:
 - `tmux display-message -p -t %NN '#{pane_id}'` can exit 0 with empty output
   for a nonexistent pane, so it cannot prove absence. Canonical pane receipts
   must list all pane ids and exact-match the target before emitting CLOSED
-  (2026-08-09 `%50`/`%51` stale-ledger incident).
+  (2026-08-09 stale-ledger incident).
 - `/quit` needs a moment before the next launch command; sleep before
   relaunching.
 - A directory-trust prompt appears on first Codex launch in a new dir; answer 1.

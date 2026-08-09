@@ -195,8 +195,8 @@ absence receipt below in a separate command. It verifies that the exact target
 is gone before printing the closed marker:
 
 ```bash
-tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
-tmux list-panes -a -F '#{pane_id}' 2>/dev/null | grep -Fx -- '%42' >/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
+codex_tmux_targets=$(tmux list-sessions -F '#{session_name}' 2>/dev/null) && { printf '%s\n' "$codex_tmux_targets" | grep -Fx -- 'SESSION_NAME' >/dev/null; codex_tmux_grep_status=$?; if [ "$codex_tmux_grep_status" -eq 1 ]; then printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'; else [ "$codex_tmux_grep_status" -eq 0 ]; fi; }
+codex_tmux_targets=$(tmux list-panes -a -F '#{pane_id}' 2>/dev/null) && { printf '%s\n' "$codex_tmux_targets" | grep -Fx -- '%42' >/dev/null; codex_tmux_grep_status=$?; if [ "$codex_tmux_grep_status" -eq 1 ]; then printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'; else [ "$codex_tmux_grep_status" -eq 0 ]; fi; }
 ```
 
 The lifecycle hook accepts only these canonical default-server command shapes;
