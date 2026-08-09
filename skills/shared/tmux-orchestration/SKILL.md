@@ -196,7 +196,7 @@ is gone before printing the closed marker:
 
 ```bash
 tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
-tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
+tmux list-panes -a -F '#{pane_id}' 2>/dev/null | grep -Fx -- '%42' >/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
 ```
 
 The lifecycle hook accepts only these canonical default-server command shapes;

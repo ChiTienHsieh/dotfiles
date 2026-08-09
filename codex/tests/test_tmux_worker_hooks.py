@@ -6,6 +6,7 @@ import importlib.util
 import json
 import os
 import stat
+import subprocess
 import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
@@ -48,7 +49,8 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         "-t controller -c /tmp 'codex --sandbox read-only'"
     )
     PANE_CLOSE = (
-        "tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || "
+        "tmux list-panes -a -F '#{pane_id}' 2>/dev/null | "
+        "grep -Fx -- '%42' >/dev/null || "
         "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'"
     )
 
@@ -61,11 +63,18 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         self.session_id = "codex-session-1"
 
     def post(
-        self, command: str, response: str, *, description: str | None = None
+        self,
+        command: str,
+        response: str,
+        *,
+        description: str | None = None,
+        shell: str | None = None,
     ) -> dict[str, object]:
         tool_input = {"command": command}
         if description is not None:
             tool_input["description"] = description
+        if shell is not None:
+            tool_input["shell"] = shell
         payload = {
             "hook_event_name": "PostToolUse",
             "session_id": self.session_id,
@@ -118,6 +127,69 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             "CODEX_TMUX_WORKER_CLOSED=pane:%42\n",
         )
         self.assertEqual(tracker.load_workers(self.session_id), set())
+
+    def test_pane_receipt_checks_list_output_not_display_message_exit(self) -> None:
+        fake_bin = Path(self.tempdir.name) / "bin"
+        fake_bin.mkdir()
+        fake_tmux = fake_bin / "tmux"
+        fake_tmux.write_text(
+            "#!/bin/sh\n"
+            "case \"$1\" in\n"
+            "  list-panes) printf '%%41\\n%%43\\n' ;;\n"
+            "  display-message) exit 0 ;;\n"
+            "  *) exit 2 ;;\n"
+            "esac\n",
+            encoding="utf-8",
+        )
+        fake_tmux.chmod(0o700)
+        environment = dict(os.environ)
+        environment["PATH"] = f"{fake_bin}:{environment['PATH']}"
+
+        missing = subprocess.run(
+            ["/bin/sh", "-c", self.PANE_CLOSE],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        self.assertEqual(missing.returncode, 0)
+        self.assertEqual(
+            missing.stdout, "CODEX_TMUX_WORKER_CLOSED=pane:%42\n"
+        )
+
+        present = subprocess.run(
+            ["/bin/sh", "-c", self.PANE_CLOSE.replace("%42", "%41")],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        self.assertEqual(present.returncode, 0)
+        self.assertEqual(present.stdout, "")
+
+        legacy = (
+            "tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || "
+            "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'"
+        )
+        legacy_result = subprocess.run(
+            ["/bin/sh", "-c", legacy],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+        self.assertEqual(legacy_result.returncode, 0)
+        self.assertEqual(legacy_result.stdout, "")
+        self.assertEqual(tracker.canonical_closed_targets(legacy, "pane"), set())
+
+    def test_pane_receipt_generator_matches_the_canonical_parser(self) -> None:
+        command = tracker.pane_closed_receipt_command("%42")
+        self.assertEqual(command, self.PANE_CLOSE)
+        self.assertEqual(
+            tracker.canonical_closed_targets(command, "pane"), {"%42"}
+        )
+        with self.assertRaisesRegex(ValueError, "invalid"):
+            tracker.pane_closed_receipt_command("%42;touch-bad")
 
     def test_ignores_marker_without_matching_tmux_action(self) -> None:
         self.post(
@@ -178,6 +250,15 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         self.assertEqual(
             tracker.load_workers(self.session_id), {("session", "review-one")}
         )
+
+    def test_rejects_closed_marker_from_custom_shell(self) -> None:
+        tracker.save_workers(self.session_id, {("pane", "%42")})
+        self.post(
+            self.PANE_CLOSE,
+            "CODEX_TMUX_WORKER_CLOSED=pane:%42\n",
+            shell="/private/tmp/fake-tmux-shell",
+        )
+        self.assertEqual(tracker.load_workers(self.session_id), {("pane", "%42")})
 
     def test_tracks_cushion_session_launch(self) -> None:
         command = (

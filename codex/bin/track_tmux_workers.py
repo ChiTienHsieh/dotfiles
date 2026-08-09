@@ -51,8 +51,9 @@ SESSION_CLOSED_RECEIPT_RE = re.compile(
     r"'CODEX_TMUX_WORKER_CLOSED=session:(?P<marker>[A-Za-z0-9_.-]+)'\s*$"
 )
 PANE_CLOSED_RECEIPT_RE = re.compile(
-    r"^\s*tmux\s+display-message\s+-p\s+-t\s+(?P<target>%[0-9]+)"
-    r"\s+'#\{pane_id\}'\s+>/dev/null\s+2>&1\s+\|\|\s+printf\s+'%s\\n'\s+"
+    r"^\s*tmux\s+list-panes\s+-a\s+-F\s+'#\{pane_id\}'\s+2>/dev/null"
+    r"\s+\|\s+grep\s+-Fx\s+--\s+'(?P<target>%[0-9]+)'\s+>/dev/null"
+    r"\s+\|\|\s+printf\s+'%s\\n'\s+"
     r"'CODEX_TMUX_WORKER_CLOSED=pane:(?P<marker>%[0-9]+)'\s*$"
 )
 
@@ -207,6 +208,8 @@ def option_value(tokens: list[str], option: str) -> str | None:
 def bash_command(tool_input: object) -> str | None:
     if not isinstance(tool_input, dict):
         return None
+    if tool_input.get("shell") is not None:
+        return None
     command = tool_input.get("command")
     return command if isinstance(command, str) else None
 
@@ -246,6 +249,16 @@ def canonical_closed_targets(command: str | None, kind: str) -> set[str]:
     if match and match.group("target") == match.group("marker"):
         return {match.group("target")}
     return set()
+
+
+def pane_closed_receipt_command(target: str) -> str:
+    if not PANE_RE.fullmatch(target):
+        raise ValueError("invalid tmux pane target")
+    return (
+        "tmux list-panes -a -F '#{pane_id}' 2>/dev/null | "
+        f"grep -Fx -- '{target}' >/dev/null || printf '%s\\n' "
+        f"'CODEX_TMUX_WORKER_CLOSED=pane:{target}'"
+    )
 
 
 def lifecycle_markers(tool_response: object) -> set[tuple[str, str, str]]:
@@ -349,9 +362,7 @@ def stop_guard(payload: dict[str, object]) -> int:
             cleanup_commands.extend(
                 [
                     f"tmux kill-pane -t {target}",
-                    f"tmux display-message -p -t {target} '#{{pane_id}}' >/dev/null "
-                    f"2>&1 || printf '%s\\n' "
-                    f"'CODEX_TMUX_WORKER_CLOSED=pane:{target}'",
+                    pane_closed_receipt_command(target),
                 ]
             )
     cleanup = "\n".join(cleanup_commands)
