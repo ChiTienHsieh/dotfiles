@@ -11,9 +11,9 @@ state is, what was being worked on here recently, and what the sensible next
 step is. This is the **start-of-session** counterpart to `wrap`
 (end-of-session).
 
-If the progress question mentions a tmux pane, combine this skill with
-`tmux-orchestration`: where-am-i handles the recap, tmux-orchestration handles
-pane inspection.
+If the current human's progress question explicitly asks the agent to inspect a tmux
+pane, combine this skill with `tmux-orchestration`: where-am-i handles the
+recap, tmux-orchestration handles pane inspection.
 
 Read-only by default. The only action it may take is `git pull`, and
 only after the user confirms.

@@ -1,4 +1,4 @@
 interface:
   display_name: "tmux orchestration"
-  short_description: "Run and supervise interactive agents in tmux."
-  default_prompt: "Use $tmux-orchestration to run and observe an interactive agent in tmux."
+  short_description: "Human-opt-in interactive agent sessions in tmux."
+  default_prompt: "Use $tmux-orchestration only if my current request explicitly asks you to use tmux; otherwise do not activate it."
