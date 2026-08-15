@@ -82,8 +82,8 @@ codex --search exec -s read-only --skip-git-repo-check \
   prompt-injection / SSRF paths if the agent reads untrusted content (random
   repos, web pages, dependencies). See the orchestrator persona's reasoning.
 - Use it only over trusted inputs, and treat the result as if anything readable
-  on the machine could have left it. For heavier or less-trusted web work, prefer
-  an observable tmux surface so a human can watch.
+  on the machine could have left it. Keep heavier or less-trusted web work in
+  the current session or another user-selected observable surface.
 
 ### Key Flags
 
@@ -104,7 +104,8 @@ Gemini is NOT inherently read-only. Under a permissive approval mode
 edit/write tools can mutate the workspace. To use it safely headless, treat it
 like Codex: drive it with a `-p` prompt and capture text via stdout redirect,
 and do NOT enable yolo / auto-edit approval modes. Anything that should change
-files goes to a tmux surface, not a headless Gemini run.
+files stays in the current session or a user-selected worker surface, not a
+headless Gemini run.
 
 ### Basic Headless (read-only usage)
 ```bash
@@ -128,8 +129,8 @@ cat source.py | gmn -p "Analyze this code" --quiet > analysis.md
 
 `claude -p` bills against the user's Claude subscription. For nested
 `claude -p` runs, use `--permission-mode auto`; `bypassPermissions` exits 1.
-Keep headless Claude read-only unless the task is moved to an observable tmux
-surface.
+Keep headless Claude read-only unless the task is moved to the current session,
+a platform-native subagent, or another user-selected worker surface.
 
 ## Timeout Guidelines
 
