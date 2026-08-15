@@ -26,6 +26,7 @@
 - 2026-08-15: `closed loop`／`open loop` 術語本身不夠直覺；需用「使用者只和 Chief of Staff 對話」對比「使用者仍要自己查看 owning thread」來說明 follow-through 邊界。
 - 2026-08-15: 拍板 Chief of Staff 作為 single front door：授權後負責 fresh-read、relay／執行、poll、驗證與安全 archive；新決策回到本 thread，長時間外部等待則精確回報，不假裝會背景自動醒來。
 - 2026-08-15: Fresh forward-tests 正確執行 shortcut partial drift，並揭露 fullwidth-colon、跨 lane 重複與無介入 task 補滿 Top 3；實作已改成全域 ASCII bold labels、跨 lane 去重及不補滿策略卡。
+- 2026-08-15: Fresh safety review 揭露 follow-through 不能把「完成 permission gate」擴張成未明列的 archive 授權；修正為只有選項明列 archive 或 Chief of Staff 自建 disposable worker 才可直接封存。
 
 ## Known Gaps
 - 尚待下一次真實 multi-thread pile dogfood 驗證 Codex app end-to-end thread operations。

@@ -44,15 +44,13 @@ Rank at most three tasks by:
 2. **Project impact**: use this to break close calls.
 3. **User interest**: use this as the final tie-breaker.
 
-Do not pad the brief to three. Omit tasks where user intervention is not useful;
-never give a no-action wait a strategic heading or card. When it helps explain
-the operational picture, append only `**Watching:** <task> — <state>; no user
-action needed`.
+Create cards only for tasks where user intervention is useful. When an
+important no-action wait helps explain the operational picture, append only
+`**Watching:** <task> — <state>; no user action needed`.
 
 Explain the ranking in prose; do not invent numeric scores. Use plain vertical
 Markdown that survives mobile rendering. Do not use tables, HTML, or
-`visualize` for the default brief. Use ASCII colons inside every bold label,
-including `Shotcall` and cleanup labels:
+`visualize` for the default brief. Use ASCII colons inside every bold label:
 
 ```markdown
 ## Top pick: <task>
@@ -79,15 +77,14 @@ it separate from the intervention-leverage ranking:
 - **Close to archive**: the only remaining blocker is one explicit permission
   the user can grant to an owning thread.
 
-Do not repeat a task across the strategic and cleanup lanes. Put a cleanup-ready
-task only in `Focus cleanup` unless it has a distinct strategic decision that
-materially deserves a card; even then, cross-reference it instead of repeating
-the same explanation.
+Put each task in only one lane. When it has a distinct strategic decision,
+cross-reference it without repeating the cleanup explanation.
 
 Show at most five numbered actions per batch, with `Archive now` first and then
 the closest permission gates. State exactly what each number authorizes. If
 more candidates exist, show `+N more`; reply `0` produces the next read-only
-batch and invalidates every number from the previous batch.
+batch and invalidates every number from the previous batch. Accept `0` only by
+itself; do not guess an execution order when it is combined with other choices.
 
 Letters and numbers form separate namespaces and may be combined, for example
 `B 1 3`: choose strategic option `B` and authorize cleanup actions `1` and `3`.
@@ -103,7 +100,8 @@ Letters and numbers form separate namespaces and may be combined, for example
   content and execution state. If the stated action and targets still match,
   execute or relay that exact permission.
 - If state drift changes an action or target, invalidate its old authorization,
-  explain the change, and ask a fresh lettered MCQ from the new state. Never map
+  explain the change, and present a fresh choice in the new state's namespace:
+  letters for a real decision, numbers for refreshed cleanup actions. Never map
   an old answer onto a similar-looking new action.
 - In a combined reply, continue only selections proven independent and
   unchanged. Re-ask for drifted selections and anything that depends on them;
@@ -115,9 +113,12 @@ After an authorized action, keep the user in this Chief of Staff thread instead
 of making them inspect the owning thread:
 
 1. Execute or relay the exact action.
-2. Poll the owning thread and read its result.
-3. When it completes, verify archive eligibility from fresh state and archive
-   it when safe.
+2. Read the owning thread's latest state and poll only within a reasonable
+   current-turn wait; if it has not finished, continue at step 5.
+3. When it completes, fresh-read and report the result. Archive only when the
+   selected option explicitly authorized archiving or this Chief of Staff
+   created the disposable worker; otherwise surface it in the next `Focus
+   cleanup` batch.
 4. Bring any new decision or drift back here as one concise MCQ.
 5. For a long external wait, report the exact running state and next check;
    never pretend background monitoring will happen when no wake-up mechanism
@@ -133,7 +134,7 @@ When the user asks whether threads can be archived:
 2. Build a candidate list by searching related projects/workstream keywords.
 3. Classify each candidate:
    - **Archive now**: completed/idle/notLoaded, final answer exists, repo/worktree is clean or later state supersedes it.
-   - **Close to archive**: one exact user permission is the only remaining blocker.
+   - **Close to archive**: meets the permission-gate definition in `Focus cleanup` above.
    - **Keep**: active, waiting for user decision, waiting for CI/deploy/external state, or holds the only current context for an unfinished workstream.
    - **Blocked archive**: safe to archive, but tool call failed.
 4. If the user has clearly asked to archive, call `set_thread_archived` for all **Archive now** candidates. Do it in batches when safe.
@@ -193,7 +194,7 @@ Required loop:
    - what it is expected to return
    - when/how this Chief of Staff thread will check it again
 
-Never make the user act as the message bus between delegated Codex threads. If a review worker finishes and this thread misses it, that is a Chief of Staff failure, not a user task.
+If a review worker finishes and this thread misses it, that is a Chief of Staff failure, not a user task.
 
 ## Repo safety checks
 
