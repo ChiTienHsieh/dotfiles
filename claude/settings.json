@@ -100,6 +100,10 @@
     }
   },
   "language": "zh-TW",
+  "skillOverrides": {
+    "herdr": "user-invocable-only",
+    "tmux-orchestration": "user-invocable-only"
+  },
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,

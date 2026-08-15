@@ -23,4 +23,4 @@
 
 ## Submodules / Nvim
 - `nvim/` 是 git submodule（獨立 repo `ChiTienHsieh/nvim-config`）；更新用 `git submodule update --recursive`。
-- Nvim 配置：LazyVim 基底；補全用 blink.cmp（從 nvim-cmp 換來，效能）；AI 用 Copilot ghost text（`zbirenbaum/copilot.lua`）；遊戲化 triforce.nvim（需 `nvzone/volt`）。
+- Nvim 配置：LazyVim 基底；補全用 blink.cmp（從 nvim-cmp 換來，效能）；遊戲化 triforce.nvim（需 `nvzone/volt`）。

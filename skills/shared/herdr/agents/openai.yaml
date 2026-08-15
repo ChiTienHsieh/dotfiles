@@ -1,0 +1,7 @@
+interface:
+  display_name: "Herdr"
+  short_description: "Inspect and operate the current Herdr workspace."
+  default_prompt: "Use $herdr to inspect and operate this Herdr workspace."
+
+policy:
+  allow_implicit_invocation: false
