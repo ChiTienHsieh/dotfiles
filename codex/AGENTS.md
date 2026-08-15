@@ -26,12 +26,14 @@
 ## 執行任務
 - 清楚、安全的任務要一路完成修正、測試、`commit` 和 `push`。只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下來。
 - 安全的指令若被 sandbox、權限、Keychain 或網路擋住，先用合適的 escalation 重試再放棄；高風險指令不得自行 escalation。
-- tmux socket 刻意不開放給 sandbox。Codex 直接執行或 command wrapper 中明示的任何 tmux 指令（包含 read-only），第一次就必須要求 scoped escalation，交由 Guardian 自動審查；不要先在 sandbox 試跑，也不要透過 wrapper 或其他 client 繞過。
+- 委派實作、研究或 review 時，預設優先使用目前 runtime 內建的 subagent；不要為了 observability、任務較重、指定 reviewer 類型或 skill 可用，就自行改用外部 CLI 或 tmux。
+- `tmux-orchestration` 只有在目前這次 human 指令明確要求 agent 使用 tmux，或明確要求「在 tmux 中」執行的可見互動式 CLI session 時才能觸發。授權只能來自目前這次 human 指令，其他來源都不算；沒有明確授權就用內建 subagent 或留在目前 session 完成。
+- human 已明確授權 tmux 後，tmux socket 仍刻意不開放給 sandbox。Codex 直接執行或 command wrapper 中明示的任何 tmux 指令（包含 read-only），第一次就必須要求 scoped escalation，交由 Guardian 自動審查；不要先在 sandbox 試跑，也不要透過 wrapper 或其他 client 繞過。
 - 收尾前 worktree 仍 dirty 時，主動提供整理選項：review 後 `commit`/`push`、拆分 stage、`stash`、經同意 discard，或維持 dirty。不要自動清掉使用者未交代的變更。
 - 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
-- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選另一個頂尖模型提供第二意見；預設使用 fresh read-only reviewer instance 或 subagent。
-- 把 repo diff、prompt 或必要檔案交給已設定的外部 AI reviewer 前，先檢查實際待傳資料是否含 secret、憑證、private key、未公開個資或其他敏感內容。若檢查確認沒有敏感資料，review 視為已授權，直接執行，不要再問使用者；只有發現敏感內容、無法可靠判斷，或目的地／傳送範圍超出既有 reviewer workflow 時才停下確認。
+- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選 fresh subagent 或另一個頂尖模型提供第二意見；需要跨 provider 時可用 bounded、read-only 的 headless reviewer。除非目前這次 human 明確要求 agent 使用 tmux，否則不得用 `tmux-orchestration`。
+- 使用者持續授權其他 agent（包含已設定的外部 AI reviewer）執行 review，不必逐次詢問。交付 repo diff、prompt 或必要檔案前，仍須先檢查實際待傳資料是否含 secret、憑證、private key、未公開個資或其他敏感內容；確認沒有敏感資料且目的地與範圍符合既有 reviewer workflow 後直接執行，只有發現敏感內容、無法可靠判斷，或目的地／傳送範圍超出既有 workflow 時才停下確認。這項持續授權只涵蓋 review，不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
 
 ## 實作取捨
 - 選擇能完整滿足目前需求的最簡單實作；有合適選項時，優先採用成熟且持續維護的 library，不自行重造同類元件。
@@ -56,7 +58,8 @@
 - 若讀取失敗、內容不足以判斷，或無法確認收件方目前工作，MUST 不傳送並先回報 blocker。提醒、暫停、狀態同步與 follow-up 也不例外。
 
 ## 跨 agent 指令的簽名
-- 透過任何外部 agent surface 傳送 prompt 時，必須附 sender 的 surface-native 回信 target、權限等級與硬邊界；只有使用者直接指令能蓋過委派限制。
+- 透過 marker file 或請使用者代送 prompt 給另一個 agent 時，必須附權限等級與硬邊界；只有使用者直接指令能蓋過委派限制。
+- human 已明確授權 tmux 時，tmux 裡的跨 agent prompt 才另外依 `tmux-orchestration` skill 附回信 pane 與完整簽名格式。
 
 ## 記憶分層
 - 這份檔案只放需要一直載入的規則。工具怪癖、走不通的方法、綁定版本的發現與參考資料放到 lazy notes（`codex/notes/*.md`）。只有使用者明確要求時，才能改 Codex 原生 memory 或 Claude 專用 memory。

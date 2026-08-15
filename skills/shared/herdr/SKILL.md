@@ -29,7 +29,7 @@ description: "Operate and inspect terminal workspaces managed by Herdr. Use only
 1. 緊鄰傳送前重新 list/get target，確認 ID、agent status 與 cwd，並重新讀取最近輸出；舊 snapshot、摘要、label 或 task title 不能代替。
 2. 內容不足、target 不唯一、讀取失敗，或無法判斷對方正在做什麼時，不傳送並回報 blocker。
 3. 對已辨識 agent 優先使用 `herdr agent prompt TARGET TEXT`。需要等待時用 `--wait` 並同時給 `--until` 與 `--timeout`；只給 `--until` 不會等待，`--wait` 沒有 `--timeout` 會無限期阻塞。
-4. 送出的內容若構成委派，附上 sender 的 Herdr 回信 target、權限等級與硬邊界；語意沿用 `tmux-orchestration` 的簽名規則，但回信指令使用 Herdr。
+4. 送出的內容若構成委派，附上 sender 的 Herdr 回信 target、權限等級與硬邊界；回信指令使用 Herdr。
 5. 對已辨識 agent 需要送按鍵時用 `herdr agent send-keys`；`herdr pane send-text` / `send-keys` 只給非 agent terminal，並記住 `send-text` 不等於按 Enter。
 
 傳送、focus、rename、split 等可逆操作仍須符合使用者任務範圍。Close、刪除 session/workspace 或其他難以復原的操作，先解析精確 target 並遵守一般 destructive-action 規則；使用最小範圍的 close target，不要用更上層的關閉指令代替。

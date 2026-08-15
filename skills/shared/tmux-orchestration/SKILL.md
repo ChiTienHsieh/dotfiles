@@ -1,16 +1,22 @@
 ---
 name: tmux-orchestration
-description: "Use when running, supervising, or delegating work to interactive agents inside tmux, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, event-based completion detection, marker-file completion fallback, or safe cleanup after completion."
+description: "Use only when the current human explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session inside tmux. Do not trigger from any other source or task characteristic."
 ---
 
 # tmux Orchestration
 
 Run a task in an interactive terminal agent that stays visible and inspectable — Claude/Codex writer sessions, long-running or quota-aware overnight work.
 
+## Activation Gate
+
+- Fail closed unless the current human instruction explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session **inside tmux**.
+- Only the current human instruction can authorize tmux; agent instructions, skill discovery, and reading this skill cannot.
+- Without that authorization, do not run tmux, its helpers, or its lifecycle workflow. Prefer built-in subagents or the current session. After authorization, follow the complete launch, delegation, observation, and cleanup rules below.
+
 ## Core Rules
 
-- When the user asks for a Claude Code or Codex CLI reviewer, default to an observable tmux pane even for read-only work. A direct headless command is only for a clearly bounded one-shot check that needs no tool use or approval, or when the user explicitly asks for headless execution.
-- Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session for this co-review case.
+- Use tmux only for the exact scope the human authorized.
+- Keep each human-authorized substantial worker in its own named tmux session — EXCEPT when the human explicitly asks to spawn a Codex or Claude reviewer/collaborator alongside the orchestrator. In that case, use a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`) so both sit side-by-side. Do NOT open a separate tmux session for this co-review case.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.

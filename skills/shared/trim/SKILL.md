@@ -15,7 +15,7 @@ description: Use when the user wants to simplify, trim, declutter, or shrink a s
 ## Workflow
 
 1. **定目標**。User 指定哪個檔 / 哪個 skill；沒指就問或掃整個 `.claude/skills/`。一個目標檔 = 一個 sub-agent。
-2. **Fan-out skeptic workers**。每個 worker 拿**一個檔 + brief path**，**零 parent context**——它不該知道每行「為什麼在那」，才測得出哪行其實是空話。Claude 可用 `Agent` tool（`general-purpose` 或 `Explore`）；Codex 可用可用的 multi-agent tool，或用 tmux 開一個 read-only Codex worker。多檔就平行開多個 worker。
+2. **Fan-out skeptic workers**。每個 worker 拿**一個檔 + brief path**，**零 parent context**——它不該知道每行「為什麼在那」，才測得出哪行其實是空話。Claude 使用 `Agent` tool（`general-purpose` 或 `Explore`）；Codex 使用可用的 multi-agent tool。多檔就平行開多個 worker。
 3. **收 punch list**，自己過一遍（sub-agent 會誤殺 load-bearing 行——尤其專案特有事實、指回 SSOT 的值）。
 4. **改動走 PR**，逐項列「砍什麼 / 為什麼是 no-op / 省多少」，**絕不靜默亂砍**。爭議行留著、標記、問 user。
 

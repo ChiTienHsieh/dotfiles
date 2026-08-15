@@ -14,7 +14,7 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 agent ses
 - **預設路由**：讀 `~/dotfiles/codex/notes/worker-routing.md`（訂閱狀態＋路由規則）決定交給 CC 還是 Codex。
 - **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看即時餘量；在 SSOT 規則之內，其他條件接近時選較肥的一邊。
 
-目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI（tmux session）、claude CLI（tmux session）、或使用者手動貼。4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
+目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI、claude CLI、或使用者手動貼。不要替 handoff 自行指定 tmux；只有 human 明確要求接棒 agent 使用 tmux 時才能加入。4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
 
 使用者預設用 zh-tw proofread，所以除非使用者明確要求英文，**輸出給使用者的 brief 與 `/goal` prompt 都預設用繁體中文**。保留必要 English technical terms，例如 `/goal`、Codex、GitHub、VM、SSH、API、CLI、token、commit、push、branch、file path、command、config key、model ID、UI label。
 

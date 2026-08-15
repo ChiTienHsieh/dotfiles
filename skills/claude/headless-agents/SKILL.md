@@ -15,23 +15,21 @@ Claude Code can delegate tasks to headless AI agents:
 
 Headless means fire-and-forget: no human watches it run. That is only safe when
 the blast radius is near zero, so the default here is **read-only**. Anything
-that mutates files headlessly is the risky part — route it to an observable
-surface instead (see Mode Awareness).
+that mutates files belongs in a built-in subagent or the controller session
+instead (see Mode Awareness).
 
 ## Mode Awareness (read this first)
 
 - This skill is for **normal Claude Code sessions** doing cheap, read-only,
   fire-and-forget headless work.
 - If running as the **orchestrator persona** (`cldo`), or any time the work
-  **writes files** or needs to be watched/interrupted, do not use this skill;
-  keep the work in the current session or use a user-selected worker surface.
+  **writes files**, use a built-in `Agent` subagent or the controller session.
 - Rule of thumb:
   - read-only + no network → headless is fine (the safe default).
   - read-only + network (`--search`) → headless is OK **only over trusted
     inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
-    web work to the current session or another user-selected surface instead.
-  - mutating (writes files) → current session, platform-native subagent, or
-    another user-selected surface; never this skill.
+    web work to a dedicated built-in research agent or approved web tool.
+  - mutating (writes files) → built-in subagent or controller, never this skill.
 
 ## When to Use Which
 
@@ -82,8 +80,8 @@ codex --search exec -s read-only --skip-git-repo-check \
   prompt-injection / SSRF paths if the agent reads untrusted content (random
   repos, web pages, dependencies). See the orchestrator persona's reasoning.
 - Use it only over trusted inputs, and treat the result as if anything readable
-  on the machine could have left it. Keep heavier or less-trusted web work in
-  the current session or another user-selected observable surface.
+  on the machine could have left it. For heavier or less-trusted web work, use a
+  dedicated built-in research agent or approved web tool.
 
 ### Key Flags
 
@@ -104,8 +102,7 @@ Gemini is NOT inherently read-only. Under a permissive approval mode
 edit/write tools can mutate the workspace. To use it safely headless, treat it
 like Codex: drive it with a `-p` prompt and capture text via stdout redirect,
 and do NOT enable yolo / auto-edit approval modes. Anything that should change
-files stays in the current session or a user-selected worker surface, not a
-headless Gemini run.
+files goes to a built-in subagent or the controller, not a headless Gemini run.
 
 ### Basic Headless (read-only usage)
 ```bash
@@ -129,8 +126,7 @@ cat source.py | gmn -p "Analyze this code" --quiet > analysis.md
 
 `claude -p` bills against the user's Claude subscription. For nested
 `claude -p` runs, use `--permission-mode auto`; `bypassPermissions` exits 1.
-Keep headless Claude read-only unless the task is moved to the current session,
-a platform-native subagent, or another user-selected worker surface.
+Keep headless Claude read-only; use a built-in subagent for file mutations.
 
 ## Timeout Guidelines
 
