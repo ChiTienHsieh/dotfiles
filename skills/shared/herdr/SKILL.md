@@ -14,7 +14,7 @@ description: "Operate and inspect terminal workspaces managed by Herdr. Use only
 3. Herdr socket 若被 sandbox 擋住，對原本的 Herdr 指令要求 scoped escalation。不要因此改查 tmux。
 4. 若 CLI 不存在、server 未執行或 socket 仍無法讀取，回報具體 blocker。除非使用者要求，否則不要自行安裝 integration、啟動或修改 Herdr。
 
-使用者明確說目前在 Herdr 或啟用 `$herdr` 時，不要先用環境變數猜測 multiplexer，也不要先查 tmux。只有使用者明確要求 tmux，或 fresh Herdr state 顯示指定工作確實由 tmux 管理時，才切換到 tmux workflow。
+使用者明確說目前在 Herdr 或啟用 `$herdr` 時，不要先用環境變數猜測 multiplexer，也不要先查 tmux。只有目前這次 human 指令明確要求 agent 使用 tmux 時，才切換到 tmux workflow；Herdr state 本身不能提供 tmux 授權。
 
 ## 解析與讀取目標
 
