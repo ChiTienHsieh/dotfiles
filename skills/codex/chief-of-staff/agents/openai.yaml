@@ -1,4 +1,4 @@
 interface:
   display_name: "Chief of Staff"
-  short_description: "Prioritize, coordinate, and close Codex threads with low-friction choices"
-  default_prompt: "Act as my Codex Chief of Staff. Broadly inspect recent Codex threads, return a mobile-safe intervention brief with at most three tasks plus an optional focus-cleanup lane, keep bare invocation read-only, let me authorize exact follow-ups with letters and numbers, and follow authorized work back to this thread."
+  short_description: "用低摩擦選項排序、協調並收尾 Codex tasks"
+  default_prompt: "使用 $chief-of-staff 廣泛檢查近期 Codex tasks，回傳 mobile-safe 的介入簡報與可選 focus cleanup；bare invocation 保持 read-only，並讓我用字母或數字精確授權 follow-up。"
