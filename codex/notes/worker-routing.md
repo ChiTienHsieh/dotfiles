@@ -9,7 +9,7 @@
 
 ## 路由規則（用「主力／省著用」角色寫，換訂閱時規則不動）
 
-- **重活實作**（bulk edits、多檔改動、長時間跑）→ 主力的 worker。優先使用當前可用的 bounded worker surface；只有使用者明確點名 `tmux-orchestration` skill 時才建立 tmux worker。
+- **重活實作**（bulk edits、多檔改動、長時間跑）→ 主力的 current session 或 platform-native subagent，並明確限制 editable scope。外部 headless agent 只做 read-only 工作；只有使用者明確點名 `tmux-orchestration` skill 時才建立 tmux worker。
 - **省著用的一邊**只在三種情況出場：輕量 review、read-only 研究（Codex 的硬條件見 orchestrator persona）、或 user 明講指定。
 - **guardrail / SSOT repo 的 reviewer**：預設主力的 fresh reviewer（fresh instance 或 subagent，含 simplify 視角）；省著用那邊只有 quota 有餘裕且 diff 小才接。
 - **fallback 順序**：主力撞牆 → 輕量活可暫轉另一邊（仍限 review / read-only）；兩邊都撞牆 → 睡到 reset。即時餘量不要背數字，跑 `codexbar usage --provider both --source cli` 查（細節見 `quota` skill）。

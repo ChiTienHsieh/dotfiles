@@ -30,7 +30,7 @@
 - 收尾前 worktree 仍 dirty 時，主動提供整理選項：review 後 `commit`/`push`、拆分 stage、`stash`、經同意 discard，或維持 dirty。不要自動清掉使用者未交代的變更。
 - 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
-- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選另一個頂尖模型提供第二意見；預設使用當前可用的 bounded reviewer surface，只有使用者明確點名 `tmux-orchestration` skill 時才建立 tmux worker。
+- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選另一個頂尖模型提供第二意見；預設使用 fresh read-only reviewer instance 或 subagent。
 - 把 repo diff、prompt 或必要檔案交給已設定的外部 AI reviewer 前，先檢查實際待傳資料是否含 secret、憑證、private key、未公開個資或其他敏感內容。若檢查確認沒有敏感資料，review 視為已授權，直接執行，不要再問使用者；只有發現敏感內容、無法可靠判斷，或目的地／傳送範圍超出既有 reviewer workflow 時才停下確認。
 
 ## 實作取捨
@@ -56,7 +56,7 @@
 - 若讀取失敗、內容不足以判斷，或無法確認收件方目前工作，MUST 不傳送並先回報 blocker。提醒、暫停、狀態同步與 follow-up 也不例外。
 
 ## 跨 agent 指令的簽名
-- 透過任何外部 agent surface 傳送 prompt 時，必須附 sender 的 surface-native 回信 target、權限等級與硬邊界；只有使用者直接指令能蓋過委派限制。若使用者明確點名 `tmux-orchestration` skill，格式與機制以該 skill 為準。
+- 透過任何外部 agent surface 傳送 prompt 時，必須附 sender 的 surface-native 回信 target、權限等級與硬邊界；只有使用者直接指令能蓋過委派限制。
 
 ## 記憶分層
 - 這份檔案只放需要一直載入的規則。工具怪癖、走不通的方法、綁定版本的發現與參考資料放到 lazy notes（`codex/notes/*.md`）。只有使用者明確要求時，才能改 Codex 原生 memory 或 Claude 專用 memory。

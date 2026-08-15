@@ -23,14 +23,15 @@ surface instead (see Mode Awareness).
 - This skill is for **normal Claude Code sessions** doing cheap, read-only,
   fire-and-forget headless work.
 - If running as the **orchestrator persona** (`cldo`), or any time the work
-  **writes files** or needs to be watched/interrupted, route it through
-  `tmux-orchestration` instead.
+  **writes files** or needs to be watched/interrupted, do not use this skill;
+  keep the work in the current session or use a user-selected worker surface.
 - Rule of thumb:
   - read-only + no network → headless is fine (the safe default).
   - read-only + network (`--search`) → headless is OK **only over trusted
     inputs**, accepting the exfil/SSRF risk noted below; send untrusted or heavy
-    web work to a tmux surface instead.
-  - mutating (writes files) → follow `tmux-orchestration`, never this skill.
+    web work to the current session or another user-selected surface instead.
+  - mutating (writes files) → current session, platform-native subagent, or
+    another user-selected surface; never this skill.
 
 ## When to Use Which
 
