@@ -2,6 +2,12 @@
 
 這份檔案記錄調查過的 Codex CLI 怪癖、死路、與綁定特定版本的發現。每條都標日期，過時就刪掉。
 
+## Codex App delegated-task return（2026-08-09、desktop `26.803.41515`／`codex-cli 0.147.0` 驗證）
+
+- `Stop`／`SessionEnd` 都不是另一個 App task 的 completion callback；`SessionEnd` 可能到 archive/delete、正常關閉或無 client 開啟且 idle 30 分鐘才發生，不能偽裝成 delegation hook。
+- App thread tools 的能力邊界與 canonical return contract 見 `codex/notes/codex-task-delegation.md`；執行時使用 `codex-task-return` skill。
+- Private registry 是 app-coordination helper，不是 hook；不得把它加進 `codex/hooks.json`、Stop dispatcher 或 live hooks。
+
 ## tmux 一律經 Guardian（2026-07-29、`codex-cli 0.145.0` 驗證）
 
 - `workspace-sprin` 不允許 tmux Unix socket；Codex 直接執行或 command wrapper 中明示的任何 tmux 指令，都應在第一次呼叫時要求 scoped escalation，讓 `approvals_reviewer = "auto_review"` 的 Guardian 審查。read-only 指令也不例外。
@@ -16,6 +22,7 @@
 - `install.sh` 會把 repo 的 `codex/hooks.json` merge 進 live `~/.codex/hooks.json`，保留其他 app-managed hooks；不要直接整檔 symlink 或覆寫 live 檔。
 - `track_tmux_workers.py` 只接受 `tmux-orchestration` 定義的 canonical lifecycle receipt 來維護 per-session ledger；`Stop` 發現未處理 worker 時只提醒並擋一次，不呼叫 tmux、不終止程序，所以所有 tmux 操作仍走 Guardian。custom tmux socket（例如 `tmux -L ...`）不會自動追蹤。
 - Hook 設定只在 Codex session 啟動時載入。首次安裝或 command 變更後要重開 Codex，並用 `/hooks` review／trust 這個 non-managed command hook；既有 session 不會中途取得新 hook。
+- Pane absence receipt 不可用 `tmux display-message -t %NN`；此版本對不存在 target 可能回 exit 0 與空輸出。Canonical receipt 先確認 `tmux list-panes` 查詢成功，再用 `grep -Fx` 區分 present（0）、absent（1）與 query error（>1）；session receipt 同樣用成功 listing 證明 absence。
 - 官方 hooks manual 已確認 unified `exec_command` 的 tool name 是 `Bash`，`PostToolUse` output 位於 `tool_response`；tracker 可保留精確 matcher 與欄位，不必對所有 local tools 執行。
 
 ## CLI thread rename（2026-08-05、`codex 0.145.0` 驗證；2026-08-07 更新）

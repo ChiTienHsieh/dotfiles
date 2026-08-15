@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Task Return"
+  short_description: "Reliably return delegated Codex task status"
+  default_prompt: "Use $codex-task-return to delegate this Codex task with reliable completion and attention callbacks."
