@@ -4,6 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| Chief of Staff default interaction design | mastered | 拍板 mobile-safe brief、letters／numbers 授權、drift fail-closed、五項 cleanup batches 與 single-front-door follow-through。 | 2026-08-15 | topics/chief-of-staff-defaults.md |
 | Pilates D1 backup hardening debrief | mastered | Mac-pull offsite 已通過真實排程、加密與 isolated recovery；cross-device key recovery copy 也已驗收。 | 2026-08-14 | topics/pilates-d1-backup-hardening-debrief.md |
 | Codex task 完成自動改 thread title preflight | familiar | 拍板 meaningful-state taxonomy 與 one-shot guard；已完成 18 項 adversarial unit tests、trusted CLI end-to-end 及 persisted title 讀回。 | 2026-08-05 | topics/codex-thread-title-hook-preflight.md |
 | gu-log ShroomDog’s Choice preflight | learning | 目標是 chat-first 決策、OpenSpec 留在幕後並完成 production 功能；選擇米其林類比、深度 2、Adaptive medium。 | 2026-08-01 | topics/gu-log-shroomdog-choice-preflight.md |
