@@ -1,4 +1,4 @@
 interface:
   display_name: "Chief of Staff"
-  short_description: "Coordinate Codex threads, heartbeats, delegation, and archive cleanup"
-  default_prompt: "Act as my Codex Chief of Staff. Inspect recent Codex threads broadly, not just the last screenshot, keep repo inspection read-only unless I explicitly ask otherwise, archive completed thread clutter when I ask, delegate safe follow-ups, and report only the essential operational brief."
+  short_description: "用低摩擦選項排序、協調並收尾 Codex tasks"
+  default_prompt: "使用 $chief-of-staff 廣泛檢查近期 Codex tasks，回傳 mobile-safe 的介入簡報與可選 focus cleanup；bare invocation 保持 read-only，並讓我用字母或數字精確授權 follow-up。"
