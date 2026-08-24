@@ -9,8 +9,7 @@ description: 更新 Codex task 標題。當使用者要求 name／rename task、
 
 1. 讀取 task 的最新狀態。若要替其他 task 改名，就在改名前重新讀取該 task。
 2. 若準備把任一 task 標題開頭的狀態 emoji 改為 `📦`：
-   - 若 `wrap` 已完成目前 task 的封存前檢查並呼叫本 skill，直接沿用該次檢查結果，不得再次執行 `wrap`。
-   - 其他情況若處理目前 task，先完整讀取 `~/dotfiles/skills/shared/wrap/SKILL.md`，請它只進行封存前檢查並回傳結果，不要更新標題；檢查通過才可繼續。
+   - 若處理目前 task，先完整讀取 `~/dotfiles/skills/shared/wrap/SKILL.md`，請它只進行封存前檢查並回傳結果，不要更新標題；檢查通過才可繼續。
    - 若處理其他 task，不得沿用目前 task 的檢查結果；只有重新讀取後確認該 task 的同等封存前檢查已通過，才可使用 `📦`。
 3. 依使用者下一步分類：
    - `🚨`：使用者明確指定要親自持續追蹤的關鍵或高槓桿 task；標記與 pin 必須同步，且只由使用者明示新增或解除。
@@ -26,7 +25,7 @@ description: 更新 Codex task 標題。當使用者要求 name／rename task、
 
    只能有一行及兩個半形 ` | ` 分隔符。目標 24–32 字，最多 40 字；最後一欄必須反映目前進度。
 
-7. 各自使用可用的改標題、pin 或 unpin 工具；每項只呼叫一次。目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 與 host。
+7. 各自使用可用的改標題、pin 或 unpin 工具；每項只呼叫一次。目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 與 host。若狀態 emoji 與 pin／unpin 只有一項成功，重新讀取實際狀態並回報，不得假裝兩者已同步或盲目重試。
 8. 缺少哪項工具，就明講該項仍需手動完成；缺少改標題工具時附上完整建議標題。不得重建舊 Stop hook、shell、app-server 或暫存檔等替代方案。
 
 除了使用者明示的 `🚨` pin／unpin，不得封存、取消封存、刪除或改變其他 task 的狀態。`📦` 只代表建議使用者之後封存。
