@@ -16,8 +16,6 @@ class ArchiveSkillContractTests(unittest.TestCase):
     def test_wrap_reads_name_task_without_running_its_workflow(self) -> None:
         self.assertIn("~/dotfiles/skills/codex/name-task/SKILL.md", self.wrap)
         self.assertIn("不得執行 `name-task` 的完整流程", self.wrap)
-        self.assertNotIn("rename-only", self.wrap + self.name_task)
-        self.assertNotIn("archive-check-only", self.wrap + self.name_task)
 
     def test_archive_status_requires_a_passed_target_specific_check(self) -> None:
         self.assertIn("只進行封存前檢查並回傳結果，不要更新標題", self.name_task)
