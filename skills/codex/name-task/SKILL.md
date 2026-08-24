@@ -9,7 +9,7 @@ description: 更新 Codex task 標題。當使用者要求 name／rename task、
 
 1. 讀取 task 的最新狀態。若要替其他 task 改名，就在改名前重新讀取該 task。
 2. 若準備把任一 task 標題開頭的狀態 emoji 改為 `📦`：
-   - 若處理目前 task，先完整讀取 `~/dotfiles/skills/shared/wrap/SKILL.md`，請它只進行封存前檢查並回傳結果，不要更新標題；檢查通過才可繼續。
+   - 若處理目前 task，明確呼叫 `$wrap`；若目前環境提供 Skill tool，則執行：Call the Skill tool with `wrap`. 要求它只進行封存前檢查並回傳結果，不要更新標題；檢查通過才可繼續。
    - 若處理其他 task，不得沿用目前 task 的檢查結果；只有重新讀取後確認該 task 的同等封存前檢查已通過，才可使用 `📦`。
 3. 依使用者下一步分類：
    - `🚨`：使用者明確指定要親自持續追蹤的關鍵或高槓桿 task；標記與 pin 必須同步，且只由使用者明示新增或解除。

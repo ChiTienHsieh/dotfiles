@@ -10,7 +10,7 @@ description: "結束目前工作階段。當使用者呼叫 $wrap，或要求收
    - 處理前，當下重新讀取其執行狀態與最新輸出，並依目前工具的權限規則確認可以關閉；閒置、標題或舊快照都不算完成證據。
    - 只有最新輸出明確顯示工作已結束、agent 也不再執行、確定不再需要，而且對應工具允許清理時，才可關閉；關閉後確認該 agent 已關閉或不再執行。
    - 無法操作、未獲授權、仍在執行，或 agent 原本就存在、屬於使用者、被刻意保留時，都必須保留並說明原因。
-4. 完整讀取 `../tidy-workspace/SKILL.md`，並依其規則整理本工作階段動過的每個儲存庫。`~/dotfiles` 存在時也要檢查；從家目錄的符號連結修改檔案，可能不會反映在目前 worktree 的 Git 狀態中。Git 操作以該 skill 為準。
+4. 明確呼叫 `$tidy-workspace`；若目前環境提供 Skill tool，則執行：Call the Skill tool with `tidy-workspace`. 依其規則整理本工作階段動過的每個儲存庫。`~/dotfiles` 存在時也要檢查；從家目錄的符號連結修改檔案，可能不會反映在目前 worktree 的 Git 狀態中。Git 操作以該 skill 為準。
 5. 處理與 `name-task` 的呼叫關係：
    - 若 `name-task` 只要求進行封存前檢查，完成步驟 1–4 後回傳結果，不更新標題。
    - 若使用者直接呼叫 `wrap`，且步驟 1–4 確認可以封存，而目前環境也同時提供 `name-task` 與改標題工具，完整讀取 `~/dotfiles/skills/codex/name-task/SKILL.md`，只採用其中的標題格式與狀態更新規則，再直接用改標題工具把開頭的狀態 emoji 更新為 `📦`。不得執行 `name-task` 的完整流程。

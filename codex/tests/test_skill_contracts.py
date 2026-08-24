@@ -16,6 +16,13 @@ class ArchiveSkillContractTests(unittest.TestCase):
     def test_wrap_reads_name_task_without_running_its_workflow(self) -> None:
         self.assertIn("~/dotfiles/skills/codex/name-task/SKILL.md", self.wrap)
         self.assertIn("不得執行 `name-task` 的完整流程", self.wrap)
+        self.assertNotIn("Call the Skill tool with `name-task`.", self.wrap)
+
+    def test_workflow_handoffs_use_the_skill_tool(self) -> None:
+        self.assertIn("明確呼叫 `$wrap`", self.name_task)
+        self.assertIn("Call the Skill tool with `wrap`.", self.name_task)
+        self.assertIn("明確呼叫 `$tidy-workspace`", self.wrap)
+        self.assertIn("Call the Skill tool with `tidy-workspace`.", self.wrap)
 
     def test_archive_status_requires_a_passed_target_specific_check(self) -> None:
         self.assertIn("只進行封存前檢查並回傳結果，不要更新標題", self.name_task)
