@@ -18,8 +18,8 @@ description: "結束目前工作階段。當使用者呼叫 $wrap，或要求收
    - 無法操作、未獲授權、仍在執行，或 agent 原本就存在、屬於使用者、被刻意保留時，都必須保留並說明原因。
 4. 載入 `$tidy-workspace`：若目前環境提供 Skill tool，執行：Call the Skill tool with `tidy-workspace`. 否則完整讀取 `../tidy-workspace/SKILL.md`。依其規則整理本工作階段動過的每個儲存庫。`~/dotfiles` 存在時也要檢查；從家目錄的符號連結修改檔案，可能不會反映在目前 worktree 的 Git 狀態中。Git 操作以該 skill 為準。
 5. 處理與 `name-task` 的呼叫關係：
-   - 若使用者直接呼叫 `wrap`，且步驟 1–4 確認可以封存，而目前環境也同時提供 `name-task` 與改標題工具，完整讀取 `~/dotfiles/skills/codex/name-task/SKILL.md`，只採用其中的標題格式與狀態更新規則，再直接用改標題工具把開頭的狀態 emoji 更新為 `📦`。不得執行 `name-task` 的完整流程。
-   - 若缺少 `name-task` 或改標題工具，只略過標題更新，並在最後回報。
+   - 若使用者直接呼叫 `wrap`、步驟 1–4 確認可以封存且有改標題工具，從目前可用的 skills 清單取得名稱精確為 `name-task` 的唯一項目，完整讀取其 `SKILL.md`。只採用標題格式與狀態更新規則，再直接用改標題工具把開頭的狀態 emoji 更新為 `📦`；不得執行 `name-task` 的完整流程。
+   - 若缺少改標題工具，或找不到唯一的 `name-task`，只略過標題更新並在最後回報。
 6. 用淺顯易懂、直觀的台灣繁中，說明已完成、驗證、commit 與 push 的內容、哪些外部 agent 已關閉或保留及原因，以及仍待決定的事項或阻礙。
 
 若使用者只想整理 Git 狀態或同步遠端，直接使用 `$tidy-workspace`。完整收尾的呼叫方向維持單向：`$wrap` 可以呼叫 `$tidy-workspace`，反過來不行。

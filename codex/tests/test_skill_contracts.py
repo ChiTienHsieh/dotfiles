@@ -14,14 +14,18 @@ class ArchiveSkillContractTests(unittest.TestCase):
         cls.wrap = WRAP.read_text(encoding="utf-8")
 
     def test_wrap_reads_name_task_without_running_its_workflow(self) -> None:
-        self.assertIn("~/dotfiles/skills/codex/name-task/SKILL.md", self.wrap)
+        self.assertIn("名稱精確為 `name-task` 的唯一項目", self.wrap)
         self.assertIn("不得執行 `name-task` 的完整流程", self.wrap)
         self.assertNotIn("Call the Skill tool with `name-task`.", self.wrap)
+        self.assertNotIn("~/dotfiles/skills/codex/name-task/SKILL.md", self.wrap)
 
     def test_name_task_uses_the_bounded_archive_check(self) -> None:
+        self.assertIn("名稱精確為 `wrap` 的唯一項目", self.name_task)
+        self.assertIn("找不到、不唯一或缺少該流程時停止", self.name_task)
         self.assertIn("只執行其中的「封存前檢查」流程", self.name_task)
         self.assertIn("不得完成未竟工作、修改文件、呼叫 `$tidy-workspace`", self.wrap)
         self.assertIn("變更 Git 或遠端狀態", self.wrap)
+        self.assertNotIn("~/dotfiles/skills/shared/wrap/SKILL.md", self.name_task)
 
     def test_shared_handoff_has_a_runtime_neutral_fallback(self) -> None:
         self.assertIn("Call the Skill tool with `tidy-workspace`.", self.wrap)
