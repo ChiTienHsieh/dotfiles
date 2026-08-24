@@ -1,15 +1,20 @@
 ---
 name: "wrap"
-description: "結束目前 session。當使用者呼叫 $wrap，或要求 wrap up、完成目前工作、收尾並交付時使用：完成未竟工作、更新必要文件、清理外部 agent target、交由 $tidy-workspace 整理 Git，並用精簡 zh-TW 收尾。"
+description: "結束目前工作階段。當使用者呼叫 $wrap，或要求收尾、完成目前工作並交付時使用：完成未竟事項、更新必要文件、清理外部 agent、交由 $tidy-workspace 整理 Git，最後用淺顯易懂、直觀的台灣繁中回報。"
 ---
 
-1. 檢查對話與 task 狀態，找出使用者已要求但尚未完成的工作。完成安全且在 scope 內的項目；只回報真正的 blocker。
-2. 若本 session 改變了 setup、指令、架構或行為，更新必要的 user-facing docs。
-3. 在宣告本 session 可封存前，盤點本 session 建立且擁有的精確 external-agent targets，以及使用者明確納入 cleanup scope 的其他精確 targets。緊鄰處理前 fresh-read 每個 target 的執行狀態與最新輸出；idle、標題或舊 snapshot 都不是 completion evidence。只關閉已有可接受 completion evidence 且不再需要的 target，並遵守該 surface 的授權與 cleanup SSOT；關閉後確認該精確 target 已不存在。若 cleanup 未獲授權或無法執行，或 target 屬於使用者、原本就存在、仍在執行或被刻意保留，則保留並回報原因。
-4. 完整讀取 `../tidy-workspace/SKILL.md`，並依其規則整理本 session 觸及的每個 repo。`~/dotfiles` 存在時也要檢查，因為經由 home-directory symlink 的修改可能不會被 dirty-worktree tracker 發現；該 skill 是 Git workflow 的 SSOT。
-5. 本 skill 由其他 skill 呼叫時必須明示 mode；mode 只存在於當前呼叫鏈。只有使用者直接呼叫 `wrap` 時才沒有 mode；其他無 mode 呼叫一律停止並回報 blocker：
-   - `archive-check-only`：回傳以上檢查的完成證據給呼叫端，不得呼叫 `name-task`。
-   - 使用者直接呼叫：若以上檢查確認沒有未完成責任或阻止封存的 blocker，且目前 surface 同時提供 `name-task` skill 與 task title capability，完整讀取 `~/dotfiles/skills/codex/name-task/SKILL.md`，並以 `rename-only` mode 執行一次，把目前 task 標為 `📦`；此 mode 不得呼叫 `wrap`。
-6. 用精簡 zh-TW 摘要已完成、驗證、commit 與 push 的內容，以及仍待決定的事項或 blocker。
+1. 檢查對話與 task 的最新狀態，找出使用者已要求但尚未完成的工作。完成安全且在本次範圍內的項目；只回報真正的阻礙。
+2. 若本工作階段改變了設定、指令、架構或行為，更新必要且給使用者看的文件。
+3. 宣告目前 task 可以封存前，處理外部 agent：
+   - 清點本工作階段建立的外部 agent，以及使用者明確要求一併清理的其他外部 agent；每個都要記下可唯一識別的名稱或 ID。
+   - 處理前，當下重新讀取其執行狀態與最新輸出；閒置、標題或舊快照都不算完成證據。
+   - 只有最新輸出明確顯示工作已結束、agent 也不再執行、確定不再需要，而且對應工具允許清理時，才可關閉；關閉後確認它已不存在。
+   - 無法操作、未獲授權、仍在執行，或 agent 原本就存在、屬於使用者、被刻意保留時，都必須保留並說明原因。
+4. 完整讀取 `../tidy-workspace/SKILL.md`，並依其規則整理本工作階段動過的每個儲存庫。`~/dotfiles` 存在時也要檢查；從 home 目錄的 symlink 修改檔案，可能不會被目前的 worktree 狀態追蹤發現。Git 操作以該 skill 為準。
+5. 處理與 `name-task` 的呼叫關係：
+   - 若 `name-task` 只要求進行封存前檢查，完成步驟 1–4 後回傳結果，不得再次呼叫 `name-task`。
+   - 若使用者直接呼叫 `wrap`，且步驟 1–4 確認可以封存，而目前環境也同時提供 `name-task` 與改標題工具，完整讀取 `~/dotfiles/skills/codex/name-task/SKILL.md`，請它把 task 標題開頭的狀態 emoji 更新為 `📦`，並依該 skill 的規則保留完整標題；不得再次執行 `wrap`。
+   - 若缺少 `name-task` 或改標題工具，只略過標題更新，並在最後回報。
+6. 用淺顯易懂、直觀的台灣繁中，說明已完成、驗證、commit 與 push 的內容，以及仍待決定的事項或阻礙。
 
-若使用者只要 Git cleanup 或 remote synchronization，直接使用 `$tidy-workspace`。保持 dependency 單向：`$wrap` 可以呼叫 `$tidy-workspace`；`$tidy-workspace` 不得呼叫 `$wrap`。
+若使用者只想整理 Git 狀態或同步遠端，直接使用 `$tidy-workspace`。呼叫方向維持單向：`$wrap` 可以呼叫 `$tidy-workspace`，反過來不行。
