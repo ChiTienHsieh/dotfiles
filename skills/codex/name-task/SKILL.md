@@ -8,11 +8,10 @@ description: 更新 Codex task 標題。當使用者要求 name／rename task、
 ## 流程
 
 1. 讀取 task 最新狀態。若要替其他 task 改名，必須緊鄰改名前 fresh-read 該 task。
-2. 若準備把目前 task 標為 `📦`，且本 turn 尚未完成 `wrap`，先讀取並執行
-   `../../shared/wrap/SKILL.md` 的封存前檢查；正在執行或本 turn 已完成
-   `wrap` 時不得再次呼叫。替其他 task 改名時，不得以目前 session 的
-   `wrap` 代替；只有 fresh-read 顯示該 task 已完成等價的封存前檢查，才可
-   使用 `📦`。
+2. 若準備把目前 task 標為 `📦`：
+   - 若由 `wrap` 以 `rename-only` mode 呼叫，沿用該次 `wrap` 的完成證據並直接改名；此 mode 不得呼叫 `wrap`。
+   - 其他入口先完整讀取 `~/dotfiles/skills/shared/wrap/SKILL.md`，並以 `archive-check-only` mode 執行一次。此 mode 只回傳封存前檢查結果，不得呼叫 `name-task`；檢查通過才可繼續改名。
+   - 替其他 task 改名時，不得以目前 session 的 `wrap` 代替；只有 fresh-read 顯示該 task 已完成等價的封存前檢查，才可使用 `📦`。
 3. 依使用者下一步分類：
    - `🚨`：使用者明確指定要親自持續追蹤的關鍵或高槓桿 task；標記與 pin 必須同步，且只由使用者明示新增或解除。
    - `⏳`：task 尚未完成，下一步需要使用者注意或行動。
