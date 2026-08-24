@@ -18,14 +18,17 @@ class ArchiveSkillContractTests(unittest.TestCase):
         self.assertIn("不得執行 `name-task` 的完整流程", self.wrap)
         self.assertNotIn("Call the Skill tool with `name-task`.", self.wrap)
 
-    def test_workflow_handoffs_use_the_skill_tool(self) -> None:
-        self.assertIn("明確呼叫 `$wrap`", self.name_task)
-        self.assertIn("Call the Skill tool with `wrap`.", self.name_task)
-        self.assertIn("明確呼叫 `$tidy-workspace`", self.wrap)
+    def test_name_task_uses_the_bounded_archive_check(self) -> None:
+        self.assertIn("只執行其中的「封存前檢查」流程", self.name_task)
+        self.assertIn("不得完成未竟工作、修改文件、呼叫 `$tidy-workspace`", self.wrap)
+        self.assertIn("變更 Git 或遠端狀態", self.wrap)
+
+    def test_shared_handoff_has_a_runtime_neutral_fallback(self) -> None:
         self.assertIn("Call the Skill tool with `tidy-workspace`.", self.wrap)
+        self.assertIn("完整讀取 `../tidy-workspace/SKILL.md`", self.wrap)
 
     def test_archive_status_requires_a_passed_target_specific_check(self) -> None:
-        self.assertIn("只進行封存前檢查並回傳結果，不要更新標題", self.name_task)
+        self.assertIn("檢查通過才可繼續", self.name_task)
         self.assertIn("該 task 的同等封存前檢查已通過", self.name_task)
 
     def test_status_update_preserves_a_complete_title(self) -> None:
