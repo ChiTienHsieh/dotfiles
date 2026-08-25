@@ -1,6 +1,7 @@
 # Local exploration workflow
 
-只有要建立或繼續 project explore branch、保存 checkpoints、判斷 authorship 時讀
+只有要建立或繼續 project explore branch、保存 checkpoints、判斷 content
+provenance 時讀
 這份 reference。
 
 ## Branch contract
@@ -86,7 +87,7 @@ provenance，不代表 Git `Author`／`Committer` identity；repo 原有 Git ide
 
 - 不把它標成 agent commit。
 - 不為了乾淨 commit 還原它。
-- 改做中性 checkpoint；若 authorship 會影響學習判斷，停下詢問。
+- 改做中性 checkpoint；若 content provenance 會影響學習判斷，停下詢問。
 
 每個 commit 應是可閱讀的小單位，不是每次 keystroke 一個 commit，也不要把多輪
 feedback 壓成單一大 commit。

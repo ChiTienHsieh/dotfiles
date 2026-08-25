@@ -18,7 +18,7 @@ description: 透過持續共同編輯 Markdown、local explore branch checkpoint
 - `.explore/<topic-slug>/VOICE.md`；
 - 分開的 `explore(user|checkpoint|agent|voice): ...` commits。
 
-需要建立 branch、判斷 authorship 或 checkpoint 時，讀
+需要建立 branch、判斷 content provenance 或 checkpoint 時，讀
 [references/exploration-workflow.md](references/exploration-workflow.md)。
 
 ### 2. Persistent learning
@@ -55,7 +55,7 @@ Local-only 不代表 secrets 可以安全 commit。若內容不適合留存，�
    使用者的事實與觀點，不補造經歷或主張。
 4. 寫檔前再讀目標段落；內容已變時吸收新版本，不用舊 snapshot 覆蓋。
 5. 把 agent revision 與 voice inference 分開 checkpoint。出現無法解釋的新變更
-   時，不還原、不冒認 authorship；改做中性 checkpoint 或停下釐清。
+   時，不還原、不冒認 content provenance；改做中性 checkpoint 或停下釐清。
 6. 只有本輪新增可引用 evidence 時才更新 project／persistent records。
 
 Persistent record 寫入若沒有可用權限，project checkpoint loop 仍可繼續，但必須

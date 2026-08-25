@@ -5,8 +5,11 @@ shared skill 內容；不得複製長篇原文、secrets、未公開個資或客
 
 ## 建立結構
 
-Data root 固定使用 `$XDG_DATA_HOME/learn-my-voice`；未設定 `XDG_DATA_HOME` 時使用
-`$HOME/.local/share/learn-my-voice`。在該 root 建立：
+`XDG_DATA_HOME` non-empty 且為 absolute path 時，data root 使用
+`$XDG_DATA_HOME/learn-my-voice`；否則使用 absolute
+`$HOME/.local/share/learn-my-voice`。兩者都無法安全解析時停止並要求使用者指定
+absolute local-only path，不得 fallback 到相對於目前 project 的位置。在該 root
+建立：
 
 ```text
 learn-my-voice/
@@ -26,7 +29,7 @@ memory。讀取通常不需額外權限；寫入前先確認該目錄是否在�
 
 若 data root 在 sandbox writable roots 之外：
 
-1. 只針對解析後的 `learning/` exact path 要求 scoped write approval，並說明用途是
+1. 只針對解析後的 exact data root 要求 scoped write approval，並說明用途是
    更新 local-only voice records。
 2. 不要求整個 home、dotfiles repo 或其他 broad path 的寫入權。
 3. Approval 不可用或被拒絕時，不建立替代的 global store；繼續 project-local
