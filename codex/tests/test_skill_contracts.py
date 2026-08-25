@@ -72,14 +72,26 @@ class GitCleanupContractTests(unittest.TestCase):
         )
         self.assertIn("PR head OID", self.tidy_flat)
         self.assertIn(
+            "deleting a remote copy also requires another verified recovery copy",
+            self.tidy_flat,
+        )
+        self.assertIn(
             "Age or staleness alone never proves deletion is safe", self.tidy_flat
         )
         self.assertIn("Leave user and other-agent artifacts untouched", self.tidy_flat)
+        for stop_condition in (
+            "worktree is dirty",
+            "task or agent is live",
+            "evidence conflicts",
+            "force, history rewriting",
+        ):
+            self.assertIn(stop_condition, self.tidy_flat)
 
     def test_wrap_delegates_terminal_cleanup_without_recursion(self) -> None:
         self.assertIn("Git artifacts 收到 terminal cleanup", self.wrap)
+        self.assertIn("證據不足時視為未完成責任並回報 blocker", self.wrap)
         self.assertIn("cleanup 判斷都以該 skill 為準", self.wrap)
-        self.assertNotIn("$tidy-workspace` 可以呼叫 `$wrap", self.tidy)
+        self.assertNotIn("`$wrap`", self.tidy)
 
 
 if __name__ == "__main__":

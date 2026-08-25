@@ -38,8 +38,8 @@ asking only when current evidence establishes all of the following:
 - the worktree is clean, and no dirty, untracked, stashed, or unpushed unique
   data would be lost;
 - the PR is merged or closed, or the artifact is otherwise no longer needed;
-- every commit has been fully pushed, and a remote, PR, merged base, or other
-  verified copy is sufficient to recover the work after the planned cleanup;
+- a remote, PR, merged base, or other verified copy is sufficient to recover
+  the work after the planned cleanup;
 - the exact cleanup is followed by a readback confirming the target state.
 
 For squash merges, Git ancestry alone is not proof. Use the PR head OID, a
