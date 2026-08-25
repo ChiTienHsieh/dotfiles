@@ -7,10 +7,13 @@
 - 探索分支預設只留本機；公開前重新檢查完整 diff 與 commits，掃描不應公開的
   內容，並取得使用者確認。
 - Checkpoint 只包含本輪明確範圍內的 Markdown 與專案 voice notes。
-- 同一 worktree 出現任務外或來源不明的變更時，依 `tidy-workspace` 的
-  `dirty-worktree-ownership.md` 處理；未確認的檔案或 diff 區塊不得納入 commit。
+- 同一 worktree 出現任務外或來源不明的變更時，依 `tidy-workspace` 處理；若沒有
+  變更負責範圍協調流程可用，就保留現況並停止。未確認的檔案或 diff 區塊不得
+  納入 commit。
 
 Explore branch 保存探索過程，不代表內容已定稿或獲使用者認可。
+任何會讓內容離開本機探索分支，或移除其唯一可用 ref 的動作，都要先重新檢查內容
+並取得使用者確認；刪除 branch 不等於清除 Git 內部保存的內容。
 
 ## Project voice notes
 
@@ -39,6 +42,13 @@ SSOT。初始格式：
 
 ## Checkpoint loop
 
+### Commit boundary
+
+只暫存本輪明確擁有的檔案。若 index（暫存區）已有其他內容，只有在目標檔案沒有
+partial staging（同檔只暫存部分修改），而且目前完整內容就是要保存的 checkpoint
+時，才能用 `git commit --only -- <paths>`；commit 後確認原有 staged diff 未變。
+無法證明時停止，不移動既有 staged state。
+
 ### Agent 動筆前
 
 重新讀取目標內容與 diff。若範圍內已有適合進 Git 歷史的變更，只保存明確檔案
@@ -48,8 +58,8 @@ SSOT。初始格式：
 ### Agent 修改後
 
 重新讀取未暫存與已暫存的 diff，只把本輪已知修改保存成
-`explore(agent): <brief intent>`。無法解釋的新變更留在原處，依共用 dirty-worktree
-protocol 查明來源；不要把多輪 feedback 壓成一個無法追溯的大 commit。
+`explore(agent): <brief intent>`。無法解釋的新變更留在原處，依 `tidy-workspace`
+查明來源；不要把多輪 feedback 壓成一個無法追溯的大 commit。
 
 ### Voice inference
 

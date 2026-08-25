@@ -1,7 +1,6 @@
 # Persistent learning records
 
-這一層保存跨專案仍有用、且適合公開的抽象寫作選擇，不保存原始段落、secrets、
-未公開資料、可識別個人的細節或客戶資料。
+這一層保存跨專案仍有用的抽象寫作選擇；公開內容邊界以 `voice-profile.md` 為準。
 
 ## 位置與同步
 
@@ -20,13 +19,13 @@ learning/
 profile 指定的 dotfiles 程式碼庫追蹤。驗證失敗時停止，不寫入副本、快取、其他
 checkout 或替代紀錄位置。
 
-每次更新：
+`voice-profile.md` 記錄的公開同步是使用者已確認的長期選擇；不需建立或檢查逐裝置
+授權標記。每次更新：
 
-1. 重新讀取 `learning/`、目前 branch、未暫存與已暫存的 diff。
-2. 只保存會改變未來代筆結果的最小公開證據。
-3. 只暫存本輪更新的 `learning/` 檔案；出現任務外或負責範圍不明的未提交變更時，
-   依 `tidy-workspace` 的 `dirty-worktree-ownership.md` 處理。
-4. 依 dotfiles repo 的正常 review、commit、push 與 PR 流程同步。
+1. 只保存會改變未來代筆結果的最小公開證據。
+2. 沿用 [exploration-workflow.md](exploration-workflow.md) 的 commit boundary，只處理
+   本輪更新的 `learning/` 檔案；不明變更依 `tidy-workspace` 處理。
+3. 依 dotfiles repo 的正常 review、commit、push 與 PR 流程同步。
 
 ## Topic 格式
 
