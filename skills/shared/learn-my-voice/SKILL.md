@@ -23,10 +23,10 @@ description: 透過持續共同編輯 Markdown、local explore branch checkpoint
 
 ### 2. Persistent learning
 
-跨專案可重用的偏好放在本 skill 目錄的 local-only `learning/`。開始代寫前依
-[references/learning-records.md](references/learning-records.md) 讀取或建立 records。
-若 sandbox 不允許寫入 installed skill 路徑，依該 reference 的 authorization flow
-只要求 `learning/` exact path 的 scoped permission；不得改存到未宣告的全域位置。
+跨專案可重用的偏好放在 package lifecycle 之外的 per-user local data root。開始
+代寫前依 [references/learning-records.md](references/learning-records.md) 解析、讀取
+或建立 records。若 sandbox 不允許寫入，只要求該 exact data root 的 scoped
+permission；不得改存到未宣告的全域位置。
 
 ## 啟動前
 
@@ -37,6 +37,10 @@ description: 透過持續共同編輯 Markdown、local explore branch checkpoint
 - 使用者是否可能同時編輯同一檔案；不能確認就每次動筆前重新讀檔並縮小 patch。
 - 目標文件與待 checkpoint 內容沒有 token、password、private key、未公開個資或
   其他不該進 Git object database／learning record 的內容。
+
+首次建立 explore branch、commit 或寫入 persistent records 前，先向使用者說明
+exact paths、會留下的 Git history／local data，並取得明確授權。未獲授權時退化成
+不 checkpoint、不寫 persistent records 的共同編輯模式。
 
 Local-only 不代表 secrets 可以安全 commit。若內容不適合留存，停止 checkpoint，
 但仍可在不保存該 evidence 的前提下協助當次寫作。
@@ -75,5 +79,6 @@ Persistent record 寫入若沒有可用權限，project checkpoint loop 仍可�
 
 使用者說完成時，列出 branch、base commit、目標文件、project voice-notes path 與
 未確認 hypotheses，讓使用者另行決定保留 branch、帶走成品 commits 或刪除探索
-資料。未經明確要求，不得 push、merge、rebase、開 PR、刪 branch，或把
+資料。刪 branch 不會立即清除 Git object database 裡的內容。未經針對 exact branch
+與內容範圍的明確確認，不得 push、merge、rebase、開 PR、刪 branch，或把
 `.explore/**` 帶進正常 branch。

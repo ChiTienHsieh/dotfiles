@@ -11,7 +11,8 @@
 
 - 從目前 `HEAD` 建立 branch，保留 working tree 現況。
 - `git switch -c` 失敗時，不得用 `reset`、`stash`、discard 或覆寫硬闖。
-- Branch 不設 upstream，永遠視為 local-only。
+- Branch 不設 upstream，並依 local-only policy 管理；這不是防止 `git push --all`、
+  explicit push 或 GUI publish 的技術保證。
 - 未經明確要求，不得 push、merge、rebase、開 PR 或刪 branch。
 - 只 stage allowlisted Markdown 與 project voice-notes file；禁止 `git add -A`、
   `git add .` 或 `git commit -a`。
@@ -20,6 +21,11 @@
 - 不修改 Git author、不 amend 或重寫既有 commits。
 
 Explore branch 保存探索過程，不代表內容已定稿或獲使用者認可。
+
+任何 push 前都要 fresh-read exact branch 相對 base 的完整 diff／commits，重掃
+secrets 與不應公開的 voice data，再取得針對該 branch 與內容範圍的明確確認。
+既有通用 push 授權不能代替。刪 branch 也不會立即清除 Git object database；若
+內容本來就不該進 object database，必須在 checkpoint 前停止。
 
 ## Project voice notes
 
@@ -62,6 +68,10 @@ Local-only working notes. Do not push or merge without explicit approval.
    且同一路徑沒有需保留的 partial staging 時，才可用
    `git commit --only -- <exact allowlisted paths>`，並在 commit 後確認其他 cached
    diff 未改變。無法證明時停止，不得 stash、unstage 或還原使用者的 index。
+
+`explore(user)`、`explore(agent)` 與 `explore(checkpoint)` 只描述 content
+provenance，不代表 Git `Author`／`Committer` identity；repo 原有 Git identity 保持
+不變。
 
 只有能從目前 fresh evidence 確定變更由使用者完成時，才用
 `explore(user): <brief intent>`。來源不明、混合或可能仍在編輯中的變更一律用

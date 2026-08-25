@@ -5,26 +5,26 @@ shared skill 內容；不得複製長篇原文、secrets、未公開個資或客
 
 ## 建立結構
 
-在本 skill 目錄建立：
+Data root 固定使用 `$XDG_DATA_HOME/learn-my-voice`；未設定 `XDG_DATA_HOME` 時使用
+`$HOME/.local/share/learn-my-voice`。在該 root 建立：
 
 ```text
-learning/
+learn-my-voice/
 ├── INDEX.md
 ├── voice-profile.md
 └── topics/
     └── <context-slug>.md
 ```
 
-`learning/.gitignore` 已讓動態檔案保持 untracked。若所在環境不是這個 dotfiles
-安裝，仍須先確認 records 不會被公開或同步到未授權位置。
+這個 data root 不屬於 skill package 或 project repo，不會因重新安裝 skill 被覆蓋；
+仍須確認它沒有被未授權的 sync／backup 工具公開。
 
 ## Write authorization
 
-先從目前載入的 `SKILL.md` 解析同層 `learning/` 的實際位置，不要假設目前 project
-就是 skill source。讀取通常不需額外權限；寫入前先確認該目錄是否在目前
-writable roots。
+依上方固定規則解析 data root，不要改成目前 project、skill source 或 native agent
+memory。讀取通常不需額外權限；寫入前先確認該目錄是否在目前 writable roots。
 
-若 installed skill symlink 回 read-only dotfiles 或其他 sandbox 外路徑：
+若 data root 在 sandbox writable roots 之外：
 
 1. 只針對解析後的 `learning/` exact path 要求 scoped write approval，並說明用途是
    更新 local-only voice records。
@@ -40,7 +40,7 @@ writable roots。
 
 | Context | Status | Evidence summary | Updated | File |
 | --- | --- | --- | --- | --- |
-| Technical essays | learning | Two revision pairs prefer claim-first openings. | 2026-08-25 | topics/technical-essays.md |
+| Technical essays | learning | Two revision pairs prefer claim-first openings. | YYYY-MM-DD | topics/technical-essays.md |
 ```
 
 `voice-profile.md` 保存跨情境成立的偏好：
@@ -98,14 +98,7 @@ Project-specific observation 先進 topic。只有跨至少兩種情境仍成立
 宣告為通用偏好，才升格到 `voice-profile.md`。反例出現時保留 decision context：
 把規則縮窄、降回 hypothesis 或移到 `Avoid`，不要無聲覆寫。
 
-## Read／write discipline
-
-開始代寫前：
-
-1. 讀 `INDEX.md` 找到相關 context。
-2. 讀 `voice-profile.md` 與最接近的 topic。
-3. 只採用有 evidence 且符合當前 audience／document type 的規則。
-
-完成一個有意義的 revision pair 後才更新 records。每輪最多寫入少量、未來確實會
-改變代寫結果的 observations；沒有新 evidence 就不動檔案。聊天中不回報純
-bookkeeping，除非使用者明確詢問。
+開始代寫前讀 `INDEX.md`、`voice-profile.md` 與最接近的 topic，只採用有 evidence
+且符合當前 audience／document type 的規則。完成一個有意義的 revision pair 後
+才更新 records；沒有新 evidence 就不動檔案。聊天中不回報純 bookkeeping，除非
+使用者明確詢問。
