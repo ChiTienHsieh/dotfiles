@@ -17,10 +17,13 @@ blocker.
 
 - `review-dirty`: inspect staged and unstaged diffs; test and commit in-scope
   changes only, then rerun the script.
+- Dirty changes outside the current task with unknown ownership: freeze Git
+  writes and follow `references/dirty-worktree-ownership.md` before acting.
 - `pull-ff-only`: run `git pull --ff-only`, then rerun the script.
 - `review-outgoing`: inspect the full outgoing range and diff, confirm ownership
   and destination, then push through the repo's PR and CI flow when required.
-- `stop:*`, sensitive files, ambiguous work, or unclear ownership: stop and ask.
+- `stop:*`, sensitive files, ambiguous work, or ownership still unclear after
+  the ownership protocol: stop and ask.
 - Before commit or push, check all relevant diffs for secrets, credentials,
   private keys, non-public personal data, and private machine details. Treat
   unknown repo visibility conservatively.
