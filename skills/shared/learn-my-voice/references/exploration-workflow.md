@@ -68,7 +68,8 @@ Local-only working notes. Do not push or merge without explicit approval.
    paths，plain `git commit` 不安全；只有在 current file content 就是完整 checkpoint
    且同一路徑沒有需保留的 partial staging 時，才可用
    `git commit --only -- <exact allowlisted paths>`，並在 commit 後確認其他 cached
-   diff 未改變。無法證明時停止，不得 stash、unstage 或還原使用者的 index。
+   diff 未改變。無法證明時停止，不得 stash、unstage 或還原任何既有 index state；
+   它可能屬於使用者或同一 worktree 的另一個 agent。
 
 `explore(user)`、`explore(agent)` 與 `explore(checkpoint)` 只描述 content
 provenance，不代表 Git `Author`／`Committer` identity；repo 原有 Git identity 保持
