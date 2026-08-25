@@ -25,6 +25,8 @@ description: 透過持續共同編輯 Markdown、local explore branch checkpoint
 
 跨專案可重用的偏好放在本 skill 目錄的 local-only `learning/`。開始代寫前依
 [references/learning-records.md](references/learning-records.md) 讀取或建立 records。
+若 sandbox 不允許寫入 installed skill 路徑，依該 reference 的 authorization flow
+只要求 `learning/` exact path 的 scoped permission；不得改存到未宣告的全域位置。
 
 ## 啟動前
 
@@ -51,6 +53,9 @@ Local-only 不代表 secrets 可以安全 commit。若內容不適合留存，�
 5. 把 agent revision 與 voice inference 分開 checkpoint。出現無法解釋的新變更
    時，不還原、不冒認 authorship；改做中性 checkpoint 或停下釐清。
 6. 只有本輪新增可引用 evidence 時才更新 project／persistent records。
+
+Persistent record 寫入若沒有可用權限，project checkpoint loop 仍可繼續，但必須
+明確回報 persistent update 未完成；不得聲稱已跨專案記住。
 
 ## 如何套用 voice
 

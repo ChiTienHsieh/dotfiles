@@ -18,6 +18,21 @@ learning/
 `learning/.gitignore` 已讓動態檔案保持 untracked。若所在環境不是這個 dotfiles
 安裝，仍須先確認 records 不會被公開或同步到未授權位置。
 
+## Write authorization
+
+先從目前載入的 `SKILL.md` 解析同層 `learning/` 的實際位置，不要假設目前 project
+就是 skill source。讀取通常不需額外權限；寫入前先確認該目錄是否在目前
+writable roots。
+
+若 installed skill symlink 回 read-only dotfiles 或其他 sandbox 外路徑：
+
+1. 只針對解析後的 `learning/` exact path 要求 scoped write approval，並說明用途是
+   更新 local-only voice records。
+2. 不要求整個 home、dotfiles repo 或其他 broad path 的寫入權。
+3. Approval 不可用或被拒絕時，不建立替代的 global store；繼續 project-local
+   exploration，並回報 persistent update blocked。
+4. 不得把「本輪看過」描述成已跨專案保存；下一次仍從現存 records 判斷。
+
 `INDEX.md` 是短而可排序的 routing table：
 
 ```markdown
