@@ -11,8 +11,8 @@ the normal `review-dirty` flow.
   any dirty path.
 - Record the exact Git root, physical worktree path, branch, active Git
   operation, and staged, unstaged, and untracked paths.
-- Treat timestamps, process IDs, task titles, branch names, previews, and old
-  summaries as clues only. None proves ownership.
+- Treat indirect metadata and stale snapshots as clues, never proof of
+  ownership. Read-only fetches of remote refs remain allowed.
 
 ## 2. Delegate one bounded investigator
 
@@ -20,10 +20,9 @@ When Codex App subagents and thread tools are available, send one read-only
 subagent to investigate. Its prompt must include:
 
 - the sender's exact task/thread reply target;
-- read-only permission until a recipient is proven and freshly read;
-- the exact repo, physical worktree, branch, and dirty paths in scope;
-- hard boundaries: no file or Git mutation, no task creation, no broadcast,
-  no raw App database access, no tmux workaround, and no destructive advice;
+- read-only permission and the exact repo, worktree, branch, and dirty paths;
+- App-native thread tools only: no raw App database or tmux workaround;
+- no file, index, branch, history, or task mutation, and no broadcast;
 - the requirement to return evidence and unresolved ambiguity to the sender.
 
 If either capability is unavailable, fail closed: preserve the changes and ask
@@ -36,49 +35,51 @@ The investigator uses only Codex App-native thread tools:
 
 1. List recent active tasks to produce a small candidate set.
 2. Read each candidate's current thread, not just its title or preview.
-3. Require direct evidence tying the candidate to the exact physical worktree
-   and at least one dirty path or the work that produced it. A matching repo or
-   branch alone is insufficient.
-4. Classify the result as `confirmed`, `possible`, or `not found`, and quote or
-   summarize the exact evidence. Never attribute user changes to Codex merely
+3. Build an ownership map for every dirty path and, when a file is mixed, its
+   exact current hunks. Require direct evidence tying each confirmed scope to
+   both the physical worktree and current diff content; intended work, a
+   matching repo, or a matching branch is insufficient.
+4. Mark each path or hunk `confirmed:<task>` or `unconfirmed`, and quote or
+   summarize the evidence. Never attribute user changes to Codex merely
    because another task exists.
 
-Only `confirmed` permits contact. For `possible` or `not found`, send nothing,
-return the evidence to the source task, and leave the worktree untouched.
+Contact only a task directly tied to a confirmed scope. Return every
+unconfirmed or mixed scope to the source task and preserve it untouched.
 
 ## 4. Negotiate isolation with the confirmed task
 
-Immediately before sending, fresh-read that exact recipient again. If the read
-fails, its state changed materially, or the evidence no longer matches, do not
-send.
+Apply the global fresh-read-before-send gate to that exact recipient. If the
+read fails, its state changed materially, or the evidence no longer matches,
+do not send.
 
 Send one targeted message containing:
 
 - the sender's reply target and the investigator's read-only coordination role;
-- the exact shared worktree and conflicting paths;
-- a request for the responsible task to confirm ownership and choose a safe
-  handoff: finish and checkpoint only its own work, or continue in a dedicated
-  Git worktree;
-- hard boundaries forbidding reset, restore, clean, default stashing, editing
-  another task's paths, or claiming the shared worktree is clean without a
-  fresh Git check.
+- only the exact confirmed paths or hunks, with unresolved scopes kept separate;
+- a request to confirm ownership, current safety state, and whether the
+  recipient's existing user authority covers checkpoint or worktree changes;
+- hard boundaries: no destructive cleanup, no mutation outside proven
+  ownership, and no claim of cleanliness without a fresh Git check.
 
-Do not claim that an already-running task can be moved automatically. The
-responsible task must first make its own changes transferable—normally as a
-focused commit—then create or continue in a dedicated worktree and verify both
-locations. Creating a new user-owned Codex task still requires the user's
-explicit request; thread tools must not invent one as part of cleanup.
+The first message only establishes ownership and existing authority. A
+read-only investigator cannot grant new mutation authority. If the fresh
+recipient thread does not already authorize the exact checkpoint and worktree
+actions, return to the source task for a user decision.
+
+Do not claim that an already-running task can be moved automatically. When its
+existing authority does cover the exact actions, the responsible task must
+create a safe transferable checkpoint, continue in a dedicated worktree, and
+verify both locations without touching unresolved scopes.
 
 ## 5. Verify the result
 
 - Fresh-read the responsible task's reply; a callback is only a wake signal,
   not proof that cleanup finished.
-- Rerun the workspace inspector and `git status` in the exact physical
-  worktree.
+- Rerun the workspace inspector, including a fresh `git status`, in the exact
+  physical worktree.
 - Continue only when the previously dirty paths are accounted for and the
   current task's intended boundary is clean. Otherwise preserve state and
   report the blocker.
-- Never use repeated broad polling or message multiple candidate tasks.
 
 Report the confirmed owner, evidence used, message target, agreed handoff,
 fresh Git result, and anything unresolved. Do not expose unrelated thread
