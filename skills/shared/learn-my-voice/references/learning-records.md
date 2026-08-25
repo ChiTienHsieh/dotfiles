@@ -1,65 +1,58 @@
 # Persistent learning records
 
-這一層保存跨專案仍有用的寫作選擇。它是 local-only 個人資料，不是可推送的
-shared skill 內容；不得複製長篇原文、secrets、未公開個資或客戶資料。
+這一層保存跨專案仍有用的寫作選擇。Storage mode 的 SSOT 是
+`voice-profile.md`；只保存可公開的抽象偏好，不得複製長篇原文、secrets、未公開
+個資或客戶資料。
 
 ## 建立結構
 
-`XDG_DATA_HOME` non-empty 且為 absolute path 時，data root 使用
-`$XDG_DATA_HOME/learn-my-voice`；否則使用 absolute
-`$HOME/.local/share/learn-my-voice`。兩者都無法安全解析時停止並要求使用者指定
-absolute local-only path，不得 fallback 到相對於目前 project 的位置。在該 root
-建立：
+Records 固定放在本 skill 目錄的 `learning/`：
 
 ```text
-learn-my-voice/
+learning/
 ├── INDEX.md
 ├── voice-profile.md
 └── topics/
     └── <context-slug>.md
 ```
 
-這個 data root 不屬於 skill package 或 project repo，不會因重新安裝 skill 被覆蓋；
-仍須確認它沒有被未授權的 sync／backup 工具公開。
+`INDEX.md` 與 `voice-profile.md` 是 tracked SSOT；topic files 依實際 evidence 建立。
+不要建立第二份全域 voice store。`.publication-consent` 是每台裝置 local-only 的
+一次性授權 marker，不追蹤、不跨裝置同步。
 
-## Write authorization
+## Public sync contract
 
-依上方固定規則解析 data root，不要改成目前 project、skill source 或 native agent
-memory。讀取通常不需額外權限；寫入前先確認該目錄是否在目前 writable roots。
+`voice-profile.md` 保存預期的 public repo identity 與 storage mode，但 clone／copy
+不可自行繼承 publication authorization。每次 session 第一次更新前：
 
-若 data root 在 sandbox writable roots 之外：
+1. 解析 installed skill symlinks，取得 `learning/` 的 physical target。
+2. 確認 target 位於 Git worktree，repo identity 是 `ChiTienHsieh/dotfiles`，且
+   `INDEX.md`、`voice-profile.md` 與既有 topic files 由該 repo 追蹤。新 topic 必須
+   位於同一 `learning/topics/`，並在本輪以 exact path 新增。
+3. 確認同一 `learning/` 內存在未追蹤的 `.publication-consent`。若缺少，向使用者
+   說明 exact repo、remote 與 public write，再取得一次授權並建立 marker。
+4. 任一驗證失敗就 fail closed：不寫 copy／cache／錯誤 checkout，回報 sync
+   blocked，也不建立替代 store。
 
-1. 只針對解析後的 exact data root 要求 scoped write approval，並說明用途是
-   更新 local-only voice records。
-2. 不要求整個 home、dotfiles repo 或其他 broad path 的寫入權。
-3. Approval 不可用或被拒絕時，不建立替代的 global store；繼續 project-local
-   exploration，並回報 persistent update blocked。
-4. 不得把「本輪看過」描述成已跨專案保存；下一次仍從現存 records 判斷。
+Remote URL 可為 HTTPS 或 SSH 表示法，但 normalize 後 owner／repo 必須精確相同。
+若 sandbox 不允許寫入 resolved target，只要求 exact `learning/` path 的 scoped
+permission，不可擴張到整個 home。
 
-`INDEX.md` 是短而可排序的 routing table：
+驗證通過後，每次更新仍須：
 
-```markdown
-# Voice learning index
+1. Fresh-read `learning/`、dotfiles branch、working diff 與 cached diff。
+2. 只寫會改變未來代筆結果的最小抽象 evidence；不複製原始段落。
+3. 掃描 secrets、識別性個資、客戶資料與其他不適合 public repo 的內容。
 
-| Context | Status | Evidence summary | Updated | File |
-| --- | --- | --- | --- | --- |
-| Technical essays | learning | Two revision pairs prefer claim-first openings. | YYYY-MM-DD | topics/technical-essays.md |
-```
+成功更新後，只 stage `learning/` 內本輪已知 paths，並沿用
+[exploration-workflow.md](exploration-workflow.md) 的 staged-index isolation：有既有
+cached changes 時，只有 exact paths 且沒有同路徑 partial staging 才能用
+`git commit --only -- <paths>`；commit 後確認其他 cached diff 完全不變。無法證明
+就停止。之後依 dotfiles repo 當前的 review、commit、push／PR contract 同步。
 
-`voice-profile.md` 保存跨情境成立的偏好：
-
-```markdown
-# Voice profile
-
-## Confirmed choices
-- ...
-
-## Working hypotheses
-- ...
-
-## Avoid
-- ...
-```
+`INDEX.md` 是短而可排序的 routing table；`voice-profile.md` 保存跨情境成立的
+偏好與 publication contract。兩者的 tracked files 是格式 SSOT，不在本 reference
+複製一份。
 
 每個 `topics/<context-slug>.md` 保存情境專屬 evidence：
 
@@ -103,5 +96,4 @@ Project-specific observation 先進 topic。只有跨至少兩種情境仍成立
 
 開始代寫前讀 `INDEX.md`、`voice-profile.md` 與最接近的 topic，只採用有 evidence
 且符合當前 audience／document type 的規則。完成一個有意義的 revision pair 後
-才更新 records；沒有新 evidence 就不動檔案。聊天中不回報純 bookkeeping，除非
-使用者明確詢問。
+才更新 records；沒有新 evidence 就不動檔案。

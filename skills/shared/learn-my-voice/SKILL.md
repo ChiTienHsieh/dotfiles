@@ -1,6 +1,6 @@
 ---
 name: learn-my-voice
-description: 透過持續共同編輯 Markdown、local explore branch checkpoints 與可成長的 local-only learning records，學習並套用使用者的寫作聲音。使用者想讓 agent 越寫越像自己、減少重打時使用；不要用於被動監控、一般一次性校稿或推測人格。
+description: 透過持續共同編輯 Markdown、local explore branch checkpoints 與可成長的 Git-tracked learning records，學習並套用使用者的寫作聲音。使用者想讓 agent 越寫越像自己、減少重打時使用；不要用於被動監控、一般一次性校稿或推測人格。
 ---
 
 # Learn My Voice
@@ -23,10 +23,9 @@ description: 透過持續共同編輯 Markdown、local explore branch checkpoint
 
 ### 2. Persistent learning
 
-跨專案可重用的偏好放在 package lifecycle 之外的 per-user local data root。開始
-代寫前依 [references/learning-records.md](references/learning-records.md) 解析、讀取
-或建立 records。若 sandbox 不允許寫入，只要求該 exact data root 的 scoped
-permission；不得改存到未宣告的全域位置。
+跨專案可重用的偏好固定放在本 skill 的 `learning/`。開始代寫前依
+[references/learning-records.md](references/learning-records.md) 驗證它確實是使用者已
+授權的 public dotfiles Git source，再讀取或更新 records。
 
 ## 啟動前
 
@@ -38,12 +37,14 @@ permission；不得改存到未宣告的全域位置。
 - 目標文件與待 checkpoint 內容沒有 token、password、private key、未公開個資或
   其他不該進 Git object database／learning record 的內容。
 
-首次建立 explore branch、commit 或寫入 persistent records 前，先向使用者說明
-exact paths、會留下的 Git history／local data，並取得明確授權。未獲授權時退化成
-不 checkpoint、不寫 persistent records 的共同編輯模式。
+首次建立 explore branch 或 checkpoint commit 前，先說明 exact paths 與 Git
+history，並取得明確授權。Persistent records 的 public sync 授權依
+`learning-records.md` 驗證；通過後不重問同一台裝置，仍須掃描每次新增內容。
+未獲授權時退化成不 checkpoint、不寫 persistent records 的共同編輯模式。
 
-Local-only 不代表 secrets 可以安全 commit。若內容不適合留存，停止 checkpoint，
-但仍可在不保存該 evidence 的前提下協助當次寫作。
+即使 explore branch 尚未 push，secrets 也不可 commit；public persistent records
+更只能保存適合公開的抽象 evidence。內容不適合留存時停止 checkpoint，但仍可在
+不保存該 evidence 的前提下協助當次寫作。
 
 ## 每個 turn
 
