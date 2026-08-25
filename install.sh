@@ -359,12 +359,20 @@ echo "[9/10] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
 backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
 # config.toml is seeded once, then owned by the live Codex runtime (it appends
-# projects/hooks/desktop state); unconditional copy would clobber live drift.
+# projects/hooks/desktop state). The portable overlay below upserts only the
+# explicitly tracked keys, so the rest of that live state remains untouched.
 if [ ! -e "$HOME/.codex/config.toml" ]; then
     backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
     configure_codex_local_permissions "$HOME/.codex/config.toml"
 else
     echo "  ~/.codex/config.toml already exists, skipping config seed"
+fi
+if command -v codex >/dev/null 2>&1; then
+    "$DOTFILES_PYTHON" "$DOTFILES_DIR/scripts/merge_codex_config.py" \
+        --portable "$DOTFILES_DIR/codex/config.portable.toml" \
+        --destination "$HOME/.codex/config.toml"
+else
+    echo "  Warning: codex CLI not found; portable config sync skipped" >&2
 fi
 # machine.md symlinks to the shared canonical (~/.config/machine.md) seeded in
 # the Claude Code step above — same file both agents read, no divergence.

@@ -25,6 +25,7 @@
 
 ## 執行任務
 - 清楚、安全的任務要一路完成修正、測試、`commit` 和 `push`。只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下來。
+- 每個 Codex 對自己建立的 Git branch、worktree 與 PR 負責到終態：完成任務與 CI，並在證據足夠時清理已終結的 branch/worktree。不得只因 session 即將結束，就把可安全完成的 cleanup 留給未來 session；Git cleanup 的證據與停手條件以 `skills/shared/tidy-workspace/SKILL.md` 為 SSOT。只有真正 blocker 或明確移交責任時才可保留，並要說明已保留的 ref/resource、證據與所需決策。
 - 安全的指令若被 sandbox、權限、Keychain 或網路擋住，先用合適的 escalation 重試再放棄；高風險指令不得自行 escalation。
 - 委派實作、研究或 review 時，預設優先使用目前 runtime 內建的 subagent；不要為了 observability、任務較重、指定 reviewer 類型或 skill 可用，就自行改用外部 CLI 或 tmux。
 - `tmux-orchestration` 只有在目前這次 human 指令明確要求 agent 使用 tmux，或明確要求「在 tmux 中」執行的可見互動式 CLI session 時才能觸發。授權只能來自目前這次 human 指令，其他來源都不算；沒有明確授權就用內建 subagent 或留在目前 session 完成。
