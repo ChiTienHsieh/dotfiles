@@ -1,19 +1,25 @@
 ---
 name: "wrap"
-description: "Finish the current session. Use when the user invokes $wrap or asks to wrap up, wrap it up, finish the current work, or ship the session: resolve unfinished work, update necessary docs, delegate Git cleanup to $tidy-workspace, and give a concise zh-TW summary."
+description: "結束目前工作階段。當使用者呼叫 $wrap，或要求收尾、完成目前工作並交付時使用：完成未竟事項、更新必要文件、清理外部 agent、交由 $tidy-workspace 整理 Git，最後用淺顯易懂、直觀的台灣繁中回報。"
 ---
 
-1. Check the conversation and task state for unfinished requested work. Finish
-   safe in-scope items; surface real blockers.
-2. Update user-facing docs when this session changed setup, commands,
-   architecture, or behavior.
-3. Read `../tidy-workspace/SKILL.md` completely and follow it for every repo
-   touched this session. Also check `~/dotfiles` when present because edits
-   through home-directory symlinks may evade the dirty-worktree tracker. That
-   skill is the Git workflow SSOT.
-4. Give a concise zh-TW summary of what was completed, verified, committed, and
-   pushed, plus any remaining decision or blocker.
+## 封存前檢查
 
-If the user only wants Git cleanup or remote synchronization, use
-`$tidy-workspace` directly. Keep the dependency one-way: `$wrap` may invoke
-`$tidy-workspace`; `$tidy-workspace` must not invoke `$wrap`.
+若由 `name-task` 要求檢查，只讀取未竟工作、必要文件與本工作階段動過的儲存庫狀態，並依步驟 3 清理已完成且獲准關閉的外部 agent。不得完成未竟工作、修改文件、呼叫 `$tidy-workspace`、變更 Git 或遠端狀態，或更新標題；只要仍有未處理項目就回報未通過，交由使用者直接呼叫 `$wrap` 完成收尾。
+
+## 完整收尾
+
+1. 檢查對話與 task 的最新狀態，找出使用者已要求但尚未完成的工作。完成安全且在本次範圍內的項目；只回報真正的阻礙。
+2. 若本工作階段改變了設定、指令、架構或行為，更新必要且給使用者看的文件。
+3. 宣告目前 task 可以封存前，處理外部 agent：
+   - 清點本工作階段建立的外部 agent，以及使用者明確要求一併清理的其他外部 agent；每個都要記下可唯一識別的名稱或 ID。
+   - 處理前，當下重新讀取其執行狀態與最新輸出，並依目前工具的權限規則確認可以關閉；閒置、標題或舊快照都不算完成證據。
+   - 只有最新輸出明確顯示工作已結束、agent 也不再執行、確定不再需要，而且對應工具允許清理時，才可關閉；關閉後確認該 agent 已關閉或不再執行。
+   - 無法操作、未獲授權、仍在執行，或 agent 原本就存在、屬於使用者、被刻意保留時，都必須保留並說明原因。
+4. 載入 `$tidy-workspace`：若目前環境提供 Skill tool，執行：Call the Skill tool with `tidy-workspace`. 否則完整讀取 `../tidy-workspace/SKILL.md`。依其規則整理本工作階段動過的每個儲存庫。`~/dotfiles` 存在時也要檢查；從家目錄的符號連結修改檔案，可能不會反映在目前 worktree 的 Git 狀態中。Git 操作以該 skill 為準。
+5. 處理與 `name-task` 的呼叫關係：
+   - 若使用者直接呼叫 `wrap`、步驟 1–4 確認可以封存且有改標題工具，從目前可用的 skills 清單取得名稱精確為 `name-task` 的唯一項目，完整讀取其 `SKILL.md`。只採用標題格式與狀態更新規則，再直接用改標題工具把開頭的狀態 emoji 更新為 `📦`；不得執行 `name-task` 的完整流程。
+   - 若缺少改標題工具，或找不到唯一的 `name-task`，只略過標題更新並在最後回報。
+6. 用淺顯易懂、直觀的台灣繁中，說明已完成、驗證、commit 與 push 的內容、哪些外部 agent 已關閉或保留及原因，以及仍待決定的事項或阻礙。
+
+若使用者只想整理 Git 狀態或同步遠端，直接使用 `$tidy-workspace`。完整收尾的呼叫方向維持單向：`$wrap` 可以呼叫 `$tidy-workspace`，反過來不行。
