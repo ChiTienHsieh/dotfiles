@@ -41,6 +41,7 @@ class ArchiveSkillContractTests(unittest.TestCase):
         self.assertNotIn("`⏳`：", self.name_task)
         self.assertIn("都不使用狀態 emoji", self.name_task)
         self.assertIn("一般改名時移除舊的 `⏳`", self.name_task)
+        self.assertIn("task 恢復工作時移除失效的 `📦`", self.name_task)
         self.assertIn("`🚨` 必須保留到使用者明示解除", self.name_task)
         self.assertIn("並同步 unpin", self.name_task)
         self.assertIn(
