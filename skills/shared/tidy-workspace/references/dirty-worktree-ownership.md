@@ -22,7 +22,8 @@ subagent to investigate. Its prompt must include:
 - the sender's exact task/thread reply target;
 - read-only permission and the exact repo, worktree, branch, and dirty paths;
 - App-native thread tools only: no raw App database or tmux workaround;
-- no file, index, branch, history, or task mutation, and no broadcast;
+- no file, index, branch, history, or task-lifecycle mutation, and no broadcast;
+- at most one targeted coordination message, only after its fresh-read gate;
 - the requirement to return evidence and unresolved ambiguity to the sender.
 
 If either capability is unavailable, fail closed: preserve the changes and ask
