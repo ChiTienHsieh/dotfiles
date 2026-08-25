@@ -15,6 +15,8 @@
 - 未經明確要求，不得 push、merge、rebase、開 PR 或刪 branch。
 - 只 stage allowlisted Markdown 與 project voice-notes file；禁止 `git add -A`、
   `git add .` 或 `git commit -a`。
+- 每次 commit 前先讀 `git diff --cached --name-only`。既有 index entries 不得被
+  checkpoint 消費或清除。
 - 不修改 Git author、不 amend 或重寫既有 commits。
 
 Explore branch 保存探索過程，不代表內容已定稿或獲使用者認可。
@@ -54,8 +56,12 @@ Local-only working notes. Do not push or merge without explicit approval.
 
 1. 重新讀完整相關段落與 diff。
 2. 確認變更都在 allowlist，且適合進 Git history。
-3. 精準 stage 那些 paths。
-4. 以 `explore(checkpoint): <brief intent>` commit。
+3. 檢查既有 staged state，再精準 stage 那些 paths。
+4. 以 `explore(checkpoint): <brief intent>` commit。若 index 原本已有其他 staged
+   paths，plain `git commit` 不安全；只有在 current file content 就是完整 checkpoint
+   且同一路徑沒有需保留的 partial staging 時，才可用
+   `git commit --only -- <exact allowlisted paths>`，並在 commit 後確認其他 cached
+   diff 未改變。無法證明時停止，不得 stash、unstage 或還原使用者的 index。
 
 只有能從目前 fresh evidence 確定變更由使用者完成時，才用
 `explore(user): <brief intent>`。來源不明、混合或可能仍在編輯中的變更一律用
@@ -63,8 +69,8 @@ Local-only working notes. Do not push or merge without explicit approval.
 
 ### 保存 agent revision
 
-交付前重新讀 status 與 diff。若只包含本輪 agent 的已知修改，精準 stage 並以
-`explore(agent): <brief intent>` commit。
+交付前重新讀 status、working diff 與 cached diff。若只包含本輪 agent 的已知修改，
+依上方既有 staged-state 規則，以 `explore(agent): <brief intent>` commit。
 
 若出現 agent 無法解釋的新變更：
 
