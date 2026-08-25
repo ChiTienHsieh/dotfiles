@@ -20,7 +20,7 @@ description: 使用者明確呼叫時，透過持續共同編輯 Markdown、探�
 
 - 確認要共同編輯的 Markdown；多檔時列出明確範圍。
 - 重新讀取目標內容與現有 diff，避免覆蓋同時發生的修改。
-- 不把 secrets、未公開資料、可識別個人的細節或客戶資料寫進 Git 與 learning
+- 避免把 secrets、未公開資料、可識別個人的細節或客戶資料寫進 Git 與 learning
   records。
 
 首次建立探索分支或階段性 commit 前，說明要寫入的檔案路徑與 Git 歷史，並取得

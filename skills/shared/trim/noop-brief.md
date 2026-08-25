@@ -4,7 +4,7 @@
 
 - **CUT — no-op**：重述 agent 預設、客套或通用 best practice。
 - **CUT — over-defensive class**：多條規則都在替罕見事故列黑名單，或描述可能隨
-  產品改版失效的能力限制。回報共同理由，整類刪除，不逐句換詞。
+  產品改版失效的能力限制。回報共同理由，整類刪除，避免逐句換詞。
 - **CUT — drift**：複製另一個 SSOT 的值或規則；改成指回來源。
 - **KEEP — load-bearing**：專案事實、非顯而易見的 policy、具體 gotcha，或其他
   刪除後會改變行為的內容。
