@@ -5,7 +5,7 @@ description: Use when the user wants to simplify, trim, declutter, or shrink a s
 
 # trim
 
-砍掉 skill / prompt / agent-instruction 檔裡的 **no-op**——那些不管刪不刪、都不會改變 agent 行為的句子。no-op test 的判準放在同層的 `noop-brief.md`；這裡只定義怎麼用 fresh-eyes worker 系統化地跑。
+砍掉 skill / prompt / agent-instruction 檔裡的 **no-op**——那些不管刪不刪、都不會改變 agent 行為的句子。多條規則若同屬一類過度防禦，先判斷能否整類刪除，不要逐句換詞後留下同一套防禦。no-op test 的判準放在同層的 `noop-brief.md`；這裡只定義怎麼用 fresh-eyes worker 系統化地跑。
 
 ## 何時用 / 不用
 
@@ -16,7 +16,7 @@ description: Use when the user wants to simplify, trim, declutter, or shrink a s
 
 1. **定目標**。User 指定哪個檔 / 哪個 skill；沒指就問或掃整個 `.claude/skills/`。一個目標檔 = 一個 sub-agent。
 2. **Fan-out skeptic workers**。每個 worker 拿**一個檔 + brief path**，**零 parent context**——它不該知道每行「為什麼在那」，才測得出哪行其實是空話。Claude 使用 `Agent` tool（`general-purpose` 或 `Explore`）；Codex 使用可用的 multi-agent tool。多檔就平行開多個 worker。
-3. **收 punch list**，自己過一遍（sub-agent 會誤殺 load-bearing 行——尤其專案特有事實、指回 SSOT 的值）。
+3. **收 punch list**，先把相同理由的 candidates 合併成規則類別，再自己過一遍（sub-agent 會誤殺 load-bearing 行——尤其專案特有事實、指回 SSOT 的值）。能整類刪除就不要做逐句同義改寫。
 4. **改動走 PR**，逐項列「砍什麼 / 為什麼是 no-op / 省多少」，**絕不靜默亂砍**。爭議行留著、標記、問 user。
 
 ## sub-agent 的 brief：放在檔案，別 inline 進 context

@@ -1,85 +1,53 @@
 ---
 name: learn-my-voice
-description: 透過持續共同編輯 Markdown、local explore branch checkpoints 與可成長的 Git-tracked learning records，學習並套用使用者的寫作聲音。使用者想讓 agent 越寫越像自己、減少重打時使用；不要用於被動監控、一般一次性校稿或推測人格。
+description: 使用者明確呼叫時，透過持續共同編輯 Markdown、探索分支的階段性版本與 Git 追蹤紀錄，學習並套用使用者的寫作聲音。
 ---
 
 # Learn My Voice
 
-這個 workflow 學的是可觀察的寫作選擇，不是假裝擁有使用者的經歷或身份。它只
-在目前 turn 被喚起時 fresh-read；不得聲稱會在背景持續監看。
+從可觀察的修改學習寫作選擇，讓之後的代筆更接近使用者。
 
 ## 兩層紀錄
 
-### 1. Project exploration
+- **專案探索**：在文件所屬程式碼庫的本機探索分支保存共同編輯過程與 voice
+  notes。需要建立分支或保存階段性版本時，讀
+  [references/exploration-workflow.md](references/exploration-workflow.md)。
+- **長期學習**：跨專案成立的偏好放在本 skill 的 `learning/`。讀取或
+  更新前，依 [references/learning-records.md](references/learning-records.md)
+  驗證公開 dotfiles 程式碼庫與紀錄格式。
 
-在共同編輯文件所屬 repo 的 local explore branch 保存 revision provenance：
+## 啟動
 
-- allowlisted Markdown 文件；
-- `.explore/<topic-slug>/VOICE.md`；
-- 分開的 `explore(user|checkpoint|agent|voice): ...` commits。
+- 確認要共同編輯的 Markdown；多檔時列出明確範圍。
+- 重新讀取目標內容與現有 diff，避免覆蓋同時發生的修改。
+- 不把 secrets、未公開資料、可識別個人的細節或客戶資料寫進 Git 與 learning
+  records。
 
-需要建立 branch、判斷 content provenance 或 checkpoint 時，讀
-[references/exploration-workflow.md](references/exploration-workflow.md)。
+首次建立探索分支或階段性 commit 前，說明要寫入的檔案路徑與 Git 歷史，並取得
+使用者同意。若不適合保存，仍可繼續當次共同編輯，但不建立階段性版本或更新
+長期紀錄。
 
-### 2. Persistent learning
+## 每輪共同編輯
 
-跨專案可重用的偏好固定放在本 skill 的 `learning/`。開始代寫前依
-[references/learning-records.md](references/learning-records.md) 驗證它確實是使用者已
-授權的 public dotfiles Git source，再讀取或更新 records。
+1. 重新讀取目標內容、相關 diff、專案 voice notes 與適用的長期紀錄。
+2. Agent 動筆前若已有目標文件變更，先保存其來源；無法確認是使用者修改時，只能
+   標成中性 checkpoint（階段性版本），不能拿來推論使用者偏好。
+3. 套用和當前情境相符的已確認選擇，以最小而連貫的段落續寫；保留使用者的事實與
+   觀點，不補造經歷或主張。
+4. Agent 修改、使用者修改與 voice 推論分開保存。只有本輪出現新的可引用證據時，
+   才更新專案或長期紀錄。
 
-## 啟動前
+## 套用與修正 voice
 
-啟動前先確認：
+- 優先採用使用者明說或反覆證實的選擇，例如選材角度、語言、句子節奏、直白程度、
+  幽默、結構與讀者假設。
+- 依讀者與文件類型調整口氣；私人筆記的寫法不能直接搬到公開文章。
+- 暫行假設只能小幅試用，不能當成固定人格；一次性的錯字、口述贅字或情緒措辭也
+  不升格成偏好。
+- 新證據與舊規則衝突時，依時間、情境與來源強度縮窄、降級或取代舊規則，
+  不靜默覆寫。
 
-- 共同編輯的 Markdown 路徑；多檔時建立明確 allowlist。
-- 目前 Git branch、working tree、最近 commits 與可能的 ref 衝突。
-- 使用者是否可能同時編輯同一檔案；不能確認就每次動筆前重新讀檔並縮小 patch。
-- 目標文件與待 checkpoint 內容沒有 token、password、private key、未公開個資或
-  其他不該進 Git object database／learning record 的內容。
+## 結束探索
 
-首次建立 explore branch 或 checkpoint commit 前，先說明 exact paths 與 Git
-history，並取得明確授權。Persistent records 的 public sync 授權依
-`learning-records.md` 驗證；通過後不重問同一台裝置，仍須掃描每次新增內容。
-未獲授權時退化成不 checkpoint、不寫 persistent records 的共同編輯模式。
-
-即使 explore branch 尚未 push，secrets 也不可 commit；public persistent records
-更只能保存適合公開的抽象 evidence。內容不適合留存時停止 checkpoint，但仍可在
-不保存該 evidence 的前提下協助當次寫作。
-
-## 每個 turn
-
-1. Fresh-read branch、status、allowlisted diff、最近 explore commits、project
-   `VOICE.md` 與相關 persistent learning records；摘要不能代替。
-2. 若 agent 動筆前已有 target changes，先依 provenance 保存 user 或中性
-   checkpoint；來源不明的變更不可標成 user evidence。
-3. 套用和當前情境相符的 confirmed choices，並以最小、連貫的一段續寫。保留
-   使用者的事實與觀點，不補造經歷或主張。
-4. 寫檔前再讀目標段落；內容已變時吸收新版本，不用舊 snapshot 覆蓋。
-5. 把 agent revision 與 voice inference 分開 checkpoint。出現無法解釋的新變更
-   時，不還原、不冒認 content provenance；改做中性 checkpoint 或停下釐清。
-6. 只有本輪新增可引用 evidence 時才更新 project／persistent records。
-
-Persistent record 寫入若沒有可用權限，project checkpoint loop 仍可繼續，但必須
-明確回報 persistent update 未完成；不得聲稱已跨專案記住。
-
-## 如何套用 voice
-
-- 優先套用使用者明說或反覆證實的選擇，例如選材角度、中文／English 取捨、
-  句子節奏、直白程度、幽默、結構與讀者假設。
-- 依情境調整 register；私人筆記的口氣不能直接搬到求職信或公開文章。
-- Working hypothesis 可以小幅試用，但要讓使用者容易否決；不得當成固定人格。
-- 不推論敏感特質、健康、政治立場或未明說的個人經歷，也不把錯字、口述贅字
-  或一次性的情緒措辭機械式模仿成特徵。
-- Project `VOICE.md` 與 persistent profile 衝突時，以較新、情境較接近、
-  provenance 較強的 evidence 為準；不要靜默覆寫舊規則。
-
-## Handoff 與離開 exploration
-
-每輪只需回報本次保存的 content checkpoints、目前採用的 1–3 個 voice choices、
-未處理變更與下一個最小共編區塊；不要把 learning bookkeeping 倒進聊天。
-
-使用者說完成時，列出 branch、base commit、目標文件、project voice-notes path 與
-未確認 hypotheses，讓使用者另行決定保留 branch、帶走成品 commits 或刪除探索
-資料。刪 branch 不會立即清除 Git object database 裡的內容。未經針對 exact branch
-與內容範圍的明確確認，不得 push、merge、rebase、開 PR、刪 branch，或把
-`.explore/**` 帶進正常 branch。
+回報本輪保存的階段性版本、採用的 voice 選擇、未處理變更與下一個共編區塊。
+探索分支預設只留本機；公開前重新檢查完整內容並取得使用者確認。
