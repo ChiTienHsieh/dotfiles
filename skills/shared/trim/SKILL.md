@@ -18,6 +18,7 @@ description: Use when the user wants to simplify, trim, declutter, or shrink a s
 1. 確認目標檔；一個檔案交給一個 worker。
 2. 解析 skill-local `noop-brief.md`，把 brief path 與目標檔路徑交給 fresh、唯讀且
    沒有 parent context 的 worker。不要把 brief inline 進 prompt。
+   Codex 使用可用的 multi-agent tool；其他 runtime 使用當前內建 worker。
 3. 收回 punch list，把相同理由的 candidates 合併成規則類別，再由主 agent 判斷。
 4. 改動走 PR，逐項列出砍掉的規則、理由與約省篇幅；爭議項目留著問使用者。
 

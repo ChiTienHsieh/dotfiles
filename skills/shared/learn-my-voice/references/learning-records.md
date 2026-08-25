@@ -19,13 +19,12 @@ learning/
 profile 指定的 dotfiles 程式碼庫追蹤。驗證失敗時停止，不寫入副本、快取、其他
 checkout 或替代紀錄位置。
 
-`voice-profile.md` 記錄的公開同步是使用者已確認的長期選擇；不需建立或檢查逐裝置
-授權標記。每次更新：
+每次更新先讀取並遵守 `voice-profile.md` 的公開同步決定：
 
 1. 只保存會改變未來代筆結果的最小公開證據。
 2. 沿用 [exploration-workflow.md](exploration-workflow.md) 的 commit boundary，只處理
    本輪更新的 `learning/` 檔案；不明變更依 `tidy-workspace` 處理。
-3. 依 dotfiles repo 的正常 review、commit、push 與 PR 流程同步。
+3. 同步到 profile 指定的公開 dotfiles 程式碼庫。
 
 ## Topic 格式
 

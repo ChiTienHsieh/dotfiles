@@ -4,8 +4,6 @@
 
 預設 branch 名為 `explore/<topic-slug>`，從目前 `HEAD` 建立。
 
-- 探索分支預設只留本機；公開前重新檢查完整 diff 與 commits，掃描不應公開的
-  內容，並取得使用者確認。
 - Checkpoint 只包含本輪明確範圍內的 Markdown 與專案 voice notes。
 - 同一 worktree 出現任務外或來源不明的變更時，依 `tidy-workspace` 處理；若沒有
   變更負責範圍協調流程可用，就保留現況並停止。未確認的檔案或 diff 區塊不得
@@ -13,7 +11,8 @@
 
 Explore branch 保存探索過程，不代表內容已定稿或獲使用者認可。
 任何會讓內容離開本機探索分支，或移除其唯一可用 ref 的動作，都要先重新檢查內容
-並取得使用者確認；刪除 branch 不等於清除 Git 內部保存的內容。
+與完整 diff、掃描不應公開的資料，並取得使用者確認；刪除 branch 不等於清除 Git
+內部保存的內容。
 
 ## Project voice notes
 
