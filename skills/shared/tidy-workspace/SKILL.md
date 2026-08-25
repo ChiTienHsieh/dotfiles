@@ -24,17 +24,42 @@ blocker.
 - Before commit or push, check all relevant diffs for secrets, credentials,
   private keys, non-public personal data, and private machine details. Treat
   unknown repo visibility conservatively.
-- Never discard, reset, force-push, run `git clean`, delete untracked files,
-  drop stashes, remove worktrees, or delete branches or tags without explicit
-  authorization. Never disturb another agent's worktree.
+- Never discard, reset, force-push, run `git clean`, delete untracked files, or
+  drop stashes without explicit authorization.
 
-Leave unrelated work in place. Temporary, stale, or merged means cleanup
-candidate, not authorized deletion.
+## Terminal cleanup
+
+The creator or current controller must finish cleanup for branches, worktrees,
+and PRs it created or explicitly took over. Remove an exact target without
+asking only when current evidence establishes all of the following:
+
+- the target is precisely identified, owned or explicitly in scope, and no
+  active task, process, or worktree is using it;
+- the worktree is clean, and no dirty, untracked, stashed, or unpushed unique
+  data would be lost;
+- the PR is merged or closed, or the artifact is otherwise no longer needed;
+- every commit has been fully pushed, and a remote, PR, merged base, or other
+  verified copy is sufficient to recover the work after the planned cleanup;
+- the exact cleanup is followed by a readback confirming the target state.
+
+For squash merges, Git ancestry alone is not proof. Use the PR head OID, a
+remote copy, patch or diff equivalence, or another simple reliable check. A
+merged or closed PR with a clean, fully pushed worktree is a cleanup candidate,
+but each deletion still needs the evidence above; deleting a remote copy also
+requires another verified recovery copy.
+
+Stop and ask before cleanup when the worktree is dirty, data exists only in an
+unpushed commit or local artifact, a task or agent is live, ownership is
+unclear, evidence conflicts, or cleanup needs force, history rewriting,
+credentials, billing, or access changes. Age or staleness alone never proves
+deletion is safe. Leave user and other-agent artifacts untouched unless this
+task explicitly took control of them, and leave all unrelated work in place.
 
 ## Report
 
 - repos and branches inspected;
 - actions, tests, and CI completed;
+- terminal cleanup performed and its readback evidence;
 - preserved work or decisions still needed.
 
 If everything was already synchronized and clean, say so directly.

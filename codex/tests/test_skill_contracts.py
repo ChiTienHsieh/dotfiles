@@ -3,7 +3,9 @@ import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+AGENTS = REPO_ROOT / "codex" / "AGENTS.md"
 NAME_TASK = REPO_ROOT / "skills" / "codex" / "name-task" / "SKILL.md"
+TIDY_WORKSPACE = REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "SKILL.md"
 WRAP = REPO_ROOT / "skills" / "shared" / "wrap" / "SKILL.md"
 
 
@@ -39,6 +41,45 @@ class ArchiveSkillContractTests(unittest.TestCase):
         self.assertIn("替換開頭既有的分類 emoji", self.name_task)
         self.assertIn("若沒有，就在最前面插入", self.name_task)
         self.assertIn("不得把完整標題縮成單一 emoji", self.name_task)
+
+
+class GitCleanupContractTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.agents = AGENTS.read_text(encoding="utf-8")
+        cls.tidy = TIDY_WORKSPACE.read_text(encoding="utf-8")
+        cls.tidy_flat = " ".join(cls.tidy.split())
+        cls.wrap = WRAP.read_text(encoding="utf-8")
+
+    def test_global_contract_assigns_terminal_responsibility(self) -> None:
+        self.assertIn("建立者或目前 controller", self.agents)
+        self.assertIn("branch、worktree 與 PR 負責到終態", self.agents)
+        self.assertIn("以 `tidy-workspace` skill 為準", self.agents)
+
+    def test_tidy_requires_complete_cleanup_evidence(self) -> None:
+        for evidence in (
+            "precisely identified",
+            "no active task, process, or worktree",
+            "no dirty, untracked, stashed, or unpushed unique data",
+            "verified copy is sufficient to recover",
+            "readback confirming the target state",
+        ):
+            self.assertIn(evidence, self.tidy_flat)
+
+    def test_tidy_covers_squash_and_stop_conditions(self) -> None:
+        self.assertIn(
+            "For squash merges, Git ancestry alone is not proof", self.tidy_flat
+        )
+        self.assertIn("PR head OID", self.tidy_flat)
+        self.assertIn(
+            "Age or staleness alone never proves deletion is safe", self.tidy_flat
+        )
+        self.assertIn("Leave user and other-agent artifacts untouched", self.tidy_flat)
+
+    def test_wrap_delegates_terminal_cleanup_without_recursion(self) -> None:
+        self.assertIn("Git artifacts 收到 terminal cleanup", self.wrap)
+        self.assertIn("cleanup 判斷都以該 skill 為準", self.wrap)
+        self.assertNotIn("$tidy-workspace` 可以呼叫 `$wrap", self.tidy)
 
 
 if __name__ == "__main__":
