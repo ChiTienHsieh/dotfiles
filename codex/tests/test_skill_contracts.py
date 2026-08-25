@@ -38,8 +38,13 @@ class ArchiveSkillContractTests(unittest.TestCase):
         self.assertIn("該 task 的同等封存前檢查已通過", self.name_task)
 
     def test_status_update_preserves_a_complete_title(self) -> None:
-        self.assertIn("替換開頭既有的分類 emoji", self.name_task)
-        self.assertIn("若沒有，就在最前面插入", self.name_task)
+        self.assertNotIn("`⏳`：", self.name_task)
+        self.assertIn("都不使用狀態 emoji", self.name_task)
+        self.assertIn("回到一般狀態時移除既有標記與舊的 `⏳`", self.name_task)
+        self.assertIn(
+            "<repo／project／最小可辨識範圍> | <使用者目的> | <進度>",
+            self.name_task,
+        )
         self.assertIn("不得把完整標題縮成單一 emoji", self.name_task)
 
 
