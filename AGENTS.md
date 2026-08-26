@@ -24,6 +24,11 @@ the same file. Directory layout: see the structure diagram in `README.md`.
   (reviewer choice per `codex/notes/worker-routing.md`). Non-interactive review
   is pre-authorized for this repo — run it yourself; do not ask the user to
   approve the review step.
+- Before opening a PR to a protected branch, verify the active GitHub account,
+  the applicable ruleset, and `CODEOWNERS`. If approval from a specific owner is
+  required, that owner must remain the reviewer; open the PR with a different
+  authorized account. Do not create a self-approval deadlock or use bypass as
+  the routine workaround.
 - Stop and ask only for: security concerns, destructive actions,
   force-push/reset/discard decisions, billing or data-loss risk, or
   product/design tradeoffs not inferable from existing instructions.
