@@ -15,6 +15,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pr-author-policy:
+    name: pr-author-policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Keep the required code owner available for review
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" != pull_request ]; then
+            exit 0
+          fi
+          if [ "${PR_AUTHOR}" = ChiTienHsieh ]; then
+            echo "::error::Open this PR with another authorized account so @ChiTienHsieh remains available for the required CODEOWNER approval."
+            exit 1
+          fi
+
   validation:
     name: deterministic-validation
     runs-on: ubuntu-24.04
@@ -216,6 +237,7 @@ jobs:
     name: ci-gate
     if: ${{ always() }}
     needs:
+      - pr-author-policy
       - validation
       - secret-scan
       - workflow-security
@@ -225,12 +247,14 @@ jobs:
     steps:
       - name: Require every deterministic check
         env:
+          PR_AUTHOR_POLICY_RESULT: ${{ needs.pr-author-policy.result }}
           SECRET_SCAN_RESULT: ${{ needs.secret-scan.result }}
           VALIDATION_RESULT: ${{ needs.validation.result }}
           WORKFLOW_SECURITY_RESULT: ${{ needs.workflow-security.result }}
         shell: bash
         run: |
           set -euo pipefail
+          test "${PR_AUTHOR_POLICY_RESULT}" = success
           test "${VALIDATION_RESULT}" = success
           test "${SECRET_SCAN_RESULT}" = success
           test "${WORKFLOW_SECURITY_RESULT}" = success
