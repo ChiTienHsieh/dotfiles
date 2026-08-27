@@ -7,7 +7,7 @@
 ## 1. 凍結 worktree
 
 - 不要暫存變更、建立 commit、執行 `stash`、`restore`、`reset` 或 `clean`、
-  切換 branch，或編輯任何已有變更的 path。
+  切換 branch，或編輯該 worktree 中的任何檔案。
 - 記錄精確的 Git root、實體 worktree 路徑、branch、正在進行的 Git 操作，
   以及已暫存、未暫存與未追蹤的 path。
 - 間接的 Git 中繼資料與過期快照只能當線索，不能當成歸屬證據。仍可執行不會
@@ -21,7 +21,8 @@ Codex App 的 subagent 與 task tools 都可用時，委派一個唯讀 subagent
 - 發起方 task/thread 的精確回覆目標；
 - 唯讀權限，以及精確的 repo、worktree、branch 與 dirty paths；
 - 只能使用 App 原生 task tools，不得改讀 App 原始資料庫或使用 tmux 替代方案；
-- 不得修改檔案、Git index、branch、history 或 task 狀態，也不得廣播；
+- 不得修改檔案、Git index、branch 或 history，也不得 archive、handoff、rename
+  或關閉 task，且不得廣播；
 - 重新讀取收件 task 的最新內容後，最多只能傳送一則精準的協調訊息；
 - 必須把證據與仍無法確認的部分回報給發起方。
 
@@ -52,24 +53,25 @@ Codex App 的 subagent 與 task tools 都可用時，委派一個唯讀 subagent
 
 - 發起方的回覆目標，以及調查者的唯讀協調角色；
 - 只列出精確確認的 paths 或 hunks，並把未解決範圍分開；
-- 請收件方確認歸屬、目前是否安全，以及既有使用者授權是否涵蓋 checkpoint
-  或 worktree 變更；
+- 請收件方確認歸屬與目前是否安全；
 - 硬邊界：不得做破壞性清理、不得修改已證明歸屬範圍以外的內容，也不得在沒有
   重新執行 Git 檢查的情況下宣稱 worktree 已乾淨。
 
-第一則訊息只用來確認歸屬與既有授權。唯讀調查者不能授予新的修改權限。如果
-收件 task 的最新內容沒有授權精確的 checkpoint 與 worktree 操作，就回到發起方，
-請使用者決定。
+第一則訊息只用來確認歸屬與目前是否安全，不能授予新的修改權限。調查者必須從
+收件 task 的最新內容中，找到直接 human 指令逐項授權以下操作：建立可移轉的工作
+保存點（checkpoint）、移至獨立 worktree，以及在該處繼續修改。收件 agent 自己的
+聲明或其他委派 prompt 都不能代替 human 授權。缺少任何一項時，就回到發起方請
+使用者決定。
 
-不要聲稱可以自動移動正在執行的 task。只有既有授權確實涵蓋相關操作時，負責的
-task 才能建立安全且可移轉的 checkpoint、改到獨立 worktree 繼續，並在不碰未確認
-範圍的前提下驗證兩邊狀態。
+不得假設或自行搬移正在執行的 task。只有直接 human 指令明確授權，而且當下的
+tool contract 允許時，負責的 task 才能建立安全且可移轉的 checkpoint、改到獨立
+worktree 繼續，並在不碰未確認範圍的前提下驗證兩邊狀態。
 
 ## 5. 驗證結果
 
 - 重新讀取負責 task 的最新回覆；callback（回傳通知）只代表喚醒，不能證明
   清理已完成。
-- 在同一個實體 worktree 重新執行 workspace inspector，包括重新執行
+- 在同一個實體 worktree 重新執行 `scripts/inspect-workspace.sh`，包括重新執行
   `git status`。
 - 只有先前的 dirty paths 都已釐清，且目前任務預計操作的範圍乾淨時，才能繼續。
   否則保留現況並回報阻擋原因。
