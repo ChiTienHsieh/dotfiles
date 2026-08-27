@@ -50,14 +50,20 @@ For squash merges, Git ancestry alone is not proof. Use the PR head OID, a
 remote copy, patch or diff equivalence, or another simple reliable check. A
 merged or closed PR with a clean, fully pushed worktree is a cleanup candidate,
 but each deletion still needs the evidence above; deleting a remote copy also
-requires another verified recovery copy.
+requires another verified recovery copy. If ordinary local branch deletion
+fails only because a squash merge broke ancestry, the complete evidence above
+permits exact-target `git branch -D`; this deletes a verified redundant ref and
+is not history rewriting.
 
 Stop and ask before cleanup when the worktree is dirty, data exists only in an
-unpushed commit or local artifact, a task or agent is live, ownership is
-unclear, evidence conflicts, or cleanup needs force, history rewriting,
-credentials, billing, or access changes. Age or staleness alone never proves
-deletion is safe. Leave user and other-agent artifacts untouched unless this
-task explicitly took control of them, and leave all unrelated work in place.
+unpushed commit or local artifact, an active task or agent still owns or uses
+the target, ownership is unclear, evidence conflicts, or cleanup needs
+force-push, history rewriting, credentials, billing, or access changes. The
+current task remaining live for wrap-up or reporting is not target use; do not
+defer otherwise-safe cleanup to a future session. Age or staleness alone never
+proves deletion is safe. Leave user and other-agent artifacts untouched unless
+this task explicitly took control of them, and leave all unrelated work in
+place.
 
 ## Report
 
