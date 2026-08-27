@@ -1,87 +1,78 @@
-# Dirty Worktree Ownership Protocol
+# Dirty Worktree 變更歸屬流程
 
-Use this protocol only when a shared physical worktree contains staged,
-unstaged, or untracked changes that are outside the current task and whose
-owner（變更負責者）is unknown. Known current-task or user-owned changes stay in
-the normal `review-dirty` flow.
+只有共用同一個實體 worktree 時，才使用這套流程：其中出現不屬於目前任務、
+且負責者不明的已暫存、未暫存或未追蹤變更。已確認屬於目前任務或使用者的變更，
+仍走一般的 `review-dirty` 流程。
 
-## 1. Freeze the worktree
+## 1. 凍結 worktree
 
-- Do not stage, commit, stash, restore, reset, clean, switch branches, or edit
-  any dirty path.
-- Record the exact Git root, physical worktree path, branch, active Git
-  operation, and staged, unstaged, and untracked paths.
-- Treat indirect metadata and stale snapshots as clues, never proof of
-  ownership. Read-only fetches of remote refs remain allowed.
+- 不要暫存變更、建立 commit、執行 `stash`、`restore`、`reset` 或 `clean`、
+  切換 branch，或編輯任何已有變更的 path。
+- 記錄精確的 Git root、實體 worktree 路徑、branch、正在進行的 Git 操作，
+  以及已暫存、未暫存與未追蹤的 path。
+- 間接的 Git 中繼資料與過期快照只能當線索，不能當成歸屬證據。仍可執行不會
+  修改 worktree 的 `git fetch`。
 
-## 2. Delegate one bounded investigator
+## 2. 委派一個範圍明確的調查者
 
-When Codex App subagents and thread tools are available, send one read-only
-subagent to investigate. Its prompt must include:
+Codex App 的 subagent 與 task tools 都可用時，委派一個唯讀 subagent 調查。
+委派指令必須包含：
 
-- the sender's exact task/thread reply target;
-- read-only permission and the exact repo, worktree, branch, and dirty paths;
-- App-native thread tools only: no raw App database or tmux workaround;
-- no file, index, branch, history, or task-lifecycle mutation, and no broadcast;
-- at most one targeted coordination message, only after its fresh-read gate;
-- the requirement to return evidence and unresolved ambiguity to the sender.
+- 發起方 task/thread 的精確回覆目標；
+- 唯讀權限，以及精確的 repo、worktree、branch 與 dirty paths；
+- 只能使用 App 原生 task tools，不得改讀 App 原始資料庫或使用 tmux 替代方案；
+- 不得修改檔案、Git index、branch、history 或 task 狀態，也不得廣播；
+- 重新讀取收件 task 的最新內容後，最多只能傳送一則精準的協調訊息；
+- 必須把證據與仍無法確認的部分回報給發起方。
 
-If either capability is unavailable, fail closed: preserve the changes and ask
-the user rather than guessing. The main agent must not silently replace this
-check with weaker attribution.
+只要其中一項能力不可用，就保留現況並詢問使用者，不要猜測。主 agent 不得默默
+改用證據力更弱的方式判定歸屬。
 
-## 3. Find and prove the responsible task
+## 3. 找出並證明負責的 task
 
-The investigator uses only Codex App-native thread tools:
+調查者只能使用 Codex App 原生 task tools：
 
-1. List recent active tasks to produce a small candidate set.
-2. Read each candidate's current thread, not just its title or preview.
-3. Build an ownership map for every dirty path and, when a file is mixed, its
-   exact current hunks. Require direct evidence tying each confirmed scope to
-   both the physical worktree and current diff content; intended work, a
-   matching repo, or a matching branch is insufficient.
-4. Mark each path or hunk `confirmed:<task>` or `unconfirmed`, and quote or
-   summarize the evidence. Never attribute user changes to Codex merely
-   because another task exists.
+1. 列出近期仍活躍的 task，縮小候選範圍。
+2. 讀取每個候選 task 的最新完整內容，不能只看 title 或 preview。
+3. 為每個 dirty path 建立歸屬表；同一檔案混有多方修改時，細分到目前的個別
+   hunk（變更區塊）。每個確認範圍都必須有直接證據，同時對得上實體 worktree
+   與目前 diff；只有工作意圖、相同 repo 或相同 branch 都不夠。
+4. 把每個 path 或 hunk 標成 `confirmed:<task>` 或 `unconfirmed`，並引用或摘要
+   證據。不能只因另一個 Codex task 存在，就把使用者的變更歸給 Codex。
 
-Contact only a task directly tied to a confirmed scope. Return every
-unconfirmed or mixed scope to the source task and preserve it untouched.
+只聯絡與已確認範圍有直接關聯的 task。所有未確認或混雜的範圍都回報給發起方，
+並維持原狀。
 
-## 4. Negotiate isolation with the confirmed task
+## 4. 與已確認的 task 協調隔離
 
-Apply the global fresh-read-before-send gate to that exact recipient. If the
-read fails, its state changed materially, or the evidence no longer matches,
-do not send.
+傳訊前，依全域規則重新讀取該收件 task 的最新內容。讀取失敗、task 狀態已有
+實質變化，或證據不再吻合時，都不要傳送。
 
-Send one targeted message containing:
+只傳送一則精準訊息，內容包含：
 
-- the sender's reply target and the investigator's read-only coordination role;
-- only the exact confirmed paths or hunks, with unresolved scopes kept separate;
-- a request to confirm ownership, current safety state, and whether the
-  recipient's existing user authority covers checkpoint or worktree changes;
-- hard boundaries: no destructive cleanup, no mutation outside proven
-  ownership, and no claim of cleanliness without a fresh Git check.
+- 發起方的回覆目標，以及調查者的唯讀協調角色；
+- 只列出精確確認的 paths 或 hunks，並把未解決範圍分開；
+- 請收件方確認歸屬、目前是否安全，以及既有使用者授權是否涵蓋 checkpoint
+  或 worktree 變更；
+- 硬邊界：不得做破壞性清理、不得修改已證明歸屬範圍以外的內容，也不得在沒有
+  重新執行 Git 檢查的情況下宣稱 worktree 已乾淨。
 
-The first message only establishes ownership and existing authority. A
-read-only investigator cannot grant new mutation authority. If the fresh
-recipient thread does not already authorize the exact checkpoint and worktree
-actions, return to the source task for a user decision.
+第一則訊息只用來確認歸屬與既有授權。唯讀調查者不能授予新的修改權限。如果
+收件 task 的最新內容沒有授權精確的 checkpoint 與 worktree 操作，就回到發起方，
+請使用者決定。
 
-Do not claim that an already-running task can be moved automatically. When its
-existing authority does cover the exact actions, the responsible task must
-create a safe transferable checkpoint, continue in a dedicated worktree, and
-verify both locations without touching unresolved scopes.
+不要聲稱可以自動移動正在執行的 task。只有既有授權確實涵蓋相關操作時，負責的
+task 才能建立安全且可移轉的 checkpoint、改到獨立 worktree 繼續，並在不碰未確認
+範圍的前提下驗證兩邊狀態。
 
-## 5. Verify the result
+## 5. 驗證結果
 
-- Fresh-read the responsible task's reply; a callback is only a wake signal,
-  not proof that cleanup finished.
-- Rerun the workspace inspector, including a fresh `git status`, in the exact
-  physical worktree.
-- Continue only when the previously dirty paths are accounted for and the
-  current task's intended boundary is clean. Otherwise preserve state and
-  report the blocker.
+- 重新讀取負責 task 的最新回覆；callback（回傳通知）只代表喚醒，不能證明
+  清理已完成。
+- 在同一個實體 worktree 重新執行 workspace inspector，包括重新執行
+  `git status`。
+- 只有先前的 dirty paths 都已釐清，且目前任務預計操作的範圍乾淨時，才能繼續。
+  否則保留現況並回報阻擋原因。
 
-Report the confirmed owner, evidence used, message target, agreed handoff,
-fresh Git result, and anything unresolved. Do not expose unrelated thread
-content.
+最後回報已確認的負責者、採用的證據、訊息傳送目標、協調結果、最新 Git 狀態，
+以及所有未解決事項。不要暴露無關 task 的內容。
