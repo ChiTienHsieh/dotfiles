@@ -4,6 +4,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| gu-log GP／MP 編輯契約 debrief | mastered | 能同時判斷 voice ownership、MP 距離自由、retained-claim grounding 與第一人稱誠實邊界。 | 2026-08-19 | topics/gu-log-gp-mp-editorial-contract.md |
 | Pilates D1 backup hardening debrief | mastered | Mac-pull offsite 已通過真實排程、加密與 isolated recovery；cross-device key recovery copy 也已驗收。 | 2026-08-14 | topics/pilates-d1-backup-hardening-debrief.md |
 | Codex task 完成自動改 thread title preflight | familiar | 拍板 meaningful-state taxonomy 與 one-shot guard；已完成 18 項 adversarial unit tests、trusted CLI end-to-end 及 persisted title 讀回。 | 2026-08-05 | topics/codex-thread-title-hook-preflight.md |
 | gu-log ShroomDog’s Choice preflight | learning | 目標是 chat-first 決策、OpenSpec 留在幕後並完成 production 功能；選擇米其林類比、深度 2、Adaptive medium。 | 2026-08-01 | topics/gu-log-shroomdog-choice-preflight.md |
