@@ -17,10 +17,14 @@ blocker.
 
 - `review-dirty`: inspect staged and unstaged diffs; test and commit in-scope
   changes only, then rerun the script.
+- 若 worktree 內有不屬於目前任務、且負責者不明的變更，先凍結該 worktree
+  的檔案、Git index（暫存區）、branch 與 history 寫入，再依
+  `references/dirty-worktree-ownership.md` 處理。
 - `pull-ff-only`: run `git pull --ff-only`, then rerun the script.
 - `review-outgoing`: inspect the full outgoing range and diff, confirm ownership
   and destination, then push through the repo's PR and CI flow when required.
-- `stop:*`, sensitive files, ambiguous work, or unclear ownership: stop and ask.
+- 遇到 `stop:*`、敏感檔案、範圍不明的工作，或走完變更歸屬流程後仍無法確認
+  負責者：停止並詢問使用者。
 - Before commit or push, check all relevant diffs for secrets, credentials,
   private keys, non-public personal data, and private machine details. Treat
   unknown repo visibility conservatively.

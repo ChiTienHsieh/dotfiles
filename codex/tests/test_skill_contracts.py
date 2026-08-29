@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import unittest
 
 
@@ -6,6 +7,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 AGENTS = REPO_ROOT / "codex" / "AGENTS.md"
 NAME_TASK = REPO_ROOT / "skills" / "codex" / "name-task" / "SKILL.md"
 TIDY_WORKSPACE = REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "SKILL.md"
+TIDY_OPENAI = (
+    REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "agents" / "openai.yaml"
+)
+CLAUDE_SETTINGS = REPO_ROOT / "claude" / "settings.json"
 WRAP = REPO_ROOT / "skills" / "shared" / "wrap" / "SKILL.md"
 
 
@@ -57,12 +62,28 @@ class GitCleanupContractTests(unittest.TestCase):
         cls.agents = AGENTS.read_text(encoding="utf-8")
         cls.tidy = TIDY_WORKSPACE.read_text(encoding="utf-8")
         cls.tidy_flat = " ".join(cls.tidy.split())
+        cls.tidy_openai = TIDY_OPENAI.read_text(encoding="utf-8")
+        cls.claude_settings = json.loads(CLAUDE_SETTINGS.read_text(encoding="utf-8"))
         cls.wrap = WRAP.read_text(encoding="utf-8")
 
     def test_global_contract_assigns_terminal_responsibility(self) -> None:
         self.assertIn("建立者或目前 controller", self.agents)
         self.assertIn("branch、worktree 與 PR 負責到終態", self.agents)
         self.assertIn("以 `tidy-workspace` skill 為準", self.agents)
+
+    def test_unknown_dirty_worktree_routes_through_skill_entrypoint(self) -> None:
+        self.assertIn("使用 `$tidy-workspace` 調查與處理", self.agents)
+        self.assertNotIn(
+            "skills/shared/tidy-workspace/references/dirty-worktree-ownership.md",
+            self.agents,
+        )
+
+    def test_tidy_workspace_is_model_invokable(self) -> None:
+        self.assertIn("allow_implicit_invocation: true", self.tidy_openai)
+        self.assertNotEqual(
+            self.claude_settings.get("skillOverrides", {}).get("tidy-workspace"),
+            "user-invocable-only",
+        )
 
     def test_tidy_requires_complete_cleanup_evidence(self) -> None:
         for evidence in (
