@@ -31,7 +31,7 @@
 - `tmux-orchestration` 只有在目前這次 human 指令明確要求 agent 使用 tmux，或明確要求「在 tmux 中」執行的可見互動式 CLI session 時才能觸發。授權只能來自目前這次 human 指令，其他來源都不算；沒有明確授權就用內建 subagent 或留在目前 session 完成。
 - human 已明確授權 tmux 後，tmux socket 仍刻意不開放給 sandbox。Codex 直接執行或 command wrapper 中明示的任何 tmux 指令（包含 read-only），第一次就必須要求 scoped escalation，交由 Guardian 自動審查；不要先在 sandbox 試跑，也不要透過 wrapper 或其他 client 繞過。
 - 收尾前 worktree 仍 dirty 時，主動提供整理選項：review 後 `commit`/`push`、拆分 stage、`stash`、經同意 discard，或維持 dirty。不要自動清掉使用者未交代的變更。
-- 若同一個實體 worktree 有不屬於目前任務、且不知道由誰負責的未提交變更，凍結該 worktree 的檔案、Git index（暫存區）、branch 與 history 寫入，並依 `skills/shared/tidy-workspace/references/dirty-worktree-ownership.md` 處理；無法用證據確認負責範圍時，維持 worktree 原狀，不再執行任何會修改檔案、Git index、branch 或 history 的操作，並回報阻擋原因。
+- 若同一個實體 worktree 有不屬於目前任務、且不知道由誰負責的未提交變更，凍結該 worktree 的檔案、Git index（暫存區）、branch 與 history 寫入，並使用 `$tidy-workspace` 調查與處理；無法用證據確認負責範圍時，維持 worktree 原狀，不再執行任何會修改檔案、Git index、branch 或 history 的操作，並回報阻擋原因。
 - 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
 - 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選 fresh subagent 或另一個頂尖模型提供第二意見；需要跨 provider 時可用 bounded、read-only 的 headless reviewer。除非目前這次 human 明確要求 agent 使用 tmux，否則不得用 `tmux-orchestration`。
