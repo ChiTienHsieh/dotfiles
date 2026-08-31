@@ -2,9 +2,16 @@
 
 這是 `level-up` 的長期學習索引。每次使用 skill 前先讀這裡，再讀相關 `topics/*.md`；每個 level 結束後，只記錄有證據的理解、誤解修正、或使用者自述已會的先備知識。
 
+若本機有 `INDEX.local.md`，一併讀取以取得完整學習紀錄。
+
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
-| Pilates D1 backup hardening debrief | mastered | Mac-pull offsite 已通過真實排程、加密與 isolated recovery；cross-device key recovery copy 也已驗收。 | 2026-08-14 | topics/pilates-d1-backup-hardening-debrief.md |
+| Sea 黑客松報名表提案 | learning | A1m；目標＝搞懂 X 討論 → 挑方向 → 寫完表單。先前已偏「同筆購買來源對不上」。 | 2026-08-25 | topics/sea-hackathon-application.md |
+| gu-log GP／MP 編輯契約 debrief | mastered | 能同時判斷 voice ownership、MP 距離自由、retained-claim grounding 與第一人稱誠實邊界。 | 2026-08-19 | topics/gu-log-gp-mp-editorial-contract.md |
+| MissionCart 黑客松題目判斷 | learning | 選擇生日派對總召類比、輕鬆速成與 Chat Markdown；目標是判斷題目是否值得做並釐清低摩擦 user story。 | 2026-08-16 | topics/missioncart-hackathon-idea.md |
+| Shared rehearsal app acceptance | learning | Selected Vainglory, depth 2, and Chat Markdown; goal is owner bootstrap and two-account acceptance before any sharing change. | 2026-08-16 | topics/shared-rehearsal-acceptance.md |
+| Shared rehearsal app security preflight | mastered | Separated platform actor identity from profile namespaces and completed the permissions, loop, storage, migration, and human-acceptance decisions. | 2026-08-16 | topics/shared-rehearsal-security-preflight.md |
+| Property tracking sheet design | learning | Ranked age ahead of deed area, common-area ratio, unit price, and floor metrics; next decision is whether legacy pros and cons duplicate the Agent assessment. | 2026-08-20 | topics/property-tracking-sheet-design.md |
 | Codex task 完成自動改 thread title preflight | familiar | 拍板 meaningful-state taxonomy 與 one-shot guard；已完成 18 項 adversarial unit tests、trusted CLI end-to-end 及 persisted title 讀回。 | 2026-08-05 | topics/codex-thread-title-hook-preflight.md |
 | gu-log ShroomDog’s Choice preflight | learning | 目標是 chat-first 決策、OpenSpec 留在幕後並完成 production 功能；選擇米其林類比、深度 2、Adaptive medium。 | 2026-08-01 | topics/gu-log-shroomdog-choice-preflight.md |
 | tmux Guardian guardrail debrief | learning | 目標是確認今天的 guardrail 決策合理；已選 Vainglory、紮實打底、Chat Markdown，待逐關驗證。 | 2026-07-30 | topics/tmux-guardian-guardrail-debrief.md |

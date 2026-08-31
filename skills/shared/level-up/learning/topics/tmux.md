@@ -3,10 +3,12 @@
 ## Learner Goal
 - Sprin 想實際會用 tmux 跑 Claude Code / 長任務：左右分割同時看對話與 log、SSH 斷線也不怕。偏實戰、能遷移到日常工作流。
 - （第二門課，桌機）搞懂 Ghostty 分頁 vs tmux window/session 分層，拍板「cmd+t 自動開新 tmux session」設定。
+- （第三門課）能根據鼠標操作與選取／複製的取捨，判斷是否關閉 tmux mouse。
 
 ## Status
 - mastered（pane/window/session、持續性、多 session/nested、pane 切割與移動全通）。整條目標鏈打通，全靠推理答對、還抓出教學者兩個流程錯。剩實機養肌肉記憶。
 - 第二門課（A2, 2026-06-27~07-11）L1–L5 全通關：detach 持久邊界（機器斷電=死、視窗關=活）、pane=並排、Ghostty 分頁=client 側觀景窗 vs window/session=server 側本體、session-per-tab vs 一 session 多 window 取捨（SSH 遠端→後者）、resurrect 藍圖 vs 現場（L5 頁內測驗 4/4，含微世界實驗）。抓出教材 bug（├ 樹枝橫排 vs prefix+w 直式樹）＋MCQ 出題破綻（正解最長=送分）。
+- 第三門課（A3m, 2026-09-01）已鎖定舊楓之谷、深挖細節與 Chat Markdown；目標是拍板是否關閉 tmux mouse。
 
 ## Analogy（鎖定，不要換）
 - 舊楓之谷（Big Bang 改版前）城鎮框架：server=世界伺服器、session=一座城鎮、window=城鎮裡一張地圖（佔滿畫面）、pane=把地圖切成並排好幾格。
