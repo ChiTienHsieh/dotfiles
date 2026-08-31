@@ -48,6 +48,11 @@ right-click-action = paste
 shell-integration = detect
 shell-integration-features = cursor,sudo,title
 
+# Keep the first tab as a plain zsh shell. Tabs, windows, and splits opened
+# afterward each start fresh tmux. Remove inherited tmux state to prevent nesting.
+initial-command = /bin/zsh
+command = direct:/usr/bin/env -u TMUX tmux new-session
+
 # ── QoL ───────────────────────────────────────
 confirm-close-surface = true
 scrollback-limit = 10000000
