@@ -100,7 +100,8 @@
   "language": "zh-TW",
   "skillOverrides": {
     "herdr": "user-invocable-only",
-    "learn-my-voice": "user-invocable-only"
+    "learn-my-voice": "user-invocable-only",
+    "tmux-orchestration": "user-invocable-only"
   },
   "sandbox": {
     "enabled": true,
