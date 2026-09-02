@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # =============================================================================
-# pre-commit hook - secret scan + run tests before commit
+# pre-commit hook - secret scan + jargon check + run tests before commit
 # =============================================================================
 # Skip with: git commit --no-verify
 
@@ -34,7 +34,80 @@ if git diff --cached -U0 | grep '^+' | grep -v '^+++' | grep -q '/Users/sprin'; 
 fi
 
 # -----------------------------------------------------------------------------
-# 2. Alias tests (only when shell config files are staged)
+# 2. Jargon scan (comment lines in staged diffs)
+# -----------------------------------------------------------------------------
+ALLOWLIST="$DOTFILES_DIR/hooks/jargon-allowlist.yml"
+if [[ -f "$ALLOWLIST" ]]; then
+    # Parse flat YAML lists without external parser
+    _parse_section() {
+        local file=$1 section=$2
+        sed -n "/^${section}:/,/^[a-z]/p" "$file" \
+            | grep '^  - ' \
+            | sed 's/^  - //' \
+            | sed 's/|.*//'
+    }
+
+    ALLOW_WORDS=$(_parse_section "$ALLOWLIST" "allow")
+    REJECT_ENTRIES=$(sed -n '/^reject:/,/^[a-z]/p' "$ALLOWLIST" | grep '^  - ' | sed 's/^  - //')
+
+    # Extract comment lines from staged diff (added lines only)
+    COMMENT_LINES=$(git diff --cached -U0 \
+        | grep '^+' | grep -v '^+++' \
+        | grep -E '^\+\s*(#|//|<!--|%)\s' \
+        | sed 's/^\+//')
+
+    if [[ -n "$COMMENT_LINES" ]]; then
+        JARGON_BLOCKED=()
+        JARGON_WARNED=()
+
+        # Check each reject-listed word
+        while IFS='|' read -r word format; do
+            [[ -z "$word" ]] && continue
+            if echo "$COMMENT_LINES" | grep -qiw "$word"; then
+                JARGON_BLOCKED+=("$word → $format")
+            fi
+        done <<< "$REJECT_ENTRIES"
+
+        # Find unknown all-caps abbreviations (≥2 chars) not in allow list
+        UNKNOWN_ABBREVS=$(echo "$COMMENT_LINES" \
+            | grep -oE '\b[A-Z][A-Z0-9]{1,}(;[A-Z]+)?\b' \
+            | sort -u)
+
+        while IFS= read -r abbrev; do
+            [[ -z "$abbrev" ]] && continue
+            # Skip if in allow list (case-insensitive match)
+            if echo "$ALLOW_WORDS" | grep -qix "$abbrev"; then
+                continue
+            fi
+            # Skip common non-jargon patterns
+            if [[ "$abbrev" =~ ^[A-F0-9]+$ ]]; then
+                continue  # hex values
+            fi
+            JARGON_WARNED+=("$abbrev")
+        done <<< "$UNKNOWN_ABBREVS"
+
+        if [[ ${#JARGON_BLOCKED[@]} -gt 0 ]]; then
+            echo "❌ Jargon rejected — 使用者不認識以下詞彙，請用中文寫法："
+            for entry in "${JARGON_BLOCKED[@]}"; do
+                echo "   $entry"
+            done
+            echo "   如果使用者確認已認識，把該詞從 reject 移到 allow："
+            echo "   $ALLOWLIST"
+            exit 1
+        fi
+
+        if [[ ${#JARGON_WARNED[@]} -gt 0 ]]; then
+            echo "⚠️  Unknown abbreviations in comments (non-blocking):"
+            for abbrev in "${JARGON_WARNED[@]}"; do
+                echo "   $abbrev — not in allowlist, check with user"
+            done
+            echo "   Add to allow/reject in: $ALLOWLIST"
+        fi
+    fi
+fi
+
+# -----------------------------------------------------------------------------
+# 3. Alias tests (only when shell config files are staged)
 # -----------------------------------------------------------------------------
 TEST_SCRIPT="$DOTFILES_DIR/tests/test_aliases.sh"
 

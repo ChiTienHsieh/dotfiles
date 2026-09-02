@@ -1,0 +1,62 @@
+# Jargon allowlist for pre-commit hook
+# Agent 被 hook 擋下後，使用者確認認識該詞就加進 allow；確認不認識就加進 reject。
+
+allow:
+  - API
+  - CDN
+  - CI
+  - CJK
+  - CLI
+  - CR
+  - CSI
+  - CSP
+  - CSS
+  - DDC
+  - DNS
+  - HTTP
+  - HTTPS
+  - HTML
+  - IDE
+  - JSON
+  - LGTM
+  - MVP
+  - ORM
+  - PR
+  - QoL
+  - RFC
+  - SDK
+  - SQL
+  - SSD
+  - SSH
+  - SSOT
+  - TC
+  - TCP
+  - TMUX
+  - TUI
+  - UDP
+  - UI
+  - UMD
+  - URL
+  - UUID
+  - UX
+  - WAL
+  - WIP
+  - YAML
+  - TL;DR
+  - commit
+  - push
+  - repo
+  - branch
+  - merge
+  - skill
+  - agent
+  - prompt
+  - token
+  - quota
+
+reject:
+  # format: word|必須使用的中文寫法
+  - orchestration|多代理協調 (orchestration)
+  - observability|可觀測性 (observability)
+  - idempotent|重跑安全 (idempotent)
+  - custody|保管／託管 (custody)
