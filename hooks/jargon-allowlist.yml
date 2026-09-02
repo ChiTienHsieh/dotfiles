@@ -1,0 +1,84 @@
+# hooks/jargon-allowlist.yml — 英文詞彙 SSOT
+#
+# Pre-commit hook 讀 allow / reject 做 commit-time 檢查。
+# Agent 遇到不確定的詞時 grep 這個檔案，不必讀全檔：
+#   grep -i "word" hooks/jargon-allowlist.yml
+# 結果會顯示該詞屬於哪個 section，按該 section 規則處理。
+#
+# User 說認識某詞 → 移到 allow；說不認識 → 移到 reject。
+# 升級詞彙（reject→bilingual→allow）前先問 user 確認。
+
+allow:
+  # 直接用，不用解釋
+  - API
+  - CDN
+  - CI
+  - CJK
+  - CLI
+  - CR
+  - CSI
+  - CSP
+  - CSS
+  - DDC
+  - DNS
+  - HTTP
+  - HTTPS
+  - HTML
+  - IDE
+  - JSON
+  - LGTM
+  - MVP
+  - ORM
+  - PR
+  - QoL
+  - RFC
+  - SDK
+  - SQL
+  - SSD
+  - SSH
+  - SSOT
+  - TC
+  - TCP
+  - TL;DR
+  - TMUX
+  - TUI
+  - UDP
+  - UI
+  - UMD
+  - URL
+  - UUID
+  - UX
+  - WAL
+  - WIP
+  - YAML
+  - agent
+  - branch
+  - commit
+  - merge
+  - orchestration
+  - prompt
+  - push
+  - quota
+  - repo
+  - skill
+  - token
+
+native_zh:
+  # 有道地中文，直接用中文不用英文
+  - flame graph|火焰圖
+  - dependency|依賴
+  - performance|效能
+  - database|資料庫
+
+bilingual:
+  # session 首次寫「中文 (English)」，之後可直接用英文
+  - sandbox|沙盒
+  - symlink|符號連結
+  - frontmatter|檔頭設定
+  - refactor|重構
+
+reject:
+  # 每次都要寫「中文翻譯 (English original)」— pre-commit hook 會擋
+  - observability|可觀測性 (observability)
+  - idempotent|重跑安全 (idempotent)
+  - custody|保管／託管 (custody)

@@ -330,7 +330,6 @@ if [ ! -e "$HOME/.config/machine.md" ]; then
 fi
 backup_and_link "$HOME/.config/machine.md" "$HOME/.claude/machine.md"
 backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
-backup_and_link "$DOTFILES_DIR/claude/user-en-vocab.md" "$HOME/.claude/user-en-vocab.md"
 
 # Directories
 backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"

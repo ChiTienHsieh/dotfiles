@@ -156,10 +156,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 codex/tests/test_hooks.py -v
-          python3 codex/tests/test_skill_contracts.py -v
-          python3 codex/tests/test_tmux_activation_policy.py -v
-          python3 codex/tests/test_tmux_worker_hooks.py -v
+          python3 tests/test_hooks.py -v
+          python3 tests/test_jargon_hook.py -v
+          python3 tests/test_skill_contracts.py -v
+          python3 tests/test_tmux_activation_policy.py -v
+          python3 tests/test_tmux_worker_hooks.py -v
           python3 tests/test_configure_package_policies.py -v
           zsh tests/test_aliases.sh
           bash claude/hooks/test-bash-helper-guard.sh

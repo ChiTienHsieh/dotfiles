@@ -10,7 +10,8 @@ from pathlib import Path
 from unittest import mock
 
 
-CODEX_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[1]
+CODEX_DIR = REPO_ROOT / "codex"
 HOOKS_DIR = CODEX_DIR / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
 

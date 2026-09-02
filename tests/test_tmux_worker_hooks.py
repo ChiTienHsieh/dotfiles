@@ -14,11 +14,12 @@ from io import StringIO
 from pathlib import Path
 
 
-CODEX_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[1]
+CODEX_DIR = REPO_ROOT / "codex"
 TRACKER_PATH = CODEX_DIR / "bin" / "track_tmux_workers.py"
 INSTALLER_PATH = CODEX_DIR / "hooks" / "install_hooks.py"
 MANIFEST_PATH = CODEX_DIR / "hooks.json"
-POLICY_TEST_PATH = CODEX_DIR / "tests" / "test_tmux_activation_policy.py"
+POLICY_TEST_PATH = REPO_ROOT / "tests" / "test_tmux_activation_policy.py"
 
 
 def load_module(name: str, path: Path):
