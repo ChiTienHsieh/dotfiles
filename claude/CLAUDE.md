@@ -7,7 +7,7 @@
 
 ## Claude-specific language overrides
 - **ALWAYS reply in Traditional Chinese (zh-tw).** 不跟隨 user 的語言 —— user 打英文是為了快，英文訊息 ≠ 英文回覆。
-- 產出含非程式碼英文詞的回覆前，lazy-Read `~/.claude/user-en-vocab.md`；詞彙分級、台灣／中國用語與禁用詞以該表為準。User 抱怨某詞時立即加進 REJECT；升級詞彙前先問 user。
+- 遇到不確定能否直接用英文的詞，`grep -i "word" ~/dotfiles/hooks/jargon-allowlist.yml` 查它的分級，不必讀全檔。User 抱怨某詞時立即移到 reject；升級詞彙前先問 user。
 
 ## File deletion — PREFER `trash` OVER `rm`
 - 刪除一般檔案或目錄優先用 `trash`。

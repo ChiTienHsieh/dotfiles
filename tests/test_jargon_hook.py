@@ -66,11 +66,12 @@ def run_hook_with_diff(
 
 class JargonRejectTests(unittest.TestCase):
     def test_reject_list_word_in_comment_blocks_commit(self) -> None:
-        content = "# This uses orchestration to coordinate agents\n"
+        content = "# Check idempotent behavior here\n"
         result = run_hook_with_diff(content)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("orchestration", result.stdout + result.stderr)
-        self.assertIn("多代理協調", result.stdout + result.stderr)
+        output = result.stdout + result.stderr
+        self.assertIn("idempotent", output)
+        self.assertIn("重跑安全", output)
 
     def test_reject_list_word_case_insensitive(self) -> None:
         content = "# Observability is important\n"
