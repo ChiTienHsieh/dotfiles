@@ -1,10 +1,2 @@
 # Keep every change under explicit review by the repository owner.
 * @ChiTienHsieh
-
-# These are redundant while the catch-all has one owner, but keep control-plane
-# ownership explicit if collaborators are added later.
-/.github/CODEOWNERS @ChiTienHsieh
-/.github/workflows/ @ChiTienHsieh
-/AGENTS.md @ChiTienHsieh
-/codex/AGENTS.md @ChiTienHsieh
-/claude/CLAUDE.md @ChiTienHsieh

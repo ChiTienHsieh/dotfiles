@@ -1,6 +1,7 @@
 ---
 name: fetch-known-url
 description: Fetch and parse a supported whitelisted URL into AI-agent-readable artifacts. Use this when the user asks to fetch, read, archive, extract, summarize, or convert a known supported URL into readable files. Currently supports ChatGPT shared conversation URLs on chatgpt.com; add new URL patterns only after their fetch and parse behavior has been learned.
+disable-model-invocation: true
 metadata:
   short-description: Fetch a supported URL into readable files
 ---

@@ -1,6 +1,7 @@
 ---
 name: craft-goal
 description: 協助撰寫、縮短、驗證、整理可交給下一個 agent session（Claude Code 或 Codex）執行的 handoff prompt，含 Codex app 的 `/goal`。當使用者要寫 `/goal`、準備 handoff prompt、把模糊任務整理成可執行 goal、要依任務性質與剩餘 quota 決定交給 CC 還是 Codex、需要 clarification、research、task spec file、side-effect boundary、或 quick smoke test 時使用。
+disable-model-invocation: true
 ---
 
 # Craft Goal
@@ -11,7 +12,7 @@ description: 協助撰寫、縮短、驗證、整理可交給下一個 agent ses
 
 產出 prompt 前先決定交給誰，兩個因素一起看：
 
-- **預設路由**：讀 `~/dotfiles/codex/notes/worker-routing.md`（訂閱狀態＋路由規則）決定交給 CC 還是 Codex。
+- **預設路由**：讀 `~/dotfiles/codex/notes/worker-routing.md`（路由規則）決定交給 CC 還是 Codex。
 - **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看即時餘量；在 SSOT 規則之內，其他條件接近時選較肥的一邊。
 
 目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI、claude CLI、或使用者手動貼。不要替 handoff 自行指定 tmux；只有 human 明確要求接棒 agent 使用 tmux 時才能加入。4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
@@ -106,12 +107,6 @@ Local side effects:
 
 ```text
 請在 `<repo path>` 依照 `<tracked spec path>` 完成所有任務；<commit/push policy>；完成後回報 <final deliverables>。
-```
-
-範例：
-
-```text
-請在 `/Users/sprin/Desktop/CodeForge/games/phantom-opera` 依照 `docs/2026-05-31-live-playtest-backlog-goal.md` 完成所有任務；驗證通過且確認沒有敏感資訊後 commit + push，完成後回報改了哪些檔案、commit hash 與驗證結果。
 ```
 
 ## Task Spec File Guidance

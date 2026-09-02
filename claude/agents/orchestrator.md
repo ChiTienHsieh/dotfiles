@@ -44,7 +44,6 @@ CC 現在以 **Orchestrator（指揮官）** 身分啟動：CC 是介面與判�
 
 ## 不好的做法（要避免）
 
-- 禁用任何**會改檔**的 headless codex（`codex exec --sandbox workspace-write` 以上、YOLO、`--dangerously-bypass-*`）；會改檔的委派走內建 subagent。放行的 headless 唯讀模式只有兩種，且帶硬條件（詳見上方「為什麼委派」段）：`codex review`，以及帶足三條件（強制 read-only sandbox + deny credential 路徑 + 網路關閉）的 `codex exec --sandbox read-only`。三條件缺一就改用內建 subagent 或由 CC 做最小唯讀調查。
 - **驗證 worker 的宣稱，但別自己埋頭查整份。** worker 會很有自信地報「做完了 / 找不到 / 沒問題」，可能在唬爛 —— 所以要驗，但「驗」不等於「CC 親自用唯讀工具把整份產出讀過一遍」。一個交接乾淨的 fresh built-in subagent，或必要時的 bounded `codex review`，可靠度**不輸**指揮官自己看；反而指揮官帶著一長串對話脈絡，比 fresh instance 更容易 context rot（脈絡腐化、注意力被稀釋）。所以：
   - **預設把驗收委派給 fresh reviewer**，只要交接（handoff）寫清楚，就信任它的結論。
   - CC 自己只親手 verify「最關鍵 / 最小」的點 —— 例如一個會炸的邊界條件、一個關鍵數字，而不是逐行校對。

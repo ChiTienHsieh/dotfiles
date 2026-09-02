@@ -39,7 +39,6 @@ class TmuxActivationPolicyTests(unittest.TestCase):
         required_phrases = {
             "codex/notes/worker-routing.md": "runtime 內建的 subagent",
             "skills/claude/arbitrage/SKILL.md": "built-in `Agent` subagents",
-            "skills/claude/headless-agents/SKILL.md": "built-in `Agent` subagent",
             "claude/agents/orchestrator.md": "內建 `Agent` subagent",
             "skills/shared/craft-goal/SKILL.md": "不要替 handoff 自行指定 tmux",
             "skills/shared/trim/SKILL.md": "Codex 使用可用的 multi-agent tool",
@@ -121,9 +120,6 @@ class TmuxActivationPolicyTests(unittest.TestCase):
             ),
             "codex/notes/worker-routing.md": "會改檔的活走 tmux",
             "skills/claude/arbitrage/SKILL.md": "Worker in tmux",
-            "skills/claude/headless-agents/SKILL.md": (
-                "route it through\n  `tmux-orchestration` instead"
-            ),
             "skills/shared/trim/SKILL.md": "或用 tmux 開一個",
             "skills/shared/level-up/references/pre-implementation.md": (
                 "走 `tmux-orchestration`"

@@ -157,9 +157,7 @@ Find_files_bigger_than() {
 # -----------------------------------------------------------------------------
 # Shell config shortcuts (zsh)
 alias zrc="vi ~/.zshrc"                 # Edit zshrc
-alias vizsh="vi ~/.zshrc"               # Alias for zrc
 alias viali="vi ~/.aliases"             # Edit aliases
-alias srzsh="source ~/.zshrc"
 alias src="source ~/.zshrc"             # Shorter version
 alias vimrc="vi ~/.config/nvim/init.lua"
 
@@ -328,16 +326,6 @@ p() {
 # -----------------------------------------------------------------------------
 # Quick access - TODO & Notes
 # -----------------------------------------------------------------------------
-# a - Append to TODO.md (goes to end, insert mode)
-a() {
-    nvim "+normal G$" "+startinsert!" "/Users/sprin/Documents/ObsidianVault/TODO.md"
-}
-
-# todo - Open TODO.md in vi (normal mode)
-todo() {
-    vi "/Users/sprin/Documents/ObsidianVault/TODO.md"
-}
-
 # -----------------------------------------------------------------------------
 # Prompt preview & send
 # -----------------------------------------------------------------------------

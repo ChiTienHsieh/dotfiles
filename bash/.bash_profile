@@ -52,4 +52,3 @@ export PATH="$HOME/bin:$PATH"
 # - OrbStack init
 # - Google Cloud SDK (if using)
 # - etc.
-. "$HOME/.cargo/env"

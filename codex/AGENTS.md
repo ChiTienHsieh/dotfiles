@@ -36,7 +36,7 @@
 - 收尾前 worktree 仍 dirty 時，主動提供整理選項：review 後 `commit`/`push`、拆分 stage、`stash`、經同意 discard，或維持 dirty。不要自動清掉使用者未交代的變更。
 - 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
-- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選 fresh subagent 或另一個頂尖模型提供第二意見；需要跨 provider 時可用 bounded、read-only 的 headless reviewer。除非目前這次 human 明確要求 agent 使用 tmux，否則不得用 `tmux-orchestration`。
+- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選 fresh subagent 或另一個頂尖模型提供第二意見；需要跨 provider 時可用 bounded、read-only 的 headless reviewer。
 - 使用者持續授權其他 agent（包含已設定的外部 AI reviewer）執行 review，不必逐次詢問。交付 repo diff、prompt 或必要檔案前，仍須先檢查實際待傳資料是否含 secret、憑證、private key、未公開個資或其他敏感內容；確認沒有敏感資料且目的地與範圍符合既有 reviewer workflow 後直接執行，只有發現敏感內容、無法可靠判斷，或目的地／傳送範圍超出既有 workflow 時才停下確認。這項持續授權只涵蓋 review，不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
 
 ## 實作取捨

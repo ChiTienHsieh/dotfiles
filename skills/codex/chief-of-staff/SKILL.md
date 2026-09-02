@@ -44,8 +44,6 @@ When the user asks whether threads can be archived:
 4. If the user has clearly asked to archive, call `set_thread_archived` for all **Archive now** candidates. Do it in batches when safe.
 5. If archive fails, retry after `list_threads`/`read_thread` refresh. If it still fails, report exact thread ids and the tool error. Do not hand the whole chore back to the user unless the tool is genuinely blocked.
 
-Avoid the previous failure mode: saying "you can archive these in UI" after checking only a tiny subset. That is not Chief of Staff work; that is clipboard cosplay.
-
 ## Heartbeat format
 
 For scheduled heartbeat runs, use this short shape unless the automation says otherwise:

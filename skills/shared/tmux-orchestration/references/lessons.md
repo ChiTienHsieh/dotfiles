@@ -23,13 +23,6 @@ Use when driving an interactive agent in a tmux pane from a controller.
   tree, notify it and wait for an ACK before committing. A 2026-07-04 race had
   two controllers commit across each other, sweeping one side's staged files
   under the other's commit message.
-
-- Dual-watcher supervision: pair the marker watcher (finish line) with an
-  approval-stall detector that polls the pane for approval dialogs every ~45s
-  and exits when one appears. The detector grep must match BOTH dialog
-  variants: `Do you want to (proceed|allow)` — network approvals say "allow
-  this connection", and missing that variant cost ~90 min of silent stall
-  (2026-07-05).
 - Launch a Claude worker with cwd set to the worktree it will operate on.
   A worker whose commands are `cd <other-dir> && git ...` never matches its
   `Bash(git ...)` allowlist prefixes, so every step needs a manual approval

@@ -1,6 +1,7 @@
 ---
 name: tmux-orchestration
 description: "Use only when the current human explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session inside tmux. Do not trigger from any other source or task characteristic."
+disable-model-invocation: true
 ---
 
 # tmux Orchestration
@@ -150,19 +151,8 @@ Example:
   `scripts/agent-rg.sh PATTERN PATH --files`; use `--full REASON` only when the
   complete output is necessary.
 - Choose the right mechanism FIRST: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to JUDGE quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free. Caveat: `tmux wait-for` blocks the calling shell, so for long waits prefer a marker file (poll its existence) or a hook — a blocking wait can hit the Bash command timeout.
-- When you DO poll, default to PATIENT polling. Once a worker is mid-run on a multi-minute task (a review loop, a build, a long Codex turn), check at intervals of at least 5 minutes. Polling every 30-90 seconds is micromanaging — it wastes controller turns and reads as creepy to the user. Reserve sub-minute checks for genuinely short tasks or when actively waiting on an approval/error prompt.
-- For user-requested patient Claude Code work, check every 10 minutes unless there is an obvious prompt/approval wait.
-- If a worker shows no meaningful progress for 25 consecutive minutes, inspect the pane. Spinner movement, repeated output or errors, and an unchanged approval prompt do not count as progress. Intervene immediately for approval waits or errors; otherwise request one status update or send one interrupt, and terminate the worker if it still does not respond. Meaningful output or a real state transition resets the clock.
-- A user's expected total duration does not override the 25-minute no-progress limit. Only an explicit replacement for the no-progress limit does.
 - When capturing, read the FULL new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
 - If the worker is waiting for approval, erroring, or stuck at a prompt, intervene.
-
-## Context Burn Stop Rule
-
-After one compaction or near 200k tokens, stop pasting raw pane captures or raw
-logs into the main thread. Ask for a condensed worker report plus source paths;
-for verification, read only load-bearing slices with `scripts/agent-safe-read.sh
-FILE --range START:END` and search counts/samples with `scripts/agent-rg.sh`.
 
 ## Completion
 

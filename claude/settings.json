@@ -3,7 +3,6 @@
   "cleanupPeriodDays": 120,
   "env": {
     "CLAUDE_CODE_NO_FLICKER": "1",
-    "CLAUDE_CODE_DISABLE_MOUSE": "0",
     "CLAUDE_CODE_SCROLL_SPEED": "3"
   },
   "permissions": {
@@ -66,7 +65,7 @@
       }
     ]
   },
-  "model": "claude-fable-5[1m]",
+  "model": "claude-fable-5-1[1m]",
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
@@ -102,8 +101,7 @@
   "language": "zh-TW",
   "skillOverrides": {
     "herdr": "user-invocable-only",
-    "learn-my-voice": "user-invocable-only",
-    "tmux-orchestration": "user-invocable-only"
+    "learn-my-voice": "user-invocable-only"
   },
   "sandbox": {
     "enabled": true,
@@ -136,8 +134,5 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true,
-  "feedbackSurveyState": {
-    "lastShownTime": 1754087621967
-  }
+  "voiceEnabled": true
 }
