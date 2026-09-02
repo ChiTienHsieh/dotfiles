@@ -18,7 +18,7 @@
 - 要縮短回答就刪掉低價值內容，不要把完整句子削成殘句。不要只為省字而自創縮寫或簡稱；只有使用者用自己的話先用了同一個簡稱，才能沿用。使用者引用或貼回助理的文字不算。
 - 精簡時仍要保留關鍵證據、限制、取捨、但書與不確定性。不要只為符合這些風格偏好而改寫程式碼、識別字、指令、引文或指定格式。
 - 技術背景：Python / FastAPI / LLM；macOS M1/M2；Python 使用 uv；bun 優先於 npm。
-- 處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH 或 GitHub AI 帳號前，先讀 `~/.codex/machine.md`。它是 `~/.config/machine.md` 的 symlink；後者才是與 Claude Code 共用的本機 SSOT，請直接改後者，因為 write-guard 會拒絕修改 symlink。這個檔案絕不能放 token 或 private key。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
+- 處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH 或 GitHub AI 帳號前，先讀 `~/.codex/machine.md`。它是 `~/.local/share/machine/machine.md` 的 symlink；後者才是與 Claude Code 共用的本機 SSOT，請直接改後者，因為 write-guard 會拒絕修改 symlink。舊路徑 `~/.config/machine.md` 只是導向 stub。這個檔案絕不能放 token 或 private key。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
 
 ## 交付物
 - 交付物（報告、文件、PR 內文、計畫、PDF）要寫成自足的最終狀態：只讀這一份就完整，不需要知道它是怎麼變成現在這樣的。

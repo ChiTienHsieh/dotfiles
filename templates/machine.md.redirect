@@ -1,0 +1,8 @@
+<!-- machine-md-redirect -->
+# machine.md 已搬家
+
+本機 SSOT 現在在 `~/.local/share/machine/machine.md`。
+
+`~/.claude/machine.md` 與 `~/.codex/machine.md` 都 symlink 到那一份。請讀／改新路徑，不要把筆記寫回這裡。
+
+舊路徑只留這則導向：避免 Claude Code 因讀 `~/.config` 被擋，也避免把整個 `~/.config` 當 agent workspace（那層有 live credentials）。

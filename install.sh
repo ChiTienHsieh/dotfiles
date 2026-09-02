@@ -71,6 +71,50 @@ backup_and_copy() {
     echo "  Copied: $dest"
 }
 
+is_real_machine_notes() {
+    local path="$1"
+    [ -f "$path" ] && [ ! -L "$path" ] && ! grep -q '<!-- machine-md-redirect -->' "$path"
+}
+
+ensure_machine_notes() {
+    local machine_dir="$HOME/.local/share/machine"
+    local canonical="$machine_dir/machine.md"
+    local stub="$HOME/.config/machine.md"
+    local seed="$DOTFILES_DIR/templates/machine.md.template"
+    local redirect_src="$DOTFILES_DIR/templates/machine.md.redirect"
+    local dir_agents_src="$DOTFILES_DIR/templates/machine-dir-AGENTS.md"
+
+    mkdir -p "$machine_dir" "$HOME/.config"
+
+    if [ ! -f "$canonical" ]; then
+        # Prefer an existing REAL notes file (not a redirect stub, not a
+        # symlink) so hand-written notes survive. Only the first match is
+        # migrated — if both agent paths are real files with diverging
+        # content, merge them by hand afterwards (the other is in $BACKUP_DIR).
+        for existing in "$stub" "$HOME/.codex/machine.md" "$HOME/.claude/machine.md"; do
+            if is_real_machine_notes "$existing"; then
+                seed="$existing"
+                break
+            fi
+        done
+        cp "$seed" "$canonical"
+        echo "  Seeded: $canonical (from ${seed##*/})"
+    fi
+
+    if is_real_machine_notes "$stub"; then
+        mkdir -p "$BACKUP_DIR"
+        echo "  Backing up old canonical: $stub -> $BACKUP_DIR/"
+        mv "$stub" "$BACKUP_DIR/"
+    elif [ -L "$stub" ]; then
+        rm "$stub"
+    fi
+    cp "$redirect_src" "$stub"
+    echo "  Wrote redirect: $stub -> $canonical"
+
+    cp "$dir_agents_src" "$machine_dir/AGENTS.md"
+    echo "  Wrote: $machine_dir/AGENTS.md"
+}
+
 ensure_real_dir() {
     local dest="$1"
 
@@ -302,27 +346,17 @@ if [ ! -e "$HOME/.claude/settings.json" ]; then
     cp "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
     echo "  Seeded: $HOME/.claude/settings.json"
 fi
-# machine.md: one machine-local canonical (~/.config/machine.md) shared by
-# Claude Code + Codex via symlink, so both agents always read identical
-# machine notes. Seeded once from a secret-free template, then owned locally
-# (machine-specific, non-syncable content — never committed). Editing a symlink
-# is refused by the agent write-guard, which is what keeps the views from
-# diverging: edits are forced back to the canonical file.
-mkdir -p "$HOME/.config"
-if [ ! -e "$HOME/.config/machine.md" ]; then
-    # On machines predating the canonical, migrate an existing REAL machine.md
-    # (not a symlink) so hand-written notes survive instead of being replaced by
-    # an empty template; else seed the secret-free template. Only the first
-    # match is migrated — if both agent paths are real files with diverging
-    # content, merge them by hand afterwards (the other is in $BACKUP_DIR).
-    machine_seed="$DOTFILES_DIR/templates/machine.md.template"
-    for existing in "$HOME/.codex/machine.md" "$HOME/.claude/machine.md"; do
-        if [ -f "$existing" ] && [ ! -L "$existing" ]; then machine_seed="$existing"; break; fi
-    done
-    cp "$machine_seed" "$HOME/.config/machine.md"
-    echo "  Seeded: $HOME/.config/machine.md (from ${machine_seed##*/})"
-fi
-backup_and_link "$HOME/.config/machine.md" "$HOME/.claude/machine.md"
+# machine.md: one machine-local canonical (~/.local/share/machine/machine.md)
+# shared by Claude Code + Codex via symlink, so both agents always read
+# identical machine notes. Seeded once from a secret-free template, then owned
+# locally (machine-specific, non-syncable content — never committed). ~/.config
+# is not the home: it holds live credentials, and Claude Code may refuse
+# reads that follow a symlink into it. ~/.config/machine.md is a short
+# redirect stub. Editing a symlink is refused by the agent write-guard, which
+# is what keeps the views from diverging: edits are forced back to the
+# canonical file.
+ensure_machine_notes
+backup_and_link "$HOME/.local/share/machine/machine.md" "$HOME/.claude/machine.md"
 backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
 
 # Directories
@@ -359,9 +393,9 @@ if [ ! -e "$HOME/.codex/config.toml" ]; then
 else
     echo "  ~/.codex/config.toml already exists, skipping config seed"
 fi
-# machine.md symlinks to the shared canonical (~/.config/machine.md) seeded in
-# the Claude Code step above — same file both agents read, no divergence.
-backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"
+# machine.md symlinks to the shared canonical (~/.local/share/machine/machine.md)
+# seeded in the Claude Code step above — same file both agents read, no divergence.
+backup_and_link "$HOME/.local/share/machine/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
 # Codex TUI pet sprites (pet.json + spritesheet per pet dir)
