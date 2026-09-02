@@ -1,6 +1,6 @@
 # Worker 路由 SSOT
 
-哪個 provider 當重活 worker、哪個當 reviewer，由本檔決定；worker surface 的授權門檻則以 `codex/AGENTS.md` 為準。**換 provider 角色時只改本檔的「目前角色分工」區；訂閱等級與 quota 記在本機 `~/.config/machine.md`**；其他 prompt（orchestrator persona、arbitrage、guardrail 閘門等）只引用本檔，不得各自寫死 provider 優先序。
+哪個 provider 當重活 worker、哪個當 reviewer，由本檔決定；worker surface 的授權門檻則以 `codex/AGENTS.md` 為準。**換 provider 角色時只改本檔的「目前角色分工」區；訂閱等級與 quota 記在本機 `~/.local/share/machine/machine.md`**；其他 prompt（orchestrator persona、arbitrage、guardrail 閘門等）只引用本檔，不得各自寫死 provider 優先序。
 
 ## 目前角色分工（更新於 2026-09-03）
 
