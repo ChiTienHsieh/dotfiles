@@ -15,7 +15,7 @@ disable-model-invocation: true
 - **預設路由**：讀 `~/dotfiles/codex/notes/worker-routing.md`（路由規則）決定交給 CC 還是 Codex。
 - **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看即時餘量；在 SSOT 規則之內，其他條件接近時選較肥的一邊。
 
-目標介面隨接棒者決定：Codex app `/goal`（受 4000 characters 限制）、codex CLI、claude CLI、或使用者手動貼。不要替 handoff 自行指定 tmux；只有 human 明確要求接棒 agent 使用 tmux 時才能加入。4000-character 限制只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
+目標介面隨接棒者決定：Codex app `/goal`（有字元數上限，以 `scripts/check_goal_prompt.py` 為準）、codex CLI、claude CLI、或使用者手動貼。不要替 handoff 自行指定 tmux；只有 human 明確要求接棒 agent 使用 tmux 時才能加入。字元數上限只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
 
 使用者預設用 zh-tw proofread，所以除非使用者明確要求英文，**輸出給使用者的 brief 與 `/goal` prompt 都預設用繁體中文**。保留必要 English technical terms，例如 `/goal`、Codex、GitHub、VM、SSH、API、CLI、token、commit、push、branch、file path、command、config key、model ID、UI label。
 
@@ -27,12 +27,12 @@ disable-model-invocation: true
    - 先定好命名、topic、target path、side-effect boundary，再產生 final `/goal`。
 
 2. **區分短 prompt 與詳細 spec**
-   - 實際貼進 `/goal` 的 prompt 必須低於 app 限制，目前是 4000 characters。
+   - 實際貼進 `/goal` 的 prompt 有字元數上限，上限由本 skill 的 `scripts/check_goal_prompt.py` 定義。把草稿從 stdin 餵給它（例如 `python3 ~/dotfiles/skills/shared/craft-goal/scripts/check_goal_prompt.py <<'EOF' ... EOF`），沒通過就縮短 prompt 或把內容移進 spec file，反覆到通過後才交給使用者。
    - 如果任務複雜，先在相關 repo 寫一份 tracked task spec file，再讓 `/goal` 引用該檔案。
    - ignored temp file 只能當 scratch draft；如果接棒 agent 必須讀到，請放在 tracked file。
    - **有 task spec file 時，`/goal` prompt 應極短，只負責指向 spec file 與補充少量 launch-time instruction。** 不要把 spec 摘要、任務清單、side-effect boundary、verification checklist 再複製一遍到 prompt；那些內容應留在 spec 裡。
-   - **`/goal` prompt 是一次性 chat text，預設不要寫進 repo，也不要建立 temporary prompt artifact file。** 不要建立 `goal-prompt.md`、`prompt.md`、scratch prompt file、不要把 prompt 放在 spec 檔開頭，也不要把 prompt commit 進 git history，除非使用者明確要求保存 prompt 本身。
-   - 如果使用者說「我只想 review spec」，final response 只給 spec path 和 chat 裡的短 prompt；不要新增 prompt file 讓使用者或接棒 agent 讀兩次。
+   - `/goal` prompt 是一次性 chat text，只放在 chat code block：不寫進 repo、不建立 `goal-prompt.md`、`prompt.md` 之類的 prompt 檔或 scratch draft、不放在 spec 檔開頭、不 commit 進 git history，除非使用者明確要求保存 prompt 本身。review notes 或僅為溝通方便建立的臨時檔案同樣不建立、不 commit。若不小心 commit/push 了這類檔案，優先移除或 amend；是否改寫 remote history 依使用者要求與風險決定。
+   - 如果使用者說「我只想 review spec」，final response 只給 spec path 和 chat 裡的短 prompt。
 
 3. **定義 side effects**
    - 明確寫出接棒 agent 可以讀或改哪些 local files。
@@ -40,7 +40,6 @@ disable-model-invocation: true
    - 明確禁止 destructive、permission-sensitive、billing、credential、或 broad-scope changes，除非使用者另外批准。
    - 寫清楚接棒 agent 是否可以 commit / push。預設不要 commit / push，除非使用者要求。
    - 如果使用者要求「完成後備份」或「讓接棒 agent 好 review」，可以在 spec 裡允許接棒 agent 在驗證通過、確認沒有 secrets/private data/unrelated changes 後 commit + push。
-   - **不要建立或 commit 一次性 prompt 檔、scratch draft、review notes、或僅為溝通方便建立的臨時 artifact。** 若使用者沒有明確要求保存這些檔案，連 temp prompt artifact file 都不要建立；若不小心 commit/push 了這類檔案，優先移除或 amend；是否改寫 remote history 依使用者要求與風險決定。
 
 4. **做快速 feasibility check**
    - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免接棒 agent 第一步就失敗。
@@ -57,7 +56,7 @@ disable-model-invocation: true
    - 若任務涉及 external systems、commit / push、SSH / VM、GitHub、Vercel、browser automation、多 repo、多 agent handoff、credentials、billing、data-loss risk，或需要 task spec file，交付前先做 adversarial review。
    - 可以開 subagent 時，傳給 reviewer 的資料只包含 raw artifacts：使用者原始需求摘要、draft `/goal`、task spec path 或必要 excerpt。
    - 不要把自己的診斷、預期答案、懷疑問題、打算採用的修法傳給 reviewer；review 的價值來自獨立挑錯，不是附和。
-   - 要求 reviewer 專門找 ambiguous scope、unsafe side effects、missing ask-first boundary、unverifiable success criteria、tool/path assumptions、以及 prompt 是否超過 4000 characters。
+   - 要求 reviewer 專門找 ambiguous scope、unsafe side effects、missing ask-first boundary、unverifiable success criteria、tool/path assumptions、以及 prompt 是否通過 `scripts/check_goal_prompt.py`。
    - 若沒有 subagent 工具或任務明顯 low-risk，改做 self-adversarial pass，並在 brief 裡說明未開 subagent 的原因。
    - 對 review findings 要明確處置：接受並修改、拒絕並說明理由，或列為接棒 agent 必須先確認的 open question。
    - 如果使用者明確要求 reviewer subagent review spec，review 對象應是 **目前最終 spec file**，不是過期 draft prompt。若 review 後又大幅改寫 spec，必須重新 review 或明確說明改動很小、不影響 review 結論。
@@ -113,7 +112,7 @@ Local side effects:
 
 出現以下情況時，建立 task spec file：
 
-- `/goal` prompt 會超過 4000 characters。
+- `/goal` prompt 超過 `scripts/check_goal_prompt.py` 的上限。
 - 任務有很多步驟、安全規則、或 external systems。
 - 接棒 agent 需要 exact config snippets、topic lists、command formats、verification criteria。
 - 任務之後需要 audit trail。
@@ -124,7 +123,7 @@ Local side effects:
 - `studies/`：conceptual research 或 analysis。
 - repo 已有明確 docs/spec 目錄時，沿用既有慣例。
 - 不要在已有結構規則的 repo 裡自行發明新的 top-level directory。
-- spec file 只放接棒 agent 必須讀的 durable instruction。不要在 spec file 內嵌「這段貼進 `/goal`」的 prompt；那是 launch-time chat text，不是 spec 內容。
+- spec file 只放接棒 agent 必須讀的 durable instruction。
 - spec file 要讓使用者容易 review：標題清楚、段落短、使用「問題 / 要做到 / 驗證」這種穩定結構；不要把 reviewer process、draft prompt 歷史、或 agent 自我辯解寫進去。
 
 ## Smoke Test Examples
@@ -141,7 +140,7 @@ Local side effects:
 交給使用者前，確認包含：
 
 - task name / scope。
-- 短版 `/goal` prompt，低於 4000 characters。
+- 短版 `/goal` prompt，已通過 `scripts/check_goal_prompt.py`。
 - 如果使用 tracked task spec file，提供該 path。
 - local side effects 與 external side effects。
 - ask-first boundaries。
