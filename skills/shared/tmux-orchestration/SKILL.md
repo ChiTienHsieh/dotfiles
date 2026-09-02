@@ -17,7 +17,7 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 ## Core Rules
 
 - Use tmux only for the exact scope the human authorized.
-- Keep each human-authorized substantial worker in its own named tmux session — EXCEPT when the human explicitly asks to spawn a Codex or Claude reviewer/collaborator alongside the orchestrator. In that case, use a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`) so both sit side-by-side. Do NOT open a separate tmux session for this co-review case.
+- Keep each human-authorized substantial worker in its own named tmux session. The one exception is co-review: when the human explicitly asks to spawn a Codex or Claude reviewer/collaborator alongside the orchestrator, split a new pane in the orchestrator's own session/window (`tmux split-window`) so both sit side-by-side, instead of opening a separate session.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
@@ -65,14 +65,14 @@ For a Claude writer or reviewer session, start Claude Code interactively inside 
 tmux new-session -d -P \
   -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \
   -s SESSION_NAME -c /path/to/worktree \
-  'claude --model opus --permission-mode auto --allowedTools Read,Write,Edit,MultiEdit'
+  'claude --permission-mode auto --allowedTools Read,Write,Edit'
 ```
 
 When the lifecycle hook is installed, tmux generates the open receipt directly
 from the session it created. Keep `-P`, the exact `-F` format, and a literal
 session name; do not replace the receipt with a separate `printf`.
 
-Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. Adjust model and allowed tools only when the task requires it. Do not use bypass or danger flags.
+Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. The launch inherits the model from `claude/settings.json`; pass `--model` only when the task needs a different one (see `arbitrage/references/model-routing.md`). Adjust allowed tools only when the task requires it. Do not use bypass or danger flags.
 
 For sessions meant to live a long time, prefer the crash-proof **cushion pattern** in "Reviving a dead session" below (launch a shell, run the agent as its child) — a launch with `claude` as the pane root dies, and takes the whole session with it, the instant claude exits.
 
@@ -150,8 +150,8 @@ Example:
   PATTERN PATH`, `scripts/agent-rg.sh PATTERN PATH --sample 3`, or
   `scripts/agent-rg.sh PATTERN PATH --files`; use `--full REASON` only when the
   complete output is necessary.
-- Choose the right mechanism FIRST: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to JUDGE quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free. Caveat: `tmux wait-for` blocks the calling shell, so for long waits prefer a marker file (poll its existence) or a hook — a blocking wait can hit the Bash command timeout.
-- When capturing, read the FULL new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
+- Choose the mechanism before you start polling: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to judge quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free. Caveat: `tmux wait-for` blocks the calling shell, so for long waits prefer a marker file (poll its existence) or a hook — a blocking wait can hit the Bash command timeout.
+- When capturing, read the full new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
 - If the worker is waiting for approval, erroring, or stuck at a prompt, intervene.
 
 ## Completion
@@ -240,7 +240,7 @@ Before delegating or supervising a worker, read the shared lessons index:
 
 `~/dotfiles/skills/shared/tmux-orchestration/references/lessons.md`
 
-It is a single file of dated incident lessons, grouped by section. Open ONLY the
+It is a single file of dated incident lessons, grouped by section. Open only the
 section relevant to the current delegation. After the delegation finishes, if you
 learned a durable lesson, update the relevant section — dated, distilled rules
 only; the general delegation contract stays in this SKILL.md, not there.

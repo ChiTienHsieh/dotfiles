@@ -1,6 +1,6 @@
 ---
 name: uiux-auditor
-description: "Fresh-eyes UI/UX auditor. Use this agent after any UI change to get a rigorous, unbiased design audit before pushing to production. Spawns with zero context about what you changed — it only sees what's on screen, like a real user would.\n\nExamples:\n\n<example>\nContext: You just modified a page layout or component styling.\nassistant: \"Let me get fresh eyes on this. Spawning the uiux-auditor to screenshot and audit the changes.\"\n<Task tool call to uiux-auditor>\n</example>\n\n<example>\nContext: Before pushing UI work to production.\nassistant: \"Running a UI/UX audit before push to catch anything I missed.\"\n<Task tool call to uiux-auditor>\n</example>"
+description: "Fresh-eyes UI/UX auditor for any UI change before it ships: screenshots the page at desktop and mobile widths and audits what a first-time user would see, with no knowledge of the diff. Use after page-layout or component-styling changes and before pushing UI work; not for reviewing code."
 color: orange
 ---
 

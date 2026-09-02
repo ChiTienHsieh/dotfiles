@@ -1,6 +1,6 @@
 ---
 name: "where-am-i"
-description: "Catch up after a break: when the user returns to a project and asks 'remind me where were we', 'where am I', 'where did we leave off', 'what was I doing here', or wants to pick up where they left off / sync with remote before resuming. Gathers git state + this project's recent agent history into a short recap with suggested next steps. Read-only by default; never auto-commits or auto-pulls without confirmation."
+description: "Catch up after a break: when the user returns to a project and asks where they left off or what they were doing here (e.g. 'remind me where were we'), or wants to sync with remote before resuming. Gathers git state + this project's recent agent history into a short recap with suggested next steps. Read-only by default; never auto-commits or auto-pulls without confirmation."
 disable-model-invocation: true
 ---
 

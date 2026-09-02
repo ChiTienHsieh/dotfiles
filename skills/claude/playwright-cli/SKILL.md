@@ -8,7 +8,7 @@ allowed-tools: Bash(playwright-cli:*)
 
 ## Login flows & sandbox (read first)
 
-- **CRITICAL: tasks requiring user login (OAuth, GCP Console, etc.) need the `--headed` flag** — `playwright-cli open "<url>" --headed` opens a visible browser window. Without it the browser is headless (invisible), useless for manual login.
+- **Login flows (OAuth, GCP Console, etc.) need `--headed`**: `playwright-cli open "<url>" --headed` opens a visible browser window. The default headless browser is invisible, so the user has nowhere to log in.
 - In Claude Code, playwright-cli needs `dangerouslyDisableSandbox: true` (it talks over Unix sockets the sandbox blocks).
 - When done, clean up sessions: `playwright-cli close-all` (or `kill-all` for stale/zombie processes). There is no `session-stop-all` subcommand.
 
