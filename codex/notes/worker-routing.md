@@ -6,6 +6,7 @@
 
 - **Claude Code＝實作主力**：重活實作、改檔委派預設走這裡。
 - **Codex＝review 與 read-only 研究的共同承擔者**：不再是「省著用」。
+- **Grok＝Codex app 側的備援 worker**：有獨立訂閱 quota，Codex 額度見底時可從 Codex app 用 Router 的 grok agent 分擔；Claude Code 沒有 Grok subagent，本檔不把它排進 CC 的委派順序。
 - 即時訂閱等級、quota 與帳號狀態一律記在本機 `~/.config/machine.md`（不進 git）；要看餘量跑 `codexbar usage --provider both --source cli`（見 `quota` skill）。
 
 ## Surface 規則
