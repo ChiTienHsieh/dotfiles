@@ -150,5 +150,24 @@ class JargonAllowlistParsingTests(unittest.TestCase):
         self.assertIn("巴茲", result.stdout + result.stderr)
 
 
+class ZhTwTermsTests(unittest.TestCase):
+    def test_mainland_term_in_markdown_blocks_commit(self) -> None:
+        content = "這段信息很重要\n"
+        result = run_hook_with_diff(content, filename="notes.md")
+        self.assertNotEqual(result.returncode, 0)
+        output = result.stdout + result.stderr
+        self.assertIn("信息 → 資訊", output)
+
+    def test_mainland_term_in_code_file_passes(self) -> None:
+        content = "label = '信息'\n"
+        result = run_hook_with_diff(content, filename="app.py")
+        self.assertEqual(result.returncode, 0)
+
+    def test_taiwan_term_in_markdown_passes(self) -> None:
+        content = "這段資訊很重要，預設用使用者介面\n"
+        result = run_hook_with_diff(content, filename="notes.md")
+        self.assertEqual(result.returncode, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 ---
 name: "level-up"
-description: "Run guided, staged teaching when the user asks for level-up coaching, staged questions, or progression through a topic. Also use for implementation preflight, debrief, merge-readiness quizzes, and decision-focused coaching. Uses persistent learning records to tailor future teaching."
+description: "Run guided, staged teaching when the user asks for level-up coaching, staged questions, or progression through a topic. Also use for implementation preflight, debrief, merge-readiness quizzes, and decision-focused coaching: run preflight on your own for non-trivial or unfamiliar tasks and for changes to data models, architecture, user-facing behavior, or guardrail/SSOT files (see references/implementation-understanding-loop.md), and offer the post-implementation quiz before push; skip the ritual for small, safe edits. Uses persistent learning records to tailor future teaching."
 ---
 
 # level-up

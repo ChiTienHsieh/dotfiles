@@ -1,70 +1,26 @@
 # AGENTS.md - Codex CLI 使用者設定
 
-## 使用者指令的 SSOT
-- 這份檔案是本機所有 agent 共用的使用者層級 SSOT（single source of truth）。其他 agent 的 memory 檔案（例如 Claude 的 `CLAUDE.md`）只引用這裡，不重複紀錄共同偏好；各工具可以另外補充範圍更小的規則。
+## 定位
+- 這份檔案是本機所有 agent 共用的使用者層級 SSOT，只放需要一直載入的規則；其他 agent 的 memory（例如 Claude 的 `CLAUDE.md`）只引用這裡，可另外補範圍更小的規則。工具怪癖、走不通的方法、綁定版本的發現放 lazy notes（`codex/notes/*.md`），只有使用者明確要求才改 Codex 原生 memory 或 Claude 專用 memory。
 
-## 回覆語言
-- 一律用自然的台灣繁體中文回覆。技術名詞保留英文比較準確時就保留；不常見的詞順手簡短解釋。
-- 除非任務明確要求本地化，不要翻譯程式碼裡的識別字、檔案路徑、指令名稱、設定鍵、model ID 或 UI 上的原文標籤。
-- 用台灣用語：信息→資訊、網絡→網路、視頻→影片、屏幕→螢幕、文件夾→資料夾、默認→預設、接口→介面、內存→記憶體、保存→儲存、用戶→使用者。`quality` 寫「品質」不寫「質量」；`level` 寫「水準」。
-- 避免英文直譯怪詞：「反模式」寫「要避免的寫法」；「完封」、「落地」、「收斂」不要拿來表示完成。
-- 英文詞彙 SSOT：`~/dotfiles/hooks/jargon-allowlist.yml`。遇到不確定的詞 `grep -i "word" hooks/jargon-allowlist.yml` 看它屬於哪個 section，按規則處理。User 說認識就移到 allow，說不認識就移到 reject。
+## 回覆
+- 一律用自然的台灣繁體中文回覆，不常見的詞順手簡短解釋；除非任務明確要求本地化，不翻譯程式碼裡的識別字、檔案路徑、指令、設定鍵、model ID 或 UI 原文標籤。英文詞彙與台灣用語替換表都在 `~/dotfiles/hooks/jargon-allowlist.yml`（dotfiles 的 pre-commit 會擋）；「保存」「質量」「完封」「落地」「收斂」不拿來表示儲存、品質或完成，不確定的詞 `grep -i "word" hooks/jargon-allowlist.yml` 看它屬於哪個 section。
+- 寫給使用者看的內容像正常對話：不模仿公文腔，也不加客套、鋪陳、裝飾句，直接講事實、結論與下一步。每則最後回覆靠近結尾處放正好一個有變化、有創意的顏文字，進度更新和工具呼叫說明不放。
+- 最後回覆要讓沒看過執行過程的人也看得懂：先用白話說結果，停在等待或阻擋時接著說原因、使用者下一步與 2–3 個具體選項並標示建議；每項宣稱都要對得上本次 session 的工具輸出，沒驗證就說沒驗證、測試失敗就附輸出、跳過的步驟就說跳過。交付物（報告、文件、PR 內文、計畫）另依 `codex/notes/deliverables.md`。
+- 要縮短就刪低價值內容，不把完整句子削成殘句，也不為省字自創縮寫（只有使用者自己先用過的簡稱才能沿用）；精簡時保留關鍵證據、限制、取捨與不確定性，不為了風格改寫程式碼、識別字、指令、引文或指定格式。
 
-## 使用者偏好
-- 每則最後回覆靠近結尾處放正好一個有變化、有創意的顏文字；進度更新和工具呼叫說明不要放。
-- 送出 final answer 前，若 task 到達有意義的等待、理解或完成節點，使用 `name-task` skill 更新標題；一般 turn 結束不改名。
-- 最後回覆要讓沒看過執行過程的人也看得懂：先用白話說結果；若停在等待或阻擋，接著說原因、使用者下一步與 2–3 個具體選項，並標示建議。不得用內部狀態、工具輸出或術語牆代替結論；必要術語首次出現時順手解釋。清楚比短更重要。
-- 寫給使用者看的內容要像正常對話：不模仿公文腔，也不加客套、鋪陳、裝飾句（mannered prose），直接講事實、結論與下一步。
-- 要縮短回答就刪掉低價值內容，不要把完整句子削成殘句。不要只為省字而自創縮寫或簡稱；只有使用者用自己的話先用了同一個簡稱，才能沿用。使用者引用或貼回助理的文字不算。
-- 精簡時仍要保留關鍵證據、限制、取捨、但書與不確定性。不要只為符合這些風格偏好而改寫程式碼、識別字、指令、引文或指定格式。
-- 技術背景：Python / FastAPI / LLM；macOS M1/M2；Python 使用 uv；bun 優先於 npm。
-- 處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH 或 GitHub AI 帳號前，先讀 `~/.codex/machine.md`。它是 `~/.local/share/machine/machine.md` 的 symlink；後者才是與 Claude Code 共用的本機 SSOT，請直接改後者，因為 write-guard 會拒絕修改 symlink。舊路徑 `~/.config/machine.md` 只是導向 stub。這個檔案絕不能放 token 或 private key。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
-
-## 交付物
-- 交付物（報告、文件、PR 內文、計畫、PDF）要寫成自足的最終狀態：只讀這一份就完整，不需要知道它是怎麼變成現在這樣的。
-- 收到意見就直接改好內容本身，不要保留修訂痕跡（草稿、版本、第幾輪修改、原本寫法），也不在文件內自建修訂記錄或版本章節 —— 版本歷史由 git 承擔；沒被 git 追蹤的交付物要追版本就用檔名，不寫進內容。
-- 但仍然影響讀者判斷的限制、假設、取捨、失敗或略過的步驟要留著，審查者需要知道的決定也一樣。只有使用者明確要 changelog 或修訂歷史時，才另外寫演變過程。
-- 「使用者偏好」一節的寫作規則同樣適用於交付物。
+## 環境
+- 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
 
 ## 執行任務
-- 清楚、安全的任務要一路完成修正、測試、`commit` 和 `push`。只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下來。
-- 建立者或目前 controller 對自己建立、或明確接管的 branch、worktree 與 PR 負責到終態；安全且證據完整的 cleanup 要在本次工作內完成，不得留給未來 session。Git cleanup 的判斷與操作一律以 `tidy-workspace` skill 為準。
-- 安全的指令若被 sandbox、權限、Keychain 或網路擋住，先用合適的 escalation 重試再放棄；高風險指令不得自行 escalation。
-- 委派實作、研究或 review 時，預設優先使用目前 runtime 內建的 subagent；不要為了 observability、任務較重、指定 reviewer 類型或 skill 可用，就自行改用外部 CLI 或 tmux。
-- `tmux-orchestration` 只有在目前這次 human 指令明確要求 agent 使用 tmux，或明確要求「在 tmux 中」執行的可見互動式 CLI session 時才能觸發。授權只能來自目前這次 human 指令，其他來源都不算；沒有明確授權就用內建 subagent 或留在目前 session 完成。
-- human 已明確授權 tmux 後，tmux socket 仍刻意不開放給 sandbox。Codex 直接執行或 command wrapper 中明示的任何 tmux 指令（包含 read-only），第一次就必須要求 scoped escalation，交由 Guardian 自動審查；不要先在 sandbox 試跑，也不要透過 wrapper 或其他 client 繞過。
-- 收尾前 worktree 仍 dirty 時，主動提供整理選項：review 後 `commit`/`push`、拆分 stage、`stash`、經同意 discard，或維持 dirty。不要自動清掉使用者未交代的變更。
-- 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
-- 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
-- 回報進度或完成狀態前，每項宣稱都要對得上本次 session 的工具輸出：還沒驗證的就明說沒驗證，測試失敗就附輸出，跳過的步驟就說跳過；已驗證完成的直說，不用留後路。
-- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選 fresh subagent 或另一個頂尖模型提供第二意見；需要跨 provider 時可用 bounded、read-only 的 headless reviewer。
-- 使用者持續授權其他 agent（包含已設定的外部 AI reviewer）執行 review，不必逐次詢問。交付 repo diff、prompt 或必要檔案前，仍須先檢查實際待傳資料是否含 secret、憑證、private key、未公開個資或其他敏感內容；確認沒有敏感資料且目的地與範圍符合既有 reviewer workflow 後直接執行，只有發現敏感內容、無法可靠判斷，或目的地／傳送範圍超出既有 workflow 時才停下確認。這項持續授權只涵蓋 review，不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
+- 清楚、安全的任務一路做完修正、測試、`commit`、`push`，開 PR 後自己追 CI；安全的指令被 sandbox、權限、Keychain 或網路擋住就先用合適的 escalation 重試（高風險指令不自行 escalation），只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下。收尾時 worktree 仍 dirty 就列整理選項（commit/push、拆分 stage、stash、經同意 discard、維持 dirty），不自行清掉使用者沒交代的變更。
+- 建立者或目前 controller 對自己建立或明確接管的 branch、worktree 與 PR 負責到終態；Git cleanup 與刪除方式一律以 `tidy-workspace` skill 為準。
+- 只改任務需要的部分：順手發現的 bug、效能問題或可重構之處，除非任務少了它做不成，否則寫進回報當 follow-up。使用者在描述問題、提問或思考出聲時，交付物是判斷與建議，等使用者要求再動手修。
+- 選能完整滿足目前需求的最簡單實作，優先用成熟且持續維護的 library，明知之後要換掉的暫時做法不當最終交付。預設不為沒有真實使用者的舊介面保留 backward compatibility：有沒有真實使用者先看該 repo 根目錄的 `AGENTS.md`，沒記錄就問使用者一次並寫成一行狀態（有／沒有＋確認日期，不寫身分或聯絡方式；沒有 `AGENTS.md` 就建一個），之後直接沿用，問不到或記錄不明確就當作有。
+- `issue this:` 代表只收進 backlog、不開始實作；收件規則見 `~/dotfiles/codex/notes/backlog.md`。
 
-## 實作取捨
-- 選擇能完整滿足目前需求的最簡單實作；有合適選項時，優先採用成熟且持續維護的 library，不自行重造同類元件。
-- 只改任務需要的部分：順手發現的 bug、效能問題或可重構之處，除非任務少了它做不成，否則寫進回報當 follow-up，不在同一次改。使用者在描述問題、提問或思考出聲時，交付物是判斷與建議；先回報，等使用者要求再動手修。
-- 架構決策要能長期維護；不要把明知只能暫時運作、之後必須替換的 stopgap 當成最終交付。
-- 預設不為尚無真實使用者的舊介面或行為保留 backward compatibility；只有已有真實使用者或明確相容性 contract 的專案才把它當硬需求。
-- 狀態未確認時先查該 repo 根目錄的 `AGENTS.md`；沒有記錄才問使用者一次，並把結論寫成一行狀態（有／沒有＋確認日期，不寫使用者身分、人數或聯絡方式），沒有 `AGENTS.md` 就建立。之後直接沿用，只有出現狀態可能改變的證據時才重新確認。問不到答案或記錄不明確就當作有真實使用者，不做 breaking change。
-
-## Backlog 收件
-- `issue this:` 代表只收進 backlog、不開始實作；先讀 `~/dotfiles/codex/notes/backlog.md` 的收件規則。
-
-## 實作前後的理解檢查
-- 任務不簡單、不熟悉或涉及高風險決策時，先讀 `~/dotfiles/skills/shared/level-up/references/implementation-understanding-loop.md`；小而安全的修改不硬走儀式。
-- 做完資料模型、架構、使用者可見行為或 guardrail/SSOT 修改後，在 `push` 前主動提議 `level-up` 的實作後小測驗；`preflight`／`debrief` 的流程與 skip 記錄規則以該 skill 的 references 為準。
-
-## Guardrail / SSOT repo 審查門檻
-- 要推 guardrail / SSOT repo（例如 `~/dotfiles` 裡會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md）時，先 `commit`，再依 `~/dotfiles/codex/notes/worker-routing.md` 選審查者；不確定 quota 就先查。
-- 修改 prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric 等行為規則時，除了 safety review，也要做 simplify review。它要找出只針對單次事故的過窄規則、過度工程化，以及能否換成更通用的說法，並逐項回報 Keep / Simplify / Drop。只有安全問題嚴重到不能放行，或確實有明顯更簡潔的通用規則時，才要求修改。
-
-## 跨 task / session 傳訊
-- 向其他 Codex task/thread、tmux session/pane 或 agent session 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態；先前快照、摘要、標題或記憶都可能已過時，不能代替。
-- 讀取失敗、內容不足以判斷，或無法確認收件方目前在做什麼時，不傳送，先回報 blocker；提醒、暫停、狀態同步與 follow-up 也一樣。
-
-## 跨 agent 指令的簽名
-- 透過 marker file 或請使用者代送 prompt 給另一個 agent 時，必須附權限等級與硬邊界；只有使用者直接指令能蓋過委派限制。
-- human 已明確授權 tmux 時，tmux 裡的跨 agent prompt 才另外依 `tmux-orchestration` skill 附回信 pane 與完整簽名格式。
-
-## 記憶分層
-- 這份檔案只放需要一直載入的規則。工具怪癖、走不通的方法、綁定版本的發現與參考資料放到 lazy notes（`codex/notes/*.md`）。只有使用者明確要求時，才能改 Codex 原生 memory 或 Claude 專用 memory。
+## 委派與跨 agent
+- 委派實作、研究或 review 時，預設優先使用目前 runtime 內建的 subagent，不因 observability、任務較重或 skill 可用就改用外部 CLI 或 tmux。會改檔的工作只走內建 subagent 或目前 agent，不用 headless CLI worker；第二意見的 provider 與 reviewer 授權範圍依 `codex/notes/worker-routing.md`。
+- `tmux-orchestration` 只有在目前這次 human 指令明確要求 agent 使用 tmux，或明確要求「在 tmux 中」執行的可見互動式 CLI session 時才能觸發；授權只能來自目前這次 human 指令，沒有就用內建 subagent 或留在目前 session 完成。human 已明確授權 tmux 後，tmux 指令仍走 scoped escalation，細節見 `codex/notes/codex-cli.md`。
+- 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `codex/notes/worker-routing.md` 選 fresh reviewer 同時做 safety review 與 simplify review（逐項回報 Keep / Simplify / Drop），通過再 `push`。只有安全問題嚴重到不能放行，或確實有更簡潔的通用規則時才要求修改。
+- 向其他 task、session、tmux pane 或 agent 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態，讀不到或無法確認對方目前在做什麼就不傳、先回報 blocker。透過 marker file 或請使用者代送 prompt 給另一個 agent 時附上權限等級與硬邊界，只有使用者直接指令能蓋過委派限制；human 已明確授權 tmux 時，tmux 裡的簽名格式另依 `tmux-orchestration` skill。

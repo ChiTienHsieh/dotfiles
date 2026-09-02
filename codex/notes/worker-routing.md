@@ -23,3 +23,10 @@
 - **review、read-only 研究、第二意見**預設可交給 Codex（bounded、read-only）；改檔仍只走能安全改檔的內建 subagent。不要為了切 provider 而提高 surface 成本。
 - **guardrail / SSOT repo 的 reviewer**：預設 fresh subagent（含 safety 與 simplify 視角）；確實需要跨 provider 的第二意見時，Codex 的 bounded、read-only reviewer 可直接接手。
 - **fallback 順序**：內建 subagent 撞牆 → 目前 agent 可安全收尾就自行完成 → review／研究可轉另一個 provider 的 bounded read-only reviewer；兩邊都撞牆才等 quota reset。即時餘量不要背數字，跑 `codexbar usage --provider both --source cli` 查（細節見 `quota` skill）。
+
+## Reviewer 授權
+
+- 使用者持續授權其他 agent（含已設定的外部 AI reviewer）做 review，不必逐次詢問。
+- 送出 diff、prompt 或檔案前先檢查實際待傳資料有沒有 secret、憑證、private key 或未公開個資；發現敏感內容、無法判斷，或目的地與範圍超出既有 reviewer workflow 時才停下確認。
+- 這項授權只涵蓋 review：不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
+- guardrail / SSOT 改動的 reviewer 同時做 safety 與 simplify review。simplify 看三件事：只針對單次事故的過窄規則、過度工程化、能不能換成更通用的說法；逐項回報 Keep / Simplify / Drop。

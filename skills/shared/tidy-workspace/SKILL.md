@@ -26,6 +26,9 @@ blocker.
   unknown repo visibility conservatively.
 - Never discard, reset, force-push, run `git clean`, delete untracked files, or
   drop stashes without explicit authorization.
+- Prefer the recoverable `trash` command over `rm` for deletions; permanently
+  delete only clearly disposable temp files, build artifacts, or what the user
+  explicitly asks to remove.
 
 ## Terminal cleanup
 

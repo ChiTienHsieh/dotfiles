@@ -107,6 +107,36 @@ if [[ -f "$ALLOWLIST" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
+# 2b. Taiwan-terms scan (added lines in staged *.md files)
+# -----------------------------------------------------------------------------
+if [[ -f "$ALLOWLIST" ]]; then
+    ZH_TW_ENTRIES=$(sed -n '/^zh_tw_terms:/,/^[a-z]/p' "$ALLOWLIST" | grep '^  - ' | sed 's/^  - //')
+    MD_FILES=$(git diff --cached --name-only --diff-filter=AM | grep -E '\.md$')
+
+    if [[ -n "$ZH_TW_ENTRIES" && -n "$MD_FILES" ]]; then
+        MD_ADDED_LINES=$(echo "$MD_FILES" | xargs git diff --cached -U0 -- \
+            | grep '^+' | grep -v '^+++' | sed 's/^\+//')
+        ZH_TW_BLOCKED=()
+
+        while IFS='|' read -r word replacement; do
+            [[ -z "$word" ]] && continue
+            if echo "$MD_ADDED_LINES" | grep -q "$word"; then
+                ZH_TW_BLOCKED+=("$word → $replacement")
+            fi
+        done <<< "$ZH_TW_ENTRIES"
+
+        if [[ ${#ZH_TW_BLOCKED[@]} -gt 0 ]]; then
+            echo "❌ 台灣用語檢查失敗 — staged .md 新增行含以下寫法，請改用右邊："
+            for entry in "${ZH_TW_BLOCKED[@]}"; do
+                echo "   $entry"
+            done
+            echo "   詞表（zh_tw_terms）：$ALLOWLIST"
+            exit 1
+        fi
+    fi
+fi
+
+# -----------------------------------------------------------------------------
 # 3. Alias tests (only when shell config files are staged)
 # -----------------------------------------------------------------------------
 TEST_SCRIPT="$DOTFILES_DIR/tests/test_aliases.sh"
