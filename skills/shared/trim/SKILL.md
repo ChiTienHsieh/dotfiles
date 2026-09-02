@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # trim
 
-砍掉 skill、prompt 與 agent instructions 裡不會改變行為的 no-op。判準在同層的
+砍掉 skill、prompt 與 agent instructions 裡不會改變行為的 no-op。判斷標準在同層的
 `noop-brief.md`；這裡只定義審查流程。
 
 ## 何時使用
