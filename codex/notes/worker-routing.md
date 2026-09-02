@@ -1,6 +1,6 @@
 # Worker 路由 SSOT
 
-哪個 provider 當重活 worker、哪個當 reviewer，由本檔決定；worker surface 的授權門檻則以 `codex/AGENTS.md` 為準。**換 provider 角色時只改本檔的「目前角色分工」區；訂閱等級與 quota 記在本機 `~/.config/machine.md`**；其他 prompt（orchestrator persona、arbitrage、guardrail 閘門等）只引用本檔，不得各自寫死 provider 優先序。
+哪個 provider 當重活 worker、哪個當 reviewer，由本檔決定；worker surface 的授權門檻則以 `codex/AGENTS.md` 為準。**換 provider 角色時只改本檔的「目前角色分工」區；訂閱等級與 quota 記在本機 `~/.local/share/machine/machine.md`**；其他 prompt（orchestrator persona、arbitrage、guardrail 閘門等）只引用本檔，不得各自寫死 provider 優先序。
 
 ## 目前角色分工（更新於 2026-09-03）
 
@@ -23,3 +23,9 @@
 - **review、read-only 研究、第二意見**預設可交給 Codex（bounded、read-only）；改檔仍只走能安全改檔的內建 subagent。不要為了切 provider 而提高 surface 成本。
 - **guardrail / SSOT repo 的 reviewer**：預設 fresh subagent（含 safety 與 simplify 視角）；確實需要跨 provider 的第二意見時，Codex 的 bounded、read-only reviewer 可直接接手。
 - **fallback 順序**：內建 subagent 撞牆 → 目前 agent 可安全收尾就自行完成 → review／研究可轉另一個 provider 的 bounded read-only reviewer；兩邊都撞牆才等 quota reset。即時餘量不要背數字，跑 `codexbar usage --provider both --source cli` 查（細節見 `quota` skill）。
+
+## Reviewer 授權
+
+- 使用者持續授權其他 agent（含已設定的外部 AI reviewer）做 review，不必逐次詢問。
+- 送出 diff、prompt 或檔案前先檢查實際待傳資料有沒有 secret、憑證、private key 或未公開個資；發現敏感內容、無法判斷，或目的地與範圍超出既有 reviewer workflow 時才停下確認。
+- 這項授權只涵蓋 review：不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
