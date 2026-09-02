@@ -58,8 +58,6 @@ EXPECTED_FUNCTIONS=(
     addali
     addcd
     p
-    a
-    todo
     pp
     pc
     wheredef

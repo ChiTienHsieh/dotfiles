@@ -1,6 +1,7 @@
 ---
 name: chill
 description: Run the chill workflow when the user explicitly asks for chill mode, `/chill`, proofreading, a vibe check, softer wording, or a more relaxed zh-TW teaching/explanation style.
+disable-model-invocation: true
 ---
 
 # Chill

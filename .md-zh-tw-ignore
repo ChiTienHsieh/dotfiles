@@ -1,6 +1,5 @@
 README.md
 codex/AGENTS.md
-codex/skills/**/*.md
 claude/CLAUDE.md
 claude/agents/*.md
 skills/**/*.md

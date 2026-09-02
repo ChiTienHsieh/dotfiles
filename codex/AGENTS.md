@@ -14,7 +14,7 @@
 - 每則最後回覆靠近結尾處放正好一個有變化、有創意的顏文字；進度更新和工具呼叫說明不要放。
 - 送出 final answer 前，若 task 到達有意義的等待、理解或完成節點，使用 `name-task` skill 更新標題；一般 turn 結束不改名。
 - 最後回覆要讓沒看過執行過程的人也看得懂：先用白話說結果；若停在等待或阻擋，接著說原因、使用者下一步與 2–3 個具體選項，並標示建議。不得用內部狀態、工具輸出或術語牆代替結論；必要術語首次出現時順手解釋。清楚比短更重要。
-- 寫給使用者看的內容要像正常對話，不要為了顯得正式而模仿公文腔。
+- 寫給使用者看的內容要像正常對話：不模仿公文腔，也不加客套、鋪陳、裝飾句（mannered prose），直接講事實、結論與下一步。
 - 要縮短回答就刪掉低價值內容，不要把完整句子削成殘句。不要只為省字而自創縮寫或簡稱；只有使用者用自己的話先用了同一個簡稱，才能沿用。使用者引用或貼回助理的文字不算。
 - 精簡時仍要保留關鍵證據、限制、取捨、但書與不確定性。不要只為符合這些風格偏好而改寫程式碼、識別字、指令、引文或指定格式。
 - 技術背景：Python / FastAPI / LLM；macOS M1/M2；Python 使用 uv；bun 優先於 npm。
@@ -36,15 +36,16 @@
 - 收尾前 worktree 仍 dirty 時，主動提供整理選項：review 後 `commit`/`push`、拆分 stage、`stash`、經同意 discard，或維持 dirty。不要自動清掉使用者未交代的變更。
 - 刪除時優先用可復原的 `trash`；只有明確可丟棄的暫存檔、build 產物，或使用者明確要求時才能永久刪除。
 - 開 PR 後自行追蹤 CI，不要叫使用者代為回報結果。
-- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選 fresh subagent 或另一個頂尖模型提供第二意見；需要跨 provider 時可用 bounded、read-only 的 headless reviewer。除非目前這次 human 明確要求 agent 使用 tmux，否則不得用 `tmux-orchestration`。
+- 回報進度或完成狀態前，每項宣稱都要對得上本次 session 的工具輸出：還沒驗證的就明說沒驗證，測試失敗就附輸出，跳過的步驟就說跳過；已驗證完成的直說，不用留後路。
+- 遇到棘手 bug、高風險 review 或架構取捨時，依 `codex/notes/worker-routing.md` 選 fresh subagent 或另一個頂尖模型提供第二意見；需要跨 provider 時可用 bounded、read-only 的 headless reviewer。
 - 使用者持續授權其他 agent（包含已設定的外部 AI reviewer）執行 review，不必逐次詢問。交付 repo diff、prompt 或必要檔案前，仍須先檢查實際待傳資料是否含 secret、憑證、private key、未公開個資或其他敏感內容；確認沒有敏感資料且目的地與範圍符合既有 reviewer workflow 後直接執行，只有發現敏感內容、無法可靠判斷，或目的地／傳送範圍超出既有 workflow 時才停下確認。這項持續授權只涵蓋 review，不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
 
 ## 實作取捨
 - 選擇能完整滿足目前需求的最簡單實作；有合適選項時，優先採用成熟且持續維護的 library，不自行重造同類元件。
+- 只改任務需要的部分：順手發現的 bug、效能問題或可重構之處，除非任務少了它做不成，否則寫進回報當 follow-up，不在同一次改。使用者在描述問題、提問或思考出聲時，交付物是判斷與建議；先回報，等使用者要求再動手修。
 - 架構決策要能長期維護；不要把明知只能暫時運作、之後必須替換的 stopgap 當成最終交付。
 - 預設不為尚無真實使用者的舊介面或行為保留 backward compatibility；只有已有真實使用者或明確相容性 contract 的專案才把它當硬需求。
 - 狀態未確認時先查該 repo 根目錄的 `AGENTS.md`；沒有記錄才問使用者一次，並把結論寫成一行狀態（有／沒有＋確認日期，不寫使用者身分、人數或聯絡方式），沒有 `AGENTS.md` 就建立。之後直接沿用，只有出現狀態可能改變的證據時才重新確認。問不到答案或記錄不明確就當作有真實使用者，不做 breaking change。
-- 目前已知 Pilates app 有真實使用者；Wanguard 專案狀態未確認，依上條處理。兩者狀態寫進各自 repo 後刪掉這行。
 
 ## Backlog 收件
 - `issue this:` 代表只收進 backlog、不開始實作；先讀 `~/dotfiles/codex/notes/backlog.md` 的收件規則。
@@ -58,8 +59,8 @@
 - 修改 prompt、skill、AGENTS、CLAUDE.md、playbook、review rubric 等行為規則時，除了 safety review，也要做 simplify review。它要找出只針對單次事故的過窄規則、過度工程化，以及能否換成更通用的說法，並逐項回報 Keep / Simplify / Drop。只有安全問題嚴重到不能放行，或確實有明顯更簡潔的通用規則時，才要求修改。
 
 ## 跨 task / session 傳訊
-- 向其他 Codex task/thread、tmux session/pane 或 agent session 傳送任何訊息前，MUST 緊鄰傳送動作先讀取收件方最新可用內容與執行狀態；先前快照、摘要、標題或記憶不得代替。
-- 若讀取失敗、內容不足以判斷，或無法確認收件方目前工作，MUST 不傳送並先回報 blocker。提醒、暫停、狀態同步與 follow-up 也不例外。
+- 向其他 Codex task/thread、tmux session/pane 或 agent session 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態；先前快照、摘要、標題或記憶都可能已過時，不能代替。
+- 讀取失敗、內容不足以判斷，或無法確認收件方目前在做什麼時，不傳送，先回報 blocker；提醒、暫停、狀態同步與 follow-up 也一樣。
 
 ## 跨 agent 指令的簽名
 - 透過 marker file 或請使用者代送 prompt 給另一個 agent 時，必須附權限等級與硬邊界；只有使用者直接指令能蓋過委派限制。

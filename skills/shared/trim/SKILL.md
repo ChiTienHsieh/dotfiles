@@ -1,6 +1,7 @@
 ---
 name: trim
 description: Use when the user wants to simplify, trim, declutter, or shrink a skill, prompt, playbook, AGENTS.md/CLAUDE.md, or other agent-instruction prose. `trim` cuts prompt prose; `/simplify` cuts code.
+disable-model-invocation: true
 ---
 
 # trim

@@ -49,7 +49,8 @@ dotfiles/
 │   ├── AGENTS.md        # Codex CLI instructions
 │   ├── config.toml      # Portable first-install seed
 │   ├── hooks.json       # Global Codex lifecycle hook registration
-│   └── hooks/           # Stop dispatcher and bounded hook policies
+│   ├── hooks/           # Stop dispatcher and bounded hook policies
+│   └── pets/            # Codex TUI pet sprites (mogu, shroom)
 ├── skills/
 │   ├── shared/          # User-authored skills installed for Claude Code + Codex
 │   ├── codex/           # User-authored Codex-only skills

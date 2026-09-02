@@ -1,6 +1,7 @@
 ---
 name: "wrap"
 description: "結束目前工作階段。當使用者呼叫 $wrap，或要求收尾、完成目前工作並交付時使用：完成未竟事項、更新必要文件、清理外部 agent、交由 $tidy-workspace 整理 Git，最後用淺顯易懂、直觀的台灣繁中回報。"
+disable-model-invocation: true
 ---
 
 ## 封存前檢查

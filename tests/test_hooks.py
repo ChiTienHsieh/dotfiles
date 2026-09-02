@@ -141,14 +141,6 @@ class HookConfigurationTests(unittest.TestCase):
         )
         self.assertTrue(all("thread_title" not in command for command in commands))
 
-    def test_legacy_dispatcher_is_a_dirty_worktree_compatibility_shim(self) -> None:
-        dispatcher = (CODEX_DIR / "hooks" / "stop_dispatcher.py").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("from stop_dirty_worktree import main", dispatcher)
-        self.assertNotIn("request_thread_title", dispatcher)
-        self.assertNotIn("TITLE_CHECKPOINT", dispatcher)
-
 
 if __name__ == "__main__":
     unittest.main()

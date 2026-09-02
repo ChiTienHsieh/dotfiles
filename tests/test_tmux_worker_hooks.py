@@ -19,7 +19,6 @@ CODEX_DIR = REPO_ROOT / "codex"
 TRACKER_PATH = CODEX_DIR / "bin" / "track_tmux_workers.py"
 INSTALLER_PATH = CODEX_DIR / "hooks" / "install_hooks.py"
 MANIFEST_PATH = CODEX_DIR / "hooks.json"
-POLICY_TEST_PATH = REPO_ROOT / "tests" / "test_tmux_activation_policy.py"
 
 
 def load_module(name: str, path: Path):
@@ -32,9 +31,6 @@ def load_module(name: str, path: Path):
 
 tracker = load_module("track_tmux_workers", TRACKER_PATH)
 installer = load_module("install_hooks", INSTALLER_PATH)
-TmuxActivationPolicyTests = load_module(
-    "test_tmux_activation_policy", POLICY_TEST_PATH
-).TmuxActivationPolicyTests
 
 
 class TmuxWorkerTrackerTests(unittest.TestCase):

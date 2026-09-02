@@ -30,10 +30,6 @@
 - `thread/name/set` 與 `/rename` 改的是同一個 user-facing thread name；差別在入口與
   live UI event。舊 Stop hook 曾用 standalone `codex exec` end-to-end 驗證 persisted rename；
   同一個互動 TUI 當下是否立即重繪仍未驗證。
-- Side conversation 在 0.145.0 是 `ephemeral = true` 的 fork，本身不能改名，也不建立
-  persisted rollout；Stop hook payload 沒有專用的 side-chat flag，但會明確帶
-  `transcript_path: null`。這不是 side-chat 專用訊號：persisted transcript path 查詢失敗
-  也可能是 `null`。標題 Stop hook 已移除，因此目前不再需要依這個欄位猜測或分流。
 
 ## CodexBar usage checks
 

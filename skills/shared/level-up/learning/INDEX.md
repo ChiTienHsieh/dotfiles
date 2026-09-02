@@ -6,6 +6,7 @@
 
 | Topic | Status | Evidence | Updated | File |
 | --- | --- | --- | --- | --- |
+| Dotfiles prompt-audit 導讀（Fable 5.1） | mastered | C2m 職場 SOP 類比。七關決策全拍板並 shipped；自提「數字進腳本當 SSOT、prompt 只叫跑腳本」原則。 | 2026-09-03 | topics/dotfiles-prompt-audit-fable.md |
 | Sea 黑客松報名表提案 | learning | A1m；目標＝搞懂 X 討論 → 挑方向 → 寫完表單。先前已偏「同筆購買來源對不上」。 | 2026-08-25 | topics/sea-hackathon-application.md |
 | gu-log GP／MP 編輯契約 debrief | mastered | 能同時判斷 voice ownership、MP 距離自由、retained-claim grounding 與第一人稱誠實邊界。 | 2026-08-19 | topics/gu-log-gp-mp-editorial-contract.md |
 | MissionCart 黑客松題目判斷 | learning | 選擇生日派對總召類比、輕鬆速成與 Chat Markdown；目標是判斷題目是否值得做並釐清低摩擦 user story。 | 2026-08-16 | topics/missioncart-hackathon-idea.md |

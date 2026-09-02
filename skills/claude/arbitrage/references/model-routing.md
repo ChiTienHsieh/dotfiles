@@ -14,7 +14,7 @@ higher numbers are better.
 | `gpt-5.5` | 9 | 8 | 5 |
 | `sonnet-5` | 5 | 5 | 7 |
 | `opus-4.8` | 4 | 7 | 8 |
-| `fable-5` | 2 | 9 | 9 |
+| `fable-5.1` | 2 | 9 | 9 |
 
 Use these as defaults, not ceilings. If the cheaper model's output is below the
 bar, upgrade or rerun without asking first; quality matters more than the model
@@ -31,12 +31,12 @@ price label.
   worker, for high-token but low-difficulty tasks such as computer use, browser
   operation, repository exploration, batch file reading, and grep-style
   investigation. Prefer `sonnet-5` for automated computer/browser operation.
-- Use `opus-4.8` or `fable-5` for user-facing deliverables that need taste,
+- Use `opus-4.8` or `fable-5.1` for user-facing deliverables that need taste,
   including UI, copy, API design, and polished code quality.
-- Use `fable-5` or `opus-4.8` to review implementation plans, with optional
+- Use `fable-5.1` or `opus-4.8` to review implementation plans, with optional
   `gpt-5.5` as an independent third perspective.
-- Use `fable-5` for the hardest reasoning and architecture decisions.
-- Do not use Haiku.
+- Use `fable-5.1` for the hardest reasoning and architecture decisions.
+- Delegate only to the models in the table above; Haiku is deliberately absent from it (in the user's experience, Haiku 4.5 hallucinated a lot).
 
 `gpt-5.5` is only available through Codex CLI: use `codex exec` or
 `codex review`; `~/.codex/config.toml` defaults to `gpt-5.5`. The Claude rows

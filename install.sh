@@ -67,12 +67,6 @@ backup_and_copy() {
 
     mkdir -p "$(dirname "$dest")"
 
-    if [ -e "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up: $dest -> $BACKUP_DIR/"
-        mv "$dest" "$BACKUP_DIR/"
-    fi
-
     cp "$src" "$dest"
     echo "  Copied: $dest"
 }
@@ -370,6 +364,8 @@ fi
 backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
+# Codex TUI pet sprites (pet.json + spritesheet per pet dir)
+backup_and_link "$DOTFILES_DIR/codex/pets" "$HOME/.codex/pets"
 backup_and_link "$DOTFILES_DIR/codex/hooks" "$HOME/.codex/hooks"
 if ! "$DOTFILES_PYTHON" "$DOTFILES_DIR/codex/hooks/install_hooks.py" \
     "$DOTFILES_DIR/codex/hooks.json" "$HOME/.codex/hooks.json"; then
