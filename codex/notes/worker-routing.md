@@ -6,6 +6,7 @@
 
 - **沒有固定的實作主力。** 每個 provider 都是訂閱制、quota 週期性重置，沒用掉就浪費：派重活前先跑 `codexbar usage --provider both --source cli` 看餘量，**誰剩得多就派給誰，尤其是快 reset 還沒用完的那家**。
 - **Claude Code**：內建 subagent 可改檔，是唯一能安全做 file-mutating 委派的 surface。
+- **Claude Code subagent 預設跑 Sonnet**（`claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`）：省錢。只有任務明確需要更強推理（棘手 debug、架構取捨、guardrail 的最終 reviewer）才在 Agent 呼叫時指定更大的 model，並在回報裡說明為什麼。
 - **Codex**：任何 agent 都能用，不限 Codex app。從 Claude Code 派實作走 `codex:codex-rescue` plugin subagent（runtime 管權限）；review、read-only 研究、第二意見用 `codex exec --sandbox read-only`（deny credential 路徑、關網路）；Codex app 直接派也行。
 - **Grok**：SuperGrok 獨立 quota，目前只驗證過 Codex app 的 Router grok agent 這條路；`codex exec` 能不能指定它還沒試，試過再更新這行。Claude Code 沒有 Grok subagent。
 - 訂閱等級、quota 與帳號狀態記在本機 `~/.local/share/machine/machine.md`（不進 git）。
