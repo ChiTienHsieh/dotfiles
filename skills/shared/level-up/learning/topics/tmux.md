@@ -25,6 +25,9 @@
 - ~~resurrect 藍圖 vs 現場~~ → L5 考過（4/4）。外掛已裝（TPM+resurrect+continuum 進 dotfiles tmux.conf）。
 - Ghostty cmd+t 自動進 tmux 的 zshrc gate 已設計、待使用者拍板安裝範圍（Ghostty-only vs 所有終端機）。
 
+## Evidence
+- 2026-09-02：能判斷 `mouse on` 時 Ghostty 會把拖曳編碼成 mouse sequence 交給 tmux，而非先完成原生文字選取再被蓋掉。
+
 ## Engagement Notes
 - 用具體 MapleStory 城名（墮落城市/魔法森林）比抽象 city A/B 更好記，Sprin 自述更有感（"very nerdy lol"）。一路沿用。
 

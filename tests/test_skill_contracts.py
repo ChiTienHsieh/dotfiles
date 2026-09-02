@@ -2,7 +2,7 @@ from pathlib import Path
 import unittest
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 AGENTS = REPO_ROOT / "codex" / "AGENTS.md"
 NAME_TASK = REPO_ROOT / "skills" / "codex" / "name-task" / "SKILL.md"
 TIDY_WORKSPACE = REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "SKILL.md"
