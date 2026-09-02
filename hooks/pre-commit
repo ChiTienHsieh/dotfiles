@@ -34,9 +34,19 @@ if git diff --cached -U0 | grep '^+' | grep -v '^+++' | grep -q '/Users/sprin'; 
 fi
 
 # -----------------------------------------------------------------------------
-# 2. Jargon scan (comment lines in staged diffs)
+# 2. Jargon scan (comment lines in staged diffs + added lines in staged *.md)
 # -----------------------------------------------------------------------------
 ALLOWLIST="$DOTFILES_DIR/hooks/jargon-allowlist.yml"
+
+# Added lines in staged *.md files (shared by sections 2 and 2b).
+# level-up/learning/ records are written by the skill itself and legitimately
+# mention rejected words when documenting them, so they are skipped.
+MD_ADDED_LINES=$(git diff --cached --name-only --diff-filter=AM -z \
+    | grep -zE '\.md$' \
+    | grep -zvE '^skills/shared/level-up/learning/' \
+    | xargs -0r git diff --cached -U0 -- 2>/dev/null \
+    | grep '^+' | grep -v '^+++' | sed 's/^\+//')
+
 if [[ -f "$ALLOWLIST" ]]; then
     # Parse flat YAML lists without external parser
     _parse_section() {
@@ -56,14 +66,21 @@ if [[ -f "$ALLOWLIST" ]]; then
         | grep -E '^\+\s*(#|//|<!--|%)\s' \
         | sed 's/^\+//')
 
-    if [[ -n "$COMMENT_LINES" ]]; then
+    # Reject-listed words are blocked in comments and in .md prose;
+    # the unknown-abbreviation warning stays comment-only (prose has legit caps).
+    # Parenthetical groups are stripped first: the accepted format is
+    # 「中文 (english)」, so the English word inside parentheses must pass.
+    REJECT_SCAN_LINES=$(printf '%s\n' "$COMMENT_LINES" "$MD_ADDED_LINES" \
+        | sed -E 's/\([^)]*\)//g; s/（[^）]*）//g')
+
+    if [[ -n "$COMMENT_LINES" || -n "$MD_ADDED_LINES" ]]; then
         JARGON_BLOCKED=()
         JARGON_WARNED=()
 
         # Check each reject-listed word
         while IFS='|' read -r word format; do
             [[ -z "$word" ]] && continue
-            if echo "$COMMENT_LINES" | grep -qiw "$word"; then
+            if echo "$REJECT_SCAN_LINES" | grep -qiw "$word"; then
                 JARGON_BLOCKED+=("$word → $format")
             fi
         done <<< "$REJECT_ENTRIES"
@@ -111,11 +128,8 @@ fi
 # -----------------------------------------------------------------------------
 if [[ -f "$ALLOWLIST" ]]; then
     ZH_TW_ENTRIES=$(sed -n '/^zh_tw_terms:/,/^[a-z]/p' "$ALLOWLIST" | grep '^  - ' | sed 's/^  - //')
-    MD_FILES=$(git diff --cached --name-only --diff-filter=AM | grep -E '\.md$')
 
-    if [[ -n "$ZH_TW_ENTRIES" && -n "$MD_FILES" ]]; then
-        MD_ADDED_LINES=$(echo "$MD_FILES" | xargs git diff --cached -U0 -- \
-            | grep '^+' | grep -v '^+++' | sed 's/^\+//')
+    if [[ -n "$ZH_TW_ENTRIES" && -n "$MD_ADDED_LINES" ]]; then
         ZH_TW_BLOCKED=()
 
         while IFS='|' read -r word replacement; do

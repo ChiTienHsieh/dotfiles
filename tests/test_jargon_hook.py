@@ -53,6 +53,7 @@ def run_hook_with_diff(
         hook_file.chmod(0o755)
 
         # Stage the test file
+        (repo / filename).parent.mkdir(parents=True, exist_ok=True)
         (repo / filename).write_text(staged_content)
         run(["git", "add", filename])
 
@@ -148,6 +149,43 @@ class JargonAllowlistParsingTests(unittest.TestCase):
         result = run_hook_with_diff(content, allowlist=allowlist)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("巴茲", result.stdout + result.stderr)
+
+
+class MarkdownProseJargonTests(unittest.TestCase):
+    def test_reject_word_in_markdown_prose_blocks_commit(self) -> None:
+        content = "Look at this hunk before merging.\n"
+        result = run_hook_with_diff(content, filename="notes.md")
+        self.assertNotEqual(result.returncode, 0)
+        output = result.stdout + result.stderr
+        self.assertIn("hunk → 修改片段 (hunk)", output)
+
+    def test_plain_markdown_prose_passes(self) -> None:
+        content = "This paragraph explains how the script reads its config.\n"
+        result = run_hook_with_diff(content, filename="notes.md")
+        self.assertEqual(result.returncode, 0)
+
+    def test_reject_word_in_code_file_passes(self) -> None:
+        content = "hunk = parse_hunk(line)\n"
+        result = run_hook_with_diff(content, filename="app.py")
+        self.assertEqual(result.returncode, 0)
+
+    def test_markdown_filename_with_space_still_scanned(self) -> None:
+        content = "Look at this hunk before merging.\n"
+        result = run_hook_with_diff(content, filename="my notes.md")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("hunk → 修改片段 (hunk)", result.stdout + result.stderr)
+
+    def test_accepted_parenthetical_format_passes(self) -> None:
+        content = "先看修改片段 (hunk) 再合併。\n"
+        result = run_hook_with_diff(content, filename="notes.md")
+        self.assertEqual(result.returncode, 0)
+
+    def test_level_up_learning_records_are_skipped(self) -> None:
+        content = "Learner asked what a hunk is.\n"
+        result = run_hook_with_diff(
+            content, filename="skills/shared/level-up/learning/x.md"
+        )
+        self.assertEqual(result.returncode, 0)
 
 
 class ZhTwTermsTests(unittest.TestCase):
