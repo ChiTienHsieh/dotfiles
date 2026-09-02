@@ -82,3 +82,4 @@ reject:
   - observability|可觀測性 (observability)
   - idempotent|重跑安全 (idempotent)
   - custody|保管／託管 (custody)
+  - hunk|修改片段 (hunk)
