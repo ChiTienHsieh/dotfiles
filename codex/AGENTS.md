@@ -10,13 +10,13 @@
 - 要縮短就刪低價值內容，不把完整句子削成殘句，也不為省字自創縮寫（只有使用者自己先用過的簡稱才能沿用）；精簡時保留關鍵證據、限制、取捨與不確定性，不為了風格改寫程式碼、識別字、指令、引文或指定格式。
 
 ## 環境
-- 技術背景：Python / FastAPI / LLM；macOS M1/M2；Python 用 uv；bun 優先於 npm。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH 或 GitHub AI 帳號前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；舊路徑 `~/.config/machine.md` 只是導向 stub；裡面不放 token 或 private key）。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
+- 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
 
 ## 執行任務
 - 清楚、安全的任務一路做完修正、測試、`commit`、`push`，開 PR 後自己追 CI；安全的指令被 sandbox、權限、Keychain 或網路擋住就先用合適的 escalation 重試（高風險指令不自行 escalation），只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下。收尾時 worktree 仍 dirty 就列整理選項（commit/push、拆分 stage、stash、經同意 discard、維持 dirty），不自行清掉使用者沒交代的變更。
 - 建立者或目前 controller 對自己建立或明確接管的 branch、worktree 與 PR 負責到終態；Git cleanup 與刪除方式一律以 `tidy-workspace` skill 為準。
 - 只改任務需要的部分：順手發現的 bug、效能問題或可重構之處，除非任務少了它做不成，否則寫進回報當 follow-up。使用者在描述問題、提問或思考出聲時，交付物是判斷與建議，等使用者要求再動手修。
-- 選能完整滿足目前需求的最簡單實作，優先用成熟且持續維護的 library，明知之後要換掉的 stopgap 不當最終交付。預設不為沒有真實使用者的舊介面保留 backward compatibility：有沒有真實使用者先看該 repo 根目錄的 `AGENTS.md`，沒記錄就問使用者一次並寫成一行狀態（有／沒有＋確認日期，不寫身分或聯絡方式；沒有 `AGENTS.md` 就建一個），之後直接沿用，問不到或記錄不明確就當作有。
+- 選能完整滿足目前需求的最簡單實作，優先用成熟且持續維護的 library，明知之後要換掉的暫時做法不當最終交付。預設不為沒有真實使用者的舊介面保留 backward compatibility：有沒有真實使用者先看該 repo 根目錄的 `AGENTS.md`，沒記錄就問使用者一次並寫成一行狀態（有／沒有＋確認日期，不寫身分或聯絡方式；沒有 `AGENTS.md` 就建一個），之後直接沿用，問不到或記錄不明確就當作有。
 - `issue this:` 代表只收進 backlog、不開始實作；收件規則見 `~/dotfiles/codex/notes/backlog.md`。
 
 ## 委派與跨 agent
