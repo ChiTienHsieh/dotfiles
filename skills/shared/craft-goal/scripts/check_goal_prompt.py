@@ -18,10 +18,10 @@ def main(argv: list[str]) -> int:
         text = sys.stdin.read()
     count = len(text)
     if count < GOAL_PROMPT_CHAR_LIMIT:
-        print(f"OK: {count} characters (limit {GOAL_PROMPT_CHAR_LIMIT})")
+        print(f"OK: {count} characters (must stay under {GOAL_PROMPT_CHAR_LIMIT})")
         return 0
     print(
-        f"TOO LONG: {count} characters (limit {GOAL_PROMPT_CHAR_LIMIT}); "
+        f"TOO LONG: {count} characters (must stay under {GOAL_PROMPT_CHAR_LIMIT}); "
         "shorten the prompt or move detail into a tracked task spec file"
     )
     return 1

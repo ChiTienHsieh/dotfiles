@@ -24,7 +24,7 @@ class CraftGoalCheckTests(unittest.TestCase):
         result = run_check("請在 `~/repo` 依照 spec 完成所有任務。")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("OK: ", result.stdout)
-        self.assertIn("limit 4000", result.stdout)
+        self.assertIn("under 4000", result.stdout)
 
     def test_over_limit_prompt_fails(self) -> None:
         result = run_check("x" * 4000, via_file=True)
