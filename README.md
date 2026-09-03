@@ -55,6 +55,8 @@ dotfiles/
 │   ├── shared/          # User-authored skills installed for Claude Code + Codex
 │   ├── codex/           # User-authored Codex-only skills
 │   └── claude/          # User-authored Claude Code-only skills
+├── scripts/
+│   └── sync-skills.sh   # Sync only user-authored skill symlinks
 ├── nvim/                # Neovim config (git submodule)
 ├── npm/
 │   └── .npmrc            # Seed for local npm safeguards
@@ -88,6 +90,17 @@ cd ~/dotfiles
 git pull
 git submodule update --recursive
 ```
+
+To sync only user-authored skills without reinstalling other dotfiles:
+
+```bash
+./scripts/sync-skills.sh
+```
+
+The skill-only sync preserves unrelated skills, backs up conflicting real files
+or directories under `~/.dotfiles_backup/`, and removes broken symlinks that
+point into this dotfiles checkout. It does not modify runtime settings such as
+`~/.claude/settings.json`.
 
 ## Adding New Dotfiles
 

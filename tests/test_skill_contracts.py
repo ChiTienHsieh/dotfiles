@@ -1,4 +1,7 @@
+import os
 from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 
 
@@ -7,6 +10,7 @@ AGENTS = REPO_ROOT / "codex" / "AGENTS.md"
 NAME_TASK = REPO_ROOT / "skills" / "codex" / "name-task" / "SKILL.md"
 TIDY_WORKSPACE = REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "SKILL.md"
 WRAP = REPO_ROOT / "skills" / "shared" / "wrap" / "SKILL.md"
+SYNC_SKILLS = REPO_ROOT / "scripts" / "sync-skills.sh"
 
 
 class ArchiveSkillContractTests(unittest.TestCase):
@@ -107,6 +111,95 @@ class GitCleanupContractTests(unittest.TestCase):
         self.assertIn("證據不足時視為未完成責任並回報 blocker", self.wrap)
         self.assertIn("cleanup 判斷都以該 skill 為準", self.wrap)
         self.assertNotIn("`$wrap`", self.tidy)
+
+
+class SkillSyncTests(unittest.TestCase):
+    def test_sync_routes_skills_and_preserves_unrelated_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            home = temp / "home"
+            backup = temp / "backup"
+            legacy = temp / "legacy-claude-skills"
+            external = temp / "external-skill"
+
+            (legacy / "external-claude").mkdir(parents=True)
+            (legacy / "external-claude" / "SKILL.md").write_text("external\n")
+            external.mkdir()
+            (external / "SKILL.md").write_text("external\n")
+
+            (home / ".claude").mkdir(parents=True)
+            (home / ".claude" / "skills").symlink_to(legacy)
+            (home / ".codex" / "skills").mkdir(parents=True)
+            (home / ".codex" / "skills" / ".system").mkdir()
+            (home / ".codex" / "skills" / "external-codex").symlink_to(external)
+            (home / ".codex" / "skills" / "retired").symlink_to(
+                REPO_ROOT / "skills" / "shared" / "retired"
+            )
+            collision = home / ".agents" / "skills" / "learn-my-voice"
+            collision.mkdir(parents=True)
+            (collision / "marker").write_text("keep me\n")
+
+            env = os.environ.copy()
+            env.update(
+                HOME=str(home),
+                TMPDIR=str(temp),
+                DOTFILES_BACKUP_DIR=str(backup),
+            )
+            for _ in range(2):
+                result = subprocess.run(
+                    [str(SYNC_SKILLS)],
+                    check=True,
+                    capture_output=True,
+                    env=env,
+                    text=True,
+                )
+                self.assertIn("Skills synced.", result.stdout)
+
+            expected = {
+                home / ".claude" / "skills": (
+                    REPO_ROOT / "skills" / "shared",
+                    REPO_ROOT / "skills" / "claude",
+                ),
+                home / ".codex" / "skills": (
+                    REPO_ROOT / "skills" / "shared",
+                    REPO_ROOT / "skills" / "codex",
+                ),
+                home / ".agents" / "skills": (
+                    REPO_ROOT / "skills" / "shared",
+                    REPO_ROOT / "skills" / "codex",
+                ),
+            }
+            for destination, source_dirs in expected.items():
+                for source_dir in source_dirs:
+                    for skill in source_dir.iterdir():
+                        if not (skill.is_dir() and (skill / "SKILL.md").is_file()):
+                            continue
+                        installed = destination / skill.name
+                        self.assertTrue(installed.is_symlink(), installed)
+                        self.assertEqual(os.readlink(installed), str(skill))
+
+            self.assertEqual(
+                os.readlink(home / ".claude" / "skills" / "external-claude"),
+                str(legacy / "external-claude"),
+            )
+            self.assertEqual(
+                os.readlink(home / ".codex" / "skills" / "external-codex"),
+                str(external),
+            )
+            self.assertTrue((home / ".codex" / "skills" / ".system").is_dir())
+            retired = home / ".codex" / "skills" / "retired"
+            self.assertFalse(retired.exists())
+            self.assertFalse(retired.is_symlink())
+            self.assertEqual(
+                (backup / ".agents" / "skills" / "learn-my-voice" / "marker").read_text(),
+                "keep me\n",
+            )
+
+    def test_installer_delegates_skill_sync_to_the_script(self) -> None:
+        installer = (REPO_ROOT / "install.sh").read_text()
+
+        self.assertEqual(installer.count('"$DOTFILES_DIR/scripts/sync-skills.sh"'), 1)
+        self.assertNotIn('"$DOTFILES_DIR"/skills/shared/*', installer)
 
 
 if __name__ == "__main__":
