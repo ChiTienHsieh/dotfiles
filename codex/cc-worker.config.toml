@@ -1,0 +1,19 @@
+# Codex permissions profile for sandboxed headless workers.
+# Installed as ~/.codex/cc-worker.config.toml; use with `codex -p cc-worker ...`.
+# Layered on top of ~/.codex/config.toml. Must stay a TOML file: `-c` cannot
+# express the "**/*.pem" key (dotted-key parser splits on ".pem").
+default_permissions = "cc-worker"
+
+[permissions.cc-worker]
+# :workspace = write only inside the workspace roots, network off.
+extends = ":workspace"
+
+[permissions.cc-worker.filesystem]
+# Plain workspace-write still reads credentials; deny them explicitly.
+"~/.ssh" = "deny"
+"~/.aws" = "deny"
+
+[permissions.cc-worker.filesystem.":workspace_roots"]
+"**/.env" = "deny"
+"**/.env.*" = "deny"
+"**/*.pem" = "deny"

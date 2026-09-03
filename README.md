@@ -48,9 +48,12 @@ dotfiles/
 ├── codex/
 │   ├── AGENTS.md        # Codex CLI instructions
 │   ├── config.toml      # Portable first-install seed
+│   ├── cc-worker.config.toml  # Sandbox profile for headless Codex workers
 │   ├── hooks.json       # Global Codex lifecycle hook registration
 │   ├── hooks/           # Stop dispatcher and bounded hook policies
 │   └── pets/            # Codex TUI pet sprites (mogu, shroom)
+├── grok/
+│   └── sandbox.toml     # Sandbox profile for headless Grok workers
 ├── skills/
 │   ├── shared/          # User-authored skills installed for Claude Code + Codex
 │   ├── codex/           # User-authored Codex-only skills

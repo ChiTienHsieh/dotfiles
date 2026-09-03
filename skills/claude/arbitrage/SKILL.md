@@ -12,10 +12,11 @@ does the bulk implementation work. Which provider serves as the worker is
 decided by `~/dotfiles/codex/notes/worker-routing.md` (the worker-routing
 SSOT), not by this skill.
 
-On this machine, implementation is delegated to built-in subagents by default;
-never use a file-mutating headless CLI worker. Tmux eligibility follows the
-human-only activation gate in `codex/AGENTS.md`. Read-only headless agents
-remain suitable for bounded verification or research.
+On this machine, implementation is delegated to built-in subagents by default.
+A headless CLI worker (Codex, Grok, nested Claude) may mutate files only under
+the sandbox profile described in the `headless-cli-agents` skill; without one it
+stays read-only. Tmux eligibility follows the human-only activation gate in
+`codex/AGENTS.md`.
 
 ## When To Use
 
@@ -35,7 +36,7 @@ remain suitable for bounded verification or research.
 | --- | --- | --- |
 | Product judgment, scope, architecture, constraints | Claude | Keep the thinking here. |
 | Spec writing and acceptance criteria | Claude | Make the worker prompt precise. |
-| Bulk code edits and test-driven implementation | Built-in subagent | Provider per SSOT when selectable. |
+| Bulk code edits and test-driven implementation | Built-in subagent or sandboxed headless CLI worker (per SSOT) | Provider per SSOT when selectable. |
 | Frontend visual validation | Claude | Run, inspect, screenshot, and judge. |
 | Debugging analysis | Claude first | Delegate the concrete fix after root cause is clear. |
 | Diff review, commit, push, PR | Claude | Git ownership stays in the controller session. |
@@ -66,16 +67,23 @@ When exact model routing matters, read `references/model-routing.md`.
 ## Dispatch Protocol
 
 Use Claude Code's built-in `Agent` subagents for delegated implementation and
-keep controller-side verification and git ownership in the parent session. Do
-not delegate file-mutating work via headless CLI. If the current human
-explicitly asks you to use tmux, use `tmux-orchestration` and follow its complete
-Delegation Contract instead.
+keep controller-side verification and git ownership in the parent session. A
+headless CLI worker may write files only under the `headless-cli-agents`
+sandbox profile. If the current human explicitly asks you to use tmux, use
+`tmux-orchestration` and follow its complete Delegation Contract instead.
 
 1. Inspect the repo state, dirty files, stop conditions, and relevant docs.
-2. Write a worker prompt that captures objective, allowed scope, constraints,
-   acceptance criteria, verification, and report marker.
+2. Write a worker prompt that follows the Spec Contract below.
 3. Dispatch to a built-in subagent with explicit ownership and side-effect boundaries.
 4. Verify worker claims and review the diff before committing or pushing.
+
+## Spec Contract
+
+Every delegation prompt carries six parts: objective, files in scope,
+interfaces (signatures, schemas, CLI contracts the worker must honor),
+constraints, the verification command, and the reasoning effort to spend. The
+controller re-runs the verification command itself after the worker reports;
+a "done" with an empty diff counts as a refusal, not a success.
 
 ## Frontend Validation Loop
 

@@ -11,11 +11,11 @@ CC 現在以 **Orchestrator（指揮官）** 身分啟動：CC 是介面與判�
 
 ## 為什麼委派（是選擇，不是被工具逼的）
 
-重活**預設委派給內建 subagent**，降低另開 CLI process、pane 或 session 的資源與 lifecycle 成本。CC 的角色是**指揮 + 驗收**，不是親自實作；會改檔的委派使用受 runtime 管理、權限與 ownership 清楚的 subagent，不使用 file-mutating headless CLI。
+重活**預設委派給內建 subagent**，降低另開 CLI process、pane 或 session 的資源與 lifecycle 成本。CC 的角色是**指揮 + 驗收**，不是親自實作；會改檔的委派優先用受 runtime 管理、權限與 ownership 清楚的 subagent。
 
-當路由結果是 Codex 時的硬規則：**禁用任何「會動手寫檔」的 headless / 背景 codex（`codex exec --sandbox workspace-write` 或更高、YOLO、`--dangerously-bypass-*` 這類 bypass flags）。** headless 唯讀模式則放行，但有兩種、各帶硬條件：
+當路由結果是 headless CLI（Codex / Grok）時的硬規則：**會寫檔的 headless worker 必須套 `headless-cli-agents` skill 的 sandbox profile**（`codex exec -p cc-worker`、`grok --sandbox cc-worker`：寫入限 worktree、deny 讀 credential 路徑、平台支援就關網路），呼叫細節與 gotcha 全在該 skill 的 runbook；`danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止。headless 唯讀模式另有兩種、各帶硬條件：
 - `codex review` —— 只產 review 報告、不改檔，直接跑。
-- `codex exec --sandbox read-only` —— 唯讀研究 / debug 可用，但**三條件缺一不可**：(a) 強制 `--sandbox read-only`（不得用 workspace-write 以上）；(b) sandbox 設定明確 deny credential 路徑（`.env`、`~/.aws`、`~/.ssh` 等），因為 read-only 只擋寫、不擋讀，不 deny 就會把 creds 讀進 context 送到 OpenAI；(c) 網路關閉。三條件沒同時成立就改用內建 subagent 或由 CC 自己做 bounded read-only 調查。
+- `codex exec --sandbox read-only` —— 唯讀研究 / debug 可用，但**三條件缺一不可**：(a) 強制 `--sandbox read-only`（不得用 workspace-write 以上）；(b) sandbox 設定明確 deny credential 路徑（`.env`、`~/.aws`、`~/.ssh` 等），因為 read-only 只擋寫、不擋讀，不 deny 就會把 creds 讀進 context 送到 OpenAI —— 加 `-p cc-worker` 就滿足；(c) 網路關閉。三條件沒同時成立就改用內建 subagent 或由 CC 自己做 bounded read-only 調查。
 
 ## Worker surface
 
@@ -36,6 +36,11 @@ CC 現在以 **Orchestrator（指揮官）** 身分啟動：CC 是介面與判�
 - **以下委派內建 subagent，不自己用 Bash 做**：任何「實作」、跨多檔修改、> 10 行的變更、新建檔案或腳本、重構、debug 程式邏輯 —— 這些會吃掉指揮官的 context，而 context 是驗收品質的本錢。
 - 灰色地帶用同一個判斷標準：這件事會不會消耗指揮官大量 context？會就委派。
 - 例外：worker 壞掉/卡死（無回應、空輸出、log 沒建），且該活落在門檻內可由 CC 唯讀＋小修＋git 指令完成時，CC 可自己收尾，但要明說原因。
+
+## 驗收
+
+- 委派 prompt 一定帶驗證指令；worker 回報後**指揮官自己重跑那條指令**，worker 說「測試過了」只是宣稱。
+- worker 回報「完成」但 `git diff` 是空的，一律當拒絕（多半是它的 instructions 擋住了），不是成功。
 
 ## 機制 & 收尾
 

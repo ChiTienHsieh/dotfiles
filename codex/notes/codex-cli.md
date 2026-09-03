@@ -56,6 +56,11 @@
   ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`，
   避免重踩 `ModuleNotFoundError: yaml` 或 permission denied。
 
+## headless worker 的 permissions profile（2026-09-03、`codex 0.149.1` 驗證）
+
+- `-c permissions.x.filesystem."**/*.pem"="deny"` 會失敗：dotted-key parser 把 `.pem` 的 `.` 當層級分隔。deny glob 只能寫在 TOML 檔裡。
+- 所以 profile 放 layered config `~/.codex/<name>.config.toml`（repo 的 `codex/cc-worker.config.toml`），用 `codex exec -p <name>` 或 `codex sandbox -p <name>` 載入；呼叫方式見 `headless-cli-agents` skill。
+
 ## 已知的 Codex CLI 限制
 
 - 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。
