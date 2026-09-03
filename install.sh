@@ -115,21 +115,6 @@ ensure_machine_notes() {
     echo "  Wrote: $machine_dir/AGENTS.md"
 }
 
-ensure_real_dir() {
-    local dest="$1"
-
-    if [ -L "$dest" ]; then
-        echo "  Removing directory symlink: $dest -> $(readlink "$dest")"
-        rm "$dest"
-    elif [ -e "$dest" ] && [ ! -d "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up non-directory: $dest -> $BACKUP_DIR/"
-        mv "$dest" "$BACKUP_DIR/"
-    fi
-
-    mkdir -p "$dest"
-}
-
 configure_codex_local_permissions() {
     local config="$1"
 
@@ -194,51 +179,6 @@ path.write_text(text.rstrip() + "\n" + block)
 PY
 
     echo "  Configured Codex workspace permissions"
-}
-
-collect_symlinked_dir_entries() {
-    local dest="$1"
-    local manifest="$2"
-    local target entry
-
-    : > "$manifest"
-
-    [ -L "$dest" ] || return 0
-
-    target="$(readlink "$dest")"
-    case "$target" in
-        /*) ;;
-        *) target="$(cd "$(dirname "$dest")" && pwd -P)/$target" ;;
-    esac
-
-    [ -d "$target" ] || return 0
-
-    for entry in "$target"/*; do
-        [ -e "$entry" ] || [ -L "$entry" ] || continue
-        printf '%s\t%s\n' "$(basename "$entry")" "$entry" >> "$manifest"
-    done
-}
-
-restore_preserved_skill_links() {
-    local manifest="$1"
-    local dest="$2"
-    local name entry
-
-    [ -f "$manifest" ] || return 0
-
-    while IFS=$'\t' read -r name entry; do
-        [ -n "$name" ] || continue
-        [ ! -e "$dest/$name" ] && [ ! -L "$dest/$name" ] || continue
-        [ -e "$entry" ] || [ -L "$entry" ] || continue
-        backup_and_link "$entry" "$dest/$name"
-    done < "$manifest"
-}
-
-is_linkable_skill_dir() {
-    local skill="$1"
-
-    [ -d "$skill" ] || return 1
-    [ -f "$skill/SKILL.md" ] || [ "$(basename "$skill")" = ".system" ]
 }
 
 prune_stale_dotfiles_links() {
@@ -333,9 +273,6 @@ echo ""
 # Claude Code configuration
 # -----------------------------------------------------------------------------
 echo "[8/11] Installing Claude Code configuration..."
-CLAUDE_SKILLS_PRESERVE_FILE="${TMPDIR:-/tmp}/dotfiles-claude-skills-preserve.$$"
-collect_symlinked_dir_entries "$HOME/.claude/skills" "$CLAUDE_SKILLS_PRESERVE_FILE"
-ensure_real_dir "$HOME/.claude/skills"
 
 # Main config files
 backup_and_link "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
@@ -362,15 +299,6 @@ backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.s
 # Directories
 backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
-
-# Skills (Grok CLI also discovers skills from ~/.claude/skills, so shared ones reach all three runtimes)
-for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/claude/*; do
-    is_linkable_skill_dir "$skill" || continue
-    backup_and_link "$skill" "$HOME/.claude/skills/$(basename "$skill")"
-done
-restore_preserved_skill_links "$CLAUDE_SKILLS_PRESERVE_FILE" "$HOME/.claude/skills"
-prune_stale_dotfiles_links "$HOME/.claude/skills"
-rm -f "$CLAUDE_SKILLS_PRESERVE_FILE"
 
 # Legacy command shims were removed (skills are directly user-invocable as
 # /skill-name); prune any leftover shim links from earlier installs.
@@ -412,23 +340,12 @@ for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
     [ -f "$rule" ] || continue
     backup_and_link "$rule" "$HOME/.codex/rules/$(basename "$rule")"
 done
-ensure_real_dir "$HOME/.codex/skills"
-ensure_real_dir "$HOME/.agents/skills"
 # NOTE: codex/skills/.system was removed from the repo — codex-cli manages and
 # updates its own system skills under ~/.codex/skills/.system; vendoring a
 # snapshot here only re-installs stale copies over the live ones.
-# Keep ~/.codex/skills links for Codex surfaces that still use the legacy path.
-for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
-    is_linkable_skill_dir "$skill" || continue
-    backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
-done
-prune_stale_dotfiles_links "$HOME/.codex/skills"
-# Current Codex releases discover user-level skills from ~/.agents/skills.
-for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
-    is_linkable_skill_dir "$skill" || continue
-    backup_and_link "$skill" "$HOME/.agents/skills/$(basename "$skill")"
-done
-prune_stale_dotfiles_links "$HOME/.agents/skills"
+# Grok discovers shared skills through ~/.claude/skills. Current Codex releases
+# use ~/.agents/skills, while ~/.codex/skills remains a compatibility path.
+DOTFILES_BACKUP_DIR="$BACKUP_DIR" "$DOTFILES_DIR/scripts/sync-skills.sh"
 echo ""
 
 # -----------------------------------------------------------------------------
