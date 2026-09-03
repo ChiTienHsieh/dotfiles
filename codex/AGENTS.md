@@ -20,7 +20,7 @@
 - `issue this:` 代表只收進 backlog、不開始實作；收件規則見 `~/dotfiles/codex/notes/backlog.md`。
 
 ## 委派與跨 agent
-- 委派實作、研究或 review 時，預設優先使用目前 runtime 內建的 subagent，不因可觀測性 (observability)、任務較重或 skill 可用就改用外部 CLI 或 tmux。會改檔的工作走內建 subagent、目前 agent，或依 `headless-cli-agents` skill 套 sandbox profile 的 headless CLI worker（只能寫 worktree、deny 讀取 credential 路徑、平台支援就關網路）；`danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止；第二意見的 provider 與 reviewer 授權範圍依 `codex/notes/worker-routing.md`。
+- 委派實作、研究或 review 時，預設優先使用目前 runtime 內建的 subagent，不因可觀測性 (observability)、任務較重或 skill 可用就改用外部 CLI 或 tmux。會改檔的工作走內建 subagent、目前 agent，或依 `headless-cli-agents` skill 套 sandbox profile 的 headless CLI worker；`danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止；第二意見的 provider 與 reviewer 授權範圍依 `codex/notes/worker-routing.md`。
 - `tmux-orchestration` 只有在目前這次 human 指令明確要求 agent 使用 tmux，或明確要求「在 tmux 中」執行的可見互動式 CLI session 時才能觸發；授權只能來自目前這次 human 指令，沒有就用內建 subagent 或留在目前 session 完成。human 已明確授權 tmux 後，tmux 指令仍走 scoped escalation，細節見 `codex/notes/codex-cli.md`。
 - 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `codex/notes/worker-routing.md` 選 fresh reviewer 同時做 safety review 與 simplify review（逐項回報 Keep / Simplify / Drop），通過再 `push`。只有安全問題嚴重到不能放行，或確實有更簡潔的通用規則時才要求修改。
 - 向其他 task、session、tmux pane 或 agent 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態，讀不到或無法確認對方目前在做什麼就不傳、先回報 blocker。透過 marker file 或請使用者代送 prompt 給另一個 agent 時附上權限等級與硬邊界，只有使用者直接指令能蓋過委派限制；human 已明確授權 tmux 時，tmux 裡的簽名格式另依 `tmux-orchestration` skill。

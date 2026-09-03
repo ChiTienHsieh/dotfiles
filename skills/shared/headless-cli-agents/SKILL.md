@@ -10,10 +10,12 @@ Loaded by Claude Code, Codex, and Grok alike (Grok discovers it through `~/.clau
 
 ## Workflow
 
-1. Run `scripts/pick-worker` (in Claude Code with `dangerouslyDisableSandbox: true`: codexbar writes its
-   cookie cache and fails inside the sandbox). It prints remaining quota, a recommendation with a reason,
-   and the matching `runbook/<provider>.md`. `--provider <name>` forces
-   one; `--quiet` prints only the recommendation.
+1. Run `~/.claude/skills/headless-cli-agents/scripts/pick-worker` (absolute path — `~/.codex/skills/...`
+   also resolves via symlink, but only the `~/.claude/skills` path is guaranteed across all three
+   runtimes, since Grok discovers this skill through it and has no symlink of its own; in Claude
+   Code add `dangerouslyDisableSandbox: true`, since codexbar writes its cookie cache and fails
+   inside the sandbox). It prints remaining quota, a recommendation with a reason, and the matching
+   `runbook/<provider>.md`. `--provider <name>` forces one; `--quiet` prints only the recommendation.
 2. **If the recommended provider is the runtime you are running in, use your native subagent**
    (Claude Code: `Agent` tool; Codex: built-in subagent; Grok: `spawn_subagent`). Never shell out to
    your own CLI. The CLI lane in each runbook is for callers on a *different* runtime.
@@ -23,7 +25,9 @@ Loaded by Claude Code, Codex, and Grok alike (Grok discovers it through `~/.clau
 
 1. **Write mode needs the sandbox profile.** Any headless CLI that may touch files runs under a kernel
    sandbox profile that limits writes to the worktree, denies *reading* credential paths, and turns
-   network off where the platform supports it. No profile → read-only only.
+   network off where the platform supports it. No profile → read-only only. **Read-only mode also
+   needs the profile**: read-only blocks writes, not reads, so without the profile credentials would
+   still be read into the model context. The only profile-free exception is `codex review`.
 2. **Never bypass.** `danger-full-access`, `--dangerously-bypass-*`, `--yolo`, `bypassPermissions` are
    banned in every mode, no exceptions.
 3. **A CLI with its own sandbox runs outside Claude Code's Bash sandbox** (`dangerouslyDisableSandbox: true`;

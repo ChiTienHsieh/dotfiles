@@ -8,7 +8,7 @@
 - **Claude Code**：內建 subagent 可改檔，是 file-mutating 委派的預設 surface；套 sandbox profile 的 headless CLI worker（Codex `-p cc-worker`、Grok `--sandbox cc-worker`、nested `claude -p`）是餘量不夠時的替代選項，怎麼安全呼叫見 `headless-cli-agents` skill。
 - **Claude Code subagent 預設跑 Sonnet**（`claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`）：省錢。只有任務明確需要更強推理（棘手 debug、架構取捨、guardrail 的最終 reviewer）才在 Agent 呼叫時指定更大的 model，並在回報裡說明為什麼。
 - **Codex**：任何 agent 都能用，不限 Codex app。從 Claude Code 或 Grok 派實作走 `headless-cli-agents` 的 `runbook/codex.md`（`codex exec -p cc-worker`，不用 Claude Code 的 codex plugin：三跳、憑證 deny 未驗證，status/cancel 用 `--json` + `kill` 就能做）；review、read-only 研究、第二意見用 `codex exec --sandbox read-only`（條件見 `headless-cli-agents` skill）；Codex app 直接派也行。
-- **Grok**：SuperGrok 獨立 quota，`grok -p` + `--sandbox cc-worker` 已驗證能改檔且擋 `.env`（2026-09-03）；`codexbar` 查不到它的餘量，派之前只能憑 grok 自己的回報。Claude Code 沒有 Grok subagent。
+- **Grok**：SuperGrok 獨立 quota，`grok -p` + `--sandbox cc-worker` 已驗證能改檔且擋 `.env`（2026-09-03）；`codexbar` 查不到它的餘量，派之前只能憑 grok 自己的回報。Claude Code 沒有 Grok subagent。但 macOS 上網路仍通（`restrict_network` 是 no-op），細節見 runbook。
 - 訂閱等級、quota 與帳號狀態記在本機 `~/.local/share/machine/machine.md`（不進 git）。
 
 ## Surface 規則

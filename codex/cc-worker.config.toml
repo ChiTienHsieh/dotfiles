@@ -12,6 +12,11 @@ extends = ":workspace"
 # Plain workspace-write still reads credentials; deny them explicitly.
 "~/.ssh" = "deny"
 "~/.aws" = "deny"
+"~/.secrets" = "deny"
+"~/.codex/auth.json" = "deny"
+"~/.claude/.credentials.json" = "deny"
+"~/.config/gh/hosts.yml" = "deny"
+"~/.grok/auth.json" = "deny"
 
 [permissions.cc-worker.filesystem.":workspace_roots"]
 "**/.env" = "deny"

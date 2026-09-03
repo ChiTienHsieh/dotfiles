@@ -30,6 +30,10 @@ def caller_runtime() -> str:
         return "claude"
     if os.environ.get("CODEX_SANDBOX"):
         return "codex"
+    # Grok: checked ~/.grok/docs/user-guide/{14-headless-mode,15-agent-mode,10-hooks}.md for a
+    # GROK_ env var set on child processes. GROK_SESSION_ID / GROK_WORKSPACE_ROOT exist but are
+    # documented as set only on *hook* processes, not on tool subprocesses generally -- no
+    # confirmed signal to key off here, so don't guess one.
     return "unknown"
 
 
@@ -49,22 +53,27 @@ def fetch_usage() -> tuple[dict[str, dict], str | None]:
     except json.JSONDecodeError as exc:
         return {}, f"codexbar output is not JSON: {exc}"
 
-    usage: dict[str, dict] = {}
-    for entry in payload if isinstance(payload, list) else []:
-        provider = entry.get("provider")
-        if provider not in PROVIDERS or "usage" not in entry:
-            continue
-        windows = {}
-        for key, label in WINDOW_LABELS.items():
-            win = entry["usage"].get(key)
-            if not win or win.get("usedPercent") is None:
+    try:
+        usage: dict[str, dict] = {}
+        for entry in payload if isinstance(payload, list) else []:
+            if not isinstance(entry, dict):
                 continue
-            windows[label] = {
-                "remaining": 100 - int(win["usedPercent"]),
-                "resets_at": win.get("resetsAt"),
-            }
-        if windows:
-            usage[provider] = windows
+            provider = entry.get("provider")
+            if provider not in PROVIDERS or "usage" not in entry:
+                continue
+            windows = {}
+            for key, label in WINDOW_LABELS.items():
+                win = entry["usage"].get(key)
+                if not win or win.get("usedPercent") is None:
+                    continue
+                windows[label] = {
+                    "remaining": 100 - int(float(win["usedPercent"])),
+                    "resets_at": win.get("resetsAt"),
+                }
+            if windows:
+                usage[provider] = windows
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        return {}, f"codexbar output shape changed, usage unavailable: {exc}"
     if not usage:
         return {}, "codexbar returned no Claude/Codex usage"
     return usage, None
@@ -79,13 +88,23 @@ def binding(windows: dict) -> tuple[int, str | None]:
 def parse_ts(value: str | None) -> datetime:
     if not value:
         return datetime.max.replace(tzinfo=timezone.utc)
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return datetime.max.replace(tzinfo=timezone.utc)
 
 
 def recommend(usage: dict[str, dict]) -> tuple[str, str]:
     scored = {p: binding(w) for p, w in usage.items() if p in ("claude", "codex")}
     if not scored:
         return "claude", "no quota data; defaulting to the built-in Claude subagent"
+    if len(scored) == 1:
+        # Only one of claude/codex reported usage. Don't fall through to Grok on the strength of
+        # one low number when the other provider's state is simply unknown -- recommend the one
+        # we can see and say so.
+        only, (rem, _) = next(iter(scored.items()))
+        other = "codex" if only == "claude" else "claude"
+        return only, f"only {only} usage visible ({rem}% remaining); {other} usage unknown"
     if all(rem < GROK_THRESHOLD for rem, _ in scored.values()):
         return "grok", (
             f"Claude and Codex both below {GROK_THRESHOLD}% remaining; "

@@ -17,10 +17,12 @@ claude -p "$(cat "$SPEC")" --permission-mode auto --output-format text > "$OUT"
 ```
 
 - `--permission-mode auto` is mandatory: `bypassPermissions` exits 1 on the first tool use.
-- Credential protection is Claude Code's own: its Bash sandbox (writes limited to cwd plus the
-  paths listed in `~/.claude/settings.json`, network allowlist) and the `permissions.deny` rules
-  there (`Read(./.env)`, `Read(./.env.*)`, `Read(~/.ssh/**)`, `Read(~/.aws/**)`). There is no
-  separate profile to pass; confirm the live file still has those rules before delegating:
-  `grep -A6 '"deny"' ~/.claude/settings.json`.
+- `claude -p --permission-mode auto` is **not** a kernel sandbox profile. Writes are limited to cwd
+  plus the `~/.claude/settings.json` allow-list, and the `auto` classifier — not a human — gates
+  escalation. This lane is weaker than the codex/grok lanes: feed it trusted inputs only.
+- There is no separate credential-deny profile to pass for this lane. Before delegating, run
+  `grep -A10 '"deny"' ~/.claude/settings.json` and treat THAT output as ground truth — do not assume
+  `.env` reads are blocked. As of 2026-09-03 the live file denies `Read(~/.ssh/**)` and
+  `Read(~/.aws/**)` but does **not** deny `Read(./.env)` / `Read(./.env.*)`. Do not point this lane at
+  a tree with live `.env` secrets unless the verification command shows that deny present.
 - It loads `~/.claude/CLAUDE.md` including `@` imports, so it sees the shared `codex/AGENTS.md`.
-- Bills the Claude subscription: `codexbar usage --provider claude --source cli` first.

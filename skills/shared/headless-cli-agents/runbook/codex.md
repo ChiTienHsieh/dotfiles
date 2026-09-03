@@ -25,8 +25,10 @@ codex exec -p cc-worker --sandbox workspace-write --skip-git-repo-check \
 - `codex review` is a separate read-only lane: it only produces a review report and never
   writes files, so it can run without `-p cc-worker`.
 - `-p cc-worker` loads `~/.codex/cc-worker.config.toml` (repo: `codex/cc-worker.config.toml`):
-  `:workspace` base, network off, deny on `~/.ssh`, `~/.aws`, `**/.env*`, `**/*.pem`. Plain
-  `--sandbox workspace-write` alone still reads credentials — the profile is what blocks it.
+  `:workspace` base, network off, deny on `~/.ssh`, `~/.aws`, `**/.env`, `**/.env.*`, `**/*.pem`,
+  plus `~/.secrets`, `~/.codex/auth.json`, `~/.claude/.credentials.json`, `~/.config/gh/hosts.yml`,
+  `~/.grok/auth.json`. Plain `--sandbox workspace-write` alone still reads credentials — the profile
+  is what blocks it.
 - The profile must be a TOML file; `-c permissions...."**/*.pem"` fails (dotted-key parser
   splits on `.pem`).
 - From Claude Code run it with `dangerouslyDisableSandbox: true` and absolute paths (see SKILL.md rule 3).

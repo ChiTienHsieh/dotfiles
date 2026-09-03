@@ -16,9 +16,13 @@ grok --prompt-file "$SPEC" --sandbox cc-worker --permission-mode acceptEdits \
   --allow 'Bash(pytest:*)' --disable-web-search --no-auto-update > "$OUT"
 ```
 
+- `--permission-mode acceptEdits` in headless mode (verified 2026-09-03): `grok -p ... --sandbox
+  cc-worker --permission-mode acceptEdits` wrote a file successfully under the profile.
 - `--sandbox cc-worker` loads `~/.grok/sandbox.toml` (repo: `grok/sandbox.toml`): `workspace`
-  base plus kernel deny (read + write) on `**/.env*`, `**/*.pem`, `/Users/*/.ssh/**`,
-  `/Users/*/.aws/**`. `~` is not expanded in `deny` — use absolute globs.
+  base plus kernel deny (read + write) on `**/.env`, `**/.env.*`, `**/*.pem`, `/Users/*/.ssh/**`,
+  `/Users/*/.aws/**`, plus `/Users/*/.secrets`, `/Users/*/.codex/auth.json`,
+  `/Users/*/.claude/.credentials.json`, `/Users/*/.config/gh/hosts.yml`. `~` is not expanded in
+  `deny` — use absolute globs.
 - `restrict_network` is a no-op on macOS and `--disable-web-search` only removes Grok's own
   web tools: a child `curl` still reaches the network. Feed it trusted inputs only.
 - `--allow 'Bash(<verify cmd>:*)'` whitelists exactly the verification command; add nothing broader.

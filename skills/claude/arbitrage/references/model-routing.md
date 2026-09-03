@@ -27,9 +27,9 @@ price label.
   `intelligence > taste > cost`.
 - Use `gpt-5.5` for batch or mechanical work with explicit specs: data
   analysis, migrations, log triage, and similar implementation chores.
-- Use `gpt-5.5` via `codex exec -s read-only`, or `sonnet-5` as the delegated
-  worker, for high-token but low-difficulty tasks such as computer use, browser
-  operation, repository exploration, batch file reading, and grep-style
+- Use `gpt-5.5` via `codex exec -s read-only -p cc-worker` (profile keeps credentials out of context),
+  or `sonnet-5` as the delegated worker, for high-token but low-difficulty tasks such as computer use,
+  browser operation, repository exploration, batch file reading, and grep-style
   investigation. Prefer `sonnet-5` for automated computer/browser operation.
 - Use `opus-4.8` or `fable-5.1` for user-facing deliverables that need taste,
   including UI, copy, API design, and polished code quality.
@@ -48,5 +48,5 @@ only on surfaces that reject `fable`.
 If a Workflow or Agent needs `gpt-5.5` for read-only analysis or review,
 dispatch a lightweight Claude wrapper such as `model: 'sonnet', effort: 'low'`;
 its prompt should build the self-contained Codex prompt, run
-`codex exec -s read-only`, and return the raw output. File-changing `gpt-5.5`
-work still goes through the visible Codex surface.
+`codex exec -s read-only -p cc-worker`, and return the raw output. File-changing work follows the
+`headless-cli-agents` skill (sandboxed lane) or a built-in subagent.

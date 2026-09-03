@@ -37,8 +37,7 @@ headless CLI（寫檔或唯讀）的安全條件、呼叫方式與 gotcha 一律
 
 ## 驗收
 
-- 委派 prompt 一定帶驗證指令；worker 回報後**指揮官自己重跑那條指令**，worker 說「測試過了」只是宣稱。
-- worker 回報「完成」但 `git diff` 是空的，一律當拒絕（多半是它的 instructions 擋住了），不是成功。
+- 驗收與 acceptance rules 依 `headless-cli-agents` skill：驗證指令指揮官自己重跑，空 diff 當拒絕。
 
 ## 機制 & 收尾
 
