@@ -79,11 +79,9 @@ sandbox profile. If the current human explicitly asks you to use tmux, use
 
 ## Spec Contract
 
-Every delegation prompt carries six parts: objective, files in scope,
-interfaces (signatures, schemas, CLI contracts the worker must honor),
-constraints, the verification command, and the reasoning effort to spend. The
-controller re-runs the verification command itself after the worker reports;
-a "done" with an empty diff counts as a refusal, not a success.
+Every delegation prompt follows the six-part spec contract and acceptance
+rules defined in the `headless-cli-agents` skill's SKILL.md; this skill does
+not restate them.
 
 ## Frontend Validation Loop
 

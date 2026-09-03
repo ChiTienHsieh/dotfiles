@@ -19,7 +19,11 @@ codex exec -p cc-worker --sandbox workspace-write --skip-git-repo-check \
 ```
 
 - Read-only variant: same command with `--sandbox read-only`; keep `-p cc-worker` so the
-  credential deny still applies.
+  credential deny still applies — `read-only` only blocks writes, not reads, so without the
+  profile it would read creds like `.env`/`~/.ssh` into context and send them to OpenAI. The
+  profile also turns network off where the platform supports it.
+- `codex review` is a separate read-only lane: it only produces a review report and never
+  writes files, so it can run without `-p cc-worker`.
 - `-p cc-worker` loads `~/.codex/cc-worker.config.toml` (repo: `codex/cc-worker.config.toml`):
   `:workspace` base, network off, deny on `~/.ssh`, `~/.aws`, `**/.env*`, `**/*.pem`. Plain
   `--sandbox workspace-write` alone still reads credentials — the profile is what blocks it.
