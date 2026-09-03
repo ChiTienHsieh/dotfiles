@@ -4,7 +4,7 @@
 Reads live quota from `codexbar usage --provider both --source cli --json`,
 compares Claude vs Codex remaining, and falls through to Grok (whose quota
 codexbar cannot see) only when both are low. Routing policy beyond that lives
-in ~/dotfiles/codex/notes/worker-routing.md.
+in the `delegate` skill (~/dotfiles/skills/shared/delegate/SKILL.md).
 """
 
 from __future__ import annotations
@@ -106,10 +106,14 @@ def recommend(usage: dict[str, dict]) -> tuple[str, str]:
         other = "codex" if only == "claude" else "claude"
         return only, f"only {only} usage visible ({rem}% remaining); {other} usage unknown"
     if all(rem < GROK_THRESHOLD for rem, _ in scored.values()):
-        return "grok", (
-            f"Claude and Codex both below {GROK_THRESHOLD}% remaining; "
-            "Grok is the overflow lane (its quota is not visible here)"
+        resets = sorted((reset for _, reset in scored.values() if reset), key=parse_ts)
+        overflow = "use `--provider grok`, the overflow lane whose quota is not visible here"
+        when = (
+            f"earliest reset {resets[0]} -- sleep until then, or {overflow}"
+            if resets
+            else f"no reset time reported -- {overflow}"
         )
+        return "grok", f"Claude and Codex both below {GROK_THRESHOLD}% remaining; {when}"
     ranked = sorted(
         scored.items(),
         key=lambda kv: (-kv[1][0], parse_ts(kv[1][1])),

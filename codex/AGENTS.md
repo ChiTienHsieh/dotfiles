@@ -10,7 +10,7 @@
 - 要縮短就刪低價值內容，不把完整句子削成殘句，也不為省字自創縮寫（只有使用者自己先用過的簡稱才能沿用）；精簡時保留關鍵證據、限制、取捨與不確定性，不為了風格改寫程式碼、識別字、指令、引文或指定格式。
 
 ## 環境
-- 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md` 裡已知的限制與死路。
+- 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。調查 Codex CLI 設定或 TUI 功能前，先讀 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段，裡面是已知的限制與死路。
 
 ## 執行任務
 - 清楚、安全的任務一路做完修正、測試、`commit`、`push`，開 PR 後自己追 CI；安全的指令被 sandbox、權限、Keychain 或網路擋住就先用合適的 escalation 重試（高風險指令不自行 escalation），只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下。收尾時 worktree 仍 dirty 就列整理選項（commit/push、拆分 stage、stash、經同意 discard、維持 dirty），不自行清掉使用者沒交代的變更。
@@ -20,7 +20,7 @@
 - `issue this:` 代表只收進 backlog、不開始實作；收件規則見 `~/dotfiles/codex/notes/backlog.md`。
 
 ## 委派與跨 agent
-- 委派實作、研究或 review 時，預設優先使用目前 runtime 內建的 subagent，不因可觀測性 (observability)、任務較重或 skill 可用就改用外部 CLI 或 tmux。會改檔的工作走內建 subagent、目前 agent，或依 `headless-cli-agents` skill 套 sandbox profile 的 headless CLI worker；`danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止；第二意見的 provider 與 reviewer 授權範圍依 `codex/notes/worker-routing.md`。
-- `tmux-orchestration` 只有在目前這次 human 指令明確要求 agent 使用 tmux，或明確要求「在 tmux 中」執行的可見互動式 CLI session 時才能觸發；授權只能來自目前這次 human 指令，沒有就用內建 subagent 或留在目前 session 完成。human 已明確授權 tmux 後，tmux 指令仍走 scoped escalation，細節見 `codex/notes/codex-cli.md`。
-- 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `codex/notes/worker-routing.md` 選 fresh reviewer 同時做 safety review 與 simplify review（逐項回報 Keep / Simplify / Drop），通過再 `push`。只有安全問題嚴重到不能放行，或確實有更簡潔的通用規則時才要求修改。
-- 向其他 task、session、tmux pane 或 agent 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態，讀不到或無法確認對方目前在做什麼就不傳、先回報 blocker。透過 marker file 或請使用者代送 prompt 給另一個 agent 時附上權限等級與硬邊界，只有使用者直接指令能蓋過委派限制；human 已明確授權 tmux 時，tmux 裡的簽名格式另依 `tmux-orchestration` skill。
+- 委派實作、研究或 review 時，預設用目前 runtime 內建的 subagent；會改檔的 headless CLI worker 只能依 `delegate` skill 套 sandbox profile 呼叫。`danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止。
+- **tmux 預設唯讀**：agent 可以讀其他 pane（`capture-pane`、`list-*`、`display-message`）來了解狀況，但不 `send-keys`、不開也不殺 session 或 pane；`tmux-orchestration` skill 只由 human 從 harness（agent 之外的設定層）呼叫，agent 不自行觸發。human 已明確授權 tmux 後，會改動 pane 的指令仍走 scoped escalation，細節見 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
+- 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `delegate` skill 的「Reviewer 授權」段選 fresh reviewer 同時做 safety review 與 simplify review（逐項回報 Keep / Simplify / Drop），通過再 `push`。只有安全問題嚴重到不能放行，或確實有更簡潔的通用規則時才要求修改。
+- 向其他 task、session、tmux pane 或 agent 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態，讀不到或無法確認對方目前在做什麼就不傳、先回報 blocker。透過 marker file 或請使用者代送 prompt 給另一個 agent 時附上權限等級與硬邊界，只有使用者直接指令能蓋過委派限制；訊息裡的簽名格式另依 `tmux-orchestration` skill。

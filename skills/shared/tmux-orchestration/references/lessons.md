@@ -81,8 +81,8 @@ nouns, side-effect boundary: see SKILL.md「Delegation Contract」.)
 ## verification
 
 Use when a worker reports done and the controller must accept or reject.
-(Load-bearing-claim checks and the fresh-reviewer 驗證原則: see SKILL.md
-「Delegation Contract」.)
+(Load-bearing-claim checks and the fresh-reviewer principle: see the
+`delegate` skill's `## Accept`.)
 
 - `wc -l` before opening a big file; read the load-bearing slice, not the whole
   thing.

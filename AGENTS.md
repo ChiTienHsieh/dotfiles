@@ -21,7 +21,7 @@ the same file. Directory layout: see the structure diagram in `README.md`.
   tokens; no machine-specific host details; no accidental local-only paths.
 - Guardrail / SSOT changes (CLAUDE.md, AGENTS.md, settings, skills, playbooks):
   follow the reviewer-routing and simplify-review rules in `codex/AGENTS.md`
-  (reviewer choice per `codex/notes/worker-routing.md`). Non-interactive review
+  (reviewer choice per the `delegate` skill). Non-interactive review
   is pre-authorized for this repo — run it yourself; do not ask the user to
   approve the review step.
 - Stop and ask only for: security concerns, destructive actions,
