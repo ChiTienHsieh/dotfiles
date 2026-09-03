@@ -13,7 +13,7 @@ cleanup() {
         rm -f "$manifest"
     done
 }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
 
 backup_existing() {
     local dest="$1"
@@ -28,6 +28,10 @@ backup_existing() {
     esac
 
     backup="$BACKUP_DIR/$relative"
+    if [ -e "$backup" ] || [ -L "$backup" ]; then
+        echo "ERROR: backup destination already exists: $backup" >&2
+        return 1
+    fi
     mkdir -p "$(dirname "$backup")"
     mv "$dest" "$backup"
     echo "  Backed up: $dest -> $backup"
@@ -70,8 +74,8 @@ collect_directory_symlink_entries() {
 
     [ -d "$target" ] || return 0
 
-    for entry in "$target"/*; do
-        [ -e "$entry" ] || [ -L "$entry" ] || continue
+    for entry in "$target"/* "$target"/.[!.]* "$target"/..?*; do
+        [ -e "$entry" ] || continue
         printf '%s\t%s\n' "$(basename "$entry")" "$entry" >> "$manifest"
     done
 }

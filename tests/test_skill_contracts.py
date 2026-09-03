@@ -120,19 +120,22 @@ class SkillSyncTests(unittest.TestCase):
             home = temp / "home"
             backup = temp / "backup"
             legacy = temp / "legacy-claude-skills"
+            legacy_codex = temp / "legacy-codex-skills"
             external = temp / "external-skill"
 
             (legacy / "external-claude").mkdir(parents=True)
             (legacy / "external-claude" / "SKILL.md").write_text("external\n")
             external.mkdir()
             (external / "SKILL.md").write_text("external\n")
+            (legacy_codex / ".system").mkdir(parents=True)
+            (legacy_codex / "external-codex").symlink_to(external)
 
             (home / ".claude").mkdir(parents=True)
             (home / ".claude" / "skills").symlink_to(legacy)
-            (home / ".codex" / "skills").mkdir(parents=True)
-            (home / ".codex" / "skills" / ".system").mkdir()
-            (home / ".codex" / "skills" / "external-codex").symlink_to(external)
-            (home / ".codex" / "skills" / "retired").symlink_to(
+            (home / ".codex").mkdir(parents=True)
+            (home / ".codex" / "skills").symlink_to(legacy_codex)
+            (home / ".agents" / "skills").mkdir(parents=True)
+            (home / ".agents" / "skills" / "retired").symlink_to(
                 REPO_ROOT / "skills" / "shared" / "retired"
             )
             collision = home / ".agents" / "skills" / "learn-my-voice"
@@ -184,10 +187,14 @@ class SkillSyncTests(unittest.TestCase):
             )
             self.assertEqual(
                 os.readlink(home / ".codex" / "skills" / "external-codex"),
-                str(external),
+                str(legacy_codex / "external-codex"),
+            )
+            self.assertEqual(
+                (home / ".codex" / "skills" / "external-codex").resolve(),
+                external.resolve(),
             )
             self.assertTrue((home / ".codex" / "skills" / ".system").is_dir())
-            retired = home / ".codex" / "skills" / "retired"
+            retired = home / ".agents" / "skills" / "retired"
             self.assertFalse(retired.exists())
             self.assertFalse(retired.is_symlink())
             self.assertEqual(
