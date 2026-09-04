@@ -24,10 +24,11 @@ DELEGATION MAP     [A]=always-loaded  [L]=lazy  [R]=computed at runtime
     3 HOW    provider == my runtime? --yes--> native subagent
                       | no                   (Agent / codex / spawn_subagent)
                       v
-             runbook/<provider>.md  <- profile: codex/cc-worker.config.toml
-             (exact CLI flags + quirks)         grok/sandbox.toml
-    4 ACCEPT spec in a file; re-run verification yourself; empty diff =
-             refusal; guardrail changes -> fresh reviewer before push
+             spec in a file; runbook/<provider>.md  <- profile:
+             (exact CLI flags + quirks)   codex/cc-worker[-ro].config.toml
+                                          grok/sandbox.toml
+    4 ACCEPT re-run verification yourself; empty diff = refusal;
+             guardrail changes -> fresh reviewer before push
 ------------------------------------------------------------------------
 [persona] claude/agents/orchestrator.md (`cldo`): same path, stricter WHEN
 [L] skills/shared/tmux-orchestration: a different SURFACE (visible panes),
@@ -41,7 +42,6 @@ DELEGATION MAP     [A]=always-loaded  [L]=lazy  [R]=computed at runtime
 - Delegate when the work needs a spec, acceptance criteria, and a separate implementation owner — including frontend work, where the controller keeps design intent and does the visual validation.
 - Keep judgment, scope, architecture, debugging root-cause analysis, diff review, and git ownership in the controller session. Delegate the concrete fix once the cause is clear.
 - Escape hatch: do not predict that a worker will fail — dispatch first. If it misses the acceptance criteria twice after concrete corrective feedback, keep the useful parts of the diff and finish it yourself.
-- The `cldo` persona (`claude/agents/orchestrator.md`) tightens this same rule: as orchestrator, CC may only do read-only investigation, acceptance, and the ≤10-line single-file fix; everything else is delegated.
 
 ## Who
 
@@ -60,19 +60,19 @@ Model principles:
 
 ## How
 
-1. Run `~/.claude/skills/delegate/scripts/pick-worker` (absolute path — `~/.codex/skills/...` also resolves via symlink, but only the `~/.claude/skills` path is guaranteed across all three runtimes, since Grok discovers this skill through it and has no symlink of its own; in Claude Code add `dangerouslyDisableSandbox: true`, since codexbar writes its cookie cache and fails inside the sandbox). It prints remaining quota, a recommendation with a reason, and the matching `runbook/<provider>.md`. `--provider <name>` forces one; `--quiet` prints only the recommendation.
+1. Run `~/.claude/skills/delegate/scripts/pick-worker` (use that absolute path; from Claude Code run with `dangerouslyDisableSandbox`). It prints remaining quota, a recommendation with a reason, and the matching `runbook/<provider>.md`. `--provider <name>` forces one; `--quiet` prints only the recommendation.
 2. **If the recommended provider is the runtime you are running in, use your native subagent** (Claude Code: `Agent` tool; Codex: built-in subagent; Grok: `spawn_subagent`). Never shell out to your own CLI. The CLI lane in each runbook is for callers on a *different* runtime.
 3. Write the spec, dispatch per the runbook, then apply the acceptance rules below.
 
 Three absolute rules:
 
-1. **Write mode needs the sandbox profile.** Any headless CLI that may touch files runs under a kernel sandbox profile that limits writes to the worktree, denies *reading* credential paths, and turns network off where the platform supports it. No profile → read-only only. **Read-only mode also needs the profile**: read-only blocks writes, not reads, so without the profile credentials would still be read into the model context. The only profile-free exception is `codex review`.
+1. **Write mode needs the sandbox profile.** Any headless CLI that may touch files runs under a kernel sandbox profile that limits writes to the workspace plus temp dirs (`/tmp`, `$TMPDIR`; grok also `~/.grok/`), denies *reading* credential paths, and turns network off where the platform supports it. **Read-only mode also needs the profile**: read-only blocks writes, not reads, so without the profile credentials would still be read into the model context. Two lanes run without a kernel profile — `codex review` (has no `-p` flag; check `codex review --help`) and the `claude -p` lane (settings-based limits only, see `runbook/claude.md`) — both get trusted input only.
 2. **Never bypass.** `danger-full-access`, `--dangerously-bypass-*`, `--yolo`, `bypassPermissions` are banned in every mode, no exceptions.
 3. **A CLI with its own sandbox runs outside Claude Code's Bash sandbox** (`dangerouslyDisableSandbox: true`; nested Seatbelt fails with `sandbox initialization failed`) and gets absolute paths — `$TMPDIR` differs inside and outside the sandbox.
 
 Spec contract, six parts, every delegation: objective · files in scope · interfaces (signatures, schemas, CLI contracts to honor) · constraints · verification command · reasoning effort. Put it in a file and pass the absolute path.
 
-Frontend validation loop: the controller writes design intent and acceptance criteria into the spec; the worker implements inside its ownership boundary; the controller runs the app, screenshots it, writes concrete visual feedback, and re-dispatches until the UI matches intent and verification passes.
+Frontend: the controller puts design intent in the spec, then runs the app, screenshots it, and re-dispatches with concrete visual feedback until the UI matches intent.
 
 ## Accept
 
@@ -80,9 +80,8 @@ Frontend validation loop: the controller writes design intent and acceptance cri
 - "Done" with an empty diff is a refusal (often the worker's own instructions blocked it), never a success.
 - Verify load-bearing claims with cheap read-only checks: grep for leftover references, `git status` / `git diff --stat`, confirm files moved or deleted, read only the one section whose accuracy matters.
 - `wc -l` before opening a big file, then read the load-bearing slice. For long worker output, have a cheap subagent summarize it and personally verify only the slices that decide acceptance — a clean-context reviewer is at least as reliable as a controller carrying a long thread.
-- For a large artifact, delegate the FULL review to a fresh worker instead of re-reading everything. If one dimension fails, fix it and rescore that dimension only; the rescore prompt must carry the original fail criterion, what changed, which slice to re-evaluate, and whether neighboring dimensions need a light sanity check.
+- For a large artifact, delegate the FULL review to a fresh worker instead of re-reading everything. If one dimension fails, fix it and rescore only that dimension; the rescore prompt carries the original failure criteria and what changed.
 - Every worker contract states "an out-of-contract CI failure is reported, not fixed" — otherwise parallel workers each fix the same inherited red gate and it lands N times.
-- Cheapest ground truth first: before contracting any "reproduce / copy / match X" task, spend one read-only check hunting for X's direct source (a public repo behind a rendered page, a package, an export). Reproducing from rendered output when the source is obtainable wastes a whole worker run.
 - Guardrail / SSOT changes: commit, then a fresh reviewer per `## Reviewer 授權`, then push.
 
 ## Fallback

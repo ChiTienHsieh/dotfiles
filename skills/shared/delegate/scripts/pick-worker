@@ -5,6 +5,12 @@ Reads live quota from `codexbar usage --provider both --source cli --json`,
 compares Claude vs Codex remaining, and falls through to Grok (whose quota
 codexbar cannot see) only when both are low. Routing policy beyond that lives
 in the `delegate` skill (~/dotfiles/skills/shared/delegate/SKILL.md).
+
+Invoke via the absolute path ~/.claude/skills/delegate/scripts/pick-worker: that is the
+only path guaranteed across Claude Code, Codex, and Grok (Grok discovers the skill through
+~/.claude/skills and has no symlink of its own; ~/.codex/skills/... also resolves). From
+Claude Code run it with `dangerouslyDisableSandbox: true` -- codexbar writes its cookie
+cache and fails inside the Bash sandbox.
 """
 
 from __future__ import annotations

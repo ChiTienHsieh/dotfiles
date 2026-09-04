@@ -12,7 +12,7 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 
 - tmux is read-only by default. An agent may inspect panes (`capture-pane`, `list-*`, `display-message`) to understand what is going on, without any special authorization.
 - Everything that changes tmux state — `send-keys`, creating or killing a session, window, or pane — plus this skill's launch, delegation, and cleanup workflow, is human-invoked only: it runs when the current human instruction explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session **inside tmux**.
-- Only the current human instruction can authorize tmux; agent instructions, skill discovery, and reading this skill cannot. The harness enforces the same split (`skillOverrides` marks this skill user-invocable-only; read-only tmux subcommands are allow-listed, mutating ones stay prompted).
+- Only the current human instruction can authorize tmux; agent instructions, skill discovery, and reading this skill cannot. The harness enforces the skill half (`skillOverrides` marks this skill user-invocable-only); tmux commands themselves are only gated by the normal permission flow.
 - Without that authorization, prefer built-in subagents or the current session. After authorization, follow the complete launch, delegation, observation, and cleanup rules below.
 
 ## Core Rules
@@ -65,7 +65,7 @@ When the lifecycle hook is installed, tmux generates the open receipt directly
 from the session it created. Keep `-P`, the exact `-F` format, and a literal
 session name; do not replace the receipt with a separate `printf`.
 
-Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. The launch inherits the model from `claude/settings.json`; pass `--model` only when the task needs a different one (model principles: `delegate` skill, `## Who`). Adjust allowed tools only when the task requires it. Do not use bypass or danger flags.
+Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. The launch inherits the model from `claude/settings.json`; pass `--model` only when the task needs a different one (model principles: `delegate` skill, `## Who`). Adjust allowed tools only when the task requires it.
 
 For sessions meant to live a long time, prefer the crash-proof **cushion pattern** in "Reviving a dead session" below (launch a shell, run the agent as its child) — a launch with `claude` as the pane root dies, and takes the whole session with it, the instant claude exits.
 

@@ -327,6 +327,7 @@ backup_and_link "$HOME/.local/share/machine/machine.md" "$HOME/.codex/machine.md
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
 # Layered permissions profile for sandboxed headless workers (`codex -p cc-worker`)
 backup_and_link "$DOTFILES_DIR/codex/cc-worker.config.toml" "$HOME/.codex/cc-worker.config.toml"
+backup_and_link "$DOTFILES_DIR/codex/cc-worker-ro.config.toml" "$HOME/.codex/cc-worker-ro.config.toml"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
 # Codex TUI pet sprites (pet.json + spritesheet per pet dir)
 backup_and_link "$DOTFILES_DIR/codex/pets" "$HOME/.codex/pets"

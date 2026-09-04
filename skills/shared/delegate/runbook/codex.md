@@ -13,21 +13,27 @@ The CLI lane below is only for callers on a different runtime (Claude Code, Grok
 ```bash
 SPEC=/abs/path/spec.md; OUT=/abs/path/codex-out.md
 mkdir -p "$(dirname "$OUT")"          # -o does not create parent dirs
-codex exec -p cc-worker --sandbox workspace-write --skip-git-repo-check \
+codex exec -p cc-worker --skip-git-repo-check \
   --model gpt-5.6-luna -c model_reasoning_effort=medium \
   -o "$OUT" - < "$SPEC"
 ```
 
-- Read-only variant: same command with `--sandbox read-only`; keep `-p cc-worker` so the
-  credential deny still applies — `read-only` only blocks writes, not reads, so without the
-  profile it would read creds like `.env`/`~/.ssh` into context and send them to OpenAI. The
-  profile also turns network off where the platform supports it.
-- `codex review` is a separate read-only lane: it only produces a review report and never
-  writes files, so it can run without `-p cc-worker`.
+- **Never put any `--sandbox` flag next to `-p cc-worker` / `-p cc-worker-ro`.** `--sandbox`
+  overrides the profile's `default_permissions`, so the credential deny list silently stops
+  applying (`codex-cli 0.153.0`: `-p cc-worker --sandbox workspace-write` reads `.env.sample`
+  fine; `-p cc-worker` alone gets `Operation not permitted`). The banner prints
+  `sandbox: workspace-write` either way, so it is not evidence. Verify by `cat` on a deny-listed
+  file — e.g. create `.env.sample` in a scratch git dir and run the exact command there.
+- Read-only lane: `codex exec -p cc-worker-ro ...` (same command, different profile). It loads
+  `~/.codex/cc-worker-ro.config.toml` (repo: `codex/cc-worker-ro.config.toml`): `:read-only`
+  base plus the same credential denies. Plain `read-only` only blocks writes, not reads, so
+  without the profile it would read `.env`/`~/.ssh` into context and send them to OpenAI.
+- `codex review` has no `-p` flag (`codex review --help`), so it runs without a kernel profile:
+  trusted input only.
 - `-p cc-worker` loads `~/.codex/cc-worker.config.toml` (repo: `codex/cc-worker.config.toml`):
-  `:workspace` base, network off, plus explicit credential denies. That TOML is the only source
-  of the deny list — read it, do not trust a copy: `grep -n deny ~/.codex/cc-worker.config.toml`.
-  Plain `--sandbox workspace-write` alone still reads credentials; the profile is what blocks it.
+  `:workspace` base (workspace-write + network off) plus explicit credential denies. That TOML is
+  the only source of the deny list — read it, do not trust a copy:
+  `grep -n deny ~/.codex/cc-worker.config.toml`.
 - The profile must be a TOML file; `-c permissions...."**/*.pem"` fails (dotted-key parser
   splits on `.pem`), so deny globs only work from a file loaded with `-p`.
 - From Claude Code run it with `dangerouslyDisableSandbox: true` and absolute paths (see SKILL.md rule 3).
@@ -40,8 +46,8 @@ codex exec -p cc-worker --sandbox workspace-write --skip-git-repo-check \
 
 ## Quirks
 
-Dated observations about the Codex CLI and app. Read before investigating a Codex config or TUI
-feature; delete a line once it stops being true.
+Dated observations that affect delegation. Delete a line once it stops being true. TUI / app
+quirks (terminal title, font blowup, thread rename) live in `codex/notes/codex-cli.md`.
 
 - **tmux always goes through Guardian** (2026-07-29, `codex-cli 0.145.0`): the permissions profile
   has no tmux socket allowlist, so every tmux command — read-only included — needs scoped escalation
@@ -66,18 +72,3 @@ feature; delete a line once it stops being true.
   config variants. It also refuses a custom prompt alongside `--commit` / `--base`; for a simplify
   lens run `codex exec` and let it read `git diff main...HEAD` itself. Skill validation has a fixed
   command: `uv run --with pyyaml python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`.
-- **Thread rename** (2026-08-05, updated 2026-08-07, `codex 0.145.0`): the app-server operation is
-  `thread/name/set` (`threadId` + `name`), the same user-facing name the TUI's `/rename` sets. A
-  standalone CLI model has no `set_thread_title` tool and cannot fake `/rename`, so the `name-task`
-  skill renames when a tool exists and otherwise just proposes a title for the user to apply.
-- **TUI dead ends**: no config collapses or folds tool calls (2026-06-13, `0.139.0`) —
-  `tui.collapse_tool_calls` and lookalikes are undocumented and do not exist, and
-  `hide_agent_reasoning = true` only suppresses reasoning. `tui.animations = false` does work
-  (2026-06-14). `tui.terminal_title` takes an array of item identifiers (2026-06-23, `0.142.0`),
-  e.g. `["run-state", "thread-title"]`; other valid items include `project-name`, `current-dir`,
-  `git-branch`, `context-remaining`, `context-used`, `five-hour-limit`, `weekly-limit`,
-  `used-tokens`, `thread-id`, `model-with-reasoning`, `task-progress`, and `activity`. Verify with
-  `codex doctor` (`title source` / `title items`); restart Codex to apply.
-- **Codex.app font blowup**: `sansFontSize` in `~/.codex/.codex-global-state.json` should be `15` —
-  values like `150` or `1615` make the Electron UI unusable. Quit the app first (it overwrites the
-  file from memory on exit), fix both the file and its `.bak`, validate the JSON, then reopen.

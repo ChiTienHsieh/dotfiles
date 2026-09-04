@@ -10,7 +10,7 @@
 - 要縮短就刪低價值內容，不把完整句子削成殘句，也不為省字自創縮寫（只有使用者自己先用過的簡稱才能沿用）；精簡時保留關鍵證據、限制、取捨與不確定性，不為了風格改寫程式碼、識別字、指令、引文或指定格式。
 
 ## 環境
-- 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。調查 Codex CLI 設定或 TUI 功能前，先讀 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段，裡面是已知的限制與死路。
+- 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。調查 Codex CLI 設定或 TUI 功能前，先讀 `codex/notes/codex-cli.md`，裡面是已知的限制與死路。
 
 ## 執行任務
 - 清楚、安全的任務一路做完修正、測試、`commit`、`push`，開 PR 後自己追 CI；安全的指令被 sandbox、權限、Keychain 或網路擋住就先用合適的 escalation 重試（高風險指令不自行 escalation），只有遇到破壞性 Git 操作、機密、`force-push`、付費或資料遺失風險才停下。收尾時 worktree 仍 dirty 就列整理選項（commit/push、拆分 stage、stash、經同意 discard、維持 dirty），不自行清掉使用者沒交代的變更。
