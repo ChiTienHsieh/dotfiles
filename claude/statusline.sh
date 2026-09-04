@@ -142,7 +142,8 @@ wk_fetch() {
     | [ .scope.model.display_name,
         (.percent | tostring),
         ((.resets_at // "") | sub("\\.[0-9]+"; "") | sub("\\+00:00$"; "Z")
-         | (try fromdateiso8601 catch 0) | tostring) ]
+         | (try fromdateiso8601 catch 0)
+         | (. + 30) / 60 | floor * 60 | tostring) ]
     | @tsv
   ' 2>/dev/null | head -1
 }
