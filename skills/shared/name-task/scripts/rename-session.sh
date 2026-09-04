@@ -14,3 +14,9 @@ if [ -z "${TMUX_PANE:-}" ]; then
 fi
 
 tmux send-keys -t "$TMUX_PANE" "/rename $TITLE" Enter
+
+# Codex TUI 的多行輸入模式需要第二次 Enter 才提交
+PANE_CMD=$(tmux display-message -t "$TMUX_PANE" -p '#{pane_current_command}')
+case "$PANE_CMD" in
+  codex*) tmux send-keys -t "$TMUX_PANE" Enter ;;
+esac
