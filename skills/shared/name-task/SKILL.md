@@ -1,6 +1,6 @@
 ---
 name: name-task
-description: 更新 Codex task 標題。當使用者要求 name／rename task、送出最後回覆前 task 到達有意義的等待、理解或完成節點（一般 turn 結束不改名），或 Chief of Staff／排程工作要整理標題時使用。
+description: 更新 task／session 標題。當使用者要求 name／rename task、送出最後回覆前 task 到達有意義的等待、理解或完成節點（一般 turn 結束不改名），或 Chief of Staff／排程工作要整理標題時使用。
 ---
 
 只有標題能幫助使用者看出下一步行動或應理解內容時才更新。
@@ -27,8 +27,19 @@ description: 更新 Codex task 標題。當使用者要求 name／rename task、
 
    通常維持一行及兩個半形 ` | ` 分隔符。清楚優先於硬湊字數；目標 24–36 字，只有縮短會失去必要意思時才超過 40 字。後兩欄要讓不了解內部 schema、tab 名稱或 agent workflow 的使用者也能看懂 task 在做什麼，以及下一步是什麼。
 
-7. 各自使用可用的改標題、pin 或 unpin 工具；每項只呼叫一次。目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 與 host。標題與 pin 是兩項獨立資訊，不要為了讓兩者看起來一致而自行新增或解除 pin；任何一項失敗時，重新讀取實際狀態並回報，不得盲目重試。
-8. 缺少哪項工具，就明講該項仍需手動完成；缺少改標題工具時附上完整建議標題。不得重建舊 Stop hook、shell、app-server 或暫存檔等替代方案。
+7. 依執行環境套用標題。每項工具只呼叫一次；目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 與 host。標題與 pin 是兩項獨立資訊，不要為了讓兩者看起來一致而自行新增或解除 pin；任何一項失敗時，重新讀取實際狀態並回報，不得盲目重試。
+
+   | 執行環境 | 改標題 | 備註 |
+   |---------|--------|------|
+   | Codex App（desktop / Electron） | `set_thread_title` tool | model 注入的內建工具 |
+   | Codex CLI（TUI，tmux 內） | `tmux send-keys -t "$TMUX_PANE" '/rename <title>' Enter` | 走 Guardian scoped escalation；`$TMUX_PANE` 由 Bash 環境提供 |
+   | Codex CLI（TUI，非 tmux） | 無工具 — 附上完整建議標題，由使用者用 `/rename` 套用 | |
+   | Claude Code（tmux 內，`$TMUX_PANE` 已設定） | `tmux send-keys -t "$TMUX_PANE" '/rename <title>' Enter` | 自己的 pane 送 `/rename` 視同使用者明確要求 |
+   | Claude Code（非 tmux） | 無工具 — 附上完整建議標題，由使用者用 `/rename` 套用 | |
+   | Grok（tmux 內，`$TMUX_PANE` 已設定） | `tmux send-keys -t "$TMUX_PANE" '/rename <title>' Enter` | Grok 支援 `/rename`（別名 `/title`） |
+   | Grok（非 tmux） | 無工具 — 附上完整建議標題，由使用者用 `/rename` 套用 | |
+
+8. 缺少哪項工具，就明講該項仍需手動完成。不得重建舊 Stop hook、shell、app-server 或暫存檔等替代方案。
 
 本 skill 只負責標題，以及使用者明示的 pin／unpin；不得藉此封存、取消封存、刪除或改變其他 task 的狀態。`📦` 只代表建議使用者之後封存；若其他 workflow 已取得使用者明示的封存授權，由該 workflow 執行。
 
