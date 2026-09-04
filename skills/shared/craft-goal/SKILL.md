@@ -12,8 +12,8 @@ disable-model-invocation: true
 
 產出 prompt 前先決定交給誰，兩個因素一起看：
 
-- **預設路由**：讀 `~/dotfiles/codex/notes/worker-routing.md`（路由規則）決定交給 CC 還是 Codex。
-- **quota 肥瘦**：用 quota skill（`codexbar usage --provider both --source cli`）看即時餘量；在 SSOT 規則之內，其他條件接近時選較肥的一邊。
+- **預設路由**：讀 `delegate` skill 的 `## Who`（角色路由規則）決定交給 CC 還是 Codex。
+- **quota 肥瘦**：跑 `~/.claude/skills/delegate/scripts/pick-worker` 看即時餘量與推薦；在路由規則之內，其他條件接近時選較肥的一邊。
 
 目標介面隨接棒者決定：Codex app `/goal`（有字元數上限，以 `scripts/check_goal_prompt.py` 為準）、codex CLI、claude CLI、或使用者手動貼。不要替 handoff 自行指定 tmux；只有 human 明確要求接棒 agent 使用 tmux 時才能加入。字元數上限只適用 Codex app `/goal`，CLI 交棒改用 task spec file + 一行 pointer 即可，不受此限。
 

@@ -204,7 +204,7 @@ prune_stale_dotfiles_links() {
 # -----------------------------------------------------------------------------
 # Initialize submodules (for nvim config)
 # -----------------------------------------------------------------------------
-echo "[1/10] Initializing git submodules..."
+echo "[1/11] Initializing git submodules..."
 if [ -f "$DOTFILES_DIR/.gitmodules" ]; then
     git -C "$DOTFILES_DIR" submodule update --init --recursive
     echo "  Done!"
@@ -216,7 +216,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Bash configuration
 # -----------------------------------------------------------------------------
-echo "[2/10] Installing bash configuration..."
+echo "[2/11] Installing bash configuration..."
 backup_and_link "$DOTFILES_DIR/bash/.bash_profile" "$HOME/.bash_profile"
 backup_and_link "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
 backup_and_link "$DOTFILES_DIR/bash/.bash_prompt" "$HOME/.bash_prompt"
@@ -226,7 +226,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Zsh configuration
 # -----------------------------------------------------------------------------
-echo "[3/10] Installing zsh configuration..."
+echo "[3/11] Installing zsh configuration..."
 backup_and_link "$DOTFILES_DIR/zsh/.zshenv" "$HOME/.zshenv"
 backup_and_link "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 echo ""
@@ -234,7 +234,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Git configuration
 # -----------------------------------------------------------------------------
-echo "[4/10] Installing git configuration..."
+echo "[4/11] Installing git configuration..."
 backup_and_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
 backup_and_link "$DOTFILES_DIR/git/.config/git/ignore" "$HOME/.config/git/ignore"
 backup_and_link "$DOTFILES_DIR/git/.config/git/hooks" "$HOME/.config/git/hooks"
@@ -243,21 +243,21 @@ echo ""
 # -----------------------------------------------------------------------------
 # Vim configuration
 # -----------------------------------------------------------------------------
-echo "[5/10] Installing vim configuration..."
+echo "[5/11] Installing vim configuration..."
 backup_and_link "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Tmux configuration
 # -----------------------------------------------------------------------------
-echo "[6/10] Installing tmux configuration..."
+echo "[6/11] Installing tmux configuration..."
 backup_and_link "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Other configurations
 # -----------------------------------------------------------------------------
-echo "[7/10] Installing other configurations..."
+echo "[7/11] Installing other configurations..."
 "$DOTFILES_PYTHON" "$DOTFILES_DIR/scripts/configure_package_policies.py" \
     --home "$HOME" --repo-root "$DOTFILES_DIR"
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
@@ -272,7 +272,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Claude Code configuration
 # -----------------------------------------------------------------------------
-echo "[8/10] Installing Claude Code configuration..."
+echo "[8/11] Installing Claude Code configuration..."
 
 # Main config files
 backup_and_link "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
@@ -310,7 +310,7 @@ prune_stale_dotfiles_links "$HOME/.local/bin"
 # -----------------------------------------------------------------------------
 # Codex CLI configuration
 # -----------------------------------------------------------------------------
-echo "[9/10] Installing Codex CLI configuration..."
+echo "[9/11] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
 backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
 # config.toml is seeded once, then owned by the live Codex runtime (it appends
@@ -325,6 +325,9 @@ fi
 # seeded in the Claude Code step above — same file both agents read, no divergence.
 backup_and_link "$HOME/.local/share/machine/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
+# Layered permissions profile for sandboxed headless workers (`codex -p cc-worker`)
+backup_and_link "$DOTFILES_DIR/codex/cc-worker.config.toml" "$HOME/.codex/cc-worker.config.toml"
+backup_and_link "$DOTFILES_DIR/codex/cc-worker-ro.config.toml" "$HOME/.codex/cc-worker-ro.config.toml"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
 # Codex TUI pet sprites (pet.json + spritesheet per pet dir)
 backup_and_link "$DOTFILES_DIR/codex/pets" "$HOME/.codex/pets"
@@ -347,9 +350,17 @@ DOTFILES_BACKUP_DIR="$BACKUP_DIR" "$DOTFILES_DIR/scripts/sync-skills.sh"
 echo ""
 
 # -----------------------------------------------------------------------------
+# Grok CLI sandbox profiles
+# -----------------------------------------------------------------------------
+echo "[10/11] Installing Grok CLI sandbox profiles..."
+mkdir -p "$HOME/.grok"
+backup_and_link "$DOTFILES_DIR/grok/sandbox.toml" "$HOME/.grok/sandbox.toml"
+echo ""
+
+# -----------------------------------------------------------------------------
 # Git hooks (for dotfiles repo itself)
 # -----------------------------------------------------------------------------
-echo "[10/10] Installing git hooks..."
+echo "[11/11] Installing git hooks..."
 if [ -d "$DOTFILES_DIR/.git" ]; then
     mkdir -p "$DOTFILES_DIR/.git/hooks"
     backup_and_link "$DOTFILES_DIR/hooks/pre-commit" "$DOTFILES_DIR/.git/hooks/pre-commit"

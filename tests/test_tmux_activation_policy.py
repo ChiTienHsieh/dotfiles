@@ -12,11 +12,12 @@ class TmuxActivationPolicyTests(unittest.TestCase):
     def read(self, relative_path: str) -> str:
         return (ROOT / relative_path).read_text(encoding="utf-8")
 
-    def test_canonical_policy_requires_current_human_authorization(self) -> None:
+    def test_canonical_policy_keeps_tmux_read_only_by_default(self) -> None:
         agents = self.read("codex/AGENTS.md")
-        self.assertIn("目前這次 human 指令明確要求 agent 使用 tmux", agents)
-        self.assertIn("預設優先使用目前 runtime 內建的 subagent", agents)
-        self.assertIn("授權只能來自目前這次 human 指令", agents)
+        self.assertIn("tmux 預設唯讀", agents)
+        self.assertIn("runtime 內建的 subagent", agents)
+        self.assertIn("只由 human 從 harness", agents)
+        self.assertIn("agent 不自行觸發", agents)
 
     def test_skill_discovery_fails_closed_without_human_request(self) -> None:
         skill = self.read("skills/shared/tmux-orchestration/SKILL.md")
@@ -37,8 +38,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
 
     def test_routing_surfaces_prefer_builtin_subagents(self) -> None:
         required_phrases = {
-            "codex/notes/worker-routing.md": "runtime 內建的 subagent",
-            "skills/claude/arbitrage/SKILL.md": "built-in `Agent` subagents",
+            "skills/shared/delegate/SKILL.md": "use your native subagent",
             "claude/agents/orchestrator.md": "內建 `Agent` subagent",
             "skills/shared/craft-goal/SKILL.md": "不要替 handoff 自行指定 tmux",
             "skills/shared/trim/SKILL.md": "Codex 使用可用的 multi-agent tool",
@@ -60,7 +60,6 @@ class TmuxActivationPolicyTests(unittest.TestCase):
     def test_active_tmux_skill_references_are_human_gated(self) -> None:
         paths = {
             ROOT / "codex/AGENTS.md",
-            ROOT / "codex/notes/worker-routing.md",
             *ROOT.glob("claude/agents/*.md"),
             *ROOT.glob("skills/**/SKILL.md"),
         }
@@ -73,6 +72,8 @@ class TmuxActivationPolicyTests(unittest.TestCase):
             "目前這次 human 明確要求 agent 使用 tmux",
             "human 已明確授權 tmux",
             "human 明確要求 agent 使用 tmux",
+            "只由 human 從 harness",
+            "human-invoked only",
         )
 
         for path in sorted(paths):
@@ -90,7 +91,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
     def test_policy_does_not_treat_a_tmux_mention_as_authorization(self) -> None:
         paths = (
             "codex/AGENTS.md",
-            "codex/notes/worker-routing.md",
+            "skills/shared/delegate/SKILL.md",
             "claude/agents/orchestrator.md",
             "skills/shared/tmux-orchestration/SKILL.md",
             "skills/shared/tmux-orchestration/agents/openai.yaml",
@@ -118,8 +119,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
             "skills/shared/tmux-orchestration/SKILL.md": (
                 "default to an observable tmux pane"
             ),
-            "codex/notes/worker-routing.md": "會改檔的活走 tmux",
-            "skills/claude/arbitrage/SKILL.md": "Worker in tmux",
+            "skills/shared/delegate/SKILL.md": "Worker in tmux",
             "skills/shared/trim/SKILL.md": "或用 tmux 開一個",
             "skills/shared/level-up/references/pre-implementation.md": (
                 "走 `tmux-orchestration`"

@@ -1,0 +1,18 @@
+# Grok CLI sandbox profiles. Installed as ~/.grok/sandbox.toml;
+# use with `grok --sandbox cc-worker ...`.
+[profiles.cc-worker]
+# workspace = read everywhere, write only CWD + temp dirs + ~/.grok/.
+extends = "workspace"
+# Linux-only (seccomp); no-op on macOS, kept for portability.
+restrict_network = true
+# Kernel-enforced read + write deny. Relative globs anchor at the workspace and
+# `~` is not expanded (verified 2026-09-03: it became <cwd>/~/.ssh), so home-dir
+# entries use an absolute one-segment glob. Linux homes would need /home/*/... too.
+deny = [
+  "**/.env", "**/.env.*", "**/*.pem",
+  "/Users/*/.ssh/**", "/Users/*/.aws/**",
+  "/Users/*/.secrets", "/Users/*/.codex/auth.json",
+  "/Users/*/.claude/.credentials.json", "/Users/*/.config/gh/hosts.yml",
+  # ~/.grok/auth.json is deliberately absent: it's grok's own state dir and
+  # must stay usable by the grok process itself.
+]

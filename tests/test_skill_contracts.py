@@ -11,6 +11,7 @@ NAME_TASK = REPO_ROOT / "skills" / "codex" / "name-task" / "SKILL.md"
 TIDY_WORKSPACE = REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "SKILL.md"
 WRAP = REPO_ROOT / "skills" / "shared" / "wrap" / "SKILL.md"
 SYNC_SKILLS = REPO_ROOT / "scripts" / "sync-skills.sh"
+CODEX_RUNBOOK = REPO_ROOT / "skills" / "shared" / "delegate" / "runbook" / "codex.md"
 
 
 class ArchiveSkillContractTests(unittest.TestCase):
@@ -111,6 +112,19 @@ class GitCleanupContractTests(unittest.TestCase):
         self.assertIn("證據不足時視為未完成責任並回報 blocker", self.wrap)
         self.assertIn("cleanup 判斷都以該 skill 為準", self.wrap)
         self.assertNotIn("`$wrap`", self.tidy)
+
+
+class DelegateContractTests(unittest.TestCase):
+    def test_global_contract_bans_danger_full_access(self) -> None:
+        self.assertIn("danger-full-access", AGENTS.read_text(encoding="utf-8"))
+
+    def test_codex_exec_never_combines_profile_with_sandbox_flag(self) -> None:
+        # `--sandbox` overrides the `-p cc-worker` profile's deny list (codex-cli 0.153.0).
+        lines = CODEX_RUNBOOK.read_text(encoding="utf-8").splitlines()
+        exec_lines = [line for line in lines if line.startswith("codex exec")]
+        self.assertTrue(exec_lines)
+        for line in exec_lines:
+            self.assertNotIn("--sandbox", line)
 
 
 class SkillSyncTests(unittest.TestCase):

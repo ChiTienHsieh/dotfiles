@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+"""Pick which provider should be the headless worker and print its runbook.
+
+Reads live quota from `codexbar usage --provider both --source cli --json`,
+compares Claude vs Codex remaining, and falls through to Grok (whose quota
+codexbar cannot see) only when both are low. Routing policy beyond that lives
+in the `delegate` skill (~/dotfiles/skills/shared/delegate/SKILL.md).
+
+Invoke via the absolute path ~/.claude/skills/delegate/scripts/pick-worker: that is the
+only path guaranteed across Claude Code, Codex, and Grok (Grok discovers the skill through
+~/.claude/skills and has no symlink of its own; ~/.codex/skills/... also resolves). From
+Claude Code run it with `dangerouslyDisableSandbox: true` -- codexbar writes its cookie
+cache and fails inside the Bash sandbox.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# Below this remaining % on both Claude and Codex, recommend Grok (the overflow lane).
+GROK_THRESHOLD = 25
+CODEXBAR_TIMEOUT_S = 90
+PROVIDERS = ("claude", "codex", "grok")
+RUNBOOK_DIR = Path(__file__).resolve().parent.parent / "runbook"
+WINDOW_LABELS = {"primary": "session", "secondary": "weekly", "tertiary": "extra"}
+
+
+def caller_runtime() -> str:
+    if os.environ.get("CLAUDECODE"):
+        return "claude"
+    if os.environ.get("CODEX_SANDBOX"):
+        return "codex"
+    # Grok: checked ~/.grok/docs/user-guide/{14-headless-mode,15-agent-mode,10-hooks}.md for a
+    # GROK_ env var set on child processes. GROK_SESSION_ID / GROK_WORKSPACE_ROOT exist but are
+    # documented as set only on *hook* processes, not on tool subprocesses generally -- no
+    # confirmed signal to key off here, so don't guess one.
+    return "unknown"
+
+
+def fetch_usage() -> tuple[dict[str, dict], str | None]:
+    """Return ({provider: {window: {remaining, resets_at}}}, error)."""
+    cmd = ["codexbar", "usage", "--provider", "both", "--source", "cli", "--json"]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=CODEXBAR_TIMEOUT_S)
+    except FileNotFoundError:
+        return {}, "codexbar not found on PATH"
+    except subprocess.TimeoutExpired:
+        return {}, f"codexbar timed out after {CODEXBAR_TIMEOUT_S}s"
+    if proc.returncode != 0:
+        return {}, f"codexbar exited {proc.returncode}: {proc.stderr.strip()[:200]}"
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        return {}, f"codexbar output is not JSON: {exc}"
+
+    try:
+        usage: dict[str, dict] = {}
+        for entry in payload if isinstance(payload, list) else []:
+            if not isinstance(entry, dict):
+                continue
+            provider = entry.get("provider")
+            if provider not in PROVIDERS or "usage" not in entry:
+                continue
+            windows = {}
+            for key, label in WINDOW_LABELS.items():
+                win = entry["usage"].get(key)
+                if not win or win.get("usedPercent") is None:
+                    continue
+                windows[label] = {
+                    "remaining": 100 - int(float(win["usedPercent"])),
+                    "resets_at": win.get("resetsAt"),
+                }
+            if windows:
+                usage[provider] = windows
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        return {}, f"codexbar output shape changed, usage unavailable: {exc}"
+    if not usage:
+        return {}, "codexbar returned no Claude/Codex usage"
+    return usage, None
+
+
+def binding(windows: dict) -> tuple[int, str | None]:
+    """The window with the least remaining is the one that actually blocks work."""
+    label, win = min(windows.items(), key=lambda kv: kv[1]["remaining"])
+    return win["remaining"], win["resets_at"]
+
+
+def parse_ts(value: str | None) -> datetime:
+    if not value:
+        return datetime.max.replace(tzinfo=timezone.utc)
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return datetime.max.replace(tzinfo=timezone.utc)
+
+
+def recommend(usage: dict[str, dict]) -> tuple[str, str]:
+    scored = {p: binding(w) for p, w in usage.items() if p in ("claude", "codex")}
+    if not scored:
+        return "claude", "no quota data; defaulting to the built-in Claude subagent"
+    if len(scored) == 1:
+        # Only one of claude/codex reported usage. Don't fall through to Grok on the strength of
+        # one low number when the other provider's state is simply unknown -- recommend the one
+        # we can see and say so.
+        only, (rem, _) = next(iter(scored.items()))
+        other = "codex" if only == "claude" else "claude"
+        return only, f"only {only} usage visible ({rem}% remaining); {other} usage unknown"
+    if all(rem < GROK_THRESHOLD for rem, _ in scored.values()):
+        resets = sorted((reset for _, reset in scored.values() if reset), key=parse_ts)
+        overflow = "use `--provider grok`, the overflow lane whose quota is not visible here"
+        when = (
+            f"earliest reset {resets[0]} -- sleep until then, or {overflow}"
+            if resets
+            else f"no reset time reported -- {overflow}"
+        )
+        return "grok", f"Claude and Codex both below {GROK_THRESHOLD}% remaining; {when}"
+    ranked = sorted(
+        scored.items(),
+        key=lambda kv: (-kv[1][0], parse_ts(kv[1][1])),
+    )
+    best, (rem, reset) = ranked[0]
+    if len(ranked) > 1 and ranked[1][1][0] == rem:
+        return best, f"tied at {rem}% remaining; {best} resets sooner ({reset}) so its quota would be wasted"
+    return best, f"most remaining ({rem}% on its binding window)"
+
+
+def print_table(usage: dict[str, dict]) -> None:
+    print(f"{'provider':<9}{'window':<9}{'remaining':>10}  resets_at")
+    for provider in ("claude", "codex"):
+        for label, win in usage.get(provider, {}).items():
+            print(f"{provider:<9}{label:<9}{win['remaining']:>9}%  {win['resets_at'] or '-'}")
+    print(f"{'grok':<9}{'-':<9}{'n/a':>10}  (not visible to codexbar)")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--provider", choices=PROVIDERS, help="force a provider; skip quota lookup")
+    parser.add_argument("--quiet", action="store_true", help="print only the one-line recommendation")
+    args = parser.parse_args()
+
+    runtime = caller_runtime()
+    warning = None
+    if args.provider:
+        provider, reason = args.provider, "forced with --provider"
+        usage = {}
+    else:
+        usage, warning = fetch_usage()
+        provider, reason = recommend(usage)
+
+    if args.quiet:
+        print(f"{provider}: {reason}" + (f" [warning: {warning}]" if warning else ""))
+        return 0
+
+    print(f"caller runtime: {runtime}" + ("  (native subagent, not CLI, if it matches)" if runtime != "unknown" else ""))
+    if warning:
+        print(f"warning: {warning}; falling back to Claude", file=sys.stderr)
+    if usage:
+        print_table(usage)
+    print(f"\nrecommendation: {provider} -- {reason}\n")
+    runbook = RUNBOOK_DIR / f"{provider}.md"
+    print(runbook.read_text())
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

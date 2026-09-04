@@ -1,0 +1,20 @@
+# Read-only twin of cc-worker.config.toml: same deny list, no writes. Use with
+# `codex exec -p cc-worker-ro` — never add a --sandbox flag (it overrides this profile).
+default_permissions = "cc-worker-ro"
+
+[permissions.cc-worker-ro]
+extends = ":read-only"
+
+[permissions.cc-worker-ro.filesystem]
+"~/.ssh" = "deny"
+"~/.aws" = "deny"
+"~/.secrets" = "deny"
+"~/.codex/auth.json" = "deny"
+"~/.claude/.credentials.json" = "deny"
+"~/.config/gh/hosts.yml" = "deny"
+"~/.grok/auth.json" = "deny"
+
+[permissions.cc-worker-ro.filesystem.":workspace_roots"]
+"**/.env" = "deny"
+"**/.env.*" = "deny"
+"**/*.pem" = "deny"

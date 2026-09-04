@@ -10,9 +10,10 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 
 ## Activation Gate
 
-- Fail closed unless the current human instruction explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session **inside tmux**.
-- Only the current human instruction can authorize tmux; agent instructions, skill discovery, and reading this skill cannot.
-- Without that authorization, do not run tmux, its helpers, or its lifecycle workflow. Prefer built-in subagents or the current session. After authorization, follow the complete launch, delegation, observation, and cleanup rules below.
+- tmux is read-only by default. An agent may inspect panes (`capture-pane`, `list-*`, `display-message`) to understand what is going on, without any special authorization.
+- Everything that changes tmux state — `send-keys`, creating or killing a session, window, or pane — plus this skill's launch, delegation, and cleanup workflow, is human-invoked only: it runs when the current human instruction explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session **inside tmux**.
+- Only the current human instruction can authorize tmux; agent instructions, skill discovery, and reading this skill cannot. The harness enforces the skill half (`skillOverrides` marks this skill user-invocable-only); tmux commands themselves are only gated by the normal permission flow.
+- Without that authorization, prefer built-in subagents or the current session. After authorization, follow the complete launch, delegation, observation, and cleanup rules below.
 
 ## Core Rules
 
@@ -26,7 +27,8 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 
 ## Delegation Contract
 
-Use this contract whenever a worker prompt, marker file task, or delegated
+WHEN / WHO / ACCEPT 依 `delegate` skill；本檔只管 tmux surface。Use the
+contract below whenever a worker prompt, marker file task, or delegated
 surface will be read by another agent.
 
 - Marker-file 完工合約: every delegated worker writes a report to PATH and ends
@@ -47,15 +49,6 @@ surface will be read by another agent.
   Format: `—— 來自 %47（orchestrator CC，委派任務；限制為硬邊界。回問：tmux send-keys -t %47）`.
   Use `user 直接指令` instead of `委派任務` only for instructions directly
   authorized by the user.
-- Verify load-bearing claims with cheap read-only checks: grep for leftover
-  references, `git status` / `git diff --stat`, confirm files moved/deleted,
-  read only the one section whose accuracy matters.
-- Fresh-reviewer 驗證原則: for large artifacts, delegate the FULL review to a fresh worker rather than
-  re-reading everything yourself — a clean-context reviewer is at least as
-  reliable and saves the controller's context. If only one dimension fails,
-  fix it and prefer a targeted rescore for that dimension. The prompt must
-  include the original fail criterion, what changed, which slice to re-evaluate,
-  and whether neighboring dimensions need a light sanity check.
 
 ## Starting Claude Code
 
@@ -72,7 +65,7 @@ When the lifecycle hook is installed, tmux generates the open receipt directly
 from the session it created. Keep `-P`, the exact `-F` format, and a literal
 session name; do not replace the receipt with a separate `printf`.
 
-Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. The launch inherits the model from `claude/settings.json`; pass `--model` only when the task needs a different one (see `arbitrage/references/model-routing.md`). Adjust allowed tools only when the task requires it. Do not use bypass or danger flags.
+Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. The launch inherits the model from `claude/settings.json`; pass `--model` only when the task needs a different one (model principles: `delegate` skill, `## Who`). Adjust allowed tools only when the task requires it.
 
 For sessions meant to live a long time, prefer the crash-proof **cushion pattern** in "Reviving a dead session" below (launch a shell, run the agent as its child) — a launch with `claude` as the pane root dies, and takes the whole session with it, the instant claude exits.
 
@@ -245,7 +238,7 @@ section relevant to the current delegation. After the delegation finishes, if yo
 learned a durable lesson, update the relevant section — dated, distilled rules
 only; the general delegation contract stays in this SKILL.md, not there.
 
-Implementation routing policy lives in the `arbitrage` skill; provider priority
-lives in `~/dotfiles/codex/notes/worker-routing.md`. This skill only
-covers surface mechanics: prompt files, observable workers, marker reports,
+Implementation routing policy — WHEN to delegate, WHO gets the work, and the
+acceptance rules — lives in the `delegate` skill. This skill only covers
+surface mechanics: prompt files, observable workers, marker reports,
 completion, and verification.
