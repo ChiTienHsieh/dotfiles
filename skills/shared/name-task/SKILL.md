@@ -32,7 +32,7 @@ description: 更新 task／session 標題。當使用者要求 name／rename tas
    | 執行環境 | 改標題 | 備註 |
    |---------|--------|------|
    | Codex App（desktop / Electron） | `set_thread_title` tool | model 注入的內建工具 |
-   | Codex CLI（TUI，tmux 內） | `tmux send-keys -t "$TMUX_PANE" '/rename <title>' Enter` | 走 Guardian scoped escalation；`$TMUX_PANE` 由 Bash 環境提供 |
+   | Codex CLI（TUI，tmux 內） | `tmux send-keys -t "$TMUX_PANE" '/rename <title>' Enter Enter` | TUI 多行輸入需兩次 Enter；走 Guardian scoped escalation；`$TMUX_PANE` 由 Bash 環境提供 |
    | Codex CLI（TUI，非 tmux） | 無工具 — 附上完整建議標題，由使用者用 `/rename` 套用 | |
    | Claude Code（tmux 內，`$TMUX_PANE` 已設定） | `tmux send-keys -t "$TMUX_PANE" '/rename <title>' Enter` | 自己的 pane 送 `/rename` 視同使用者明確要求 |
    | Claude Code（非 tmux） | 無工具 — 附上完整建議標題，由使用者用 `/rename` 套用 | |
