@@ -120,7 +120,7 @@ if [ "$SEVEN_PCT" != "-1" ] && [ -n "$SEVEN_PCT" ]; then
 fi
 
 # Per-model weekly bucket (e.g. Fable): not in the statusline stdin payload, so
-# pull it from the OAuth usage API the /usage panel uses. Cached 60s; any failure
+# pull it from the OAuth usage API the /usage panel uses. Cached 180s; any failure
 # (no keychain, no network, non-200, no scoped bucket) falls back to the cached
 # value, else the segment is silently omitted. Only {name, pct, epoch} is cached.
 WK_CACHE=/tmp/claude/weekly-model
@@ -155,7 +155,7 @@ if [ -r "$WK_CACHE" ]; then
   case $WK_MTIME in '' | *[!0-9]*) WK_MTIME= ;; esac
   WK_LINE=$(head -1 "$WK_CACHE" 2>/dev/null)
 fi
-if [ -z "$WK_MTIME" ] || [ $(( $(date +%s) - WK_MTIME )) -ge 60 ] 2>/dev/null; then
+if [ -z "$WK_MTIME" ] || [ $(( $(date +%s) - WK_MTIME )) -ge 180 ] 2>/dev/null; then
   WK_NEW=$(wk_fetch)
   if [ -n "$WK_NEW" ]; then
     WK_LINE=$WK_NEW
