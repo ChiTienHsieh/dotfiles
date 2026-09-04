@@ -29,6 +29,7 @@ allow:
   - LGTM
   - MVP
   - ORM
+  - PM
   - PR
   - QoL
   - RFC
