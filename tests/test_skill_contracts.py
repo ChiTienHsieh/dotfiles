@@ -7,7 +7,7 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AGENTS = REPO_ROOT / "codex" / "AGENTS.md"
-NAME_TASK = REPO_ROOT / "skills" / "codex" / "name-task" / "SKILL.md"
+NAME_TASK = REPO_ROOT / "skills" / "shared" / "name-task" / "SKILL.md"
 TIDY_WORKSPACE = REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "SKILL.md"
 WRAP = REPO_ROOT / "skills" / "shared" / "wrap" / "SKILL.md"
 SYNC_SKILLS = REPO_ROOT / "scripts" / "sync-skills.sh"
@@ -24,7 +24,7 @@ class ArchiveSkillContractTests(unittest.TestCase):
         self.assertIn("名稱精確為 `name-task` 的唯一項目", self.wrap)
         self.assertIn("不得執行 `name-task` 的完整流程", self.wrap)
         self.assertNotIn("Call the Skill tool with `name-task`.", self.wrap)
-        self.assertNotIn("~/dotfiles/skills/codex/name-task/SKILL.md", self.wrap)
+        self.assertNotIn("~/dotfiles/skills/shared/name-task/SKILL.md", self.wrap)
 
     def test_name_task_uses_the_bounded_archive_check(self) -> None:
         self.assertIn("名稱精確為 `wrap` 的唯一項目", self.name_task)

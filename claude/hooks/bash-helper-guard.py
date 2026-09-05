@@ -250,18 +250,26 @@ def check_long_tmux_send_keys_payload(command):
 
     This deliberately targets simple quoted prompt strings. It leaves normal
     key sends (`Enter`, `BTab`), short commands, and the dedicated helper alone.
+
+    Only quoted strings in the same pipeline segment as `send-keys` are
+    measured — a long commit message or python source in another segment of
+    the same statement does not trigger the guard.
     """
     command = strip_heredoc_bodies(command)
     for statement in STATEMENT_SPLIT_RE.split(command):
         if "agent-send-prompt.sh" in statement:
             continue
-        executable_statement = strip_data_quotes(statement)
-        if not TMUX_SEND_KEYS_RE.search(executable_statement):
-            continue
-        for match in QUOTED_RE.finditer(statement):
-            payload = unquote_shell_literal(match.group(0))
-            if len(payload) >= LONG_SEND_KEYS_PAYLOAD_CHARS:
-                return True
+        # Split into pipeline segments. STATEMENT_SPLIT_RE already consumed
+        # || so remaining | characters are pipes. A | inside quotes may
+        # over-split; accepted (same spirit as the existing statement split).
+        for segment in statement.split("|"):
+            executable_segment = strip_data_quotes(segment)
+            if not TMUX_SEND_KEYS_RE.search(executable_segment):
+                continue
+            for match in QUOTED_RE.finditer(segment):
+                payload = unquote_shell_literal(match.group(0))
+                if len(payload) >= LONG_SEND_KEYS_PAYLOAD_CHARS:
+                    return True
     return False
 
 
