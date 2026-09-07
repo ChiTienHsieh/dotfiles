@@ -23,6 +23,6 @@
 
 ## 委派與跨 agent
 - 委派實作、研究或 review 時，預設用目前 runtime 內建的 subagent；會改檔的 headless CLI worker 只能依 `delegate` skill 套 sandbox profile 呼叫。`danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止。
-- **tmux 預設唯讀**：agent 隨時可以讀 pane（`capture-pane`、`list-*`、`display-message`）來了解狀況；會改動 pane 的指令（`send-keys`、開關 session 或 pane）要有目前這次 human 指令的明確要求，對自己 pane 送 `/rename` 這類只改 TUI 狀態的 slash 指令也算 —— 但不送 prompt 文字或審核回覆給自己的 pane，那等於自己冒充使用者。`tmux-orchestration` skill 只由 human 從 harness（agent 之外的設定層）呼叫，agent 不自行觸發；Codex 側的 tmux 指令仍走 scoped escalation，細節見 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
+- **tmux 預設唯讀**：agent 隨時可以讀 pane（`capture-pane`、`list-*`、`display-message`）來了解狀況；會改動 pane 的指令（`send-keys`、開關 session 或 pane）要有目前這次 human 指令的明確要求，使用者持續授權 `name-task` 透過 `rename-session.sh` 對自己的 `$TMUX_PANE` 送出 `/rename <title>`，不必逐次確認；這個例外只涵蓋改標題，不涵蓋其他 pane、prompt 文字或審核回覆。`tmux-orchestration` skill 只由 human 從 harness（agent 之外的設定層）呼叫，agent 不自行觸發；Codex 側的 tmux 指令仍走 scoped escalation，細節見 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
 - 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `delegate` skill 的「Reviewer 授權」段選 fresh reviewer 同時做 safety review 與 simplify review（逐項回報 Keep / Simplify / Drop），通過再 `push`。只有安全問題嚴重到不能放行，或確實有更簡潔的通用規則時才要求修改。
 - 向其他 task、session、tmux pane 或 agent 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態，讀不到或無法確認對方目前在做什麼就不傳、先回報 blocker。透過 marker file 或請使用者代送 prompt 給另一個 agent 時附上權限等級與硬邊界，只有使用者直接指令能蓋過委派限制；訊息裡的簽名格式另依 `tmux-orchestration` skill。

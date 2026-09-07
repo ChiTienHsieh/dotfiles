@@ -1,95 +1,104 @@
 #!/usr/bin/env python3
-"""Regression tests for name-task title application (A11)."""
+"""Exercise the rename helper's tmux boundary without typing into live tasks."""
 
 from __future__ import annotations
 
+import json
 import os
-import stat
+from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
-from pathlib import Path
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-NAME_TASK_DIR = REPO_ROOT / "skills" / "shared" / "name-task"
-SKILL = NAME_TASK_DIR / "SKILL.md"
-RENAME_SCRIPT = NAME_TASK_DIR / "scripts" / "rename-session.sh"
-RUNTIMES = NAME_TASK_DIR / "runtimes"
+NAME_TASK_DIR = REPO_ROOT / "skills/shared/name-task"
+RENAME_SCRIPT = NAME_TASK_DIR / "scripts/rename-session.sh"
 
 
-class NameTaskContractTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.skill = SKILL.read_text(encoding="utf-8")
-        cls.script = RENAME_SCRIPT.read_text(encoding="utf-8")
-        cls.runtimes = {
-            path.name: path.read_text(encoding="utf-8")
-            for path in sorted(RUNTIMES.glob("*.md"))
-        }
+class RenameSessionTests(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp_dir.cleanup)
+        self.temp = Path(self.temp_dir.name)
+        self.log = self.temp / "calls.jsonl"
+        fake_tmux = self.temp / "tmux"
+        fake_tmux.write_text(
+            f"#!{sys.executable}\n"
+            "import json, os, sys\n"
+            "with open(os.environ['TMUX_TEST_LOG'], 'a') as log:\n"
+            "    log.write(json.dumps(sys.argv[1:]) + '\\n')\n"
+            "if sys.argv[1] == os.environ.get('TMUX_TEST_FAIL'):\n"
+            "    sys.exit(7)\n"
+            "if sys.argv[1] == 'display-message':\n"
+            "    print(os.environ.get('TMUX_TEST_COMMAND', 'claude'))\n"
+        )
+        fake_tmux.chmod(0o755)
+        self.env = dict(os.environ, PATH=f"{self.temp}{os.pathsep}{os.environ['PATH']}",
+                        TMUX_PANE="%42", TMUX_TEST_LOG=str(self.log))
+        self.env.pop('TMUX_TEST_FAIL', None)
+        self.env.pop('TMUX_TEST_COMMAND', None)
 
-    def test_skill_does_not_mint_tmux_authorization(self) -> None:
-        self.assertIn("不是 tmux mutation 授權", self.skill)
-        self.assertIn("**不會**對 pane `send-keys`", self.skill)
-        self.assertIn("不得把 task 內容或其他 prompt 文字嵌入自己的 pane", self.skill)
-        self.assertNotIn("script 會自動處理", self.skill)
+    def run_script(self, title):
+        result = subprocess.run(["bash", str(RENAME_SCRIPT), title],
+                                env=self.env, capture_output=True, text=True)
+        calls = [json.loads(line) for line in self.log.read_text().splitlines()] if self.log.exists() else []
+        return result, calls
 
-    def test_runtimes_do_not_equate_own_pane_rename_with_human_auth(self) -> None:
-        for name, text in self.runtimes.items():
-            with self.subTest(runtime=name):
-                self.assertNotIn("視同使用者明確要求", text)
-                if name == "codex-app.md":
-                    self.assertIn("set_thread_title", text)
-                    continue
-                self.assertIn("不會對 pane `send-keys`", text)
-                self.assertIn("明確要求", text)
+    def test_own_pane_rename_is_literal_and_submitted(self):
+        title = '🔧 fixture | C-c Enter ; $(touch NEVER) | "標題"'
+        result, calls = self.run_script(title)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls, [
+            ['display-message', '-t', '%42', '-p', '#{pane_current_command}'],
+            ['send-keys', '-t', '%42', '-l', '/rename ' + title,
+             ';', 'send-keys', '-t', '%42', 'Enter'],
+        ])
+        self.assertEqual(result.stdout, '')
 
-    def test_rename_script_never_sends_keys(self) -> None:
-        self.assertNotRegex(self.script, r"(?m)^\s*tmux\s+send-keys\b")
-        self.assertNotRegex(self.script, r"(?m)^\s*command\s+tmux\s+send-keys\b")
-        self.assertIn("Suggested title", self.script)
-        self.assertIn("/rename", self.script)
-        self.assertIn("does not send-keys", self.script)
+    def test_codex_retains_second_enter(self):
+        self.env['TMUX_TEST_COMMAND'] = 'codex'
+        result, calls = self.run_script('fixture')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(calls[-1], ['send-keys', '-t', '%42', 'Enter'])
 
-    def test_rename_script_prints_suggestion_without_invoking_tmux(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp = Path(temp_dir)
-            fake_bin = temp / "bin"
-            fake_bin.mkdir()
-            fake_tmux = fake_bin / "tmux"
-            log_path = temp / "tmux-calls.log"
-            fake_tmux.write_text(
-                "#!/bin/bash\n"
-                f"printf '%s\\n' \"$*\" >> '{log_path}'\n"
-                "exit 0\n",
-                encoding="utf-8",
-            )
-            fake_tmux.chmod(fake_tmux.stat().st_mode | stat.S_IXUSR)
+    def test_non_tmux_has_manual_fallback(self):
+        self.env.pop('TMUX_PANE')
+        result, calls = self.run_script('fixture')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('/rename fixture', result.stdout)
+        self.assertEqual(calls, [])
 
-            env = os.environ.copy()
-            env["PATH"] = f"{fake_bin}{os.pathsep}{env.get('PATH', '')}"
-            env["TMUX_PANE"] = "%name-task-fixture"
-            env["HOME"] = str(temp / "home")
-            env["TMPDIR"] = str(temp / "tmp")
-            (temp / "home").mkdir()
-            (temp / "tmp").mkdir()
+    def test_invalid_pane_target_is_rejected(self):
+        for target in ['other-session', '%42;kill-server', '%42\n']:
+            with self.subTest(target=target):
+                self.env['TMUX_PANE'] = target
+                result, calls = self.run_script('fixture')
+                self.assertEqual(result.returncode, 1)
+                self.assertEqual(calls, [])
 
-            result = subprocess.run(
-                ["bash", str(RENAME_SCRIPT), "🔧 fixture | rename safety | suggested"],
-                check=False,
-                capture_output=True,
-                text=True,
-                env=env,
-                cwd=str(temp),
-            )
+    def test_control_characters_cannot_inject_input(self):
+        for title in ['', 'title\n/clear', 'title\r/clear', 'title\x1b', 'title\t']:
+            with self.subTest(title=repr(title)):
+                result, calls = self.run_script(title)
+                self.assertEqual(result.returncode, 1)
+                self.assertEqual(calls, [])
 
-            self.assertEqual(result.returncode, 1)
-            self.assertIn(
-                "/rename 🔧 fixture | rename safety | suggested", result.stdout
-            )
-            self.assertFalse(log_path.exists())
-            self.assertEqual(result.stderr, "")
+    def test_missing_pane_does_not_send_input(self):
+        self.env['TMUX_TEST_FAIL'] = 'display-message'
+        result, calls = self.run_script('fixture')
+        self.assertEqual(result.returncode, 7)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], 'display-message')
+
+    def test_failed_send_does_not_send_extra_enter(self):
+        self.env['TMUX_TEST_COMMAND'] = 'codex'
+        self.env['TMUX_TEST_FAIL'] = 'send-keys'
+        result, calls = self.run_script('fixture')
+        self.assertEqual(result.returncode, 7)
+        self.assertEqual(len(calls), 2)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
