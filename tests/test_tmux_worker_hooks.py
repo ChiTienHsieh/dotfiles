@@ -40,7 +40,7 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
         "-s review-one -c /tmp 'claude --model opus'"
     )
     SESSION_CLOSE = (
-        "tmux has-session -t review-one 2>/dev/null || "
+        "tmux has-session -t =review-one 2>/dev/null || "
         "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'"
     )
     PANE_OPEN = (
@@ -133,7 +133,7 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             {("session", "review-one"), ("session", "review-two")},
         )
         self.post(
-            "tmux has-session -t review-one 2>/dev/null || "
+            "tmux has-session -t =review-one 2>/dev/null || "
             "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-two'",
             "CODEX_TMUX_WORKER_CLOSED=session:review-two\n",
         )
@@ -141,6 +141,26 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             tracker.load_workers(self.session_id),
             {("session", "review-one"), ("session", "review-two")},
         )
+
+    def test_rejects_prefix_match_session_receipt_without_equals(self) -> None:
+        tracker.save_workers(self.session_id, {("session", "review-one")})
+        self.post(
+            "tmux has-session -t review-one 2>/dev/null || "
+            "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'",
+            "CODEX_TMUX_WORKER_CLOSED=session:review-one\n",
+        )
+        self.assertEqual(
+            tracker.load_workers(self.session_id), {("session", "review-one")}
+        )
+
+    def test_stop_cleanup_commands_use_exact_session_targets(self) -> None:
+        tracker.save_workers(self.session_id, {("session", "review")})
+        decision = self.stop("Done.")
+        self.assertEqual(decision["decision"], "block")
+        self.assertIn("tmux kill-session -t =review", decision["reason"])
+        self.assertIn("tmux has-session -t =review", decision["reason"])
+        self.assertNotIn("tmux kill-session -t review\n", decision["reason"])
+        self.assertNotIn("tmux has-session -t review ", decision["reason"])
 
     def test_ignores_open_marker_for_a_different_session(self) -> None:
         self.post(

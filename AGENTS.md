@@ -31,8 +31,10 @@ the same file. Directory layout: see the structure diagram in `README.md`.
 
 ## Secrets
 
-- Never in tracked files. Secrets live in `~/.secrets` (created from
+- Never in tracked files. Secrets live in `~/.secrets/index.sh` (created from
   `templates/.secrets.template`), sourced by shell startup, never committed.
+  New directories use mode 700 and files mode 600; existing single-file
+  `~/.secrets` remains supported.
 
 ## Maintenance Recipes (lazy)
 

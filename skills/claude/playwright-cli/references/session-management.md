@@ -36,18 +36,16 @@ playwright-cli list
 
 # Stop a browser session (close the browser)
 playwright-cli close                # stop the default browser
-playwright-cli -s=mysession close   # stop a named browser
-
-# Stop all browser sessions
-playwright-cli close-all
-
-# Forcefully kill all daemon processes (for stale/zombie processes)
-playwright-cli kill-all
+playwright-cli -s=mysession close   # stop only this named browser
 
 # Delete browser session user data (profile directory)
 playwright-cli delete-data                # delete default browser data
 playwright-cli -s=mysession delete-data   # delete named browser data
 ```
+
+Normal cleanup closes only the session this task opened. Do not use
+`close-all` or `kill-all` as routine cleanup — they affect every session in
+the shared CLI workspace and can kill other tasks' browsers.
 
 ## Environment Variable
 
@@ -77,8 +75,10 @@ playwright-cli -s=site1 snapshot
 playwright-cli -s=site2 snapshot
 playwright-cli -s=site3 snapshot
 
-# Cleanup
-playwright-cli close-all
+# Cleanup — close only the sessions this task opened
+playwright-cli -s=site1 close
+playwright-cli -s=site2 close
+playwright-cli -s=site3 close
 ```
 
 ### A/B Testing Sessions
@@ -206,15 +206,9 @@ playwright-cli -s=s1 open https://github.com
 ### 2. Always Clean Up
 
 ```bash
-# Stop browsers when done
+# Stop only the browsers this task opened
 playwright-cli -s=auth close
 playwright-cli -s=scrape close
-
-# Or stop all at once
-playwright-cli close-all
-
-# If browsers become unresponsive or zombie processes remain
-playwright-cli kill-all
 ```
 
 ### 3. Delete Stale Browser Data

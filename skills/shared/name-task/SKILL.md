@@ -27,11 +27,10 @@ description: 更新 task／session 標題。當使用者要求 name／rename tas
 
    通常維持一行及兩個半形 ` | ` 分隔符。清楚優先於硬湊字數；目標 24–36 字，只有縮短會失去必要意思時才超過 40 字。後兩欄要讓不了解內部 schema、tab 名稱或 agent workflow 的使用者也能看懂 task 在做什麼，以及下一步是什麼。
 
-7. 套用標題：執行 `scripts/rename-session.sh "<title>"`。若你的執行環境有原生改標題工具（見下方），優先使用原生工具。各環境的細節與注意事項在 `runtimes/<環境>.md`。
+7. 套用標題：若執行環境有原生改標題工具，優先使用（見下方與 `runtimes/<環境>.md`）。否則執行 `scripts/rename-session.sh "<title>"` 取得建議標題。
 
    - Codex App：使用 `set_thread_title` tool（不需要 script）
-   - tmux 環境（`$TMUX_PANE` 已設定）：script 會自動處理
-   - 非 tmux 環境：script 會印出建議標題，由使用者用 `/rename` 套用
+   - 其他環境：script 只印出建議標題與手動 `/rename` 指令，**不會**對 pane `send-keys`。載入本 skill 或自動改名節點都不是 tmux mutation 授權；沒有目前這次 human 對 rename／tmux 的明確要求時，把建議標題交給使用者套用。不得把 task 內容或其他 prompt 文字嵌入自己的 pane。
 
    每項工具只呼叫一次。目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 與 host。標題與 pin 是兩項獨立資訊，不要為了讓兩者看起來一致而自行新增或解除 pin；任何一項失敗時，重新讀取實際狀態並回報，不得盲目重試。
 

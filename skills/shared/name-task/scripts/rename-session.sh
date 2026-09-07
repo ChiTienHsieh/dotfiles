@@ -1,22 +1,16 @@
 #!/bin/bash
-# rename-session.sh — 透過 tmux /rename 為目前 agent session 改名
+# rename-session.sh — print a suggested /rename command; never mutates tmux
 # 用法：rename-session.sh "<title>"
 #
-# 需要 $TMUX_PANE。若不在 tmux 內，印出建議標題並以 exit 1
-# 讓呼叫端知道要顯示給使用者。
+# Does not send-keys into any pane. Skill loading is not human authorization;
+# the caller (or user) applies /rename manually. Exit 1 so callers treat the
+# title as a suggestion, not an applied rename.
 set -euo pipefail
 
 TITLE="${1:?Usage: rename-session.sh '<title>'}"
 
-if [ -z "${TMUX_PANE:-}" ]; then
-  printf 'Not in tmux. Apply manually:\n  /rename %s\n' "$TITLE"
-  exit 1
+printf 'Suggested title (apply manually):\n  /rename %s\n' "$TITLE"
+if [ -n "${TMUX_PANE:-}" ]; then
+  printf 'tmux pane %s is set; this script does not send-keys. Apply /rename in the TUI.\n' "$TMUX_PANE"
 fi
-
-tmux send-keys -t "$TMUX_PANE" "/rename $TITLE" Enter
-
-# Codex TUI 的多行輸入模式需要第二次 Enter 才提交
-PANE_CMD=$(tmux display-message -t "$TMUX_PANE" -p '#{pane_current_command}')
-case "$PANE_CMD" in
-  codex*) tmux send-keys -t "$TMUX_PANE" Enter ;;
-esac
+exit 1

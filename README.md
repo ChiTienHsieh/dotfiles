@@ -41,7 +41,7 @@ dotfiles/
 ├── gh/
 │   └── .config/gh/config.yml  # GitHub CLI config
 ├── templates/
-│   ├── .secrets.template      # API keys template (copy to ~/.secrets)
+│   ├── .secrets.template      # API keys template (copy to ~/.secrets/index.sh)
 │   └── .aliases.local.template  # Machine-specific aliases
 ├── claude/
 │   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
@@ -72,7 +72,7 @@ dotfiles/
 
 ## Post-Installation
 
-1. **Edit `~/.secrets`** - Add your API keys (this file is never committed)
+1. **Edit `~/.secrets/index.sh`** - Add your API keys (this file is never committed)
 2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
 3. **Skills** - `skills/shared/` is installed into Claude Code and both Codex user-skill paths; `skills/codex/` is installed into Codex's current `~/.agents/skills` discovery path plus the legacy `~/.codex/skills` path; `skills/claude/` is installed only into Claude Code. For how the agents hand work to each other — when to delegate, who gets it, how to dispatch, how to accept — start at the map at the top of `skills/shared/delegate/SKILL.md`
 4. **Codex hooks** - Start a new Codex CLI session, open `/hooks`, review the global `PostToolUse` and `Stop` commands, then trust them explicitly. The installer never writes or bypasses hook trust.
@@ -82,7 +82,7 @@ dotfiles/
 
 These files are created from templates but not tracked in git:
 
-- `~/.secrets` - API keys and tokens
+- `~/.secrets/` - API keys and tokens (directory 700, index.sh 600); an existing single-file `~/.secrets` remains supported
 - `~/.aliases.local` - Machine-specific aliases
 - `~/.gitconfig.local` - Machine-specific Git settings
 - `~/.bunfig.toml`, `~/.npmrc`, `~/.config/pnpm/rc` - Real local files; the installer preserves registry credentials and only upserts the tracked release-age policy

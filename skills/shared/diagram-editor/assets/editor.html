@@ -1209,25 +1209,38 @@ function afterDocChange() {
   saveDraft();
   renderAll();
 }
+// 拒絕 GUI 變更時還原屬性／下拉顯示；不動 code buffer（renderCode 會擦掉待套用文字）。
+function restoreGuiFromDoc() {
+  $('selDir').value = doc.dir;
+  renderDrawerMeta();
+  renderProps();
+}
+// GUI 變更入口：dirty 程式碼存在時先擋下，避免 renderCode 覆寫待套用文字。
 function mutate(fn) {
+  if (codeDirty) {
+    toast('程式碼有未套用的修改,先按「套用」再改畫布', true);
+    restoreGuiFromDoc();
+    return false;
+  }
   undoStack.push(serializeMermaid(doc));
   if (undoStack.length > 100) undoStack.shift();
   redoStack = [];
   fn();
   afterDocChange();
+  return true;
 }
 // 針對目前選取的元素做修改(節點傳 node、邊傳 edge 進 fn)
 function mutateSel(fn) {
-  if (!selection) return;
+  if (!selection) return false;
   if (selection.kind === 'node') {
     const id = selection.id;
-    mutate(() => fn(doc.nodes.find(x => x.id === id)));
-  } else {
-    const idx = selection.index;
-    mutate(() => fn(doc.edges[idx]));
+    return mutate(() => fn(doc.nodes.find(x => x.id === id)));
   }
+  const idx = selection.index;
+  return mutate(() => fn(doc.edges[idx]));
 }
 function undo() {
+  if (codeDirty) { toast('程式碼有未套用的修改,先按「套用」再復原', true); return; }
   if (!undoStack.length) { toast('沒有可復原的步驟了'); return; }
   redoStack.push(serializeMermaid(doc));
   doc = parseMermaid(undoStack.pop()).doc;
@@ -1235,6 +1248,7 @@ function undo() {
   afterDocChange();
 }
 function redo() {
+  if (codeDirty) { toast('程式碼有未套用的修改,先按「套用」再重做', true); return; }
   if (!redoStack.length) { toast('沒有可重做的步驟了'); return; }
   undoStack.push(serializeMermaid(doc));
   doc = parseMermaid(redoStack.pop()).doc;
@@ -1358,9 +1372,9 @@ function freeId() {
 const TOOL_SHAPE = { rect: 'rect', diamond: 'diamond', stadium: 'stadium' };
 function createNodeAt(wx, wy, shape, thenEdit) {
   const id = freeId();
-  positions.set(id, { x: wx, y: wy });
   const node = { id, shape, label: '', comment: '', style: null };
-  mutate(() => { doc.nodes.push(node); doc.stream.push({ kind: 'node', ref: node }); });
+  if (!mutate(() => { doc.nodes.push(node); doc.stream.push({ kind: 'node', ref: node }); })) return null;
+  positions.set(id, { x: wx, y: wy });
   selection = { kind: 'node', id };
   renderAll();
   if (thenEdit) editNodeLabel(id);
@@ -1368,9 +1382,10 @@ function createNodeAt(wx, wy, shape, thenEdit) {
 }
 function createEdge(fromId, toId, kind) {
   const edge = { from: fromId, to: toId, type: kind === 'line' ? 'line' : 'arrow', label: null, comment: '', style: null };
-  mutate(() => { doc.edges.push(edge); doc.stream.push({ kind: 'edge', ref: edge }); });
+  if (!mutate(() => { doc.edges.push(edge); doc.stream.push({ kind: 'edge', ref: edge }); })) return false;
   selection = { kind: 'edge', index: doc.edges.length - 1 };
   renderAll();
+  return true;
 }
 
 // ---------- 指標互動 ----------
@@ -1498,8 +1513,10 @@ function endPointer(e) {
       createEdge(d.from, overId, tool); // 同一節點=自迴圈,也合法
     } else {
       const nid = createNodeAt(pt.x, pt.y, 'rect', false);
-      createEdge(d.from, nid, tool);
-      editNodeLabel(nid);
+      if (nid) {
+        createEdge(d.from, nid, tool);
+        editNodeLabel(nid);
+      }
     }
     setTool('select');
     return;
@@ -1586,13 +1603,13 @@ function deleteSelection() {
   if (!selection) return;
   if (selection.kind === 'node') {
     const id = selection.id;
-    mutate(() => {
+    if (!mutate(() => {
       doc.nodes = doc.nodes.filter(n => n.id !== id);
       doc.edges = doc.edges.filter(e => e.from !== id && e.to !== id);
-    });
+    })) return;
   } else {
     const idx = selection.index;
-    mutate(() => { doc.edges.splice(idx, 1); });
+    if (!mutate(() => { doc.edges.splice(idx, 1); })) return;
   }
   selection = null;
   renderAll();
@@ -1603,9 +1620,9 @@ function duplicateSelection() {
   if (!src) return;
   const id = freeId();
   const p = positions.get(src.id);
-  positions.set(id, { x: p.x + 40, y: p.y + 40 });
   const node = { id, shape: src.shape, label: src.label, comment: src.comment, style: src.style };
-  mutate(() => { doc.nodes.push(node); doc.stream.push({ kind: 'node', ref: node }); });
+  if (!mutate(() => { doc.nodes.push(node); doc.stream.push({ kind: 'node', ref: node }); })) return;
+  positions.set(id, { x: (p ? p.x : 0) + 40, y: (p ? p.y : 0) + 40 });
   selection = { kind: 'node', id };
   renderAll();
 }
@@ -1619,13 +1636,13 @@ $('pId').addEventListener('change', e => {
   if (!/^[A-Za-z0-9_]+$/.test(newId)) { toast('ID 只能用英文、數字、底線', true); renderProps(); return; }
   if (doc.nodes.some(n => n.id === newId)) { toast('ID「' + newId + '」已經有人用了', true); renderProps(); return; }
   const p = positions.get(oldId);
-  mutate(() => {
+  if (!mutate(() => {
     doc.nodes.find(x => x.id === oldId).id = newId;
     for (const ed of doc.edges) {
       if (ed.from === oldId) ed.from = newId;
       if (ed.to === oldId) ed.to = newId;
     }
-  });
+  })) return;
   if (p) positions.set(newId, p);
   selection = { kind: 'node', id: newId };
   renderAll();
@@ -1678,7 +1695,7 @@ $('btnLayout').addEventListener('click', () => {
   renderCanvas();
 });
 $('selDir').addEventListener('change', e => {
-  mutate(() => { doc.dir = e.target.value; });
+  if (!mutate(() => { doc.dir = e.target.value; })) return;
   positions = autoLayout(doc, measureNode);
   fitView();
   renderCanvas();
@@ -1752,7 +1769,7 @@ $('btnExportAgent').addEventListener('click', () => {
 });
 $('btnNew').addEventListener('click', () => {
   if (!confirm('清空目前的圖、開一張新的?(目前內容會留在復原歷史裡)')) return;
-  mutate(() => { doc = emptyDoc(); });
+  if (!mutate(() => { doc = emptyDoc(); })) return;
   positions = new Map();
   selection = null;
   fitView();

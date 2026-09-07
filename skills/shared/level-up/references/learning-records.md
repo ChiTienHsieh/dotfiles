@@ -15,6 +15,20 @@ Never show record paths, “record updated,” Known Gaps, waiting-for-level tex
 XP/level bookkeeping, option-letter history, or model prefixes. Mention a record
 update only when the user explicitly asks.
 
+## Local-Only Learning Directory
+
+`learning/` is **local-only**. Its contents (except this directory's tracked
+`.gitignore`) must not be committed or pushed. The `.gitignore` ignores every
+file under `learning/` while allowing the `.gitignore` itself to stay tracked.
+
+Create `learning/` on first need when a session must read or write records. Do
+not expect it to exist in a fresh clone. Reusable teaching templates, schemas,
+and examples stay in `references/`; do not move those into `learning/`.
+
+Even though records are local, still forbid secrets and sensitive personal data
+(see Privacy and Safety below). Local-only is not a license to store identifying
+career, financial, health, or family details.
+
 ## Read Before Teaching
 
 Inspect this skill's `learning/` directory:
@@ -114,3 +128,4 @@ future session can reuse or avoid it.
 Never store secrets, tokens, client-specific facts, private code snippets,
 identifying career details, financial or health information, family details, or
 long chat transcripts. Keep evidence minimal, abstract, and teaching-relevant.
+`learning/` being gitignored does not relax this rule.

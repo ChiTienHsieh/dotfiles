@@ -1,6 +1,7 @@
 # Claude Code
 
-執行 `scripts/rename-session.sh "<title>"`。
+執行 `scripts/rename-session.sh "<title>"` 取得建議標題。
 
-- 自己的 pane 送 `/rename` 視同使用者明確要求，不違反 tmux 預設唯讀規則。
-- 非 tmux 時 script 會印出建議標題並以 exit 1 結束，由使用者用 `/rename` 套用。
+- Script 不會對 pane `send-keys`；把印出的 `/rename …` 交給使用者套用。
+- 載入本 skill、或一般完成／等待節點要改標題，都不構成 tmux mutation 授權。對自己 pane 送 `/rename` 仍需要目前這次 human 的明確要求。
+- 不得把 task 內容或其他 prompt 文字嵌入自己的 pane。

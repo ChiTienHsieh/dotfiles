@@ -78,11 +78,6 @@ date_ago_local_find() { # $1=hours -> local "YYYY-MM-DD HH:MM:SS" for find -newe
   if [ "$DATE_FLAVOR" = bsd ]; then date -v-"$1"H +"%Y-%m-%d %H:%M:%S"
   else date -d "-$1 hours" +"%Y-%m-%d %H:%M:%S"; fi
 }
-date_ago_day() { # $1=days -> YYYY/MM/DD
-  if [ "$DATE_FLAVOR" = bsd ]; then date -v-"$1"d +%Y/%m/%d
-  else date -d "-$1 days" +%Y/%m/%d; fi
-}
-
 # ---- cutoffs ----------------------------------------------------------------
 # UTC ISO for precise per-line timestamp comparison (both sources emit Z).
 CUTOFF_UTC="$(date_ago_utc_iso "$SINCE_HOURS")"
@@ -108,20 +103,12 @@ fi
 
 if [ "$SOURCE" = "all" ] || [ "$SOURCE" = "codex" ]; then
   if [ -d "$CODEX_ROOT" ]; then
-    # Codex is date-partitioned YYYY/MM/DD. Cover ceil(hours/24)+1 day dirs so a
-    # window crossing midnight (or a multi-day window) is fully included; the
-    # per-line timestamp filter trims precisely afterwards.
-    ndays=$(( SINCE_HOURS / 24 + 1 ))
-    d=0
-    while [ "$d" -le "$ndays" ]; do
-      day_dir="$CODEX_ROOT/$(date_ago_day "$d")"
-      if [ -d "$day_dir" ]; then
-        while IFS= read -r f; do
-          [ -n "$f" ] && codex_files+=("$f")
-        done < <(find "$day_dir" -type f -name 'rollout-*.jsonl' 2>/dev/null)
-      fi
-      d=$(( d + 1 ))
-    done
+    # Codex keeps rollouts under the create-day YYYY/MM/DD folder, but sessions
+    # may keep appending later. Discover by file mtime across the whole tree;
+    # the per-line timestamp filter trims precisely afterwards.
+    while IFS= read -r f; do
+      [ -n "$f" ] && codex_files+=("$f")
+    done < <(find "$CODEX_ROOT" -type f -name 'rollout-*.jsonl' -newermt "$CUTOFF_LOCAL" 2>/dev/null)
   else
     echo "mine_transcripts.sh: $CODEX_ROOT not found, skipping Codex source" >&2
   fi
@@ -295,6 +282,19 @@ fi
 read -r -d '' AGG_JQ <<'JQ' || true
 # slurp of per-session objects; args: $window_from $window_to $hours $maxsnip $prior
 def mergecounts(f): reduce (.[] | f | to_entries[]) as $e ({}; .[$e.key] += $e.value);
+# Fair-share global snippet budget across projects (no per-project floor).
+# Remainder goes to the hottest projects first (already sorted by -user_turns).
+def cap_snippets($projs; $max):
+  ($projs | length) as $np
+  | if $np == 0 then []
+    else
+      (($max / $np) | floor) as $share
+      | ($max % $np) as $rem
+      | [ range(0; $np) as $i
+          | $projs[$i]
+          | .snippets |= .[0:($share + (if $i < $rem then 1 else 0 end))]
+        ]
+    end;
 . as $sessions
 | {
     window: { from: $window_from, to: $window_to, hours: $hours },
@@ -309,18 +309,20 @@ def mergecounts(f): reduce (.[] | f | to_entries[]) as $e ({}; .[$e.key] += $e.v
                         | select(. as $x | ($prior | index($x)) | not) ] | length )
     },
     projects: (
-      [ $sessions | group_by(.cwd)[]
-        | {
-            cwd: .[0].cwd,
-            sources: ( [ .[].source ] | unique ),
-            sessions: length,
-            user_turns: ( [ .[].user_turns ] | add // 0 ),
-            errorish: ( [ .[].errorish ] | add // 0 ),
-            tools: ( reduce (.[].tools | to_entries[]) as $e ({}; .[$e.key] += $e.value) ),
-            bash_bins: ( reduce (.[].bash_bins | to_entries[]) as $e ({}; .[$e.key] += $e.value) ),
-            snippets: ( [ .[].snippets[] ] )
-          }
-      ] | sort_by(-.user_turns)
+      ( [ $sessions | group_by(.cwd)[]
+          | {
+              cwd: .[0].cwd,
+              sources: ( [ .[].source ] | unique ),
+              sessions: length,
+              user_turns: ( [ .[].user_turns ] | add // 0 ),
+              errorish: ( [ .[].errorish ] | add // 0 ),
+              tools: ( reduce (.[].tools | to_entries[]) as $e ({}; .[$e.key] += $e.value) ),
+              bash_bins: ( reduce (.[].bash_bins | to_entries[]) as $e ({}; .[$e.key] += $e.value) ),
+              snippets: ( [ .[].snippets[] ] )
+            }
+        ] | sort_by(-.user_turns)
+      ) as $projs
+      | cap_snippets($projs; $maxsnip)
     ),
     signals: {
       hot_bins: ( mergecounts(.bash_bins) | to_entries | map(select(.value >= 3))
@@ -349,15 +351,11 @@ AGG="$(jq -s \
 if [ "$FORMAT" = "json" ]; then
   printf '%s\n' "$AGG"
 else
-  # Markdown rendering, driven from the aggregate JSON. The per-project snippet
-  # count is budgeted so the total stays under --max-snippets.
+  # Markdown rendering, driven from the aggregate JSON. Snippet lists are already
+  # globally capped in AGG_JQ; render them as-is so MD and JSON stay aligned.
   read -r -d '' MD_JQ <<'JQ' || true
-# args: $maxsnip
 def commas(o): [ o | to_entries | sort_by(-.value) | .[] | "\(.key)×\(.value)" ] | join(", ");
-( .projects | length ) as $np
-| ( if $np > 0 then ( ($maxsnip / $np) | floor ) else 0 end ) as $share
-| ( if $share < 2 then 2 else $share end ) as $per
-| ( "# daily-loop digest  (window: \(.window.from) .. \(.window.to), \(.window.hours)h)\n" ),
+( "# daily-loop digest  (window: \(.window.from) .. \(.window.to), \(.window.hours)h)\n" ),
   ( "## Overview" ),
   ( "- sessions: \(.totals.sessions) (" +
       ( [ .totals.by_source | to_entries[] | "\(.key): \(.value)" ] | join(", ") ) + ")" ),
@@ -376,7 +374,7 @@ def commas(o): [ o | to_entries | sort_by(-.value) | .[] | "\(.key)×\(.value)" 
           then "- hot shell bins: " + commas(.bash_bins) else empty end ),
       ( if (.snippets | length) > 0
           then "- representative asks:" else empty end ),
-      ( .snippets[0:$per][] | "  - " + (gsub("\n";" ⏎ ")) ),
+      ( .snippets[] | "  - " + (gsub("\n";" ⏎ ")) ),
       ( "" )
   ),
   ( "## Cross-cutting signals (script-computed, not judged)" ),
@@ -396,7 +394,7 @@ def commas(o): [ o | to_entries | sort_by(-.value) | .[] | "\(.key)×\(.value)" 
       else "- Claude Read paths over 3×: (none)" end )
 JQ
 
-  printf '%s\n' "$AGG" | jq -r --argjson maxsnip "$MAX_SNIPPETS" "$MD_JQ"
+  printf '%s\n' "$AGG" | jq -r "$MD_JQ"
 fi
 
 if [ "$CHECKPOINT" -eq 1 ]; then

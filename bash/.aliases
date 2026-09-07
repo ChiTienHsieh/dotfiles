@@ -111,37 +111,64 @@ chrome-recover() {
 # -----------------------------------------------------------------------------
 # File operations
 # -----------------------------------------------------------------------------
-# Move to Trash with timestamp suffix (prevents collision)
-# Use -f to force trash files >5MB
+# Move to Trash into a unique mktemp container (same-second + same basename safe).
+# Use -f to force trash files >5MB. Pass -- before leading-dash names.
 trash() {
     local force=false
     local max_size_kb=5120  # 5MB in KB
+    # Avoid `status`: zsh treats it as a read-only special variable.
+    local trash_result=0
+    local trash_root="${HOME}/.Trash"
 
     # Check for -f flag
     if [[ "$1" == "-f" ]]; then
         force=true
         shift
     fi
+    if [[ "$1" == "--" ]]; then
+        shift
+    fi
 
-    local ts=$(date +"%y%m%d-%H%M%S")
+    if [[ $# -eq 0 ]]; then
+        echo "trash: missing operand" >&2
+        return 1
+    fi
+
+    mkdir -p "$trash_root" || return 1
+
+    local f size_kb size_mb base dest
     for f in "$@"; do
-        if [[ ! -e "$f" ]]; then
-            echo "trash: '$f' not found"
+        # -L covers broken symlinks; -e covers existing files/dirs/symlinks.
+        if [[ ! -e "$f" && ! -L "$f" ]]; then
+            echo "trash: '$f' not found" >&2
+            trash_result=1
             continue
         fi
 
         # Get size in KB (works for both files and dirs)
-        local size_kb=$(du -sk "$f" 2>/dev/null | cut -f1)
+        size_kb=$(du -sk -- "$f" 2>/dev/null | cut -f1)
+        size_kb=${size_kb:-0}
 
         if [[ "$force" == false && "$size_kb" -gt "$max_size_kb" ]]; then
-            local size_mb=$((size_kb / 1024))
-            echo "trash: '$f' is ${size_mb}MB (>5MB). Use 'trash -f $f' to force."
+            size_mb=$((size_kb / 1024))
+            echo "trash: '$f' is ${size_mb}MB (>5MB). Use 'trash -f -- $f' to force." >&2
+            trash_result=1
             continue
         fi
 
-        local base=$(basename "$f")
-        mv -fv "$f" ~/.Trash/"${base}.${ts}"
+        base=$(basename -- "$f")
+        dest=$(mktemp -d "${trash_root}/${base}.XXXXXX") || {
+            trash_result=1
+            continue
+        }
+        if mv -fv -- "$f" "$dest/"; then
+            :
+        else
+            rmdir "$dest" 2>/dev/null || true
+            trash_result=1
+        fi
     done
+    return "$trash_result"
 }
 bak() { cp -vr "$@" ".${@}.bak"; }      # Create backup with .bak suffix
 hide() { mv -v "$@" ".${@}"; }          # Hide file (prepend dot)

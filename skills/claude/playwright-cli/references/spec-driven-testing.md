@@ -3,8 +3,8 @@
 End-to-end workflow for authoring and maintaining Playwright tests using `playwright-cli`. The three sections below can be used independently:
 
 - **Planning** — explore the app, produce a spec file describing what to test.
-- **Generate** — turn a spec into Playwright test files. Update the spec if it's vague or stale.
-- **Heal** — diagnose failing tests, fix the code, reconcile the spec with reality.
+- **Generate** — turn a spec into Playwright test files. Clarify vague steps if needed; do not rewrite user-visible expected outcomes to match a possible app regression.
+- **Heal** — diagnose failing tests, fix the code, reconcile the spec with reality only after intentional-change vs regression is clear.
 
 All three lean on the same mechanic: run `npx playwright test --debug=cli` in the background, then `playwright-cli attach tw-XXXX` to drive the paused page interactively. See [playwright-tests.md](playwright-tests.md) for the debug/attach mechanics and [test-generation.md](test-generation.md) for how every `playwright-cli` action emits Playwright TypeScript.
 
@@ -151,7 +151,7 @@ Guidelines:
 
 ## 2. Generate
 
-Goal: take a spec file and produce Playwright test files. Optionally update the spec if it has drifted.
+Goal: take a spec file and produce Playwright test files. The user-supplied spec owns expected behaviour; do not rewrite it to match a possible regression.
 
 ### 2.1 Inputs
 
@@ -171,7 +171,11 @@ playwright-cli attach tw-XXXX
 
 **Do not** just open the app url with playwright-cli, always go through the test to capture any custom setup done there.
 
-Walk the scenario's `Steps:` one by one with `playwright-cli`, treating the spec as the plan and the live app as the source of truth. If a step is vague ("click the button" — which button?), references an element that no longer exists, or contradicts the app's actual behaviour, use your judgement: update the spec to match what the app really does, then keep going. Editing the spec mid-generation is expected.
+Walk the scenario's `Steps:` one by one with `playwright-cli`. The user-supplied spec owns expected outcomes; the live app is for locating controls and observing behaviour.
+
+- If a step is vague ("click the button" — which button?) or a locator has drifted, clarify the step or fix the locator and keep going.
+- If the app contradicts a clear user-visible expected outcome in the spec, **do not** rewrite the spec to match the app. Treat that the same way Heal does: stop and ask whether this is an intentional product change or a regression. Provide the scenario id, the mismatched expect lines, and the observed behaviour.
+- Only after the user answers may you update the spec (intentional change) or keep the original expect and flag the mismatch as a bug (regression).
 
 Every action prints the equivalent Playwright TypeScript (see [test-generation.md](test-generation.md)):
 
