@@ -8,7 +8,8 @@ the same file. Directory layout: see the structure diagram in `README.md`.
 
 ## Agent Memory Access
 
-- `~/.codex/AGENTS.md` -> `./codex/AGENTS.md`; `~/.claude/CLAUDE.md` ->
+- `~/.codex/AGENTS.md` -> `./agents/AGENTS.md`; `codex/AGENTS.md` is a relative
+  compatibility symlink for existing installs. `~/.claude/CLAUDE.md` ->
   `./claude/CLAUDE.md`. Edit the repo copies directly; no need to write outside
   the sandbox.
 
@@ -20,7 +21,7 @@ the same file. Directory layout: see the structure diagram in `README.md`.
 - This is a PUBLIC repo. Before pushing verify: no secrets, private keys, or
   tokens; no machine-specific host details; no accidental local-only paths.
 - Guardrail / SSOT changes (CLAUDE.md, AGENTS.md, settings, skills, playbooks):
-  follow the reviewer-routing and simplify-review rules in `codex/AGENTS.md`
+  follow the reviewer-routing and simplify-review rules in `agents/AGENTS.md`
   (reviewer choice per the `delegate` skill). Non-interactive review
   is pre-authorized for this repo — run it yourself; do not ask the user to
   approve the review step.
@@ -39,6 +40,6 @@ the same file. Directory layout: see the structure diagram in `README.md`.
 ## Maintenance Recipes (lazy)
 
 - Aliases, adding new dotfiles, testing shell/tmux changes, nvim submodule
-  details: read `codex/notes/dotfiles-maintenance.md` when touching those areas.
+  details: read `agents/notes/dotfiles-maintenance.md` when touching those areas.
   Quick rule: machine-specific content goes to gitignored `bash/.aliases.local`,
   and new dotfiles need an `install.sh` symlink entry.

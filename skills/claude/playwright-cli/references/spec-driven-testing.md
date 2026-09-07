@@ -174,8 +174,8 @@ playwright-cli attach tw-XXXX
 Walk the scenario's `Steps:` one by one with `playwright-cli`. The user-supplied spec owns expected outcomes; the live app is for locating controls and observing behaviour.
 
 - If a step is vague ("click the button" — which button?) or a locator has drifted, clarify the step or fix the locator and keep going.
-- If the app contradicts a clear user-visible expected outcome in the spec, **do not** rewrite the spec to match the app. Treat that the same way Heal does: stop and ask whether this is an intentional product change or a regression. Provide the scenario id, the mismatched expect lines, and the observed behaviour.
-- Only after the user answers may you update the spec (intentional change) or keep the original expect and flag the mismatch as a bug (regression).
+- If the app contradicts a clear expected outcome, keep the original spec and generate the original assertion. Record the scenario id, mismatched expect lines, and observed behaviour, then continue generating the remaining scenarios. Report the mismatches together after generation; do not mark assertions as expected failures or skip them just to make the suite pass.
+- Change an expected outcome only when the user has authorized that product change. A mismatch alone does not require interrupting generation or rewriting the spec.
 
 Every action prints the equivalent Playwright TypeScript (see [test-generation.md](test-generation.md)):
 

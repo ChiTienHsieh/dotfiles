@@ -46,7 +46,7 @@ OPEN_FORMATS = {
     "pane": "CODEX_TMUX_WORKER_OPEN=pane:#{pane_id}",
 }
 SESSION_CLOSED_RECEIPT_RE = re.compile(
-    r"^\s*tmux\s+has-session\s+-t\s+=(?P<target>[A-Za-z0-9_.-]+)"
+    r"^\s*tmux\s+has-session\s+-t\s+=?(?P<target>[A-Za-z0-9_.-]+)"
     r"\s+2>/dev/null\s+\|\|\s+printf\s+'%s\\n'\s+"
     r"'CODEX_TMUX_WORKER_CLOSED=session:(?P<marker>[A-Za-z0-9_.-]+)'\s*$"
 )

@@ -1768,6 +1768,7 @@ $('btnExportAgent').addEventListener('click', () => {
   copyText(agentPreamble() + '\n' + serializeMermaid(doc), '已複製(含給 AI 的註解說明),貼回 agent 對話即可');
 });
 $('btnNew').addEventListener('click', () => {
+  if (codeDirty) { toast('程式碼有未套用的修改,先按「套用」再建立新圖', true); return; }
   if (!confirm('清空目前的圖、開一張新的?(目前內容會留在復原歷史裡)')) return;
   if (!mutate(() => { doc = emptyDoc(); })) return;
   positions = new Map();

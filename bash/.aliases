@@ -157,7 +157,7 @@ trash() {
         fi
 
         base=$(basename -- "$f")
-        dest=$(mktemp -d "${trash_root}/${base}.XXXXXX") || {
+        dest=$(mktemp -d "${trash_root}/${base}.$(date +%y%m%d-%H%M%S).XXXXXX") || {
             trash_result=1
             continue
         }

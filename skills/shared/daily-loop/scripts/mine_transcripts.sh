@@ -31,7 +31,7 @@ Usage:
 Options:
   --since HOURS        Lookback window in hours (default 24)
   --format md|json     Output format (default md)
-  --max-snippets N     Global cap on verbatim user snippets (default 40)
+  --max-snippets N     Global cap on verbatim user snippets in md/json (default 40)
   --snippet-chars N    Truncate each snippet to N chars (default 240)
   --source all|claude|codex   Restrict source (default all)
   --state FILE         State log to read and optionally checkpoint
@@ -40,6 +40,7 @@ Options:
   --debug              Print candidate file list + counts to stderr
   -h, --help           Show this help
 
+Snippets are samples in both formats; aggregate counts include all matched events.
 Emits a compact digest of how you worked in the window. Reads
 ~/.claude/projects (Claude Code) and ~/.codex/sessions (Codex CLI) jsonl.
 USAGE

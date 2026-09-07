@@ -24,6 +24,8 @@ class TrashTests(unittest.TestCase):
                                         cwd=home, env=env, text=True, capture_output=True)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertNotIn("read-only variable", result.stderr)
+                for container in (home / ".Trash").iterdir():
+                    self.assertRegex(container.name, r"\.\d{6}-\d{6}\.[A-Za-z0-9]+$")
                 entries = list((home / ".Trash").glob("*/*"))
                 self.assertEqual(len(entries), 4)
                 self.assertEqual(sorted(p.read_text() for p in entries if not p.is_symlink()),

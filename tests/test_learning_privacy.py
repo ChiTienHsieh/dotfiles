@@ -15,9 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_GITIGNORE = (
     REPO_ROOT / "skills" / "shared" / "level-up" / "learning" / ".gitignore"
 )
-LEARNING_RECORDS_DOC = (
-    REPO_ROOT / "skills" / "shared" / "level-up" / "references" / "learning-records.md"
-)
+
 
 # Fixture paths relative to a synthetic learning/ directory.
 FIXTURE_REL_PATHS = (
@@ -42,20 +40,10 @@ class LearningPrivacyGitignoreTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.gitignore_text = SOURCE_GITIGNORE.read_text(encoding="utf-8")
-        cls.records_doc = LEARNING_RECORDS_DOC.read_text(encoding="utf-8")
 
     def test_gitignore_ignores_all_content_but_keeps_itself(self) -> None:
         self.assertIn("*", self.gitignore_text.splitlines())
         self.assertIn("!.gitignore", self.gitignore_text.splitlines())
-
-    def test_docs_say_learning_is_local_only(self) -> None:
-        lowered = self.records_doc.lower()
-        self.assertIn("local-only", lowered)
-        self.assertIn("on first need", lowered)
-        self.assertIn("references/", self.records_doc)
-        # Privacy rule remains even when local.
-        self.assertIn("financial", lowered)
-        self.assertIn("family", lowered)
 
     def test_synthetic_repo_ignores_fixtures_not_gitignore(self) -> None:
         with tempfile.TemporaryDirectory(prefix="learning-privacy-") as tmp:

@@ -149,7 +149,7 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             {("session", "review-one"), ("session", "review-two")},
         )
 
-    def test_rejects_prefix_match_session_receipt_without_equals(self) -> None:
+    def test_accepts_conservative_legacy_session_absence_receipt(self) -> None:
         tracker.save_workers(self.session_id, {("session", "review-one")})
         self.post(
             "tmux has-session -t review-one 2>/dev/null || "
@@ -157,7 +157,7 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             "CODEX_TMUX_WORKER_CLOSED=session:review-one\n",
         )
         self.assertEqual(
-            tracker.load_workers(self.session_id), {("session", "review-one")}
+            tracker.load_workers(self.session_id), set()
         )
 
     def test_stop_cleanup_commands_use_exact_session_targets(self) -> None:

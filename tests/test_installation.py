@@ -17,8 +17,8 @@ class InstallationTests(unittest.TestCase):
         self.home = base / "home"
         self.home.mkdir()
         self.repo = base / "repo"
-        shutil.copytree(ROOT, self.repo, ignore=shutil.ignore_patterns(
-            ".git", "nvim", "__pycache__", "output", "*.local"))
+        shutil.copytree(ROOT, self.repo, symlinks=True, ignore=shutil.ignore_patterns(
+            ".git", "nvim", "__pycache__", "output", "*.local", "learning"))
         (self.repo / "nvim").mkdir()
         self.env = dict(os.environ, HOME=str(self.home), TMPDIR=str(base),
                         GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
@@ -45,6 +45,40 @@ class InstallationTests(unittest.TestCase):
         self.install()
         self.assertEqual(index.read_text(), "export FIXTURE_VALUE=retained\n")
 
+    def test_shared_prompt_is_loaded_at_codex_default_path(self):
+        self.install()
+        prompt = self.home / ".codex/AGENTS.md"
+        shared = self.repo / "agents/AGENTS.md"
+        self.assertTrue(prompt.is_symlink())
+        self.assertEqual(prompt.resolve(), shared.resolve())
+        self.assertEqual(prompt.read_text(), shared.read_text())
+        self.assertNotIn("顏文字", prompt.read_text())
+        self.assertEqual((self.home / ".codex/agents").resolve(),
+                         (self.repo / "codex/agents").resolve())
+        self.assertTrue((self.home / ".codex/config.toml").is_file())
+        self.assertTrue((self.home / ".codex/hooks.json").is_file())
+        # A source edit remains visible immediately, without a generation step.
+        shared.write_text(shared.read_text() + "\nfixture shared instruction\n")
+        self.assertIn("fixture shared instruction", prompt.read_text())
+
+    def test_existing_prompt_link_and_runtime_state_survive_migration(self):
+        runtime = self.home / ".codex"
+        (runtime / "sessions").mkdir(parents=True)
+        (runtime / "sessions/fixture.txt").write_text("local session")
+        config = runtime / "config.toml"
+        config.write_text('model = "user-selected-model"\n')
+        prompt = runtime / "AGENTS.md"
+        prompt.symlink_to(self.repo / "codex/AGENTS.md")
+        shared = self.repo / "agents/AGENTS.md"
+        # The old two-hop path works even before rerunning install.sh.
+        self.assertEqual(prompt.resolve(), shared.resolve())
+        self.install()
+        self.install()
+        self.assertFalse(runtime.is_symlink())
+        self.assertEqual(config.read_text(), 'model = "user-selected-model"\n')
+        self.assertEqual((runtime / "sessions/fixture.txt").read_text(), "local session")
+        self.assertEqual(prompt.resolve(), shared.resolve())
+
     def test_machine_notes_with_same_basename_all_survive(self):
         originals = {".config/machine.md": "first", ".codex/machine.md": "second",
                      ".claude/machine.md": "third"}
@@ -67,6 +101,14 @@ class InstallationTests(unittest.TestCase):
         self.assertEqual(directory.stat().st_mode & 0o777, 0o700)
         self.assertEqual((directory / "provider.sh").read_text(), "fixture")
         self.assertEqual((directory / "index.sh").stat().st_mode & 0o777, 0o600)
+
+    def test_conflicting_secrets_index_does_not_block_remaining_setup(self):
+        index = self.home / ".secrets/index.sh"
+        index.mkdir(parents=True)
+        (index / "fixture.txt").write_text("keep")
+        self.install()
+        self.assertEqual((index / "fixture.txt").read_text(), "keep")
+        self.assertTrue((self.home / ".aliases.local").is_symlink())
 
     def test_legacy_secrets_stays_intact_and_both_shells_load_it(self):
         legacy = self.home / ".secrets"

@@ -313,6 +313,7 @@ function run() {
       s,
     );
     setDirtyPending(s, 'UNAPPLIED_BTNNEW');
+    s.confirm = () => { throw new Error('dirty New must not ask for confirmation'); };
     const before = snapshotPending(s);
     vm.runInContext('document.getElementById("btnNew").events.click()', s);
     const after = snapshotPending(s);

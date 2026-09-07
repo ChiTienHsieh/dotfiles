@@ -47,6 +47,16 @@ Normal cleanup closes only the session this task opened. Do not use
 `close-all` or `kill-all` as routine cleanup — they affect every session in
 the shared CLI workspace and can kill other tasks' browsers.
 
+## Recovering a Stuck Browser
+
+`kill-all` remains available for stuck Playwright processes, but it scans
+processes across workspaces, including CLI and MCP daemons. `playwright-cli
+list --all` helps inspect sessions; it alone does not establish ownership of
+every process that would be killed. Use global recovery when the user has
+requested that scope or all affected processes are verified as owned by this
+task. Otherwise close the task's named session, or stop only its verified stuck
+PID. There is no `session-stop-all` subcommand.
+
 ## Environment Variable
 
 Set a default browser session name via environment variable:

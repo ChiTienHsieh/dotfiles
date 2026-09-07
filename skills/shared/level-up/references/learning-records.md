@@ -29,6 +29,16 @@ Even though records are local, still forbid secrets and sensitive personal data
 (see Privacy and Safety below). Local-only is not a license to store identifying
 career, financial, health, or family details.
 
+## Upgrading an Existing Clone
+
+Before pulling the change that stops tracking `learning/`, copy that directory
+to a private backup outside the repo, including uncommitted and untracked files.
+Git applies tracked-file deletions during the update; `.gitignore` does not
+preserve those working-copy files. After updating, restore the records from the
+backup into `learning/`, keeping the new `.gitignore`. Keep the backup until you
+have verified the restored files. Fresh clones start with an empty local record
+store. This change does not remove previously published records from Git history.
+
 ## Read Before Teaching
 
 Inspect this skill's `learning/` directory:

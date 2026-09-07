@@ -45,8 +45,11 @@ dotfiles/
 │   └── .aliases.local.template  # Machine-specific aliases
 ├── claude/
 │   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
+├── agents/
+│   ├── AGENTS.md        # Shared instructions for Claude, Codex, and Grok
+│   └── notes/           # Shared delivery, backlog, and dotfiles recipes
 ├── codex/
-│   ├── AGENTS.md        # Codex CLI instructions
+│   ├── AGENTS.md        # Compatibility symlink -> ../agents/AGENTS.md
 │   ├── config.toml      # Portable first-install seed
 │   ├── cc-worker.config.toml  # Sandbox profile for headless Codex workers
 │   ├── hooks.json       # Global Codex lifecycle hook registration
@@ -69,6 +72,22 @@ dotfiles/
 ├── install.sh           # Installation script
 └── README.md
 ```
+
+## 共用規則與工具專用設定
+
+`agents/` 放跨工具共用的規則與 notes；`codex/`、`claude/`、`grok/` 保留各自的設定、hooks 與工具專用文件。採用複數是參考 [Agent Skills 的 `.agents/skills` 共用慣例](https://agentskills.io/client-implementation/adding-skills-support)，不是宣稱 `agents/AGENTS.md` 本身是工具自動掃描的標準位置。
+
+安裝後，Codex 仍從官方指定的 [`~/.codex/AGENTS.md`](https://learn.chatgpt.com/docs/agent-configuration/agents-md) 自動載入共用 prompt：
+
+```text
+~/.codex/AGENTS.md -> <repo>/agents/AGENTS.md
+<repo>/codex/AGENTS.md -> ../agents/AGENTS.md  # 讓既有安裝繼續有效
+~/.claude/CLAUDE.md -> <repo>/claude/CLAUDE.md  # 引用共用 AGENTS.md
+```
+
+目前沒有另外複製一份 Codex 專用 AGENTS.md；Codex 的預設設定仍在 `codex/config.toml`，專用操作筆記在 `codex/notes/`。共用 prompt 透過 symlink 即時更新，不需要 agent 再呼叫工具讀取第二份 prompt，也沒有產生檔或額外啟動 hook。
+
+`~/.codex` 保留為 runtime 目錄，只連結受管理的檔案／子目錄。既有 `config.toml` 與 session 資料保留；config 只在首次安裝時從 repo 種子建立。不要把整個 `agents/` 或 `codex/` 連成 `~/.codex`，避免把帳號與 session 資料寫進公開 repo。
 
 ## Post-Installation
 

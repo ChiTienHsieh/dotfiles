@@ -337,7 +337,7 @@ prune_stale_dotfiles_links "$HOME/.local/bin"
 # -----------------------------------------------------------------------------
 echo "[9/11] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
-backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+backup_and_link "$DOTFILES_DIR/agents/AGENTS.md" "$HOME/.codex/AGENTS.md"
 # config.toml is seeded once, then owned by the live Codex runtime (it appends
 # projects/hooks/desktop state); unconditional copy would clobber live drift.
 if [ ! -e "$HOME/.codex/config.toml" ]; then
@@ -419,8 +419,8 @@ ensure_secrets() {
         return 0
     fi
     if [ -e "$index" ]; then
-        echo "ERROR: ~/.secrets/index.sh is not a file; leaving untouched." >&2
-        return 1
+        echo "Warning: ~/.secrets/index.sh is not a file; skipping secrets setup and leaving it untouched." >&2
+        return 0
     fi
     (umask 077; cp "$DOTFILES_DIR/templates/.secrets.template" "$index")
     chmod 600 "$index"

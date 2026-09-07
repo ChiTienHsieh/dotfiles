@@ -1,9 +1,9 @@
 @SOUL.md
 @USER.md
-@~/dotfiles/codex/AGENTS.md
+@~/dotfiles/agents/AGENTS.md
 
 ## Terminology
-- "Claude Code" 可縮寫為 "CC"。跨 agent 共用規則在 `~/dotfiles/codex/AGENTS.md`；本檔只放 Claude 專屬行為與更嚴的覆蓋，不重複共用規則。
+- "Claude Code" 可縮寫為 "CC"。跨 agent 共用規則在 `~/dotfiles/agents/AGENTS.md`；本檔只放 Claude 專屬行為與更嚴的覆蓋，不重複共用規則。
 
 ## Proactivity
 - 需要確認時直接在聊天裡列編號選項＋標推薦，不要開放式乾問；不用 AskUserQuestion（已 deny —— 選項欄位固定長度，內容被截斷看不懂）。
