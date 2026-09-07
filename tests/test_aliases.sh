@@ -103,4 +103,4 @@ else
 fi
 
 echo ""
-echo "${GREEN}All tests passed!${NC} (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧"
+echo "${GREEN}All tests passed!${NC}"

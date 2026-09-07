@@ -11,14 +11,12 @@ disable-model-invocation: true
 ## Resources
 
 - 複製並改寫 `assets/career_decision_template.typ` 的版型與 helpers；把內容裡的範例事實全數換成本次資料。
-- 加入 kaomoji、符號或 checkbox 前，讀 `references/kaomoji-guide.md`。
 - 需要挑選章節時，讀 `references/section-patterns.md`；只取本次決策需要的部分。
 
 ## Content contract
 
 - 用自然的 zh-TW 和日常語彙，把技術概念改寫成非技術背景的家人能快速理解的版本。
 - 先說結論，再說理由；保持短句、短段落，用表格或色塊比較選項、條件、時間與風險。
-- 單頁 PDF 至少自然放一個 kaomoji；多頁文件少量使用，不要每頁硬塞。
 
 ## Mobile page contract
 

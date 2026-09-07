@@ -220,10 +220,10 @@ addali() {
     conflicted_names="$alias_name"
 
     while check_name_conflict "$alias_name"; do
-        echo "(・_・;) '$alias_name' conflicts"
+        echo "'$alias_name' conflicts"
 
         if [ $llm_calls -ge $max_llm_calls ]; then
-            echo "(╯°□°)╯ Max LLM calls reached"
+            echo "Max LLM calls reached"
             read "alias_name?Enter name: "
             [ -z "$alias_name" ] && return 1
             continue
@@ -234,10 +234,10 @@ addali() {
         llm_calls=$((llm_calls + 1))
 
         if [ -z "$suggested_name" ]; then
-            echo "(´・ω・\`) AI failed"
+            echo "AI failed"
             read "alias_name?Enter name: "
         else
-            echo "(°▽°) Suggestion: '$suggested_name'"
+            echo "Suggestion: '$suggested_name'"
             read "choice?Accept? (y/n/manual): "
             case $choice in
                 y|Y) alias_name="$suggested_name" ;;
@@ -260,7 +260,7 @@ addali() {
     echo "$full_alias" >> ~/.aliases.local
     eval "$full_alias"
 
-    echo "(ﾉ◕ヮ◕)ﾉ $alias_name → $alias_command"
+    echo "$alias_name → $alias_command"
 
     source ~/.aliases.local 2>/dev/null
 }
@@ -273,18 +273,18 @@ addcd() {
     read "alias_name?Alias name to cd here ($current_dir): "
 
     if [ -z "$alias_name" ]; then
-        echo "(´・ω・\`) Name required"
+        echo "Name required"
         return 1
     fi
 
     # Check for conflicts
     if check_name_conflict "$alias_name"; then
-        echo "(・_・;) '$alias_name' exists: $(type "$alias_name" 2>&1 | head -1)"
+        echo "'$alias_name' exists: $(type "$alias_name" 2>&1 | head -1)"
         read "alias_name?Different name: "
         [ -z "$alias_name" ] && return 1
 
         if check_name_conflict "$alias_name"; then
-            echo "(╯°□°)╯ '$alias_name' also taken"
+            echo "'$alias_name' also taken"
             return 1
         fi
     fi
@@ -294,7 +294,7 @@ addcd() {
     echo "$full_alias" >> ~/.aliases.local
     eval "$full_alias"
 
-    echo "(ﾉ◕ヮ◕)ﾉ $alias_name → $current_dir"
+    echo "$alias_name → $current_dir"
 }
 
 # -----------------------------------------------------------------------------
@@ -334,7 +334,7 @@ pp() {
     local prompts_dir="/tmp/prompts"
 
     if [[ ! -d "$prompts_dir" ]]; then
-        echo "(´・ω・\`) $prompts_dir doesn't exist"
+        echo "$prompts_dir doesn't exist"
         return 1
     fi
 
@@ -342,7 +342,7 @@ pp() {
     local latest=$(ls "$prompts_dir"/prompt-*.md 2>/dev/null | sort -r | head -1)
 
     if [[ -z "$latest" ]]; then
-        echo "(´・ω・\`) No prompt files in $prompts_dir"
+        echo "No prompt files in $prompts_dir"
         return 1
     fi
 
@@ -368,7 +368,7 @@ pc() {
     local prompts_dir="/tmp/prompts"
 
     if [[ ! -d "$prompts_dir" ]]; then
-        echo "(´・ω・\`) $prompts_dir doesn't exist"
+        echo "$prompts_dir doesn't exist"
         return 1
     fi
 
@@ -376,7 +376,7 @@ pc() {
     local latest=$(ls "$prompts_dir"/prompt-*.md 2>/dev/null | sort -r | head -1)
 
     if [[ -z "$latest" ]]; then
-        echo "(´・ω・\`) No prompt files in $prompts_dir"
+        echo "No prompt files in $prompts_dir"
         return 1
     fi
 
@@ -446,7 +446,7 @@ wheredef() {
     done
 
     # Not found in our config files - fall back to type
-    echo "(・_・;) Not found in shell configs"
+    echo "Not found in shell configs"
     echo ""
     type "$name" 2>&1
 }
@@ -457,13 +457,13 @@ wheredef() {
 cldaddcontext7() {
     echo "(°ロ°) Adding Context7 MCP..."
     claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
-    echo "(ﾉ◕ヮ◕)ﾉ Use 'use context7' in prompts"
+    echo "Use 'use context7' in prompts"
 }
 
 cldaddplaywright() {
     echo "(°ロ°) Adding Playwright MCP..."
     claude mcp add playwright npx @playwright/mcp@latest
-    echo "(ﾉ◕ヮ◕)ﾉ Say 'use playwright mcp to open browser'"
+    echo "Say 'use playwright mcp to open browser'"
 }
 
 # Safe planning session for sensitive dirs (e.g. ~).
@@ -489,7 +489,7 @@ tmclean() {
             tmux kill-session -t "=$name" && echo "killed: $name" && ((killed++))
         fi
     done < <(tmux ls -F '#{session_name} #{session_attached}' 2>/dev/null)
-    (( killed == 0 )) && echo "沒有可清的匿名 session (・ω・)"
+    (( killed == 0 )) && echo "沒有可清的匿名 session"
     return 0
 }
 

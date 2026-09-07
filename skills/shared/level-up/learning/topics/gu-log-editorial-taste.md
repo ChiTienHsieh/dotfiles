@@ -49,7 +49,6 @@
 ### Language and presentation
 - 「首屏」讀起來像支語；改用「開頭、首段、文章一開始」。
 - Repo 實查目前沒有完整支語警察 hook：zh-tw style guide 是散文規則，晶晶體 checker 管 English mixing，AI-tells hook 只有窄版 blocklist。後續應把高信心、低誤判用語放 deterministic gate，語境型 taste 留 reviewer。
-- Kaomoji 只用常見、已知能穩定渲染的字元；避免 superscript modifier letters 與罕見 glyph 組合。
 - Hassabis 原文標題已核對為 `A Framework for Frontier AI and the Dawning of a New Age`；文內 H2 `A Framework for a Frontier AI Standards Body` 不是全文標題。
 - 標題新方向：直接翻譯原標題，但刻意採超爆中二的 zh-tw 語氣，因為原文在使用者讀感裡本來就很中二；exact wording 尚待拍板。
 - 標題 taste correction：`前沿 AI 之框架` 正式淘汰，只有換虛詞、毫無中二能量；`破曉之時` 可接受。前半需要真正的最終章語彙與畫面，例如「創世綱要／奇點山麓／創世宣言」，但仍應取材自原文而非憑空改寫。

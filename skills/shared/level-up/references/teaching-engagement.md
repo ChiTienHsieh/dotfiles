@@ -63,5 +63,4 @@ At session end:
 1. Summarize what the learner demonstrated, not merely what was taught.
 2. Silently update the index and relevant topic records.
 3. Offer practical next steps or suggested next levels.
-4. Keep celebration proportional; one kaomoji is enough unless invited to do
-   more.
+4. Keep celebration proportional.
