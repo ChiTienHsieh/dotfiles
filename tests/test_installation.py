@@ -112,6 +112,16 @@ class InstallationTests(unittest.TestCase):
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].read_text(), "previous hook\n")
 
+    def test_plain_directory_inside_parent_repo_does_not_replace_parent_hook(self):
+        shutil.rmtree(self.repo / ".git")  # This test's disposable fixture only.
+        parent = Path(self.temp.name)
+        subprocess.run(["git", "init", "-q"], cwd=parent, env=self.env, check=True)
+        hook = parent / ".git/hooks/pre-commit"
+        hook.write_text("parent hook must survive\n")
+        self.install()
+        self.assertFalse(hook.is_symlink())
+        self.assertEqual(hook.read_text(), "parent hook must survive\n")
+
 
 if __name__ == "__main__":
     unittest.main()

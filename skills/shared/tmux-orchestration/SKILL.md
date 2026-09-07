@@ -170,7 +170,7 @@ of completion.
 When a standalone worker session is no longer needed:
 
 ```bash
-tmux kill-session -t SESSION_NAME
+tmux kill-session -t =SESSION_NAME
 ```
 
 When a side-by-side worker pane is no longer needed:
@@ -184,7 +184,7 @@ absence receipt below in a separate command. It verifies that the exact target
 is gone before printing the closed marker:
 
 ```bash
-tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
+tmux has-session -t =SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
 tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
 ```
 

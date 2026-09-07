@@ -34,6 +34,13 @@ installer = load_module("install_hooks", INSTALLER_PATH)
 
 
 class TmuxWorkerTrackerTests(unittest.TestCase):
+    def test_documented_session_receipt_is_accepted(self) -> None:
+        skill = (REPO_ROOT / "skills/shared/tmux-orchestration/SKILL.md").read_text()
+        receipt = next(line for line in skill.splitlines()
+                       if line.startswith("tmux has-session") and "CODEX_TMUX_WORKER_CLOSED=session:" in line)
+        self.assertIsNotNone(tracker.SESSION_CLOSED_RECEIPT_RE.fullmatch(
+            receipt.replace("SESSION_NAME", "review-one")))
+
     SESSION_OPEN = (
         "tmux new-session -d -P \\\n"
         "  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \\\n"

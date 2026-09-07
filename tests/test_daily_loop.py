@@ -19,7 +19,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "skills" / "shared" / "daily-loop" / "scripts" / "mine_transcripts.sh"
-FIXTURE_ROOT = Path("/tmp/dotfiles-fix-20260907-daily-loop-fixtures")
 
 
 def utc_now_iso() -> str:
@@ -73,8 +72,7 @@ class DailyLoopMineTests(unittest.TestCase):
             raise unittest.SkipTest(f"missing script: {SCRIPT}")
 
     def setUp(self) -> None:
-        FIXTURE_ROOT.mkdir(parents=True, exist_ok=True)
-        self._ctx = tempfile.TemporaryDirectory(prefix="daily-loop-", dir=str(FIXTURE_ROOT))
+        self._ctx = tempfile.TemporaryDirectory(prefix="daily-loop-")
         self.root = Path(self._ctx.name)
         self.home = self.root / "home"
         self.tmpdir = self.root / "tmpdir"

@@ -387,7 +387,7 @@ echo ""
 # -----------------------------------------------------------------------------
 echo "[11/11] Installing git hooks..."
 GIT_COMMON_DIR="$(git -C "$DOTFILES_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
-if [ -n "$GIT_COMMON_DIR" ] && [ -d "$GIT_COMMON_DIR" ]; then
+if [ -e "$DOTFILES_DIR/.git" ] && [ -n "$GIT_COMMON_DIR" ] && [ -d "$GIT_COMMON_DIR" ]; then
     mkdir -p "$GIT_COMMON_DIR/hooks"
     backup_and_link "$DOTFILES_DIR/hooks/pre-commit" "$GIT_COMMON_DIR/hooks/pre-commit"
 else
