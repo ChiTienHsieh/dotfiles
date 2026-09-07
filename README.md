@@ -108,6 +108,8 @@ These files are created from templates but not tracked in git:
 
 ## Updating
 
+既有 clone 若含已追蹤的 `skills/shared/level-up/learning/` 紀錄，先在 repo 外備份再更新；Git 會套用刪除追蹤檔的變更。更新後把紀錄還原到原目錄並保留新的 `.gitignore`。[升級說明](skills/shared/level-up/references/learning-records.md#upgrading-an-existing-clone)。這不會清除舊公開 Git 歷史。
+
 ```bash
 cd ~/dotfiles
 git pull
