@@ -8,16 +8,14 @@ the same file. Directory layout: see the structure diagram in `README.md`.
 
 ## Agent Memory Access
 
-- `~/.codex/AGENTS.md` -> `./agents/AGENTS.md`; `codex/AGENTS.md` is a relative
-  compatibility symlink for existing installs. `~/.claude/CLAUDE.md` ->
-  `./claude/CLAUDE.md`. Edit the repo copies directly; no need to write outside
-  the sandbox.
+- `~/.codex/AGENTS.md` -> `./agents/AGENTS.md` (`codex/AGENTS.md` is a symlink
+  to it); `~/.claude/CLAUDE.md` -> `./claude/CLAUDE.md`. Edit the repo copies
+  directly.
 
 ## Autonomous Completion
 
 - Safe, clear changes: work autonomously through review, commit, and push to
-  `origin`. Do not stop with unpushed changes — that forces the next agent to
-  reconstruct context from scratch.
+  `origin`. Do not stop with unpushed changes.
 - This is a PUBLIC repo. Before pushing verify: no secrets, private keys, or
   tokens; no machine-specific host details; no accidental local-only paths.
 - Guardrail / SSOT changes (CLAUDE.md, AGENTS.md, settings, skills, playbooks):

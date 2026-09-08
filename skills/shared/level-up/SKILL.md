@@ -14,8 +14,7 @@ description: "Run guided, staged teaching when the user asks for level-up coachi
 
 ## Reference Router
 
-Load only the references needed for the current turn. Every reference is linked
-directly here; do not depend on one reference to route to another.
+Load only the references needed for the current turn.
 
 - **Every level-up session:** read
   [`references/learning-records.md`](references/learning-records.md) before
