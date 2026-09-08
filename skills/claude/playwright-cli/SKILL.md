@@ -6,13 +6,11 @@ allowed-tools: Bash(playwright-cli:*)
 
 # Browser Automation with playwright-cli
 
-卡死救援仍可使用 `kill-all`，但它會影響其他 workspace 的 CLI／MCP daemon，不能只憑目前 session 清單就執行。範圍確認與替代方法見 [session-management.md](references/session-management.md)；CLI 沒有 `session-stop-all` 子指令。
-
 ## Login flows & sandbox (read first)
 
 - **Login flows (OAuth, GCP Console, etc.) need `--headed`**: `playwright-cli open "<url>" --headed` opens a visible browser window. The default headless browser is invisible, so the user has nowhere to log in.
 - In Claude Code, playwright-cli needs `dangerouslyDisableSandbox: true` (it talks over Unix sockets the sandbox blocks).
-- Give each task a unique named session (`-s=<task-unique-name>`). When done, close only that session: `playwright-cli -s=<task-unique-name> close`. Do not use `close-all` or `kill-all` as routine cleanup — they can destroy other tasks' browsers.
+- Give each task a unique named session (`-s=<task-unique-name>`). When done, close only that session: `playwright-cli -s=<task-unique-name> close`. Do not use `close-all` or `kill-all` as routine cleanup — they can destroy other tasks' browsers; for a stuck daemon see [session-management.md](references/session-management.md).
 
 ## Quick start
 

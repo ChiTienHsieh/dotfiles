@@ -75,7 +75,7 @@ dotfiles/
 
 ## 共用規則與工具專用設定
 
-`agents/` 放跨工具共用的規則與 notes；`codex/`、`claude/`、`grok/` 保留各自的設定、hooks 與工具專用文件。採用複數是參考 [Agent Skills 的 `.agents/skills` 共用慣例](https://agentskills.io/client-implementation/adding-skills-support)，不是宣稱 `agents/AGENTS.md` 本身是工具自動掃描的標準位置。
+`agents/` 放跨工具共用的規則與 notes；`codex/`、`claude/`、`grok/` 保留各自的設定、hooks 與工具專用文件。
 
 安裝後，Codex 仍從官方指定的 [`~/.codex/AGENTS.md`](https://learn.chatgpt.com/docs/agent-configuration/agents-md) 自動載入共用 prompt：
 
@@ -85,7 +85,7 @@ dotfiles/
 ~/.claude/CLAUDE.md -> <repo>/claude/CLAUDE.md  # 引用共用 AGENTS.md
 ```
 
-目前沒有另外複製一份 Codex 專用 AGENTS.md；Codex 的預設設定仍在 `codex/config.toml`，專用操作筆記在 `codex/notes/`。共用 prompt 透過 symlink 即時更新，不需要 agent 再呼叫工具讀取第二份 prompt，也沒有產生檔或額外啟動 hook。
+目前沒有另外複製一份 Codex 專用 AGENTS.md；Codex 的預設設定仍在 `codex/config.toml`，專用操作筆記在 `codex/notes/`。共用 prompt 透過 symlink 即時更新。
 
 `~/.codex` 保留為 runtime 目錄，只連結受管理的檔案／子目錄。既有 `config.toml` 與 session 資料保留；config 只在首次安裝時從 repo 種子建立。不要把整個 `agents/` 或 `codex/` 連成 `~/.codex`，避免把帳號與 session 資料寫進公開 repo。
 
@@ -101,7 +101,7 @@ dotfiles/
 
 These files are created from templates but not tracked in git:
 
-- `~/.secrets/` - API keys and tokens (directory 700, index.sh 600); an existing single-file `~/.secrets` remains supported
+- `~/.secrets/` - API keys and tokens (never committed)
 - `~/.aliases.local` - Machine-specific aliases
 - `~/.gitconfig.local` - Machine-specific Git settings
 - `~/.bunfig.toml`, `~/.npmrc`, `~/.config/pnpm/rc` - Real local files; the installer preserves registry credentials and only upserts the tracked release-age policy
@@ -110,7 +110,7 @@ These files are created from templates but not tracked in git:
 
 `level-up` 的公開概念進度隨 skill 放在 [learning/](skills/shared/level-up/learning/INDEX.md)，新機器可以直接接著學；私人補充放 `~/.local/share/level-up/learning/`，不在這個公開 repo。
 
-既有 clone 升級前，先把舊 `skills/shared/level-up/learning/` **整個目錄（含未提交與未追蹤檔）複製到 repo 外的私人備份**並核對內容。更新會刪除或取代舊追蹤檔；`.gitignore` 不會保護已追蹤檔。更新後保留新的公開摘要，把舊資料放在私人目錄的 `archive/<日期>/`，需要接續的私人主題可從私人 `INDEX.md` 連結。**不要把原始紀錄還原到公開 learning/ 覆蓋摘要**；驗證前不刪備份。這不會清除舊公開 Git 歷史。讀寫規則見 [學習紀錄](skills/shared/level-up/references/learning-records.md)。
+既有 clone 升級前，先把舊 `skills/shared/level-up/learning/`（含未提交檔）複製到 repo 外，更新會取代舊追蹤檔；舊資料放私人目錄的 `archive/<日期>/`。讀寫規則見 [學習紀錄](skills/shared/level-up/references/learning-records.md)。
 
 ```bash
 cd ~/dotfiles

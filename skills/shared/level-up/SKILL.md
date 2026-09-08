@@ -47,8 +47,8 @@ directly here; do not depend on one reference to route to another.
 
 ## Run the Session
 
-1. Read the public learning index, learner profile, and relevant topic evidence;
-   supplement with available private context per the learning-record contract.
+1. Read the learning index, learner profile, and relevant topic evidence per
+   the learning-record contract.
 2. Select implementation references when the request is preflight/debrief work;
    otherwise use normal teaching mode.
 3. Run Level 0 before locking the course. Wait for analogy, depth, and medium;
@@ -74,8 +74,7 @@ directly here; do not depend on one reference to route to another.
   HTML is practice only and cannot advance the learner.
 - Never override or silently change the learner's analogy, depth, medium, or
   stated goal. Ask at the Level 0 checkpoint or before an adaptive medium switch.
-- Record minimal evidence that improves future teaching. Public records contain
-  generalized progress; necessary private context stays outside the repo, per
-  the learning-record contract. Never store secrets or full transcripts.
+- Record minimal evidence that improves future teaching, per the
+  learning-record contract. Never store secrets or full transcripts.
 - For a skipped preflight/debrief, record only the silent workflow event; do not
   alter topic mastery.
