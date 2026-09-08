@@ -77,7 +77,7 @@ dotfiles/
 
 `agents/` 放跨工具共用的規則與 notes；`codex/`、`claude/`、`grok/` 保留各自的設定、hooks 與工具專用文件。
 
-Claude 用 `@` import 讀共用檔；Codex 沒有 import，所以 `install.sh` 把兩份串成一個檔（[官方載入位置](https://learn.chatgpt.com/docs/agent-configuration/agents-md)）：
+兩個 runtime 載入共用規則的方式（Codex 的[官方載入位置](https://learn.chatgpt.com/docs/agent-configuration/agents-md)）：
 
 ```text
 ~/.claude/CLAUDE.md -> <repo>/claude/CLAUDE.md          # @import agents/AGENTS.md

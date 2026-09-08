@@ -337,8 +337,6 @@ prune_stale_dotfiles_links "$HOME/.local/bin"
 # -----------------------------------------------------------------------------
 echo "[9/11] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
-# Codex has no import mechanism, so ~/.codex/AGENTS.md is generated from the
-# shared prompt plus the Codex-specific one. Rerun install.sh after editing either.
 build_codex_agents_md() {
     local dest="$HOME/.codex/AGENTS.md"
     local tmp

@@ -1,7 +1,7 @@
 # AGENTS.md - 共用 agent 使用者設定
 
 ## 定位
-- 這份檔案是本機所有 agent 共用的使用者層級 SSOT，只放需要一直載入的規則；其他 agent 的 memory（例如 Claude 的 `CLAUDE.md`）只引用這裡，可另外補範圍更小的規則。共用流程放 `agents/notes/`；工具怪癖、走不通的方法與綁定版本的發現放各工具的 notes（例如 `codex/notes/`、`claude/notes/`），只有使用者明確要求才改 Codex 原生 memory 或 Claude 專用 memory。
+- 這份檔案是本機所有 agent 共用的使用者層級 SSOT，只放需要一直載入的規則；其他 agent 的 memory（例如 Claude 的 `CLAUDE.md`）只引用或串接這裡，可另外補範圍更小的規則。共用流程放 `agents/notes/`；工具怪癖、走不通的方法與綁定版本的發現放各工具的 notes（例如 `codex/notes/`、`claude/notes/`），只有使用者明確要求才改 Codex 原生 memory 或 Claude 專用 memory。
 
 ## 回覆
 - 一律用自然的台灣繁體中文回覆，含使用者看得到的 thinking／推理過程，任何地方都不用簡體字（照抄原文除外）；不常見的詞順手簡短解釋；除非任務明確要求本地化，不翻譯程式碼裡的識別字、檔案路徑、指令、設定鍵、model ID 或 UI 原文標籤。英文詞彙與台灣用語替換表都在 `~/dotfiles/hooks/jargon-allowlist.yml`（dotfiles 的 pre-commit 會擋）；「保存」「質量」「完封」「落地」「收斂」不拿來表示儲存、品質或完成，不確定的詞 `grep -i "word" hooks/jargon-allowlist.yml` 看它屬於哪個 section。
