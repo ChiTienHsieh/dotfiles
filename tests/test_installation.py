@@ -60,21 +60,41 @@ class InstallationTests(unittest.TestCase):
                              "Synthetic concept evidence\n")
         self.assertFalse((self.home / ".local/share/level-up/learning").exists())
 
-    def test_shared_prompt_is_loaded_at_codex_default_path(self):
+    def test_codex_prompt_is_generated_from_shared_plus_codex(self):
         self.install()
         prompt = self.home / ".codex/AGENTS.md"
-        shared = self.repo / "agents/AGENTS.md"
-        self.assertTrue(prompt.is_symlink())
-        self.assertEqual(prompt.resolve(), shared.resolve())
-        self.assertEqual(prompt.read_text(), shared.read_text())
-        self.assertNotIn("顏文字", prompt.read_text())
+        shared = (self.repo / "agents/AGENTS.md").read_text()
+        codex_only = (self.repo / "codex/AGENTS.md").read_text()
+        self.assertFalse(prompt.is_symlink())
+        text = prompt.read_text()
+        self.assertIn(shared, text)
+        self.assertIn(codex_only, text)
+        self.assertLess(text.index(shared), text.index(codex_only))
+        self.assertNotIn("顏文字", text)
         self.assertEqual((self.home / ".codex/agents").resolve(),
                          (self.repo / "codex/agents").resolve())
         self.assertTrue((self.home / ".codex/config.toml").is_file())
         self.assertTrue((self.home / ".codex/hooks.json").is_file())
-        # A source edit remains visible immediately, without a generation step.
-        shared.write_text(shared.read_text() + "\nfixture shared instruction\n")
-        self.assertIn("fixture shared instruction", prompt.read_text())
+        # An unchanged rerun does not back up; a source edit regenerates and keeps the old file.
+        self.install()
+        self.assertFalse((self.home / ".dotfiles_backup").exists())
+        (self.repo / "codex/AGENTS.md").write_text(codex_only + "\nfixture codex instruction\n")
+        self.install()
+        self.assertIn("fixture codex instruction", prompt.read_text())
+        backups = list((self.home / ".dotfiles_backup").iterdir())
+        self.assertEqual(len(backups), 1)
+        self.assertEqual((backups[0] / ".codex/AGENTS.md").read_text(), text)
+
+    def test_hand_edited_codex_prompt_is_backed_up_before_regeneration(self):
+        self.install()
+        prompt = self.home / ".codex/AGENTS.md"
+        prompt.write_text("hand-edited live prompt\n")
+        self.install()
+        self.assertNotIn("hand-edited", prompt.read_text())
+        backups = list((self.home / ".dotfiles_backup").iterdir())
+        self.assertEqual(len(backups), 1)
+        self.assertEqual((backups[0] / ".codex/AGENTS.md").read_text(),
+                         "hand-edited live prompt\n")
 
     def test_existing_prompt_link_and_runtime_state_survive_migration(self):
         runtime = self.home / ".codex"
@@ -84,15 +104,15 @@ class InstallationTests(unittest.TestCase):
         config.write_text('model = "user-selected-model"\n')
         prompt = runtime / "AGENTS.md"
         prompt.symlink_to(self.repo / "codex/AGENTS.md")
-        shared = self.repo / "agents/AGENTS.md"
-        # The old two-hop path works even before rerunning install.sh.
-        self.assertEqual(prompt.resolve(), shared.resolve())
         self.install()
         self.install()
         self.assertFalse(runtime.is_symlink())
         self.assertEqual(config.read_text(), 'model = "user-selected-model"\n')
         self.assertEqual((runtime / "sessions/fixture.txt").read_text(), "local session")
-        self.assertEqual(prompt.resolve(), shared.resolve())
+        # The old symlink is replaced by the generated file; nothing to back up.
+        self.assertFalse(prompt.is_symlink())
+        self.assertIn((self.repo / "agents/AGENTS.md").read_text(), prompt.read_text())
+        self.assertFalse((self.home / ".dotfiles_backup").exists())
 
     def test_machine_notes_with_same_basename_all_survive(self):
         originals = {".config/machine.md": "first", ".codex/machine.md": "second",

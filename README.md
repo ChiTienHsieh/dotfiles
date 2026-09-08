@@ -77,15 +77,14 @@ dotfiles/
 
 `agents/` 放跨工具共用的規則與 notes；`codex/`、`claude/`、`grok/` 保留各自的設定、hooks 與工具專用文件。
 
-安裝後，Codex 仍從官方指定的 [`~/.codex/AGENTS.md`](https://learn.chatgpt.com/docs/agent-configuration/agents-md) 自動載入共用 prompt：
+Claude 用 `@` import 讀共用檔；Codex 沒有 import，所以 `install.sh` 把兩份串成一個檔（[官方載入位置](https://learn.chatgpt.com/docs/agent-configuration/agents-md)）：
 
 ```text
-~/.codex/AGENTS.md -> <repo>/agents/AGENTS.md
-<repo>/codex/AGENTS.md -> ../agents/AGENTS.md  # 讓既有安裝繼續有效
-~/.claude/CLAUDE.md -> <repo>/claude/CLAUDE.md  # 引用共用 AGENTS.md
+~/.claude/CLAUDE.md -> <repo>/claude/CLAUDE.md          # @import agents/AGENTS.md
+~/.codex/AGENTS.md  = agents/AGENTS.md + codex/AGENTS.md  # install.sh 生成，改完重跑
 ```
 
-目前沒有另外複製一份 Codex 專用 AGENTS.md；Codex 的預設設定仍在 `codex/config.toml`，專用操作筆記在 `codex/notes/`。共用 prompt 透過 symlink 即時更新。
+生成前會把內容不同的舊 `~/.codex/AGENTS.md` 備份到 `~/.dotfiles_backup/<時間戳>/`。
 
 `~/.codex` 保留為 runtime 目錄，只連結受管理的檔案／子目錄。既有 `config.toml` 與 session 資料保留；config 只在首次安裝時從 repo 種子建立。不要把整個 `agents/` 或 `codex/` 連成 `~/.codex`，避免把帳號與 session 資料寫進公開 repo。
 
