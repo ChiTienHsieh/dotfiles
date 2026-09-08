@@ -6,3 +6,4 @@
 !topics/
 topics/*
 !topics/*.md
+*.local.md

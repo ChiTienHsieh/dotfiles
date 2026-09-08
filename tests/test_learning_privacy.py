@@ -8,7 +8,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = (".gitignore", "INDEX.md", "user-profile.md", "topics/example-topic.md")
 PRIVATE = ("INDEX.local.md", "workflow-events.md", "raw.md", "private/context.md",
-           "topics/raw.json", "topics/raw/context.md", "topics/private/data.md")
+           "topics/raw.json", "topics/raw/context.md", "topics/private/data.md",
+           "topics/notes.local.md")
 
 
 class LearningPrivacyTests(unittest.TestCase):

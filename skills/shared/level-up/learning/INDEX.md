@@ -19,3 +19,4 @@
 | 來源寫作與敘事判斷 | [editorial-reasoning](topics/editorial-reasoning.md) |
 | 螢幕亮度控制 | [display-control](topics/display-control.md) |
 | 產品資料與低摩擦操作 | [product-data-design](topics/product-data-design.md) |
+| 文字相似度技術（pg_trgm、BM25、embedding） | [text-similarity-techniques](topics/text-similarity-techniques.md) |

@@ -21,3 +21,6 @@ __pycache__/
 
 # Auto-downloaded plugin skills
 claude/skills/
+
+# playwright-cli page snapshots
+.playwright-cli/
