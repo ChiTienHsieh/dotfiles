@@ -4,7 +4,7 @@
 
 ## 起手
 
-- 先問任務目標與成功標準；不要直接寫 plan。
+- 沿用已給的任務目標與成功標準；只有缺少會改變方案的資訊時才問。
 - 找出哪些答案會改變 architecture、data model、type/API contracts、user-facing behavior。
 - 若 user 已給 spec、截圖、參考 repo、文章或舊實作，先把它們當作地圖，不要憑空補故事。
 
