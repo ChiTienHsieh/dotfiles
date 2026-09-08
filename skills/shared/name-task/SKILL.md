@@ -37,7 +37,7 @@ description: 更新 task／session 標題。當使用者要求 name／rename tas
    - tmux 環境（`$TMUX_PANE` 已設定）：只有目前 human 指令明確要求改名，才可執行 script 送出 `/rename`；自動觸發本 skill 不構成授權，否則只提供建議標題。
    - 非 tmux 環境：script 會印出建議標題，由使用者用 `/rename` 套用
 
-   每項工具只呼叫一次。目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 與 host。標題與 pin 是兩項獨立資訊，不要為了讓兩者看起來一致而自行新增或解除 pin；任何一項失敗時，重新讀取實際狀態並回報，不得盲目重試。
+   每項工具只呼叫一次。目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 辨識目標；host 用於核對來源，只在工具 schema 支援時傳入。標題與 pin 是兩項獨立資訊，不要為了讓兩者看起來一致而自行新增或解除 pin；任何一項失敗時，重新讀取實際狀態並回報，不得盲目重試。
 
 8. 缺少哪項工具，就明講該項仍需手動完成。不得重建舊 Stop hook、shell、app-server 或暫存檔等替代方案。
 
