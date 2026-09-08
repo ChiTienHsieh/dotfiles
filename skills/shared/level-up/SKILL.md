@@ -41,7 +41,7 @@ directly here; do not depend on one reference to route to another.
   artifact presentation, theme, renderer handoff, and the chat/HTML boundary.
 - **For implementation planning, decision review, or understanding work:** read
   [`references/implementation-understanding-loop.md`](references/implementation-understanding-loop.md)
-  for the risk-triggered pre/during/post model.
+  for the pre/during/post teaching modes.
 - **For “preflight” or pre-implementation coaching:** also read
   [`references/pre-implementation.md`](references/pre-implementation.md).
 - **For “debrief,” post-implementation understanding, or a merge/push readiness

@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 把任務整理成接棒 agent 可執行、可驗證、權限清楚的 handoff。
 
-## 先選接棒者：CC 還是 Codex
+## 接棒者與介面
 
 沿用使用者指定的接棒者。只有需要選擇 provider 或查 quota 時才依 `delegate` 路由；單純撰寫 prompt 不需要查即時餘量。
 
@@ -35,7 +35,7 @@ disable-model-invocation: true
    - 明確寫出接棒 agent 可以讀或改哪些 local files。
    - 明確寫出可能會改哪些 external systems，例如 VM config、Telegram、GitHub、Vercel、browser state。
    - 明確禁止 destructive、permission-sensitive、billing、credential、或 broad-scope changes，除非使用者另外批准。
-   - 寫清楚接棒 agent 的 commit / push 權限，沿用使用者與 repo 已有授權及 review gate；沒有授權時才限制為不提交、不推送。
+   - 寫清楚接棒 agent 的 commit / push 權限與授權來源，沿用使用者與 repo 已有授權及 review gate；沒有授權時才限制為不提交、不推送。
 
 4. **做快速 feasibility check**
    - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免接棒 agent 第一步就失敗。
@@ -95,7 +95,7 @@ Instructions:
 Local side effects:
 - May edit: <paths>
 - Must not edit: <paths>
-- Commit / push: <沿用已授權範圍與 repo review gate；無授權則禁止>。
+- Commit / push: <允許或禁止＋授權來源與 repo review gate>。
 ```
 
 若已建立 tracked task spec file，`/goal` prompt 應改用極短 pointer，不要重複 spec：

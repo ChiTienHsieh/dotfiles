@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: "委派有明確範圍的實作、研究或 review，並提供 provider、quota 與 headless CLI 的安全執行規則。"
+description: "委派有明確範圍的實作、研究或 review，查 quota／reset 時間，或安全啟動 headless CLI worker 時使用。"
 allowed-tools: Bash
 ---
 
@@ -21,7 +21,7 @@ allowed-tools: Bash
 - 研究與 review 使用有明確範圍的唯讀 worker。實作分配檔案責任，告知 worker 有其他人同時工作，不得覆寫他人變更。
 - **Guardrail / prompt / SSOT reviewer** 是 provider 路由的例外：使用 fresh、無作者對話脈絡的最強 Claude reviewer，同時做 safety 與 simplify。Codex 可做一般 code review，不替代此角色。
 - 保留使用者指定的 model；需要更換時先說明。選擇仍以 `intelligence > taste > cost` 為原則；機械任務可用較小 model，不用 Haiku。
-- 只有需要選 provider、查餘量或處理 quota blocker 時才跑 `scripts/pick-worker`。已選 native worker 的小任務不先查所有 provider；未知餘量不當作零或無限。
+- 只有需要選 provider、查餘量或處理 quota blocker 時才跑 `scripts/pick-worker`；解析為本 skill 下的絕對路徑，Claude Code 從 Bash sandbox 外執行。已選 native worker 的小任務不先查所有 provider；未知餘量不當作零或無限。
 
 ## How
 
@@ -38,7 +38,7 @@ allowed-tools: Bash
 
 ## Accept
 
-- 檢查實際交付物、diff 與驗證輸出，不能只接受「tests pass」。完成必要 checks 後，只在整合修改、失敗、未解疑慮或證據不足時重跑相關驗證；大型結果先讀決定驗收的部分，不另派 worker 只為摘要。
+- 檢查實際交付物、diff 與驗證指令的原始輸出或 log，不能只接受 worker 的摘要或「tests pass」。完成必要 checks 後，只在整合修改、失敗、未解疑慮或證據不足時重跑相關驗證；大型結果先讀決定驗收的部分，不另派 worker 只為摘要。
 - 預期需要修改卻沒有 diff 時查明原因；唯讀研究、review 或有證據證明不需修改，都可以是有效交付，空 diff 不等於拒絕。
 - Review 後只重查受修改影響的部分與尚未解決的問題。
 - Guardrail / SSOT 改動：先 commit，再由上述 fresh reviewer 依下節審查，通過才 push。
