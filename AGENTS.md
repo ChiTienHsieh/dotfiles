@@ -15,9 +15,7 @@ the same file. Directory layout: see the structure diagram in `README.md`.
 
 ## Autonomous Completion
 
-- Safe, clear changes: work autonomously through review, commit, and push to
-  `origin`. Do not stop with unpushed changes — that forces the next agent to
-  reconstruct context from scratch.
+- Follow `agents/AGENTS.md` for completion, scope, and approval boundaries.
 - This is a PUBLIC repo. Before pushing verify: no secrets, private keys, or
   tokens; no machine-specific host details; no accidental local-only paths.
 - Guardrail / SSOT changes (CLAUDE.md, AGENTS.md, settings, skills, playbooks):
@@ -25,10 +23,6 @@ the same file. Directory layout: see the structure diagram in `README.md`.
   (reviewer choice per the `delegate` skill). Non-interactive review
   is pre-authorized for this repo — run it yourself; do not ask the user to
   approve the review step.
-- Stop and ask only for: security concerns, destructive actions,
-  force-push/reset/discard decisions, billing or data-loss risk, or
-  product/design tradeoffs not inferable from existing instructions.
-- Push rejected or CI red → investigate and resolve safe issues yourself first.
 
 ## Secrets
 

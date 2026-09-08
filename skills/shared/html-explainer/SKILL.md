@@ -1,6 +1,6 @@
 ---
 name: html-explainer
-description: Recipe for effective self-contained HTML learning artifacts — single-file explainer pages that teach ONE concept through a strong analogy carried throughout, an interactive micro-world the reader manipulates, and a built-in comprehension quiz. Use when the user asks for an HTML explainer, learning page, concept lesson, or a code/diff explainer doc that teaches a person to understand a change (not a merge-decision review), or when the level-up workflow needs a level rendered as HTML.
+description: 製作含類比、互動與測驗的單檔 HTML 教學頁。使用者要求 HTML 教材，或 level-up 已選 HTML 時使用；一般 code／diff 說明不自動轉成網頁。
 ---
 
 # html-explainer — 有效的 HTML 學習頁配方

@@ -1,12 +1,15 @@
 ---
 name: "level-up"
-description: "Run guided, staged teaching when the user asks for level-up coaching, staged questions, or progression through a topic. Also use for implementation preflight, debrief, merge-readiness quizzes, and decision-focused coaching: run preflight on your own for non-trivial or unfamiliar tasks and for changes to data models, architecture, user-facing behavior, or guardrail/SSOT files (see references/implementation-understanding-loop.md), and offer the post-implementation quiz before push; skip the ritual for small, safe edits. Uses persistent learning records to tailor future teaching."
+description: "逐關教學與共同決策。使用者要求 level-up、分階段學習、preflight、debrief 或理解測驗時使用；一般實作與簡短解釋不啟動課程。"
 ---
 
 # level-up
 
 ## Core Contract
 
+- Implementation work does not require a course or quiz. Use this workflow
+  when the user requests teaching or accepts an offer; an optional offer does
+  not block already-authorized implementation, review, or push.
 - Let concept difficulty set the number of levels; use 3–15+ when needed.
 - Advance only after the learner demonstrates understanding or makes the required decision.
 - Keep the learner's stated goal as the course lens; it may reorder, add, or remove levels.
