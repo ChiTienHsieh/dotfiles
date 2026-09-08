@@ -4,7 +4,7 @@
 
 ## 證據
 
-- 2026-07-01：明確自述不熟 message broker、Kafka、RabbitMQ 與 Celery；不能把它們當成已知類比。
+- 明確自述不熟 message broker、Kafka、RabbitMQ 與 Celery；不能把它們當成已知類比。
 
 ## 下一步
 

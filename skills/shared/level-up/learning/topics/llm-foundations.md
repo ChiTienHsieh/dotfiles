@@ -4,7 +4,7 @@
 
 ## 證據
 
-- 2026-06-17：自述熟悉 agent、context window、Chat Completions／Messages／Responses API、Python 基礎與基本 SQL，也理解不能只依賴單一 agent。尚無逐項應用驗證。
+- 自述熟悉 agent、context window、Chat Completions／Messages／Responses API、Python 基礎與基本 SQL，也理解不能只依賴單一 agent。尚無逐項應用驗證。
 
 ## 下一步
 
