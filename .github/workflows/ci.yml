@@ -86,15 +86,15 @@ jobs:
             esac
           done < <(git ls-files -z)
 
-          if [ "${#bash_files[@]}" -gt 0 ]; then
-            bash -n "${bash_files[@]}"
-          fi
-          if [ "${#sh_files[@]}" -gt 0 ]; then
-            sh -n "${sh_files[@]}"
-          fi
-          if [ "${#zsh_files[@]}" -gt 0 ]; then
-            zsh -n "${zsh_files[@]}"
-          fi
+          for file in "${bash_files[@]}"; do
+            bash -n "$file"
+          done
+          for file in "${sh_files[@]}"; do
+            sh -n "$file"
+          done
+          for file in "${zsh_files[@]}"; do
+            zsh -n "$file"
+          done
 
           shellcheck_files=()
           for file in "${bash_files[@]}"; do
@@ -156,12 +156,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 tests/test_hooks.py -v
-          python3 tests/test_jargon_hook.py -v
-          python3 tests/test_skill_contracts.py -v
-          python3 tests/test_tmux_activation_policy.py -v
-          python3 tests/test_tmux_worker_hooks.py -v
-          python3 tests/test_configure_package_policies.py -v
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          node tests/test_diagram_editor.mjs
           zsh tests/test_aliases.sh
           bash claude/hooks/test-bash-helper-guard.sh
 

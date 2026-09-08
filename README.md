@@ -41,12 +41,15 @@ dotfiles/
 ├── gh/
 │   └── .config/gh/config.yml  # GitHub CLI config
 ├── templates/
-│   ├── .secrets.template      # API keys template (copy to ~/.secrets)
+│   ├── .secrets.template      # API keys template (copy to ~/.secrets/index.sh)
 │   └── .aliases.local.template  # Machine-specific aliases
 ├── claude/
 │   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
+├── agents/
+│   ├── AGENTS.md        # Shared instructions for Claude, Codex, and Grok
+│   └── notes/           # Shared delivery, backlog, and dotfiles recipes
 ├── codex/
-│   ├── AGENTS.md        # Codex CLI instructions
+│   ├── AGENTS.md        # Compatibility symlink -> ../agents/AGENTS.md
 │   ├── config.toml      # Portable first-install seed
 │   ├── cc-worker.config.toml  # Sandbox profile for headless Codex workers
 │   ├── hooks.json       # Global Codex lifecycle hook registration
@@ -70,9 +73,25 @@ dotfiles/
 └── README.md
 ```
 
+## 共用規則與工具專用設定
+
+`agents/` 放跨工具共用的規則與 notes；`codex/`、`claude/`、`grok/` 保留各自的設定、hooks 與工具專用文件。採用複數是參考 [Agent Skills 的 `.agents/skills` 共用慣例](https://agentskills.io/client-implementation/adding-skills-support)，不是宣稱 `agents/AGENTS.md` 本身是工具自動掃描的標準位置。
+
+安裝後，Codex 仍從官方指定的 [`~/.codex/AGENTS.md`](https://learn.chatgpt.com/docs/agent-configuration/agents-md) 自動載入共用 prompt：
+
+```text
+~/.codex/AGENTS.md -> <repo>/agents/AGENTS.md
+<repo>/codex/AGENTS.md -> ../agents/AGENTS.md  # 讓既有安裝繼續有效
+~/.claude/CLAUDE.md -> <repo>/claude/CLAUDE.md  # 引用共用 AGENTS.md
+```
+
+目前沒有另外複製一份 Codex 專用 AGENTS.md；Codex 的預設設定仍在 `codex/config.toml`，專用操作筆記在 `codex/notes/`。共用 prompt 透過 symlink 即時更新，不需要 agent 再呼叫工具讀取第二份 prompt，也沒有產生檔或額外啟動 hook。
+
+`~/.codex` 保留為 runtime 目錄，只連結受管理的檔案／子目錄。既有 `config.toml` 與 session 資料保留；config 只在首次安裝時從 repo 種子建立。不要把整個 `agents/` 或 `codex/` 連成 `~/.codex`，避免把帳號與 session 資料寫進公開 repo。
+
 ## Post-Installation
 
-1. **Edit `~/.secrets`** - Add your API keys (this file is never committed)
+1. **Edit `~/.secrets/index.sh`** - Add your API keys (this file is never committed)
 2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
 3. **Skills** - `skills/shared/` is installed into Claude Code and both Codex user-skill paths; `skills/codex/` is installed into Codex's current `~/.agents/skills` discovery path plus the legacy `~/.codex/skills` path; `skills/claude/` is installed only into Claude Code. For how the agents hand work to each other — when to delegate, who gets it, how to dispatch, how to accept — start at the map at the top of `skills/shared/delegate/SKILL.md`
 4. **Codex hooks** - Start a new Codex CLI session, open `/hooks`, review the global `PostToolUse` and `Stop` commands, then trust them explicitly. The installer never writes or bypasses hook trust.
@@ -82,12 +101,14 @@ dotfiles/
 
 These files are created from templates but not tracked in git:
 
-- `~/.secrets` - API keys and tokens
+- `~/.secrets/` - API keys and tokens (directory 700, index.sh 600); an existing single-file `~/.secrets` remains supported
 - `~/.aliases.local` - Machine-specific aliases
 - `~/.gitconfig.local` - Machine-specific Git settings
 - `~/.bunfig.toml`, `~/.npmrc`, `~/.config/pnpm/rc` - Real local files; the installer preserves registry credentials and only upserts the tracked release-age policy
 
 ## Updating
+
+既有 clone 若含已追蹤的 `skills/shared/level-up/learning/` 紀錄，先在 repo 外備份再更新；Git 會套用刪除追蹤檔的變更。更新後把紀錄還原到原目錄並保留新的 `.gitignore`。[升級說明](skills/shared/level-up/references/learning-records.md#upgrading-an-existing-clone)。這不會清除舊公開 Git 歷史。
 
 ```bash
 cd ~/dotfiles

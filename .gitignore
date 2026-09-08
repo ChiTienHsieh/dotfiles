@@ -10,6 +10,7 @@ ai_chatroom/
 # Generated run artifacts
 output/
 __pycache__/
+.nvimlog
 
 # Local overrides (machine-specific, not tracked)
 *.local

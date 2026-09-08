@@ -1,6 +1,6 @@
 ---
 name: trim
-description: Use when the user wants to simplify, trim, declutter, or shrink a skill, prompt, playbook, AGENTS.md/CLAUDE.md, or other agent-instruction prose. `trim` cuts prompt prose; `/simplify` cuts code.
+description: 精簡 skill、prompt 與 AGENTS.md／CLAUDE.md 等 agent 指令；程式碼精簡用 `/simplify`。
 disable-model-invocation: true
 ---
 
@@ -16,12 +16,12 @@ disable-model-invocation: true
 
 ## Workflow
 
-1. 確認目標檔；一個檔案交給一個 worker。
-2. 解析 skill-local `noop-brief.md`，把 brief path 與目標檔路徑交給 fresh、唯讀且
-   沒有 parent context 的 worker。不要把 brief inline 進 prompt。
+1. 確認目標與載入關係，依 `noop-brief.md` 判斷規則是否改變行為。
+2. 小幅精簡直接自審；跨檔規則或需要獨立判斷時，依相依關係分組交給 fresh、
+   唯讀且沒有 parent context 的 worker，提供 brief path 與目標路徑即可。
    Codex 使用可用的 multi-agent tool；其他 runtime 使用當前內建 worker。
 3. 收回刪減建議，把理由相同的項目歸在一起，再由主 agent 決定是否採納。
-4. 改動走 PR，逐項列出砍掉的規則、理由與約省篇幅；爭議項目留著問使用者。
+4. 改動走 PR，列出刪減類別、理由與約省篇幅；會影響使用者偏好且無法判斷的項目先保留。
 
 ## 邊界
 

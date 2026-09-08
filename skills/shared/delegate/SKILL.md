@@ -1,95 +1,51 @@
 ---
 name: delegate
-description: "Use when planning or delegating implementation, research, or review to another agent — choosing which provider or worker gets the job, answering quota / rate-limit / usage-reset questions, or running the codex, grok, or claude CLIs headlessly (codex exec, grok -p, claude -p). Owns the whole path: when to delegate at all, which role goes where, the sandbox profile that makes write mode safe, the spec contract, and the acceptance rules."
+description: "委派有明確範圍的實作、研究或 review，查 quota／reset 時間，或安全啟動 headless CLI worker 時使用。"
 allowed-tools: Bash
 ---
 
 # Delegate
 
-Loaded by Claude Code, Codex, and Grok alike (Grok discovers it through `~/.claude/skills`).
-
-```
-DELEGATION MAP     [A]=always-loaded  [L]=lazy  [R]=computed at runtime
-------------------------------------------------------------------------
-[A] codex/AGENTS.md "委派與跨 agent": native subagent first; file-writing
-    CLI only via `delegate`; never bypass; tmux read-only by default
-                 |  "heavy task / tool loop / need a 2nd opinion"
-                 v
-[L] skills/shared/delegate/SKILL.md   (this file; README.md points here)
-    1 WHEN   <=10-line edit -> do it yourself
-             >20 same-shape loops, ssh/gh sweeps, bulk edits -> delegate
-    2 WHO    [R] scripts/pick-worker -> provider + reason + reset time
-             roles: impl -> most quota | review -> bounded read-only
-                    guardrail reviewer -> fresh, strongest Claude
-    3 HOW    provider == my runtime? --yes--> native subagent
-                      | no                   (Agent / codex / spawn_subagent)
-                      v
-             spec in a file; runbook/<provider>.md  <- profile:
-             (exact CLI flags + quirks)   codex/cc-worker[-ro].config.toml
-                                          grok/sandbox.toml
-    4 ACCEPT re-run verification yourself; empty diff = refusal;
-             guardrail changes -> fresh reviewer before push
-------------------------------------------------------------------------
-[persona] claude/agents/orchestrator.md (`cldo`): same path, stricter WHEN
-[L] skills/shared/tmux-orchestration: a different SURFACE (visible panes),
-    human-invoked only; WHEN/WHO/ACCEPT still come from here
-```
+共用委派規則；`claude/agents/orchestrator.md` 是使用者手動啟動的指揮模式。
+`tmux-orchestration` 另管可見 terminal，human-invoked only。
 
 ## When
 
-- A single-file edit of ~10 lines or less, or anything where the delegation overhead exceeds the work: do it yourself.
-- Delegate by default when a task is about to burn the controller's context on mechanical iteration, even if each step looks trivial: more than ~20 same-shaped tool loops (read/grep/edit cycles, log trawling), SSH command batches against remote hosts, GitHub sweeps across many issues/PRs/runs, broad web research with many fetches, bulk edits across many files.
-- Delegate when the work needs a spec, acceptance criteria, and a separate implementation owner — including frontend work, where the controller keeps design intent and does the visual validation.
-- Keep judgment, scope, architecture, debugging root-cause analysis, diff review, and git ownership in the controller session. Delegate the concrete fix once the cause is clear.
-- Escape hatch: do not predict that a worker will fail — dispatch first. If it misses the acceptance criteria twice after concrete corrective feedback, keep the useful parts of the diff and finish it yourself.
+- 有可獨立完成的明確子任務，且平行處理能省時或提升品質時委派；小改動或緊密相依的工作直接完成，不用行數或工具次數當門檻。
+- Controller 負責範圍、整合與驗收，worker 執行期間繼續不依賴其結果的工作。
+- Worker 卡住時，依原因選擇具體回饋、換適合的 worker 或自行完成；不強制先派一次或重試固定次數。
 
 ## Who
 
-Roles, not provider names — `scripts/pick-worker` picks the provider from live quota.
-
-- **Heavy implementation** (bulk edits, many files, long runs) → the current runtime's built-in subagent, or a headless CLI worker under the sandbox profile; take the provider with the most remaining quota. Headless is an option, never an obligation.
-- **Review, read-only research, second opinion** → a bounded read-only worker; a different provider is fine and often useful here. Do not raise the surface cost just to switch provider.
-- **Guardrail / prompt / SSOT reviewer** → always a fresh Claude subagent on the strongest Claude model, doing safety and simplify in one pass. Fresh is what matters, not the provider: the author carries the change's context and is the blindest to stale flags and self-contradiction. Codex is deliberately not used for this role (over-defensive, pads redundant context); keep its bounded read-only reviewer for code review that needs an opposing view.
-
-Model principles:
-
-- For any deliverable, prefer `intelligence > taste > cost`; cost is a local override, never the deciding factor.
-- Cheap models are fine for mechanical work with an explicit spec (migrations, log triage, batch file reading, grep-style investigation). Taste work — UI, copy, API design, architecture, plan review — goes to the strongest model available.
-- Never delegate to Haiku; it hallucinated badly in the user's experience.
-- Never silently swap a model the user named. If quota forces a change, say so first.
+- 預設使用目前 runtime 內建 worker：use your native subagent。不要從自己的 runtime 再呼叫同 provider 的 CLI；跨 provider 才讀對應的 `runbook/<provider>.md`。
+- 研究與 review 使用有明確範圍的唯讀 worker。實作分配檔案責任，告知 worker 有其他人同時工作，不得覆寫他人變更。
+- **Guardrail / prompt / SSOT reviewer** 是 provider 路由的例外：使用 fresh、無作者對話脈絡的最強 Claude reviewer，同時做 safety 與 simplify。Codex 可做一般 code review，不替代此角色。
+- 保留使用者指定的 model；需要更換時先說明。選擇仍以 `intelligence > taste > cost` 為原則；機械任務可用較小 model，不用 Haiku。
+- 只有需要選 provider、查餘量或處理 quota blocker 時才跑 `scripts/pick-worker`；解析為本 skill 下的絕對路徑，Claude Code 從 Bash sandbox 外執行。已選 native worker 的小任務不先查所有 provider；未知餘量不當作零或無限。
 
 ## How
 
-1. Run `~/.claude/skills/delegate/scripts/pick-worker` (use that absolute path; from Claude Code run with `dangerouslyDisableSandbox`). It prints remaining quota, a recommendation with a reason, and the matching `runbook/<provider>.md`. `--provider <name>` forces one; `--quiet` prints only the recommendation.
-2. **If the recommended provider is the runtime you are running in, use your native subagent** (Claude Code: `Agent` tool; Codex: built-in subagent; Grok: `spawn_subagent`). Never shell out to your own CLI. The CLI lane in each runbook is for callers on a *different* runtime.
-3. Write the spec, dispatch per the runbook, then apply the acceptance rules below.
+- Native worker 的 prompt 交代目標、範圍、權限與預期結果即可；介面、驗證方式與 effort 按需要補充。
+- Headless CLI worker 使用獨立 spec 檔與絕對路徑，包含 objective、files in scope、interfaces、constraints、verification command、reasoning effort；跨 session 的交接也需可讀到的持久 spec。
+- 所有 worker 只回報超出契約的 CI 失敗，不自行修正。Frontend 的 spec 要含設計意圖，controller 以實際畫面驗收。
+- 只有讀取對應 provider runbook 後才啟動 CLI；旗標、profile 路徑與工具怪癖留在 runbook。
 
-Three absolute rules:
+### CLI 安全邊界
 
-1. **Write mode needs the sandbox profile.** Any headless CLI that may touch files runs under a kernel sandbox profile that limits writes to the workspace plus temp dirs (`/tmp`, `$TMPDIR`; grok also `~/.grok/`), denies *reading* credential paths, and turns network off where the platform supports it. **Read-only mode also needs the profile**: read-only blocks writes, not reads, so without the profile credentials would still be read into the model context. Two lanes run without a kernel profile — `codex review` (has no `-p` flag; check `codex review --help`) and the `claude -p` lane (settings-based limits only, see `runbook/claude.md`) — both get trusted input only.
-2. **Never bypass.** `danger-full-access`, `--dangerously-bypass-*`, `--yolo`, `bypassPermissions` are banned in every mode, no exceptions.
-3. **A CLI with its own sandbox runs outside Claude Code's Bash sandbox** (`dangerouslyDisableSandbox: true`; nested Seatbelt fails with `sandbox initialization failed`) and gets absolute paths — `$TMPDIR` differs inside and outside the sandbox.
-
-Spec contract, six parts, every delegation: objective · files in scope · interfaces (signatures, schemas, CLI contracts to honor) · constraints · verification command · reasoning effort. Put it in a file and pass the absolute path.
-
-Frontend: the controller puts design intent in the spec, then runs the app, screenshots it, and re-dispatches with concrete visual feedback until the UI matches intent.
+1. Write 與 read-only CLI 都要用 sandbox profile：限制 workspace／temp 寫入、禁止讀取 credentials，並依平台限制網路。唯讀不代表能安全讀取機密。僅 `codex review` 與 `runbook/claude.md` 的 `claude -p` lane 沒有 kernel profile，兩者只接收可信輸入；Claude lane 的設定限制與即時 deny 檢查仍須遵守。
+2. `danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止。
+3. 自帶 sandbox 的 CLI 在 Claude Code Bash sandbox 外執行（`dangerouslyDisableSandbox: true`），避免 nested Seatbelt 失敗；這不允許移除 CLI 自己的 profile。使用絕對路徑，因內外 `$TMPDIR` 可能不同。
 
 ## Accept
 
-- The controller re-runs the verification command itself; the worker's "tests pass" is a claim, not proof.
-- "Done" with an empty diff is a refusal (often the worker's own instructions blocked it), never a success.
-- Verify load-bearing claims with cheap read-only checks: grep for leftover references, `git status` / `git diff --stat`, confirm files moved or deleted, read only the one section whose accuracy matters.
-- `wc -l` before opening a big file, then read the load-bearing slice. For long worker output, have a cheap subagent summarize it and personally verify only the slices that decide acceptance — a clean-context reviewer is at least as reliable as a controller carrying a long thread.
-- For a large artifact, delegate the FULL review to a fresh worker instead of re-reading everything. If one dimension fails, fix it and rescore only that dimension; the rescore prompt carries the original failure criteria and what changed.
-- Every worker contract states "an out-of-contract CI failure is reported, not fixed" — otherwise parallel workers each fix the same inherited red gate and it lands N times.
-- Guardrail / SSOT changes: commit, then a fresh reviewer per `## Reviewer 授權`, then push.
+- 檢查實際交付物、diff 與驗證指令的原始輸出或 log，不能只接受 worker 的摘要或「tests pass」。完成必要 checks 後，只在整合修改、失敗、未解疑慮或證據不足時重跑相關驗證；大型結果先讀決定驗收的部分，不另派 worker 只為摘要。
+- 預期需要修改卻沒有 diff 時查明原因；唯讀研究、review 或有證據證明不需修改，都可以是有效交付，空 diff 不等於拒絕。
+- Review 後只重查受修改影響的部分與尚未解決的問題。
+- Guardrail / SSOT 改動：先 commit，再由上述 fresh reviewer 依下節審查，通過才 push。
 
 ## Fallback
 
-1. Built-in subagent hits a wall → finish it in the current agent if that stays inside the `## When` threshold.
-2. Still blocked → move review or research to another provider's bounded read-only worker.
-3. Every provider low → `pick-worker` prints the earliest reset time; sleep until then (small buffer, keep no locks or half-written files) or run `--provider grok`, whose quota codexbar cannot see.
-4. Re-run `pick-worker` after waking, then continue the interrupted work. Never recite quota numbers from memory; if the reset time is unclear, report the blocker instead of guessing.
+有可用 worker 或 controller 能安全完成時繼續；quota 真的阻擋工作才查即時餘量與 reset 時間。不要背數字、假設未知 provider 可用，或默默替換使用者指定 model。需要稍後續做時依 runtime 的排程能力與使用者授權處理，不強制長時間 sleep。
 
 ## Reviewer 授權
 

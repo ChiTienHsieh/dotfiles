@@ -1,6 +1,6 @@
 ---
 name: "where-am-i"
-description: "Catch up after a break: when the user returns to a project and asks where they left off or what they were doing here (e.g. 'remind me where were we'), or wants to sync with remote before resuming. Gathers git state + this project's recent agent history into a short recap with suggested next steps. Read-only by default; never auto-commits or auto-pulls without confirmation."
+description: "回顧專案進度：使用者問上次做到哪裡、目前狀態或如何接續時使用；預設唯讀，整理 Git 與相關 task 的脈絡。"
 disable-model-invocation: true
 ---
 
@@ -17,8 +17,8 @@ current human's progress question explicitly asks the agent to inspect a tmux
 pane and then act on it, combine this skill with `tmux-orchestration`:
 where-am-i handles the recap, tmux-orchestration handles the pane surface.
 
-Read-only by default. The only action it may take is `git pull`, and
-only after the user confirms.
+Read-only by default. If the user also requests a pull or sync, follow
+`tidy-workspace` within that authorization; do not ask for the same approval again.
 
 ## When NOT to use
 
@@ -42,8 +42,9 @@ recent commit trajectory, any stashes left behind.
 
 ## Step 2 — This project's recent agent history
 
-Reuse the daily-loop extractor (the shared substrate) and filter to the current
-directory, so you see what *you and the agents* were actually doing here:
+Use relevant conversation context or native task summaries first. If those
+do not establish where this project left off, use the daily-loop extractor and
+filter to the current directory:
 
 ```bash
 "$HOME/dotfiles/skills/shared/daily-loop/scripts/mine_transcripts.sh" \
@@ -52,9 +53,8 @@ directory, so you see what *you and the agents* were actually doing here:
       | {sessions, user_turns, tools, snippets: (.snippets[0:6])}'
 ```
 
-If nothing matches `$PWD` (no recent sessions in this exact dir), widen the
-window (`--since 336`) or note that there's no recent agent history here and
-lean on the git state alone. Do not read raw `.jsonl` — trust the digest.
+If nothing matches `$PWD`, widen the window only when older history is needed;
+otherwise report the gap and use Git state. Do not read raw `.jsonl` — use the digest.
 
 ## Step 3 — Sync check
 
@@ -65,7 +65,8 @@ up — do not pull silently:
 - Diverged (both ahead and behind) → present the divergence and let the user
   pick rebase/merge; do not pull here.
 
-Ask before running any pull.
+An unrequested pull needs approval; an already-requested sync follows
+`tidy-workspace` without a second confirmation.
 
 ## Step 4 — Recap + next steps
 

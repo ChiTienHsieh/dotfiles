@@ -6,7 +6,7 @@ import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-AGENTS = REPO_ROOT / "codex" / "AGENTS.md"
+AGENTS = REPO_ROOT / "agents" / "AGENTS.md"
 NAME_TASK = REPO_ROOT / "skills" / "shared" / "name-task" / "SKILL.md"
 TIDY_WORKSPACE = REPO_ROOT / "skills" / "shared" / "tidy-workspace" / "SKILL.md"
 WRAP = REPO_ROOT / "skills" / "shared" / "wrap" / "SKILL.md"

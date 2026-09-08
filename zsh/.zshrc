@@ -48,7 +48,11 @@ ulimit -n 10240
 # 3. Source other config files
 # -----------------------------------------------------------------------------
 # Secrets (~/.secrets/ is a dir of per-provider *.sh files — NEVER commit!)
-[ -f ~/.secrets/index.sh ] && source ~/.secrets/index.sh
+if [ -f "$HOME/.secrets/index.sh" ]; then
+    source "$HOME/.secrets/index.sh"
+elif [ -f "$HOME/.secrets" ]; then
+    source "$HOME/.secrets"
+fi
 
 # Aliases (shared with bash)
 [ -f ~/.aliases ] && source ~/.aliases
@@ -160,7 +164,7 @@ precmd() {
 # - etc.
 
 # bun completions
-[ -s "/Users/shroom/.bun/_bun" ] && source "/Users/shroom/.bun/_bun"
+[ -s "${BUN_INSTALL:-$HOME/.bun}/_bun" ] && source "${BUN_INSTALL:-$HOME/.bun}/_bun"
 
 # >>> grok installer >>>
 export PATH="$HOME/.grok/bin:$PATH"

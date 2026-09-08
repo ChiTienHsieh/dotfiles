@@ -32,7 +32,7 @@ grok --prompt-file "$SPEC" --sandbox cc-worker --permission-mode acceptEdits \
 - `-p` / `--prompt-file` run in the caller's cwd and never create a worktree — isolate by handing it
   a worktree path yourself.
 - It loads `~/.claude/CLAUDE.md` but does not expand `@` imports, so it never sees
-  `codex/AGENTS.md`: every constraint must be in the spec itself.
+  `agents/AGENTS.md`: every constraint must be in the spec itself.
 - `~` is not expanded in `deny` globs (it resolves to `<cwd>/~/.ssh`), so home-directory entries in
   `grok/sandbox.toml` must be absolute one-segment globs such as `/Users/*/.ssh/**`.
 - `codexbar` cannot see SuperGrok quota at all, so `pick-worker` reports it as `n/a`; before a long

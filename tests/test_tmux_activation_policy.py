@@ -13,7 +13,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
         return (ROOT / relative_path).read_text(encoding="utf-8")
 
     def test_canonical_policy_keeps_tmux_read_only_by_default(self) -> None:
-        agents = self.read("codex/AGENTS.md")
+        agents = self.read("agents/AGENTS.md")
         self.assertIn("tmux 預設唯讀", agents)
         self.assertIn("runtime 內建的 subagent", agents)
         self.assertIn("只由 human 從 harness", agents)
@@ -59,7 +59,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
 
     def test_active_tmux_skill_references_are_human_gated(self) -> None:
         paths = {
-            ROOT / "codex/AGENTS.md",
+            ROOT / "agents/AGENTS.md",
             *ROOT.glob("claude/agents/*.md"),
             *ROOT.glob("skills/**/SKILL.md"),
         }
@@ -90,7 +90,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
 
     def test_policy_does_not_treat_a_tmux_mention_as_authorization(self) -> None:
         paths = (
-            "codex/AGENTS.md",
+            "agents/AGENTS.md",
             "skills/shared/delegate/SKILL.md",
             "claude/agents/orchestrator.md",
             "skills/shared/tmux-orchestration/SKILL.md",

@@ -8,35 +8,32 @@ the same file. Directory layout: see the structure diagram in `README.md`.
 
 ## Agent Memory Access
 
-- `~/.codex/AGENTS.md` -> `./codex/AGENTS.md`; `~/.claude/CLAUDE.md` ->
+- `~/.codex/AGENTS.md` -> `./agents/AGENTS.md`; `codex/AGENTS.md` is a relative
+  compatibility symlink for existing installs. `~/.claude/CLAUDE.md` ->
   `./claude/CLAUDE.md`. Edit the repo copies directly; no need to write outside
   the sandbox.
 
 ## Autonomous Completion
 
-- Safe, clear changes: work autonomously through review, commit, and push to
-  `origin`. Do not stop with unpushed changes — that forces the next agent to
-  reconstruct context from scratch.
+- Follow `agents/AGENTS.md` for completion, scope, and approval boundaries.
 - This is a PUBLIC repo. Before pushing verify: no secrets, private keys, or
   tokens; no machine-specific host details; no accidental local-only paths.
 - Guardrail / SSOT changes (CLAUDE.md, AGENTS.md, settings, skills, playbooks):
-  follow the reviewer-routing and simplify-review rules in `codex/AGENTS.md`
+  follow the reviewer-routing and simplify-review rules in `agents/AGENTS.md`
   (reviewer choice per the `delegate` skill). Non-interactive review
   is pre-authorized for this repo — run it yourself; do not ask the user to
   approve the review step.
-- Stop and ask only for: security concerns, destructive actions,
-  force-push/reset/discard decisions, billing or data-loss risk, or
-  product/design tradeoffs not inferable from existing instructions.
-- Push rejected or CI red → investigate and resolve safe issues yourself first.
 
 ## Secrets
 
-- Never in tracked files. Secrets live in `~/.secrets` (created from
+- Never in tracked files. Secrets live in `~/.secrets/index.sh` (created from
   `templates/.secrets.template`), sourced by shell startup, never committed.
+  New directories use mode 700 and files mode 600; existing single-file
+  `~/.secrets` remains supported.
 
 ## Maintenance Recipes (lazy)
 
 - Aliases, adding new dotfiles, testing shell/tmux changes, nvim submodule
-  details: read `codex/notes/dotfiles-maintenance.md` when touching those areas.
+  details: read `agents/notes/dotfiles-maintenance.md` when touching those areas.
   Quick rule: machine-specific content goes to gitignored `bash/.aliases.local`,
   and new dotfiles need an `install.sh` symlink entry.

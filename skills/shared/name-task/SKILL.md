@@ -31,11 +31,11 @@ description: 更新 task／session 標題。當使用者要求 name／rename tas
 
    保留有辨識力的專案名與必要英文，其餘優先中文；只沿用使用者已指定的縮寫。Pilates 主題使用「皮」，一般主題 emoji 用 `🧘`；處置或用途 emoji 優先，例如「🧘 皮彈簧設定」；個人評測可寫「🧑 個人評測集｜待選規則」。這些縮寫只用於標題，不改專案、程式碼或檔案名稱。
 
-7. 套用標題：執行 `scripts/rename-session.sh "<title>"`。若你的執行環境有原生改標題工具（見下方），優先使用原生工具。各環境的細節與注意事項在 `runtimes/<環境>.md`。
+7. 套用標題：若執行環境有原生改標題工具，優先使用（見下方與 `runtimes/<環境>.md`）。否則執行 `scripts/rename-session.sh "<title>"` 改名。
 
    - Codex App：使用 `set_thread_title` tool（不需要 script）
-   - tmux 環境（`$TMUX_PANE` 已設定）：只有目前 human 指令明確要求改名，才可執行 script 送出 `/rename`；自動觸發本 skill 不構成授權，否則只提供建議標題。
-   - 非 tmux 環境：script 會印出建議標題，由使用者用 `/rename` 套用
+   - tmux：依 `agents/AGENTS.md` 的持續授權，script 直接對自己的 `$TMUX_PANE` 送出 `/rename <title>`，一次呼叫即可，不必另問使用者或另外呼叫 `send-keys`。只傳送單行標題，不傳送 prompt 或審核回覆。
+   - 非 tmux 且沒有原生工具：script 印出手動 `/rename` 指令並以 exit 1 結束，表示尚未套用。
 
    每項工具只呼叫一次。目前 task 省略 `threadId`；經授權替其他 task 操作時，使用步驟 1 取得的精確 ID 辨識目標；host 用於核對來源，只在工具 schema 支援時傳入。標題與 pin 是兩項獨立資訊，不要為了讓兩者看起來一致而自行新增或解除 pin；任何一項失敗時，重新讀取實際狀態並回報，不得盲目重試。
 
