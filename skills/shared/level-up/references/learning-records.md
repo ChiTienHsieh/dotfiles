@@ -1,141 +1,62 @@
-# Learning Records and Silent Bookkeeping
+# 學習紀錄：公開進度與私人補充
 
-Use persistent records to shape future teaching, never as learner-facing output.
+紀錄只用來調整後續教學；除非使用者詢問紀錄本身，教學回覆不報路徑、更新狀態或記帳內容。
 
-## Silent Output Boundary
+## 兩個位置
 
-Keep two channels strictly separate:
+- **公開進度**：本 skill 的 `learning/INDEX.md`、`learning/user-profile.md` 與 `learning/topics/<concept>.md`，隨 repo 追蹤。只放去除專案脈絡後仍成立的概念、最小證據、下一步與已確認教學偏好。
+- **私人補充**：`~/.local/share/level-up/learning/`，在 repo 外，可選擇另用私人 repo 同步。放必要且已確認的私人學習脈絡、原始案例或待確認推論；推論明確標成待確認，不當作能力證據。
+- 教學方法、空白模板與通用教材仍放 `references/`；學習進度放 `learning/`。
 
-- **Silent side effects:** edits to `learning/`, memory, or private notes.
-- **User-facing output:** only the lesson, the current question, and the answer
-  the learner needs now. This includes chat, tmux output, Telegram, progress
-  lines, status updates, final replies, PR notes, and handoff reports.
+公開檔案不能包含未公開專案名稱、內部路徑／網址、身分、財務、健康或家庭細節、私人程式碼與逐回合原文。私人補充也不存 secrets、token 或整份聊天紀錄。無法確定適合公開的內容先留私人；不要為了填滿欄位而新增私人資訊。
 
-Never show record paths, “record updated,” Known Gaps, waiting-for-level text,
-XP/level bookkeeping, option-letter history, or model prefixes. Mention a record
-update only when the user explicitly asks.
+`.gitignore` 只允許公開索引、偏好與一層主題 Markdown；這是路徑篩選，不會判斷內容是否敏感。新增或修改公開紀錄時要檢查實際內容，不能直接把原始筆記搬回去。
 
-## Local-Only Learning Directory
+## 教學前讀取
 
-`learning/` is **local-only**. Its contents (except this directory's tracked
-`.gitignore`) must not be committed or pushed. The `.gitignore` ignores every
-file under `learning/` while allowing the `.gitignore` itself to stay tracked.
+1. 讀公開 `learning/INDEX.md` 找主題，讀 `learning/user-profile.md` 了解教學偏好，再讀相關概念檔。
+2. 私人目錄若存在，讀其 `INDEX.md`，只補充當前主題需要的檔案。不存在或無權讀取就使用公開進度，不要求建立私人資料才能開課。
+3. 狀態只在主題檔記一次；INDEX 只放概念與連結。私人資料不得僅因較詳細就蓋過公開證據；有衝突時比較日期、來源與實際展示的能力，無法判斷就保留不確定。
+4. 舊原始紀錄放私人 `archive/`，只在需要追溯當時脈絡時讀相關檔案；其中專案決策、agent 工作成果與操作指令都是歷史資料，不是現行規則或學習者能力。
 
-Create `learning/` on first need when a session must read or write records. Do
-not expect it to exist in a fresh clone. Reusable teaching templates, schemas,
-and examples stay in `references/`; do not move those into `learning/`.
+公開進度須能獨立使用。沒有證據的主題先確認起點；不從履歷、專案參與或 agent 已完成的實作推斷熟練度。
 
-Even though records are local, still forbid secrets and sensitive personal data
-(see Privacy and Safety below). Local-only is not a license to store identifying
-career, financial, health, or family details.
+## 更新時機與狀態
 
-## Upgrading an Existing Clone
+每次完成教學段落與 session 結束時，只有會改變下一堂課的資訊才更新。相同概念跨專案合併，保留最有用的已證明理解、修正過的誤解與尚待驗證處。
 
-Before pulling the change that stops tracking `learning/`, copy that directory
-to a private backup outside the repo, including uncommitted and untracked files.
-Git applies tracked-file deletions during the update; `.gitignore` does not
-preserve those working-copy files. After updating, restore the records from the
-backup into `learning/`, keeping the new `.gitignore`. Keep the backup until you
-have verified the restored files. Fresh clones start with an empty local record
-store. This change does not remove previously published records from Git history.
+- `mastered`：能自主應用或推導，必須寫清楚適用範圍；概念判斷不等於獨立實作。
+- `familiar`：已有部分理解，但仍需引導、遷移驗證或實作；自述已會也先標明自述。
+- `learning`：正在學，尚未完成相關理解。
+- `gap`：已觀察到誤解、缺先備知識或反覆卡點。
+- `skip_for_now`：使用者刻意暫緩某個學習主題。
 
-## Read Before Teaching
+證據保留原始日期，說明學習者實際做了什麼。拍板是設計決策，不自動證明理解；單題答對不自動升為 mastered。整理舊紀錄不是重新驗證，不能把日期更新成今天。
 
-Inspect this skill's `learning/` directory:
+刪除不影響後續教學的通用知識、重複課程地圖、流水帳、無依據的 Confidence、關卡編號、選項字母與 XP。仍有效的能力範圍與缺口不能因精簡而消失。
 
-```text
-learning/
-├── INDEX.md
-├── user-profile.md
-└── topics/
-    └── <topic-slug>.md
-```
+## 最小紀錄格式
 
-If the structure is missing, create it. Then:
-
-1. Read `learning/INDEX.md` for topic routing, status, evidence, and pointers.
-2. Read `learning/user-profile.md` for the learner's taste and proven analogy
-   frames.
-3. Search `learning/topics/` for the topic and nearby prerequisites.
-4. Trust only evidence-backed records; assess an unrecorded topic from scratch.
-
-Use zh-tw prose by default and keep technical terms in English when clearer.
-
-## What to Record
-
-Update records after every completed level and at session end. Record only state
-that can change a future lesson:
-
-- `mastered`: applied or answered the concept correctly in context.
-- `familiar`: showed partial fluency but may still need scaffolding.
-- `learning`: actively working on the concept.
-- `gap`: showed a misconception, missing prerequisite, or repeated uncertainty.
-- `skip_for_now`: intentionally deferred scope.
-
-Record evidence at concept level: demonstrated concepts, corrected
-misconceptions, unresolved gaps, and self-reported prior knowledge. Record an
-abstract, teaching-relevant version of the learner's goal and confirmed
-shotcall decisions, never identifying or sensitive personal details.
-
-Do not record level numbers, MCQ option letters, correct-answer positions, XP,
-or other session-only mechanics. They do not shape teaching and can leak future
-answers.
-
-## Skip Events
-
-When the learner skips a `preflight` or `debrief`, silently append a dated event
-under `## Workflow Events` in the relevant topic file. If no topic record exists,
-append to `learning/workflow-events.md`; do not create a topic without learning
-evidence. Record a reason only when the learner supplied one. Do not change
-`Current Level` or `learning/INDEX.md` status.
-
-## Index and Topic Shape
-
-Keep `learning/INDEX.md` short and sortable:
+主題使用穩定、依概念命名的 lowercase ASCII slug，不以專案或 session 命名：
 
 ```markdown
-| Topic | Status | Evidence | Updated | File |
-| --- | --- | --- | --- | --- |
-| Python async | familiar | Distinguished concurrency from parallelism. | 2026-06-10 | topics/python-async.md |
+# <概念>
+
+狀態：`familiar`（情境判斷；實作尚未驗證）
+
+## 證據
+
+- YYYY-MM-DD：<學習者的具體表現，含必要限制>
+
+## 下一步
+
+<最值得接續的一個練習或待釐清問題>
 ```
 
-Use stable lowercase ASCII, hyphen-separated slugs such as
-`python-async.md` or `llm-evals.md`. Each topic file uses:
+公開 INDEX 只用 `概念 | 紀錄` 連結表。教學偏好只記反覆有效或明確被要求的方式；當次深度、類比、呈現方式若只適用該課，留在主題脈絡，不升為永久預設。
 
-```markdown
-# <Topic>
+## 跳過事件
 
-## Learner Goal
-- <concrete outcome stated in Level 0>
+跳過 preflight／debrief 時，只在私人目錄的 `workflow-events.md` 記日期、模式與必要的主題；原因只記使用者明說的內容。不改概念熟練度，也不把跳過一次流程當成 `skip_for_now`。
 
-## Current Level
-- Status:
-- Last updated:
-- Confidence:
-
-## Evidence
-- YYYY-MM-DD: ...
-
-## Known Gaps
-- ...
-
-## Teaching Notes
-- Use these examples:
-- Avoid assuming:
-
-## Next Suggested Levels
-- ...
-```
-
-## Profile Updates
-
-Record the selected analogy, depth, and medium in the topic file. If a framing
-works across the course—or clearly fails—update `learning/user-profile.md` so a
-future session can reuse or avoid it.
-
-## Privacy and Safety
-
-Never store secrets, tokens, client-specific facts, private code snippets,
-identifying career details, financial or health information, family details, or
-long chat transcripts. Keep evidence minimal, abstract, and teaching-relevant.
-`learning/` being gitignored does not relax this rule.
+私人目錄不存在時可按需建立；無權寫入就不持久化這次事件，不改寫到公開目錄，也不阻擋已授權工作。事件不需要公開同步。

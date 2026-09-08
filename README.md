@@ -108,7 +108,9 @@ These files are created from templates but not tracked in git:
 
 ## Updating
 
-既有 clone 若含已追蹤的 `skills/shared/level-up/learning/` 紀錄，先在 repo 外備份再更新；Git 會套用刪除追蹤檔的變更。更新後把紀錄還原到原目錄並保留新的 `.gitignore`。[升級說明](skills/shared/level-up/references/learning-records.md#upgrading-an-existing-clone)。這不會清除舊公開 Git 歷史。
+`level-up` 的公開概念進度隨 skill 放在 [learning/](skills/shared/level-up/learning/INDEX.md)，新機器可以直接接著學；私人補充放 `~/.local/share/level-up/learning/`，不在這個公開 repo。
+
+既有 clone 升級前，先把舊 `skills/shared/level-up/learning/` **整個目錄（含未提交與未追蹤檔）複製到 repo 外的私人備份**並核對內容。更新會刪除或取代舊追蹤檔；`.gitignore` 不會保護已追蹤檔。更新後保留新的公開摘要，把舊資料放在私人目錄的 `archive/<日期>/`，需要接續的私人主題可從私人 `INDEX.md` 連結。**不要把原始紀錄還原到公開 learning/ 覆蓋摘要**；驗證前不刪備份。這不會清除舊公開 Git 歷史。讀寫規則見 [學習紀錄](skills/shared/level-up/references/learning-records.md)。
 
 ```bash
 cd ~/dotfiles

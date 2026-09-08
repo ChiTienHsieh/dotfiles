@@ -47,7 +47,8 @@ directly here; do not depend on one reference to route to another.
 
 ## Run the Session
 
-1. Read the learning index, learner profile, and relevant topic evidence.
+1. Read the public learning index, learner profile, and relevant topic evidence;
+   supplement with available private context per the learning-record contract.
 2. Select implementation references when the request is preflight/debrief work;
    otherwise use normal teaching mode.
 3. Run Level 0 before locking the course. Wait for analogy, depth, and medium;
@@ -66,17 +67,15 @@ directly here; do not depend on one reference to route to another.
 
 ## Non-Negotiable Guardrails
 
-- Keep all bookkeeping off every user-visible surface, including progress and
-  status messages. Never expose record paths or updates, `Known Gaps`, level
-  bookkeeping, stored option-letter history, or model tags.
+- Keep bookkeeping out of lesson output unless the user asks about records.
 - Ask one substantive MCQ or shotcall at a time. A batch of questions is not a
   level-up interaction.
 - The chat question is the sole authority for progression. Any quiz embedded in
   HTML is practice only and cannot advance the learner.
 - Never override or silently change the learner's analogy, depth, medium, or
   stated goal. Ask at the Level 0 checkpoint or before an adaptive medium switch.
-- Record only minimal, abstract evidence that can improve future teaching.
-  Never store secrets, identifying or sensitive personal details,
-  client-specific facts, private code, tokens, or long transcripts.
+- Record minimal evidence that improves future teaching. Public records contain
+  generalized progress; necessary private context stays outside the repo, per
+  the learning-record contract. Never store secrets or full transcripts.
 - For a skipped preflight/debrief, record only the silent workflow event; do not
-  alter topic mastery or index status.
+  alter topic mastery.

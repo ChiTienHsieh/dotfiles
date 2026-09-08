@@ -45,6 +45,21 @@ class InstallationTests(unittest.TestCase):
         self.install()
         self.assertEqual(index.read_text(), "export FIXTURE_VALUE=retained\n")
 
+    def test_public_learning_is_shared_without_a_private_store(self):
+        # Keep excluding real records in setUp; installer coverage uses fixtures.
+        learning = self.repo / "skills/shared/level-up/learning"
+        (learning / "topics").mkdir(parents=True)
+        (learning / "INDEX.md").write_text("[Concept](topics/example.md)\n")
+        (learning / "topics/example.md").write_text("Synthetic concept evidence\n")
+        self.install()
+        for runtime in (".codex", ".claude", ".agents"):
+            installed = self.home / runtime / "skills/level-up/learning"
+            self.assertEqual((installed / "INDEX.md").read_text(),
+                             (learning / "INDEX.md").read_text())
+            self.assertEqual((installed / "topics/example.md").read_text(),
+                             "Synthetic concept evidence\n")
+        self.assertFalse((self.home / ".local/share/level-up/learning").exists())
+
     def test_shared_prompt_is_loaded_at_codex_default_path(self):
         self.install()
         prompt = self.home / ".codex/AGENTS.md"
