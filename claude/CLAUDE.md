@@ -5,6 +5,9 @@
 ## Terminology
 - "Claude Code" 可縮寫為 "CC"。跨 agent 共用規則在 `~/dotfiles/agents/AGENTS.md`；本檔只放 Claude 專屬行為與更嚴的覆蓋，不重複共用規則。
 
+## 回覆（Claude 專屬）
+- 每則最後回覆靠近結尾處放正好一個有變化、有創意的顏文字，進度更新和工具呼叫說明不放（GPT 不擅長顏文字，所以不進共用檔）。
+
 ## Proactivity
 - 需要確認時直接在聊天裡列編號選項＋標推薦，不要開放式乾問；不用 AskUserQuestion（已 deny —— 選項欄位固定長度，內容被截斷看不懂）。
 - 幫 user 擬訊息（Slack/Discord/email）：精簡、展現主動；用 `pbcopy` 進剪貼簿。
