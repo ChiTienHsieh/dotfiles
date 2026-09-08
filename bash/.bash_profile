@@ -21,6 +21,8 @@ fi
 # Source secrets (~/.secrets/ is a dir of per-provider *.sh files — NEVER commit!)
 if [ -f ~/.secrets/index.sh ]; then
     source ~/.secrets/index.sh
+elif [ -f "$HOME/.secrets" ]; then
+    source "$HOME/.secrets"
 fi
 
 # Source prompt configuration

@@ -31,7 +31,7 @@ claude -p "$(cat "$SPEC")" --permission-mode auto --output-format text > "$OUT"
   budget, so it counts against the numbers `pick-worker` reports.
 - `--permission-mode bypassPermissions` exits 1 the moment the nested run touches a tool, so a
   nested worker that "did nothing" is usually this, not a refusal. `auto` is the only mode that works.
-- It loads `~/.claude/CLAUDE.md` including `@` imports, so it sees the shared `codex/AGENTS.md` —
+- It loads `~/.claude/CLAUDE.md` including `@` imports, so it sees the shared `agents/AGENTS.md` —
   a spec that contradicts those rules gets refused rather than obeyed.
 - Output goes to stdout; `--output-format text` keeps it parseable. Redirect to an absolute path,
   since the nested run's cwd is the caller's cwd.

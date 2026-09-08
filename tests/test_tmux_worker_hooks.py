@@ -34,13 +34,20 @@ installer = load_module("install_hooks", INSTALLER_PATH)
 
 
 class TmuxWorkerTrackerTests(unittest.TestCase):
+    def test_documented_session_receipt_is_accepted(self) -> None:
+        skill = (REPO_ROOT / "skills/shared/tmux-orchestration/SKILL.md").read_text()
+        receipt = next(line for line in skill.splitlines()
+                       if line.startswith("tmux has-session") and "CODEX_TMUX_WORKER_CLOSED=session:" in line)
+        self.assertIsNotNone(tracker.SESSION_CLOSED_RECEIPT_RE.fullmatch(
+            receipt.replace("SESSION_NAME", "review-one")))
+
     SESSION_OPEN = (
         "tmux new-session -d -P \\\n"
         "  -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \\\n"
         "-s review-one -c /tmp 'claude --model opus'"
     )
     SESSION_CLOSE = (
-        "tmux has-session -t review-one 2>/dev/null || "
+        "tmux has-session -t =review-one 2>/dev/null || "
         "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'"
     )
     PANE_OPEN = (
@@ -133,7 +140,7 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             {("session", "review-one"), ("session", "review-two")},
         )
         self.post(
-            "tmux has-session -t review-one 2>/dev/null || "
+            "tmux has-session -t =review-one 2>/dev/null || "
             "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-two'",
             "CODEX_TMUX_WORKER_CLOSED=session:review-two\n",
         )
@@ -141,6 +148,26 @@ class TmuxWorkerTrackerTests(unittest.TestCase):
             tracker.load_workers(self.session_id),
             {("session", "review-one"), ("session", "review-two")},
         )
+
+    def test_accepts_conservative_legacy_session_absence_receipt(self) -> None:
+        tracker.save_workers(self.session_id, {("session", "review-one")})
+        self.post(
+            "tmux has-session -t review-one 2>/dev/null || "
+            "printf '%s\\n' 'CODEX_TMUX_WORKER_CLOSED=session:review-one'",
+            "CODEX_TMUX_WORKER_CLOSED=session:review-one\n",
+        )
+        self.assertEqual(
+            tracker.load_workers(self.session_id), set()
+        )
+
+    def test_stop_cleanup_commands_use_exact_session_targets(self) -> None:
+        tracker.save_workers(self.session_id, {("session", "review")})
+        decision = self.stop("Done.")
+        self.assertEqual(decision["decision"], "block")
+        self.assertIn("tmux kill-session -t =review", decision["reason"])
+        self.assertIn("tmux has-session -t =review", decision["reason"])
+        self.assertNotIn("tmux kill-session -t review\n", decision["reason"])
+        self.assertNotIn("tmux has-session -t review ", decision["reason"])
 
     def test_ignores_open_marker_for_a_different_session(self) -> None:
         self.post(

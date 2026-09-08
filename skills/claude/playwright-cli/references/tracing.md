@@ -5,11 +5,13 @@ Capture detailed execution traces for debugging and analysis. Traces include DOM
 ## Basic Usage
 
 ```bash
-# Start trace recording
+# Open a blank session first — open restarts the browser context
+# (no URL → about:blank). Start tracing before the navigation you care about.
+playwright-cli open
 playwright-cli tracing-start
 
-# Perform actions
-playwright-cli open https://example.com
+# Navigate and perform actions (recorded in the trace)
+playwright-cli goto https://example.com
 playwright-cli click e1
 playwright-cli fill e2 "test"
 
@@ -64,8 +66,9 @@ When you start tracing, Playwright creates a `traces/` directory with several fi
 ### Debugging Failed Actions
 
 ```bash
+playwright-cli open
 playwright-cli tracing-start
-playwright-cli open https://app.example.com
+playwright-cli goto https://app.example.com
 
 # This click fails - why?
 playwright-cli click e5
@@ -76,9 +79,14 @@ playwright-cli tracing-stop
 
 ### Analyzing Performance
 
+Capture the **first** navigation and its network waterfall. Opening the URL
+before `tracing-start` loads the page outside the trace, so slow resources
+never appear.
+
 ```bash
+playwright-cli open
 playwright-cli tracing-start
-playwright-cli open https://slow-site.com
+playwright-cli goto https://slow-site.com
 playwright-cli tracing-stop
 
 # View network waterfall to identify slow resources
@@ -87,10 +95,10 @@ playwright-cli tracing-stop
 ### Capturing Evidence
 
 ```bash
-# Record a complete user flow for documentation
+# Record a complete user flow for documentation, including the landing navigation
+playwright-cli open
 playwright-cli tracing-start
-
-playwright-cli open https://app.example.com/checkout
+playwright-cli goto https://app.example.com/checkout
 playwright-cli fill e1 "4111111111111111"
 playwright-cli fill e2 "12/25"
 playwright-cli fill e3 "123"
@@ -116,9 +124,10 @@ playwright-cli tracing-stop
 ### 1. Start Tracing Before the Problem
 
 ```bash
-# Trace the entire flow, not just the failing step
+# Trace the entire flow, including the first navigation — not just the failing step
+playwright-cli open
 playwright-cli tracing-start
-playwright-cli open https://example.com
+playwright-cli goto https://example.com
 # ... all steps leading to the issue ...
 playwright-cli tracing-stop
 ```

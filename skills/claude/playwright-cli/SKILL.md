@@ -8,9 +8,9 @@ allowed-tools: Bash(playwright-cli:*)
 
 ## Login flows & sandbox (read first)
 
-- **Login flows (OAuth, GCP Console, etc.) need `--headed`**: `playwright-cli open "<url>" --headed` opens a visible browser window. The default headless browser is invisible, so the user has nowhere to log in.
+- **Login flows (OAuth, GCP Console, etc.) need `--headed`**: `playwright-cli open "<url>" --headed` opens a visible browser window.
 - In Claude Code, playwright-cli needs `dangerouslyDisableSandbox: true` (it talks over Unix sockets the sandbox blocks).
-- When done, clean up sessions: `playwright-cli close-all` (or `kill-all` for stale/zombie processes). There is no `session-stop-all` subcommand.
+- Give each task a unique named session (`-s=<task-unique-name>`). When done, close only that session: `playwright-cli -s=<task-unique-name> close`. Do not use `close-all` or `kill-all` as routine cleanup — they can destroy other tasks' browsers; for a stuck daemon see [session-management.md](references/session-management.md).
 
 ## Quick start
 
@@ -99,14 +99,10 @@ playwright-cli -s=mysession open example.com --persistent
 # same with manually specified profile directory (use when requested explicitly)
 playwright-cli -s=mysession open example.com --profile=/path/to/profile
 playwright-cli -s=mysession click e6
-playwright-cli -s=mysession close  # stop a named browser
+playwright-cli -s=mysession close  # stop only this named browser
 playwright-cli -s=mysession delete-data  # delete user data for persistent session
 
 playwright-cli list
-# Close all browsers
-playwright-cli close-all
-# Forcefully kill all browser processes
-playwright-cli kill-all
 ```
 
 ## Installation fallback

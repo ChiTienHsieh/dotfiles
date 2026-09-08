@@ -21,7 +21,7 @@ Codex CLI / app 的怪癖、死路、綁定版本的發現。每條標日期，�
 ## CLI thread rename（2026-08-05、`codex 0.145.0` 驗證；2026-08-07 更新）
 
 - TUI 的 `/rename` 是使用者入口；app-server 的對應 operation 是穩定的 `thread/name/set`，接受 `threadId` 與 `name`，可更新 loaded thread 或 persisted rollout。
-- Standalone CLI 的 model 不保證擁有 Codex App 注入的 `set_thread_title` tool，也不能假裝自己在 TUI 輸入 `/rename`。曾驗證可用的 private temp-file Stop-hook fallback 已於 2026-08-07 移除：它會在正常 final answer 後產生可見 continuation，使 task 難以閱讀。現在由 `name-task` skill 在有工具時改名；沒有工具時只提出標題，由使用者用 `/rename` 套用。
+- Standalone CLI 的 model 不保證擁有 Codex App 注入的 `set_thread_title` tool。`name-task` 的順序：有原生改名工具（Codex App 的 `set_thread_title`）就用；沒有就用 script 在自己的 tmux pane 送 `/rename`；都不行就給使用者建議標題，由使用者自己改名。
 
 ## Codex.app 字級爆掉（desktop / Electron）
 

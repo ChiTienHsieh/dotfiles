@@ -11,7 +11,7 @@ Loaded by Claude Code, Codex, and Grok alike (Grok discovers it through `~/.clau
 ```
 DELEGATION MAP     [A]=always-loaded  [L]=lazy  [R]=computed at runtime
 ------------------------------------------------------------------------
-[A] codex/AGENTS.md "委派與跨 agent": native subagent first; file-writing
+[A] agents/AGENTS.md "委派與跨 agent": native subagent first; file-writing
     CLI only via `delegate`; never bypass; tmux read-only by default
                  |  "heavy task / tool loop / need a 2nd opinion"
                  v
