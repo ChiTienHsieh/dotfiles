@@ -49,7 +49,7 @@ class ArchiveSkillContractTests(unittest.TestCase):
 
     def test_domain_emoji_and_pin_are_independent(self) -> None:
         self.assertIn("可用 domain emoji 表示長期 workstream", self.name_task)
-        self.assertIn("Pin 是「使用者目前要持續注意」的唯一依據", self.name_task)
+        self.assertIn("只由使用者明示新增或解除", self.name_task)
         self.assertIn("標題與 pin 是兩項獨立資訊", self.name_task)
 
     def test_title_remains_human_readable(self) -> None:
