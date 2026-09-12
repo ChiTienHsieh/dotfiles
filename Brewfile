@@ -101,6 +101,8 @@ brew "steipete/tap/oracle", trusted: true
 cask "cmux", args: { appdir: "/Applications" }
 # OpenAI's coding agent that runs in your terminal
 cask "codex"
+# Menu bar usage monitor for Codex and Claude (installed by hand on the M1; cask added manually)
+cask "codexbar"
 # UI toolkit for building applications for mobile, web and desktop
 cask "flutter"
 cask "font-fira-code-nerd-font"
