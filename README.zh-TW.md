@@ -35,6 +35,7 @@ dotfiles/
 ├── skills/                          # shared/、claude/、codex/ 三類 skills
 ├── hooks/                           # pre-commit hook 用的英文詞彙 allowlist
 ├── scripts/                         # sync-skills.sh 與安裝輔助腳本
+├── userscripts/                     # 瀏覽器 userscript（Tampermonkey）
 ├── templates/                       # secrets 與本機專用檔的範本
 ├── tests/                           # 安裝與 hook 測試（CI 會跑）
 └── install.sh

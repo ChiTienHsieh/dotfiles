@@ -35,6 +35,7 @@ dotfiles/
 ├── skills/                          # shared/, claude/, codex/ skills
 ├── hooks/                           # jargon allowlist for the pre-commit hook
 ├── scripts/                         # sync-skills.sh and installer helpers
+├── userscripts/                     # browser userscripts (Tampermonkey)
 ├── templates/                       # secrets and machine-local templates
 ├── tests/                           # installer and hook tests (run in CI)
 └── install.sh
