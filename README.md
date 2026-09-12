@@ -15,7 +15,10 @@ git clone --recursive https://github.com/ChiTienHsieh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
 source ~/.bash_profile
+brew bundle   # optional: installs the CLI tools, casks, fonts and npm globals in Brewfile
 ```
+
+`Brewfile` is a raw `brew bundle dump` of the main Mac; refresh it with `brew bundle dump --force` when the toolchain changes.
 
 `install.sh` symlinks each file from `~` into this repo. Anything it would overwrite is backed up to `~/.dotfiles_backup/<timestamp>/` first, so uninstalling is just copying those files back.
 
