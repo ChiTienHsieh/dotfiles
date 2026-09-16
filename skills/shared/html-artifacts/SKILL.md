@@ -15,7 +15,7 @@ description: 製作單檔 HTML 工作文件。使用者要求 HTML／互動文�
 
 使用者要求 HTML、互動文件或可用瀏覽器開的成品時直接做。只說要報告、圖或計畫不算選了 HTML：用 Markdown，或在互動真的有幫助時建議 HTML。
 
-先建議 HTML的情況：
+先建議 HTML 的情況：
 
 - Markdown 會壓扁並排比較、空間結構、狀態或互動
 - 同一份資料需要多個視角
@@ -51,9 +51,9 @@ description: 製作單檔 HTML 工作文件。使用者要求 HTML／互動文�
 5. 可行時本機開起來確認；UI 重的成品用瀏覽器驗證。
 6. 說明檔案在哪、支援什麼工作流程。
 
-## 樣式參考
+## Pattern 參考
 
-選結構、互動樣式或起始版面時讀 `references/patterns.md`，裡面有計畫、code review、設計、原型、圖、簡報、研究、報告與自訂編輯器的樣式。
+選結構、互動 pattern 或起始版面時讀 `references/patterns.md`，裡面有計畫、code review、設計、原型、圖、簡報、研究、報告與自訂編輯器的 pattern。
 
 ## 不要這樣做
 
@@ -65,4 +65,4 @@ description: 製作單檔 HTML 工作文件。使用者要求 HTML／互動文�
 
 ## 靈感來源
 
-想法來自 Thariq Shihipar 的 HTML effectiveness 範例與公開的 `dogum/html-artifacts` skill。只當靈感與樣式詞彙，不把大段文字原樣複製進產出的成品。
+想法來自 Thariq Shihipar 的 HTML effectiveness 範例與公開的 `dogum/html-artifacts` skill。只當靈感與 pattern 詞彙，不把大段文字原樣複製進產出的成品。
