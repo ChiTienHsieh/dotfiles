@@ -18,7 +18,7 @@ allowed-tools: Bash
 ## Who
 
 - 預設使用目前 runtime 內建 worker：use your native subagent，不要從自己的 runtime 再呼叫同 provider 的 CLI。Claude Code 的 `Agent` subagent model 依 `claude/settings.json`（SSOT）；task 或 reviewer policy 需要時可 override，說明理由。
-- 要呼叫**別家** provider 的 CLI 當 worker 時，讀 `runbook/<worker provider>.md`（檔名是 worker 那邊的名字：Codex 要叫 claude CLI 就讀 `runbook/claude.md`）。
+- 要呼叫**別家** provider 的 CLI 當 worker 時，讀 `runbook/<worker provider>.md`（例：Codex 要叫 claude CLI 就讀 `runbook/claude.md`）。
 - 研究與 review 使用有明確範圍的唯讀 worker。實作分配檔案責任，告知 worker 有其他人同時工作，不得覆寫他人變更。
 - **Guardrail / prompt / SSOT reviewer** 是 provider 路由的例外：使用 fresh、無作者對話脈絡的最強 Claude reviewer，同時做 safety 與 simplify。Codex 不做這個角色（over-defensive、會塞多餘脈絡），一般 code review 可以用。
 - 保留使用者指定的 model；需要更換時先說明。選擇仍以 `intelligence > taste > cost` 為原則；機械任務可用較小 model；Haiku 4.5 不用（最後測試 2026-Q2，幻覺嚴重；要拿掉這條先重測）。
