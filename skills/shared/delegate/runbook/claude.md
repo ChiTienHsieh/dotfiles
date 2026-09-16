@@ -1,30 +1,21 @@
-# Claude as worker
+# 用 Claude 當 worker
 
-How a caller on another runtime (Codex, Grok) runs `claude -p` as a worker. Claude Code itself uses the `Agent` tool instead (see `SKILL.md` `## Who`).
+給別的 runtime（Codex、Grok）看：怎麼用 `claude -p` 跑一個 worker。Claude Code 自己不走這條，用 `Agent` tool（見 `SKILL.md` 的 `## Who`）。
 
-## CLI lane
+## CLI 做法
 
 ```bash
 SPEC=/abs/path/spec.md; OUT=/abs/path/claude-out.md
 claude -p "$(cat "$SPEC")" --permission-mode auto --output-format text > "$OUT"
 ```
 
-- `--permission-mode auto` is mandatory: `bypassPermissions` exits 1 on the first tool use.
-- `claude -p --permission-mode auto` is **not** a kernel sandbox profile. Writes are limited to cwd
-  plus the `~/.claude/settings.json` allow-list, and the `auto` classifier — not a human — gates
-  escalation. This lane is weaker than the codex/grok lanes: feed it trusted inputs only.
-- There is no separate credential-deny profile for this lane. The live settings file is the only
-  source of what is denied — run `grep -n -A10 '"deny"' ~/.claude/settings.json` immediately before
-  delegating and treat that output as truth. Do not assume `.env` reads are blocked, and do not
-  point this lane at a tree with live secrets unless that output shows the deny you need.
+- `--permission-mode auto` 一定要帶：`bypassPermissions` 在第一次用工具時就會 exit 1。
+- `claude -p --permission-mode auto` **不是** kernel 層的 sandbox profile。寫入只限 cwd 加 `~/.claude/settings.json` 的 allow 清單，escalation 由 `auto` 分類器決定，不是人。這條比 codex／grok 的弱，只餵可信的輸入。
+- 這條沒有獨立的 credential deny profile，能擋什麼只看當下的 settings 檔。委派前先跑 `grep -n -A10 '"deny"' ~/.claude/settings.json`，以輸出為準。不要假設 `.env` 讀不到；除非輸出顯示有你要的 deny，否則不要指向有真 secrets 的目錄。
 
-## Quirks
+## 怪癖
 
-- `claude -p` spends the same subscription quota as an interactive session; it is not a separate
-  budget, so it counts against the numbers `pick-worker` reports.
-- `--permission-mode bypassPermissions` exits 1 the moment the nested run touches a tool, so a
-  nested worker that "did nothing" is usually this, not a refusal. `auto` is the only mode that works.
-- It loads `~/.claude/CLAUDE.md` including `@` imports, so it sees the shared `agents/AGENTS.md` —
-  a spec that contradicts those rules gets refused rather than obeyed.
-- Output goes to stdout; `--output-format text` keeps it parseable. Redirect to an absolute path,
-  since the nested run's cwd is the caller's cwd.
+- `claude -p` 吃的是跟互動 session 同一份訂閱 quota，不是另外的額度，會算進 `pick-worker` 報的數字裡。
+- `--permission-mode bypassPermissions` 一碰到工具就 exit 1，所以「什麼都沒做」的 nested worker 通常是這個原因，不是拒絕。只有 `auto` 能用。
+- 它會載入 `~/.claude/CLAUDE.md` 連同 `@` import，所以看得到共用的 `agents/AGENTS.md`；spec 跟那些規則衝突會被拒絕，不會照做。
+- 輸出走 stdout，`--output-format text` 才好解析。要導向絕對路徑，因為 nested run 的 cwd 是呼叫端的 cwd。

@@ -49,7 +49,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
                 "built-in teacher subagent"
             ),
             "skills/shared/where-am-i/SKILL.md": (
-                "current human's progress question explicitly asks the agent"
+                "這次 human 的進度提問明確要求 agent 看某個 tmux pane"
             ),
         }
 
