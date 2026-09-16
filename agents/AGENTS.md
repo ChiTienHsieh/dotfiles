@@ -13,11 +13,10 @@
 - 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。
 
 ## 執行任務
-- 依使用者指令與前文判斷意圖、範圍及既有授權，優先採取行動。「can you…」「I want to…」「help me…」等表達若是在請求工作，就直接執行；不要只答應、列計畫、表示可以繼續，或為省時、省 Token 停在部分成果。持續推進直到使用者目標完成，或遇到確實需要使用者處理的阻礙。
+- 使用者叫你做事（「can you…」「I want to…」「help me…」都算）就做到完，中途卡住才停。安全的步驟自己判斷往前走；缺資訊時先做能做的部分，拿出具體成果再問。只有真正的風險（破壞性 Git、機密、付費、資料遺失）才暫停那一步。
 - 清楚、安全的修改任務一路完成實作、適當驗證、`commit`、review、`push`、PR 與 CI；必要時自行建立隔離 worktree、解決可安全處理的衝突。一般改動自行 review diff，必要的獨立 review 依下節與 repo 規定。
-- 一般實作選擇自行判斷；任務範圍內的唯讀調查、可逆修改、review 與已授權步驟不重複確認。若缺少會改變結果的資訊，先完成不依賴答案的工作，再提出聚焦的問題；若部署、外部寫入、合併或發佈仍需批准，先完成已授權的準備與驗證，讓使用者批准具體、可審核的成果。需要使用者決定範圍、具體安全或機密疑慮、破壞性 Git 操作、`force-push`、付費或資料遺失風險時，停下相關動作並繼續不受影響的工作；明文授權邊界仍須遵守，不因假想風險另加警告、免責聲明、批准流程或安全檢查清單。
-- 驗證範圍依改動與風險決定，完成專案必要 checks；通過後，只有新變更、失敗或未解疑慮才擴大或重跑。新增測試應驗證有意義的行為，不為可逆的小改動新增只比對實作文字的測試。
-- 安全指令被 sandbox、權限、Keychain 或網路擋住時，用合適的 escalation 重試；高風險指令不自行 escalation。Commit／push 前檢查待提交內容，避免洩露機密與未公開個資。保留使用者或其他 agent 的變更；收尾仍 dirty 時說明歸屬與可行整理方式，不自行 discard。
+- 跑專案要求的 checks，通過就繼續，不重跑沒改到的。
+- 安全指令被 sandbox、權限、Keychain 或網路擋住時，用合適的 escalation 重試；高風險指令不自行 escalation。Commit／push 前檢查待提交內容，避免洩露機密與未公開個資。保留使用者或其他 agent 的變更；收尾仍 dirty 時說明歸屬與可行整理方式（預設建議先備份到 local branch 再清乾淨），不自行 discard，也不把維持 dirty 當預設，下一個 agent 要拿到乾淨的 worktree。
 - 使用者的需求有邏輯或根本性錯誤、或偏離原本目標時，動手前先指出來、給替代做法與理由；使用者聽完仍堅持就照做，同一件事不再重複反對；上述停下條件不因此放寬。
 - 建立者或目前 controller 對自己建立或明確接管的 branch、worktree 與 PR 負責到終態；Git cleanup 與刪除方式一律以 `tidy-workspace` skill 為準。
 - 只改任務需要的部分：順手發現的 bug、效能問題或可重構之處，除非任務少了它做不成，否則寫進回報當 follow-up。使用者僅在討論、詢問判斷或思考出聲，且上下文沒有要求執行時，提供判斷與建議。

@@ -5,9 +5,7 @@ The CLI lane below is only for callers on a different runtime (Codex, Grok).
 
 ## Native lane (caller is Claude Code)
 
-- Use the `Agent` tool with a task-sized contract per `delegate`. Inherit the
-  configured model unless the task or reviewer policy requires an override;
-  do not assume a model default from an older settings snapshot.
+- 用 `Agent` tool，prompt 依 `delegate` 給任務大小的契約。model 依 `claude/settings.json` 的設定（SSOT）；task 或 reviewer policy 需要時可 override，說明理由。
 
 ## CLI lane (caller is Codex or Grok)
 

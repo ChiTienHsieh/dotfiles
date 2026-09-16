@@ -19,8 +19,8 @@ allowed-tools: Bash
 
 - 預設使用目前 runtime 內建 worker：use your native subagent。不要從自己的 runtime 再呼叫同 provider 的 CLI；跨 provider 才讀對應的 `runbook/<provider>.md`。
 - 研究與 review 使用有明確範圍的唯讀 worker。實作分配檔案責任，告知 worker 有其他人同時工作，不得覆寫他人變更。
-- **Guardrail / prompt / SSOT reviewer** 是 provider 路由的例外：使用 fresh、無作者對話脈絡的最強 Claude reviewer，同時做 safety 與 simplify。Codex 可做一般 code review，不替代此角色。
-- 保留使用者指定的 model；需要更換時先說明。選擇仍以 `intelligence > taste > cost` 為原則；機械任務可用較小 model，不用 Haiku。
+- **Guardrail / prompt / SSOT reviewer** 是 provider 路由的例外：使用 fresh、無作者對話脈絡的最強 Claude reviewer，同時做 safety 與 simplify。Codex 不做這個角色（over-defensive、會塞多餘脈絡），一般 code review 可以用。
+- 保留使用者指定的 model；需要更換時先說明。選擇仍以 `intelligence > taste > cost` 為原則；機械任務可用較小 model；Haiku 4.5 不用（最後測試 2026-Q2，幻覺嚴重；要拿掉這條先重測）。
 - 只有需要選 provider、查餘量或處理 quota blocker 時才跑 `scripts/pick-worker`；解析為本 skill 下的絕對路徑，Claude Code 從 Bash sandbox 外執行。已選 native worker 的小任務不先查所有 provider；未知餘量不當作零或無限。
 
 ## How
