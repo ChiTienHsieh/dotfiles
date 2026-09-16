@@ -4,12 +4,11 @@
 
 ## 觸發規則
 
-- Data model、architecture、user-facing behavior、guardrail/SSOT 改動：agent 必須主動提議 post-implementation quiz。
-- Type/API contracts、permissions、migration、跨 agent workflow 改動：通常也應提議。
+- 使用者要求 debrief／理解測驗或接受教學提議後才啟動；重大設計取捨可簡短提議，但不因檔案類型一律出題。
 - user 可明確 skip；依已載入的 learning-record contract 靜默記成
   workflow event，不得改變 topic 的學習狀態。
 - typo、純格式化、機械小改不觸發。
-- 不做 git hook；這是 workflow 規範，不是硬擋。
+- 不做 git hook。只有使用者明確要求理解驗收時才阻擋下游步驟；未接受的提議不需等待或記成 skip。
 
 ## 素材來源
 

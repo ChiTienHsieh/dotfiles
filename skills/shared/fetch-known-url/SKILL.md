@@ -1,6 +1,6 @@
 ---
 name: fetch-known-url
-description: Fetch and parse a supported whitelisted URL into AI-agent-readable artifacts. Use this when the user asks to fetch, read, archive, extract, summarize, or convert a known supported URL into readable files. Currently supports ChatGPT shared conversation URLs on chatgpt.com; add new URL patterns only after their fetch and parse behavior has been learned.
+description: 將 chatgpt.com/share 的公開對話擷取成 Markdown 與 JSON；讀取或整理這類分享連結時使用。
 disable-model-invocation: true
 metadata:
   short-description: Fetch a supported URL into readable files
@@ -8,23 +8,23 @@ metadata:
 
 # Fetch Known URL
 
-## Supported URLs
+## 支援的網址
 
-- `chatgpt.com/share/...`: fetches the raw HTML, extracts the shared conversation payload, and writes Markdown plus JSON.
+- `chatgpt.com/share/...`：抓原始 HTML，取出分享對話的資料，寫成 Markdown 加 JSON。
 
-Do not add unsupported URL patterns casually. When learning a new pattern, first inspect its fetch behavior, identify the stable embedded data or clean content source, then add the parser and update this list.
+不要隨手加新的網址類型。要學新類型時，先看它抓下來長什麼樣、找到穩定的內嵌資料或乾淨的內容來源，再加 parser 並更新這份清單。
 
-## Workflow
+## 流程
 
-1. Confirm the URL matches a supported pattern.
-2. Use `scripts/fetch_chatgpt_share.py` for ChatGPT shared conversation URLs.
-3. Save outputs under a task-local directory, typically `fetched-chatgpt/`.
-4. Prefer the generated Markdown for agent reading and the JSON for structured follow-up work.
-5. Keep raw HTML when possible so future parsers can be improved without refetching.
+1. 確認網址符合支援的類型。
+2. ChatGPT 分享對話用 `scripts/fetch_chatgpt_share.py`。
+3. 輸出放在任務目錄下，通常是 `fetched-chatgpt/`。
+4. agent 讀 Markdown，後續結構化處理用 JSON。
+5. 盡量留著原始 HTML，之後改 parser 不用重抓。
 
-## ChatGPT Share Fetch
+## 抓 ChatGPT 分享對話
 
-Run:
+執行：
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR:-${CODEX_HOME:-$HOME/.codex}/skills/fetch-known-url}/scripts/fetch_chatgpt_share.py" \
@@ -32,19 +32,19 @@ python3 "${CLAUDE_SKILL_DIR:-${CODEX_HOME:-$HOME/.codex}/skills/fetch-known-url}
   --out-dir fetched-chatgpt
 ```
 
-Outputs:
+輸出：
 
-- `chatgpt-share-<id>.html`: raw fetched HTML
-- `chatgpt-share-<id>.json`: structured metadata and messages
-- `chatgpt-share-<id>.md`: clean transcript for AI agents
+- `chatgpt-share-<id>.html`：原始 HTML
+- `chatgpt-share-<id>.json`：結構化的 metadata 與訊息
+- `chatgpt-share-<id>.md`：給 agent 讀的乾淨逐字稿
 
-If the structured parser fails or the transcript looks incomplete, save the HTML and run the heuristic extractor:
+結構化 parser 失敗或逐字稿看起來不完整時，留著 HTML、改跑啟發式的抽取器：
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR:-${CODEX_HOME:-$HOME/.codex}/skills/fetch-known-url}/scripts/extract_chatgpt_share_text.py" \
   fetched-chatgpt/chatgpt-share-SHARE_ID.html
 ```
 
-Treat heuristic extractor output as orientation notes, not a canonical transcript. If precision matters and extraction is incomplete, say so clearly.
+啟發式抽取的結果只當參考筆記，不是正式逐字稿。需要精確又抽不完整時，明講。
 
-If the sandbox blocks network access, rerun the fetch command with the appropriate network approval.
+sandbox 擋網路時，用合適的網路核准重跑抓取指令。

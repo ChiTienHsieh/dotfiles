@@ -1,74 +1,36 @@
-# Codex as worker
+# 用 Codex 當 worker
 
-**If you ARE Codex, use Codex's built-in subagent — never shell out to `codex exec`.**
-The CLI lane below is only for callers on a different runtime (Claude Code, Grok).
+給別的 runtime（Claude Code、Grok）看：怎麼用 `codex exec` 跑一個 worker。Codex 自己不走這條，用內建 subagent（見 `SKILL.md` 的 `## Who`）。
 
-## Before delegating
+## 委派前
 
-- `codexbar usage --provider codex --source cli`: the weekly window usually runs out first.
-  Low quota → fall back to Claude; headless Codex is an option, never an obligation.
+- `codexbar usage --provider codex --source cli`：通常是週額度先用完。quota 低就改用 Claude；headless Codex 是選項，不是義務。
 
-## CLI lane (caller is Claude Code or Grok)
+## CLI 做法
 
 ```bash
 SPEC=/abs/path/spec.md; OUT=/abs/path/codex-out.md
-mkdir -p "$(dirname "$OUT")"          # -o does not create parent dirs
+mkdir -p "$(dirname "$OUT")"          # -o 不會自己建上層目錄
 codex exec -p cc-worker --skip-git-repo-check \
   --model gpt-5.6-luna -c model_reasoning_effort=medium \
   -o "$OUT" - < "$SPEC"
 ```
 
-- **Never put any `--sandbox` flag next to `-p cc-worker` / `-p cc-worker-ro`.** `--sandbox`
-  overrides the profile's `default_permissions`, so the credential deny list silently stops
-  applying (`codex-cli 0.153.0`: `-p cc-worker --sandbox workspace-write` reads `.env.sample`
-  fine; `-p cc-worker` alone gets `Operation not permitted`). The banner prints
-  `sandbox: workspace-write` either way, so it is not evidence. Verify by `cat` on a deny-listed
-  file — e.g. create `.env.sample` in a scratch git dir and run the exact command there.
-- Read-only lane: `codex exec -p cc-worker-ro ...` (same command, different profile). It loads
-  `~/.codex/cc-worker-ro.config.toml` (repo: `codex/cc-worker-ro.config.toml`): `:read-only`
-  base plus the same credential denies. Plain `read-only` only blocks writes, not reads, so
-  without the profile it would read `.env`/`~/.ssh` into context and send them to OpenAI.
-- `codex review` has no `-p` flag (`codex review --help`), so it runs without a kernel profile:
-  trusted input only.
-- `-p cc-worker` loads `~/.codex/cc-worker.config.toml` (repo: `codex/cc-worker.config.toml`):
-  `:workspace` base (workspace-write + network off) plus explicit credential denies. That TOML is
-  the only source of the deny list — read it, do not trust a copy:
-  `grep -n deny ~/.codex/cc-worker.config.toml`.
-- The profile must be a TOML file; `-c permissions...."**/*.pem"` fails (dotted-key parser
-  splits on `.pem`), so deny globs only work from a file loaded with `-p`.
-- From Claude Code run it with `dangerouslyDisableSandbox: true` and absolute paths (see SKILL.md rule 3).
-- `codex exec` loads `~/.codex/AGENTS.md`. If those rules forbid the task it exits 0 with an
-  empty diff and a polite refusal: treat as refused, fix the rule, do not paper over it with a preamble.
-- `--search` is a top-level flag (`codex --search exec ...`) and turns network on; only over trusted inputs.
-- Models: the live default in `~/.codex/config.toml` is `gpt-5.6-sol` (hard work);
-  `gpt-5.6-luna` is the routine worker model. `model_reasoning_effort` low|medium|high|xhigh.
-  Anything else: `codex exec --help`.
+- **`-p cc-worker`／`-p cc-worker-ro` 旁邊絕對不要加任何 `--sandbox` flag。** `--sandbox` 會蓋掉 profile 的 `default_permissions`，credential deny 清單就無聲失效（`codex-cli 0.153.0` 實測：`-p cc-worker --sandbox workspace-write` 讀得到 `.env.sample`；只有 `-p cc-worker` 會得到 `Operation not permitted`）。兩種情況 banner 都印 `sandbox: workspace-write`，所以 banner 不算證據。要驗證就 `cat` 一個 deny 清單裡的檔：在 scratch git 目錄建 `.env.sample`，用一模一樣的指令跑。
+- 唯讀版：`codex exec -p cc-worker-ro ...`（同指令、換 profile）。它載入 `~/.codex/cc-worker-ro.config.toml`（repo 裡是 `codex/cc-worker-ro.config.toml`）：`:read-only` 基底加同一組 credential deny。單純的 `read-only` 只擋寫不擋讀，沒有 profile 它會把 `.env`／`~/.ssh` 讀進 context 送去 OpenAI。
+- `codex review` 沒有 `-p` flag（`codex review --help`），所以沒有 kernel profile：只餵可信輸入。
+- `-p cc-worker` 載入 `~/.codex/cc-worker.config.toml`（repo 裡是 `codex/cc-worker.config.toml`）：`:workspace` 基底（workspace-write、網路關閉）加明列的 credential deny。deny 清單只認那份 TOML，不要信複本：`grep -n deny ~/.codex/cc-worker.config.toml`。
+- profile 一定要是 TOML 檔；`-c permissions...."**/*.pem"` 會失敗（dotted-key 解析器在 `.pem` 處切開），所以 deny glob 只能從 `-p` 載入的檔案生效。
+- 從 Claude Code 呼叫要用 `dangerouslyDisableSandbox: true` 和絕對路徑（見 SKILL.md 安全邊界第 3 條）。
+- `codex exec` 會載入 `~/.codex/AGENTS.md`。規則禁止那個任務時，它會 exit 0、空 diff、禮貌拒絕：當作被拒絕，去修規則，不要用前言把它蓋過去。
+- `--search` 是頂層 flag（`codex --search exec ...`）而且會打開網路；只在可信輸入下用。
+- Model：`~/.codex/config.toml` 目前預設 `gpt-5.6-sol`（重活）；`gpt-5.6-luna` 是日常 worker model。`model_reasoning_effort` 可選 low|medium|high|xhigh。其他看 `codex exec --help`。
 
-## Quirks
+## 怪癖
 
-Dated observations that affect delegation. Delete a line once it stops being true. TUI / app
-quirks (terminal title, font blowup, thread rename) live in `codex/notes/codex-cli.md`.
+會影響委派的、有日期的觀察。哪一條不再成立就刪掉。TUI／app 的怪癖（終端機標題、字體爆掉、thread 改名）在 `codex/notes/codex-cli.md`。
 
-- **tmux always goes through Guardian** (2026-07-29, `codex-cli 0.145.0`): the permissions profile
-  has no tmux socket allowlist, so every tmux command — read-only included — needs scoped escalation
-  and Guardian review. `codex/rules/tmux.rules` marks tmux `prompt` as a second layer. Do not add a
-  read-only tmux exception (socket permissions see a path, not a subcommand), do not build a
-  "deny, then tell the agent to retry escalated" PreToolUse hook (`ask` is unsupported and a denied
-  retry cannot be proven escalated), and never keep a broad command-runner allow rule such as
-  `["uv", "run"]` — `uv run tmux …` matches the outer allow and skips the tmux prompt. The guarantee
-  covers commands Codex submits, not child processes an approved program spawns on its own.
-- **Hooks load only at session start** (2026-08-08, `codex-cli 0.145.0`): `install.sh` merges the
-  repo's `codex/hooks.json` into the live `~/.codex/hooks.json` — never symlink or overwrite that
-  file. After a first install or a command change, restart Codex and trust the hook via `/hooks`;
-  an existing session never picks it up. Per the official hooks manual the unified `exec_command`
-  tool name is `Bash` and `PostToolUse` output lands in `tool_response`.
-- **CodexBar and the Keychain**: use `codexbar usage --provider both --source cli`; plain
-  `codexbar usage` imports browser cookies and can raise a macOS Keychain Safe Storage prompt that
-  blocks a non-interactive agent. It often takes ~30s — wait 60s before calling it hung, and rerun
-  outside the sandbox if the sandboxed attempt fails.
-- **`codex review`** (2026-07-04, `0.142.5`): inside Claude Code's Bash sandbox it dies with
-  `failed to start managed network proxy … reserve managed loopback proxy listeners` because it
-  binds a loopback listener — rerun that one command with `dangerouslyDisableSandbox`, do not try
-  config variants. It also refuses a custom prompt alongside `--commit` / `--base`; for a simplify
-  lens run `codex exec` and let it read `git diff main...HEAD` itself. Skill validation has a fixed
-  command: `uv run --with pyyaml python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`.
+- **tmux 一律經過 Guardian**（2026-07-29，`codex-cli 0.145.0`）：permissions profile 沒有 tmux socket 的 allow 清單，所以每個 tmux 指令（含唯讀）都要 scoped escalation 和 Guardian 審核。`codex/rules/tmux.rules` 把 tmux 標成 `prompt` 當第二層。不要加唯讀 tmux 例外（socket 權限看的是路徑，不是子指令）；不要做「先 deny、再叫 agent 用 escalation 重試」的 PreToolUse hook（`ask` 不支援，被 deny 的重試也證明不了有 escalation）；也永遠不要留 `["uv", "run"]` 這種寬的 command-runner allow 規則，因為 `uv run tmux …` 會命中外層 allow、跳過 tmux prompt。這個保證只涵蓋 Codex 送出的指令，不涵蓋被核准的程式自己再開的子程序。
+- **Hook 只在 session 開始時載入**（2026-08-08，`codex-cli 0.145.0`）：`install.sh` 把 repo 的 `codex/hooks.json` 合併進實際的 `~/.codex/hooks.json`，那個檔絕不 symlink 或覆寫。第一次安裝或改了指令後要重啟 Codex，並在 `/hooks` 裡 trust；跑到一半的 session 永遠不會載到。依官方 hooks 手冊，統一的 `exec_command` 工具名是 `Bash`，`PostToolUse` 的輸出在 `tool_response`。
+- **CodexBar 與 Keychain**：用 `codexbar usage --provider both --source cli`；不帶參數的 `codexbar usage` 會讀瀏覽器 cookie，可能跳出 macOS Keychain Safe Storage 提示，把非互動的 agent 卡住。它常常要跑約 30 秒，等 60 秒再判定卡死；sandbox 內失敗就到 sandbox 外重跑。
+- **`codex review`**（2026-07-04，`0.142.5`）：在 Claude Code 的 Bash sandbox 內會死於 `failed to start managed network proxy … reserve managed loopback proxy listeners`，因為它要綁 loopback listener。只把這一個指令用 `dangerouslyDisableSandbox` 重跑，不要試 config 變體。它也不接受自訂 prompt 搭 `--commit`／`--base`；要做 simplify 視角就改跑 `codex exec` 讓它自己讀 `git diff main...HEAD`。skill 驗證有固定指令：`uv run --with pyyaml python ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`。
