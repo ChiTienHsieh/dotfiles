@@ -1,14 +1,13 @@
 # Grok as worker
 
-**If you ARE Grok, use the `spawn_subagent` tool — never shell out to `grok -p`.**
-The CLI lane below is only for callers on a different runtime (Claude Code, Codex).
+How a caller on another runtime (Claude Code, Codex) runs `grok -p` as a worker. Grok itself uses `spawn_subagent` instead (see `SKILL.md` `## Who`).
 
 ## Before delegating
 
 - SuperGrok quota is separate and `codexbar` cannot read it, so Grok is the overflow lane:
   use it when both Claude and Codex are low, and watch Grok's own rate-limit errors.
 
-## CLI lane (caller is Claude Code or Codex)
+## CLI lane
 
 ```bash
 SPEC=$(mktemp -t grok-spec).md; OUT=/abs/path/grok-out.md    # write the spec into $SPEC first

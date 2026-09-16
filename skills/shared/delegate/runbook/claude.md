@@ -1,13 +1,8 @@
 # Claude as worker
 
-**If you ARE Claude Code, use the built-in `Agent` tool — never shell out to `claude -p`.**
-The CLI lane below is only for callers on a different runtime (Codex, Grok).
+How a caller on another runtime (Codex, Grok) runs `claude -p` as a worker. Claude Code itself uses the `Agent` tool instead (see `SKILL.md` `## Who`).
 
-## Native lane (caller is Claude Code)
-
-- 用 `Agent` tool，prompt 依 `delegate` 給任務大小的契約。model 依 `claude/settings.json` 的設定（SSOT）；task 或 reviewer policy 需要時可 override，說明理由。
-
-## CLI lane (caller is Codex or Grok)
+## CLI lane
 
 ```bash
 SPEC=/abs/path/spec.md; OUT=/abs/path/claude-out.md

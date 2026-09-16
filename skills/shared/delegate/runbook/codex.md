@@ -1,14 +1,13 @@
 # Codex as worker
 
-**If you ARE Codex, use Codex's built-in subagent — never shell out to `codex exec`.**
-The CLI lane below is only for callers on a different runtime (Claude Code, Grok).
+How a caller on another runtime (Claude Code, Grok) runs `codex exec` as a worker. Codex itself uses its built-in subagent instead (see `SKILL.md` `## Who`).
 
 ## Before delegating
 
 - `codexbar usage --provider codex --source cli`: the weekly window usually runs out first.
   Low quota → fall back to Claude; headless Codex is an option, never an obligation.
 
-## CLI lane (caller is Claude Code or Grok)
+## CLI lane
 
 ```bash
 SPEC=/abs/path/spec.md; OUT=/abs/path/codex-out.md
