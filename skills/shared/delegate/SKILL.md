@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: "委派有明確範圍的實作、研究或 review，查 quota／reset 時間，或安全啟動 headless CLI worker 時使用。"
+description: "委派有明確範圍的實作、研究或 review，查 quota／reset 時間，或安全啟動 headless CLI worker（codex exec、grok -p、claude -p）時使用。"
 allowed-tools: Bash
 ---
 
