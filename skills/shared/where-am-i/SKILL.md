@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 使用者隔一陣子回到專案，問「我們做到哪了」之類的話時，快速、準確地回顧：git 現在什麼狀態、最近在這裡做什麼、合理的下一步是什麼。這是 `wrap`（session 收尾）的**開場**對應版。
 
-讀 pane 是唯讀的，不需要授權。如果這次 human 的進度提問明確要求 agent 看某個 tmux pane 再動作，就搭配 `tmux-orchestration`：where-am-i 負責回顧，tmux-orchestration 負責 pane 那一面。
+讀 pane 是唯讀的，不需要授權。如果目前這次 human 指令明確要求 agent 使用 tmux（看某個 pane 再動作），就搭配 `tmux-orchestration`：where-am-i 負責回顧，tmux-orchestration 負責 pane 那一面。
 
 預設唯讀。使用者同時要求 pull 或同步時，在那個授權範圍內照 `tidy-workspace` 做，不再問一次。
 
