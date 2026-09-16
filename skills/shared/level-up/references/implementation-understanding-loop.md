@@ -4,10 +4,9 @@
 
 ## 何時觸發
 
-- 陌生 codebase、陌生技術、長任務、多 agent 接力。
-- 會改 data model、type/API contracts、architecture、user-facing behavior。
-- guardrail / SSOT / prompt / skill / workflow 這類會改變 agent 行為的檔案。
-- user 明確要求 implementation plan、decision review、post-implementation note、merge-readiness quiz。
+- user 要求逐關理解實作、preflight、debrief 或 merge-readiness quiz，或接受 agent 的教學提議。
+- 陌生技術、介面或架構的重大取捨可作為提議教學的理由；單純改到這些檔案、要求一般 plan 或 review，不自動啟動課程。
+- 教學提議不阻擋已授權的實作、review 或 push；只有 user 明確要求理解驗收時，才把課程完成設為該任務的門檻。
 
 ## 何時不要
 

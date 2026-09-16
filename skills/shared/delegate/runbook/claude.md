@@ -5,9 +5,9 @@ The CLI lane below is only for callers on a different runtime (Codex, Grok).
 
 ## Native lane (caller is Claude Code)
 
-- `Agent` tool with the six-part spec as the prompt. Subagents default to Sonnet
-  (`CLAUDE_CODE_SUBAGENT_MODEL` in `claude/settings.json`); pass a bigger `model` only when
-  the task needs it and say why in the report.
+- Use the `Agent` tool with a task-sized contract per `delegate`. Inherit the
+  configured model unless the task or reviewer policy requires an override;
+  do not assume a model default from an older settings snapshot.
 
 ## CLI lane (caller is Codex or Grok)
 

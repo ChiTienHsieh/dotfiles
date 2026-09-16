@@ -1,6 +1,6 @@
 ---
 name: html-artifacts
-description: Create self-contained HTML artifacts for plans, reviews, reports, research syntheses, diagrams, prototypes, dashboards, custom editors, and other work products where Markdown would lose structure, interactivity, navigation, or export-back-to-agent workflows. Use when the user explicitly asks for an HTML artifact, interactive document, single-file prototype, diagram, deck, report, or browser-openable deliverable; for learning/teaching pages use the html-explainer skill instead.
+description: 製作單檔 HTML 工作文件。使用者要求 HTML／互動文件，或同意將 Markdown 改成瀏覽器文件時使用；HTML 教學頁用 html-explainer。
 ---
 
 # HTML Artifacts
@@ -13,11 +13,9 @@ Default to **Ask Before HTML** unless the user explicitly asks for HTML. The ski
 
 ## Decision
 
-Use HTML directly when the user asks for:
-
-- an HTML artifact, interactive document, browser-openable deliverable, or self-contained page
-- a visual plan, research synthesis, report, status page, review artifact, diagram, deck, prototype, or custom editor
-- a shareable local artifact that benefits from tabs, filters, copy buttons, export controls, or visual hierarchy
+Use HTML directly when the user requests HTML, an interactive document, or a
+browser-openable artifact. A request for a report, diagram, or plan alone does
+not select HTML; use Markdown or suggest HTML when its interaction would help.
 
 Suggest HTML first when:
 
