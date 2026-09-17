@@ -7,6 +7,6 @@
 - **controller / worker**：controller 是目前對話的 agent，負責判斷、驗收；worker 是被委派做實作、研究或 review 的 subagent 或 headless CLI。規則在 `delegate` skill。
 - **fresh reviewer**：沒有本次工作脈絡的 worker，做 safety review 與 simplify review，逐項回 Keep / Simplify / Drop。
 - **preflight / debrief**：`level-up` skill 的實作前對齊與實作後講解。
-- **user-profile**：`skills/shared/level-up/learning/user-profile.md`，跨 repo 的教學偏好與類比世界；不放 repo 專屬詞彙，那些放各 repo 的 `CONTEXT.md`。
+- **user-profile**：`skills/shared/level-up/learning/user-profile.md`，跨 repo 的教學偏好與類比世界。
 - **jargon allowlist**：`hooks/jargon-allowlist.yml`，英文詞彙與台灣用語的 allow / reject 表，pre-commit 會擋。
-- **machine SSOT**：`~/.local/share/machine/machine.md`，本機 host、帳號、工具鏈偏好；不進 repo。
+- **本機 SSOT**：`~/.local/share/machine/machine.md`，本機 host、帳號、工具鏈偏好；不進 repo。
