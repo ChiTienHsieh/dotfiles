@@ -62,3 +62,8 @@ link-url = true
 # 讓 Shift+Enter 送出與 Enter 不同的序列，Codex/Claude TUI 才能區分。
 # Ghostty 可綁 CSI 序列；tmux 透過 csi-u 轉送。
 keybind = shift+enter=csi:13;2u
+
+# 讓 macOS 的左半、右半與填滿視窗快捷鍵接手，避免與切換分割窗格衝突。
+keybind = super+alt+arrow_left=unbind
+keybind = super+alt+arrow_right=unbind
+keybind = super+alt+arrow_up=unbind
