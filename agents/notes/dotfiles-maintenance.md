@@ -24,3 +24,5 @@
 ## Submodules / Nvim
 - `nvim/` 是 git submodule（獨立 repo `ChiTienHsieh/nvim-config`）；更新用 `git submodule update --recursive`。
 - Nvim 配置：LazyVim 基底；補全用 blink.cmp（從 nvim-cmp 換來，效能）；遊戲化 triforce.nvim（需 `nvzone/volt`）。
+- 新機器先跑 `nvim/scripts/bootstrap.sh`（brew 裝 node/ripgrep/fd/lazygit/tree-sitter-cli）；沒 node 的話 Mason 裝不了 pyright/vtsls/jsonls/markdownlint-cli2，啟動會噴一排 `failed to install`。
+- e2e 測 nvim 不要用 `:sleep` 等 LSP（會擋事件迴圈），用 `nvim file -c 'luafile check.lua'` 裡的 `vim.defer_fn` 非同步讀 `vim.lsp.get_clients()`／`:messages` 再 `qa!`；headless `:checkhealth` 裡 Snacks.image、kitty、`site` 不在 rtp、TERM 那幾條是 headless 假警報，以真實 TTY 為準。
