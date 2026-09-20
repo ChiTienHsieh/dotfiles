@@ -1,32 +1,24 @@
 ---
 name: "where-am-i"
-description: "Catch up after a break: when the user returns to a project and asks where they left off or what they were doing here (e.g. 'remind me where were we'), or wants to sync with remote before resuming. Gathers git state + this project's recent agent history into a short recap with suggested next steps. Read-only by default; never auto-commits or auto-pulls without confirmation."
+description: "回顧專案進度：使用者問上次做到哪裡、目前狀態或如何接續時使用；預設唯讀，整理 Git 與相關 task 的脈絡。"
 disable-model-invocation: true
 ---
 
 # where-am-i
 
-When the user comes back to a project after a while and asks some variant of
-"remind me where were we?", give them a fast, accurate recap: what the git
-state is, what was being worked on here recently, and what the sensible next
-step is. This is the **start-of-session** counterpart to `wrap`
-(end-of-session).
+使用者隔一陣子回到專案，問「我們做到哪了」之類的話時，快速、準確地回顧：git 現在什麼狀態、最近在這裡做什麼、合理的下一步是什麼。這是 `wrap`（session 收尾）的**開場**對應版。
 
-Reading a pane is read-only and needs no authorization. If the
-current human's progress question explicitly asks the agent to inspect a tmux
-pane and then act on it, combine this skill with `tmux-orchestration`:
-where-am-i handles the recap, tmux-orchestration handles the pane surface.
+讀 pane 是唯讀的，不需要授權。如果目前這次 human 指令明確要求 agent 使用 tmux（看某個 pane 再動作），就搭配 `tmux-orchestration`：where-am-i 負責回顧，tmux-orchestration 負責 pane 那一面。
 
-Read-only by default. The only action it may take is `git pull`, and
-only after the user confirms.
+預設唯讀。使用者同時要求 pull 或同步時，在那個授權範圍內照 `tidy-workspace` 做，不再問一次。
 
-## When NOT to use
+## 不適用
 
-- Ending a session / committing / pushing → the `wrap` skill.
+- 結束 session／commit／push 的事：用 `wrap`。
 
-## Step 1 — Git state (read-only)
+## 第 1 步：Git 狀態（唯讀）
 
-From the current working directory, gather:
+在目前目錄收集：
 
 ```bash
 git rev-parse --is-inside-work-tree 2>/dev/null || echo "(not a git repo)"
@@ -37,13 +29,11 @@ git rev-list --left-right --count HEAD...@{upstream} 2>/dev/null || echo "(no up
 git stash list
 ```
 
-Interpret: how many commits ahead/behind upstream, whether the tree is dirty,
-recent commit trajectory, any stashes left behind.
+解讀：領先／落後 upstream 幾個 commit、tree 髒不髒、最近的 commit 走向、有沒有留下的 stash。
 
-## Step 2 — This project's recent agent history
+## 第 2 步：這個專案最近的 agent 活動
 
-Reuse the daily-loop extractor (the shared substrate) and filter to the current
-directory, so you see what *you and the agents* were actually doing here:
+先用相關的對話脈絡或 runtime 原生的 task 摘要。不夠判斷上次做到哪時，再用 daily-loop 的抽取器篩到目前目錄：
 
 ```bash
 "$HOME/dotfiles/skills/shared/daily-loop/scripts/mine_transcripts.sh" \
@@ -52,40 +42,34 @@ directory, so you see what *you and the agents* were actually doing here:
       | {sessions, user_turns, tools, snippets: (.snippets[0:6])}'
 ```
 
-If nothing matches `$PWD` (no recent sessions in this exact dir), widen the
-window (`--since 336`) or note that there's no recent agent history here and
-lean on the git state alone. Do not read raw `.jsonl` — trust the digest.
+沒有東西對到 `$PWD` 時，只在真的需要更舊的紀錄才放寬時間窗；否則說明沒有紀錄，用 Git 狀態就好。不要讀原始 `.jsonl`，用 digest。
 
-## Step 3 — Sync check
+## 第 3 步：同步檢查
 
-If Step 1 shows the branch is **behind** upstream, surface it and offer to catch
-up — do not pull silently:
+第 1 步顯示 branch **落後** upstream 時，講出來並提議追上，不要默默 pull：
 
-- Clean catch-up (behind only, not diverged) → offer `git pull --ff-only`.
-- Diverged (both ahead and behind) → present the divergence and let the user
-  pick rebase/merge; do not pull here.
+- 單純落後（沒分岔）：提議 `git pull --ff-only`。
+- 分岔（又領先又落後）：把分岔情況攤開，讓使用者選 rebase 或 merge；這裡不 pull。
 
-Ask before running any pull.
+沒被要求的 pull 要先問；已經要求的同步照 `tidy-workspace` 做，不再確認一次。
 
-## Step 4 — Recap + next steps
+## 第 4 步：回顧與下一步
 
-Present a short recap (in the user's communication style). Keep it scannable:
+用使用者的溝通風格給一段短回顧，要一眼掃得完：
 
 ```
-## Where you were: <repo> (<branch>)
+## 上次停在：<repo>（<branch>）
 
-- Git: <ahead/behind summary>, <clean|N dirty files>, <stash note if any>
-- Last worked on: <1-2 lines from recent commits + recent agent asks>
-- Loose ends: <uncommitted work / open threads from the snippets>
+- Git：<領先／落後摘要>，<乾淨｜N 個髒檔>，<有 stash 就註明>
+- 最近在做：<從最近 commit 與 agent 對話抓 1–2 行>
+- 未收尾：<未提交的工作／snippets 裡還開著的事>
 
-### Suggested next step
-<one concrete suggestion, e.g. "finish X", "pull then continue Y">
+### 建議下一步
+<一個具體建議，例如「把 X 做完」「先 pull 再接 Y」>
 ```
 
-Then stop and let the user decide. where-am-i orients; it does not charge ahead.
+然後停下來讓使用者決定。where-am-i 負責定位，不往前衝。
 
-## Cross-tool note
+## 跨工具
 
-This SKILL.md is read by both Claude Code and Codex. The git commands and the
-extractor both work in either. Where a step would use a Claude-only mechanism,
-fall back to a plain numbered question.
+這份 SKILL.md Claude Code 和 Codex 都會讀。git 指令和抽取器兩邊都能跑；某一步用到 Claude 才有的機制時，退回用一般的編號問題。

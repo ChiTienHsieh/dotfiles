@@ -1,12 +1,13 @@
 ---
 name: "level-up"
-description: "使用者要求分關教學、逐題推進或 level-up 教練時使用；也負責實作前 preflight、實作後 debrief、合併前測驗與決策教練。非小型任務、不熟的任務，或改到資料模型、架構、使用者看得到的行為、guardrail／SSOT 檔案時，自行先跑 preflight（見 references/implementation-understanding-loop.md），push 前主動提供實作後測驗；小而安全的修改不走這套流程。用持續保存的學習紀錄調整之後的教學。"
+description: "逐關教學與共同決策。使用者要求 level-up、分階段學習、preflight、debrief 或理解測驗時使用；一般實作與簡短解釋不啟動課程。"
 ---
 
 # level-up
 
 ## 核心約定
 
+- 實作工作本身不需要課程或測驗。只在使用者要求教學或接受提議時走這套流程；提議沒被接受不阻擋已授權的實作、review 或 push。
 - 關卡數由概念難度決定，需要時 3 到 15 關以上都可以。
 - 學習者展示理解或做出必要決定後才進下一關。
 - 學習者說的目標就是整門課的視角，可以據此調整關卡順序、增減關卡。
@@ -21,7 +22,7 @@ description: "使用者要求分關教學、逐題推進或 level-up 教練時�
 - **規劃或講關卡、處理課中提問、結束課程**：讀 [`references/teaching-engagement.md`](references/teaching-engagement.md)。它管投入感、節奏、關卡結構、task plan 的用法與收尾。
 - **出任何測驗或 shotcall 之前、回應答案之前**：讀 [`references/mcq-and-response.md`](references/mcq-and-response.md)。它管一次一題、不洩題、錯誤選項設計、shotcall 與重試規則。
 - **媒介選了 `h`、課程中途要切成 HTML、或把渲染委派出去**：讀 [`references/html-presentation.md`](references/html-presentation.md)。它管成品呈現、主題色、渲染交接，以及聊天與 HTML 的分工界線。
-- **實作規劃、決策檢視或理解工作**：讀 [`references/implementation-understanding-loop.md`](references/implementation-understanding-loop.md)，那是依風險觸發的實作前／中／後模型。
+- **實作規劃、決策檢視或理解工作**：讀 [`references/implementation-understanding-loop.md`](references/implementation-understanding-loop.md)，那是實作前／中／後的教學模式。
 - **preflight 或實作前教練**：另讀 [`references/pre-implementation.md`](references/pre-implementation.md)。
 - **debrief、實作後理解、或合併／push 前測驗**：另讀 [`references/post-implementation.md`](references/post-implementation.md)。
 

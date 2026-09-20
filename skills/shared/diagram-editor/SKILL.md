@@ -1,6 +1,6 @@
 ---
 name: diagram-editor
-description: Single-file HTML editor for Mermaid flowcharts — humans edit and annotate visually, agents read plain Mermaid text. Use when the user wants to hand a Mermaid flowchart to a human for GUI editing or markup, asks for the diagram editor / mermaid editor, or wants an edit-in-browser-then-paste-back-to-agent diagram workflow. Ships assets/editor.html to copy or adapt per task.
+description: 讓使用者在瀏覽器編輯或註解 Mermaid 流程圖，再匯出文字交回 agent；要求 diagram editor 或可編輯流程圖時使用。
 ---
 
 # diagram-editor — Mermaid 流程圖的人機交接編輯器
