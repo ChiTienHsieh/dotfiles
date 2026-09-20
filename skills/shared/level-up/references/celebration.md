@@ -10,7 +10,7 @@
 
 - 至少 8 行。獎盃、煙火、通關橫幅都可以，主題要跟這門課有關：SSH 課畫一把鑰匙或一條水管，git 課畫一棵分支樹，資料庫課畫一疊抽屜。
 - 放在 code block 裡，終端機才不會跑版。
-- 下面用一到兩句話總結學習者**展示了什麼**（不是「教了什麼」）：哪些關一次過、哪些關逆轉、他現在能自己做到什麼。
+- 底下用一到兩句話總結學習者**展示了什麼**（不是「教了什麼」）：哪些關一次過、哪些關逆轉、他現在能自己做到什麼。
 
 ```text
         .-----.
@@ -29,13 +29,13 @@
 
 走 `skills/shared/delegate` 的流程，控制端只寫 spec，不自己刻 HTML。
 
-1. 跑 `~/.claude/skills/delegate/scripts/pick-worker` 挑目前配額最多的 coding agent（從 Claude Code 跑要 `dangerouslyDisableSandbox: true`）。推薦的是自己的 runtime 就用內建 subagent。
-2. 把 spec 寫進 `$TMPDIR` 下的檔案，傳絕對路徑（沙盒內外的 `$TMPDIR` 不同，給 worker 的一律用絕對路徑）；遵守 delegate 的六段契約：objective、files in scope、interfaces、constraints、verification、reasoning effort。
+1. 跑 `~/.claude/skills/delegate/scripts/pick-worker` 挑目前配額最多的 coding agent（從 Claude Code 跑要 `dangerouslyDisableSandbox: true`）。如果推薦到的是自己的 runtime，就直接用內建 subagent。
+2. 把 spec 寫到 `$TMPDIR` 底下的檔案，傳絕對路徑（沙盒內外的 `$TMPDIR` 不同，給 worker 的一律用絕對路徑）；遵守 delegate 的六段契約：objective、files in scope、interfaces、constraints、verification、reasoning effort。
 3. 收到檔案後控制端自己驗收（下一節），再把絕對路徑給學習者。
 
 ### spec 最低要求
 
-照 `skills/shared/html-artifacts` 的規矩產出（它的「先問要不要 HTML」在這頁不適用，學習者在 skill 層已經要了），另加下面每一條：
+照 `skills/shared/html-artifacts` 的規矩做出來（它的「先問要不要 HTML」在這頁不適用，學習者在 skill 層已經要了），另加下面每一條：
 
 - 單一 `.html` 檔，CSS 與 JS 全部 inline，不用外部字型、CDN、圖片。
 - 開頁有動畫：煙火、彩帶、跑馬燈任選，不能是靜態頁。
@@ -58,8 +58,8 @@
 
 ## 委派失敗的備案
 
-worker 沒交出東西、交出空 diff，或兩次修正後仍不合格：控制端自己畫一個簡單版的單一 HTML（一段 CSS 動畫、大字目標、關卡清單、one-liner）就好。課程收尾不能因為委派失敗而沒有慶祝。
+worker 沒交出東西、交出空 diff，或兩次修正後仍不合格：控制端自己畫一個簡單版的單一 HTML（一段 CSS 動畫、大字目標、關卡清單、one-liner）就好。不能因為委派失敗就沒慶祝。
 
 ## 給學習者的最後一則訊息
 
-依序：ASCII art、展示了什麼的一兩句、通關頁的絕對路徑、可執行的下一步一句。不提記帳，不提委派過程。
+依序：ASCII art、展示了什麼的一兩句、通關頁的絕對路徑、接下來能做什麼一句。不提記帳，不提委派過程。
