@@ -39,9 +39,9 @@ disable_hotkey 241 124
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 echo "macOS: 已停用 ⌃⌥⌘←/→/↑ 的內建視窗平鋪快捷鍵"
 
-# Rectangle 只在啟動時讀 defaults，重啟才生效。
+# Rectangle 只在啟動時讀 defaults：有在跑就重啟，沒在跑就啟動。
 if pgrep -xq Rectangle; then
     osascript -e 'quit app "Rectangle"' && sleep 1
-    open -a Rectangle
-    echo "Rectangle 已重啟"
 fi
+open -a Rectangle
+echo "Rectangle 已（重新）啟動"
