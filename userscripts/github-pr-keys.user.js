@@ -4,6 +4,8 @@
 // @version      0.4.0
 // @description  v = mark current file Viewed and jump to next, j/k = next/prev file, o = expand/collapse current file, Ctrl-D/U = half page, Ctrl-F/B = full page, Cmd-Shift-Enter x2 = approve review
 // @match        https://github.com/*/pull/*
+// @updateURL    https://raw.githubusercontent.com/ChiTienHsieh/dotfiles/main/userscripts/github-pr-keys.user.js
+// @downloadURL  https://raw.githubusercontent.com/ChiTienHsieh/dotfiles/main/userscripts/github-pr-keys.user.js
 // @run-at       document-idle
 // @grant        none
 // ==/UserScript==
