@@ -46,7 +46,7 @@ class TmuxActivationPolicyTests(unittest.TestCase):
                 "內建 teacher subagent"
             ),
             "skills/shared/level-up/references/teaching-engagement.md": (
-                "built-in teacher subagent"
+                "內建 teacher subagent"
             ),
             "skills/shared/where-am-i/SKILL.md": (
                 "current human's progress question explicitly asks the agent"
