@@ -34,6 +34,7 @@ dotfiles/
 ├── grok/                            # Grok: sandbox profile
 ├── skills/                          # shared/, claude/, codex/ skills
 ├── hooks/                           # jargon allowlist for the pre-commit hook
+├── macos/                           # macOS defaults (keyboard shortcuts), run manually
 ├── scripts/                         # sync-skills.sh and installer helpers
 ├── userscripts/                     # browser userscripts (Tampermonkey)
 ├── templates/                       # secrets and machine-local templates
