@@ -30,12 +30,12 @@
 走 `skills/shared/delegate` 的流程，控制端只寫 spec，不自己刻 HTML。
 
 1. 跑 `~/.claude/skills/delegate/scripts/pick-worker` 挑目前配額最多的 coding agent（從 Claude Code 跑要 `dangerouslyDisableSandbox: true`）。推薦的是自己的 runtime 就用內建 subagent。
-2. 把 spec 寫進檔案（`$TMPDIR` 或專案的 notes 資料夾），傳絕對路徑；遵守 delegate 的六段契約：objective、files in scope、interfaces、constraints、verification、reasoning effort。
+2. 把 spec 寫進 `$TMPDIR` 下的檔案，傳絕對路徑（沙盒內外的 `$TMPDIR` 不同，給 worker 的一律用絕對路徑）；遵守 delegate 的六段契約：objective、files in scope、interfaces、constraints、verification、reasoning effort。
 3. 收到檔案後控制端自己驗收（下一節），再把絕對路徑給學習者。
 
 ### spec 最低要求
 
-照 `skills/shared/html-artifacts` 的規矩產出，另加下面每一條：
+照 `skills/shared/html-artifacts` 的規矩產出（它的「先問要不要 HTML」在這頁不適用，學習者在 skill 層已經要了），另加下面每一條：
 
 - 單一 `.html` 檔，CSS 與 JS 全部 inline，不用外部字型、CDN、圖片。
 - 開頁有動畫：煙火、彩帶、跑馬燈任選，不能是靜態頁。
@@ -44,14 +44,15 @@
 - 答錯又答對的關特別標「逆轉」，視覺上要跟一次過的關明顯不同。
 - 最後一句是這門課的 one-liner：一句話講完這門課教的核心。
 - 浮誇是要求，不是選項：字要大、顏色要多、要有一點蠢。html-artifacts 裡「避免 hero、避免裝飾」那幾條在這頁不適用，spec 裡要明講。
-- 輸出路徑寫死在 spec 裡（例如專案 notes 資料夾或 `~/scratch/<course>-clear.html`）。
+- 輸出路徑寫死在 spec 裡，用 worker 寫得到的地方：`$TMPDIR` 的絕對路徑或 worker 的 workspace；不進追蹤檔。控制端驗收後可再搬到 `~/scratch/`。
+- 這是 taste work，依 delegate 的模型原則用最強的模型，不用預設的小模型。
 
 ### 驗收
 
 控制端自己做，worker 說「做好了」不算：
 
 1. 在瀏覽器打開檔案（`open` 加絕對路徑）。
-2. 用 grep 找 `http://`、`https://`、`src=`、`href=`，確認沒有外部資源。
+2. 用 grep 找 `https?://`，確認沒有外部資源。
 3. 確認動畫會跑、目標與關卡名都在、逆轉關有標、one-liner 在最後。
 4. 缺什麼就帶具體回饋再派一次，最多兩次。
 
