@@ -9,6 +9,7 @@
 ## 自主做完
 
 - 安全、明確的修改：自己走完 review、commit、push 到 `origin`，不要停在還沒 push 的狀態。
+- 開 PR 後立刻 `gh pr merge --auto --squash`：repo 已允許 auto-merge、只准 squash、main 需要 1 個 approval 加 `ci-gate`。Sprin 在 GitHub 按 approve 後就自動合併，不用再回來按 merge；這條就是啟用 auto-merge 的授權。
 - 這是 PUBLIC repo。push 前確認：沒有 secrets、private key、token；沒有本機的 host 細節；沒有不小心寫進去的本機路徑。
 - Guardrail／SSOT 修改（CLAUDE.md、AGENTS.md、settings、skills、playbooks）：照 `agents/AGENTS.md` 的 reviewer 路由與 simplify review 規則，reviewer 依 `delegate` skill 選。本 repo 已預先授權非互動式 review，自己跑，不要問使用者是否要 review。
 - 只在這些情況停下來問：安全疑慮、破壞性操作、force-push／reset／discard 的決定、付費或資料遺失風險、現有指示推不出來的產品或設計取捨。
