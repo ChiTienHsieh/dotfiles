@@ -23,7 +23,9 @@ selection-foreground = #cecdda
 cursor-color = #ff79c6
 
 # ── 視窗 ──────────────────────────────────────
-macos-titlebar-style = tabs
+# tabs 風格在 macOS 27 + Ghostty 1.3.1 stable 會把 tab 擠到右上角疊在一起
+# (ghostty-org/ghostty#14244)，改用原生 tab bar 等 stable 修好再考慮切回。
+macos-titlebar-style = native
 window-padding-x = 8
 window-padding-y = 8
 window-padding-balance = true
