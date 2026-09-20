@@ -12,6 +12,9 @@
 2. 更新 `install.sh` 建 symlink。
 3. 需要的話更新 `README.md` 結構圖。
 
+## macOS 設定
+- 鍵盤快捷鍵之類的 `defaults` 放 `macos/defaults.sh`，冪等、手動執行（`install.sh` 只提示不自動跑）。新增項目前先 `defaults read <domain>` 讀本機實際值，不背數字。
+
 ## Git configuration
 - Portable defaults stay in tracked `git/.gitconfig`.
 - Machine-specific credential helpers and host-only overrides go in untracked `~/.gitconfig.local`, which the tracked config includes last.
