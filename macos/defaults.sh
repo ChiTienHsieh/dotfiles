@@ -21,7 +21,12 @@ RECT=com.knollsoft.Rectangle
 defaults write "$RECT" leftHalf  -dict keyCode -int 123 modifierFlags -int 1572864
 defaults write "$RECT" rightHalf -dict keyCode -int 124 modifierFlags -int 1572864
 defaults write "$RECT" maximize  -dict keyCode -int 126 modifierFlags -int 1572864
-echo "Rectangle: ⌥⌘← 左半、⌥⌘→ 右半、⌥⌘↑ 最大化"
+# 等同在歡迎視窗按「Recommended」，新機不再跳選單。命名反直覺：alternateDefaultShortcuts=1
+# 才是 Recommended 那組（⌃⌥ 為主，不跟上面的 ⌥⌘ 重疊）；0 是 Spectacle 組，⌥⌘↑ 會撞「上半」。
+# subsequentExecutionMode 1 = 重複按同一鍵時移到下一個螢幕；0 = 循環 1/2、2/3、1/3 寬度（看起來像壞掉）。
+defaults write "$RECT" alternateDefaultShortcuts -bool true
+defaults write "$RECT" subsequentExecutionMode -int 1
+echo "Rectangle: ⌥⌘← 左半、⌥⌘→ 右半、⌥⌘↑ 最大化（其餘沿用 Recommended 預設）"
 
 # --- macOS 內建視窗平鋪快捷鍵 ------------------------------------------------------
 # AppleSymbolicHotKeys ID：237 = ⌃⌥⌘↑、240 = ⌃⌥⌘←、241 = ⌃⌥⌘→（本機讀出的實際值）。
