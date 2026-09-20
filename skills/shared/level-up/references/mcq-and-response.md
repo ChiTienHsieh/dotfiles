@@ -67,11 +67,11 @@ Make the learner reason instead of reading the shape of the answer:
 
 Confirm briefly, explain why it works, then advance and preview the next level.
 
-### Incorrect
+### 答錯
 
-Stay encouraging and remain on the same level. Re-explain from a different
-angle, ask one new check, and record a gap only when it matters for future
-teaching.
+語氣維持鼓勵，留在同一關。換一個真的不同的角度重講：職場鬼故事模式就換一個事故（Ben 或 Jack 弄壞別的東西），類比模式就換一個場景。禁止把同一段解釋換字重貼。然後出一題新的檢查題；只有會影響之後教學時才記缺口。
+
+重試通過後，在給學習者看的進度表把這關標「逆轉」，收尾慶祝會特別標這幾關。
 
 Use this miss ladder:
 
