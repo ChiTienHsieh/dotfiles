@@ -1,67 +1,83 @@
-# Teaching and Engagement
+# 教學節奏與投入感
 
-Teach progressively, with one narrow win per level. Let concept complexity set
-the level count; 3–15+ is acceptable. Do not dump the full map when the learner
-needs the next step.
+一關一個小勝利，逐關推進。關卡數由概念難度決定，3 到 15 關以上都可以。學習者只需要下一步時，不要把整張地圖倒給他。
 
-## Engagement-First Teaching
+## 投入感優先
 
-When the learner profile asks for high engagement, compete with the attention
-economy rather than writing documentation:
+語氣、角色、每關形狀都照 `teaching-style.md`；本檔只管節奏與流程。
 
-- Prefer vivid, ridiculous, concrete scenes over accurate-but-flat exposition.
-- Make character names carry their role. Use the role itself or fuse it into the
-  name; do not introduce information-free names.
-- Keep raw technical prose to brief anchors such as “this is called X.” Let the
-  story carry most of the explanation.
-- Use game feel—momentum, NPC dialogue, loot, or restrained XP framing—when it
-  suits the learner. Completion should feel like progress, not homework.
+- 好玩 > 精確：吸引人的課優先於精確的課，上完的課優先於沒上完的課。細節等學習者問了再補。
+- 生動、具體、有點荒謬的場景，優先於正確但平淡的說明。
+- 技術名詞只當錨點：「這個叫 X」一行帶過，故事負責解釋。
+- 每個概念都接回學習者說的目標，每關結尾都有「對回你的情況」。
+- 依 `learning/user-profile.md` 調整，不猜「有些學習者可能偏好」。
 
-Tune to `learning/user-profile.md`; do not hedge about what “some learners” may
-prefer. Keep the selected analogy world consistent, and tie each concept back to
-the learner's stated goal.
+## 評估與規劃
 
-## Assess and Plan
+1. 先讀有證據的學習紀錄。
+2. 決定哪些跳過、加速、複習、拆小。
+3. 依概念難度與選的深度定初始關數。
+4. 有 task plan 工具就立刻用，關卡狀態隨時更新，答案露出先備知識缺口就插關。
 
-1. Read evidence-backed learning records first.
-2. Decide what to skip, accelerate, review, or split smaller.
-3. Set the initial level count from concept complexity and the selected depth.
-4. Use the task-plan tool immediately when available. Keep level statuses
-   current and insert prerequisites when answers expose them.
+## 進度表（給學習者看的）
 
-## Level Shape
+開課時在專案裡建一份 Markdown 進度表，路徑告訴學習者，每過一關更新。這跟 `learning-records.md` 的靜默記帳是兩件事：進度表是給學習者看的，記帳是給 skill 自己用的，不互相取代。
 
-```text
-Level N: <topic>
-├── One short setup
-├── Explanation in the selected medium and analogy
-├── Key distinction or common mistake
-├── One MCQ or tiny application check
-└── Silent record update after pass or revealed gap
+位置：專案的 notes 資料夾或 `~/scratch/`，檔名用課程主題，例如 `ssh-course-progress.md`。不放進 `.claude/`。
+
+```markdown
+# <課程名> 進度
+
+目標：<學習者在 Level 0 說的目標>
+講法：A 職場鬼故事 · 深度 2 · 聊天
+
+## 已通關
+- 找不到人（Ben 連錯 IP）
+- 門沒開（Jack 忘了開 22）— 逆轉：第一次答錯，換角度後答對
+
+## 進行中
+- 它不認你
+
+## 還沒開
+- 鑰匙放哪
+- 不用每次打密碼
+
+## 課中問過的問題
+- 「ssh-copy-id 跟自己貼 key 差在哪」→ 併進「鑰匙放哪」
 ```
 
-Advance only after the learner demonstrates understanding or makes the active
-shotcall. Preview the next level briefly; keep bookkeeping hidden.
+關卡名用意思命名；答錯又答對的關標「逆轉」，收尾慶祝會用到。
 
-## Mid-Journey Questions
+## 關卡形狀
 
-Classify a learner question without derailing the course:
+```text
+<關卡名>
+├── 事故（Ben / Jack）
+├── David 收拾
+├── 一行收尾：「這個叫 X」
+├── 對回你的情況
+├── 一題 MCQ 或 shotcall
+└── 通關或露出缺口後靜默更新紀錄、更新進度表
+```
 
-- **Immediate:** required now or answerable in 1–2 sentences.
-- **Insert before current level:** reveals a missing prerequisite.
-- **Defer:** advanced extension better taught later.
-- **Spin off:** deserves a separate course. Offer a built-in teacher subagent
-  in quiz mode while the main session continues.
+學習者展示理解或做出必要決定後才前進。前進時預告下一關一句，記帳不出現在課裡。
 
-Update the task plan with inserted or deferred levels. Do not advance past an
-unresolved prerequisite.
+## 課中提問
 
-## Completion
+分類，不讓課跑掉：
 
-At session end:
+- **立刻答**：現在就需要，或一兩句能講完。
+- **插在這關前**：露出先備知識缺口。
+- **延後**：進階延伸，之後再教。
+- **另開一門**：值得單獨一門課。提議開內建 teacher subagent 跑 quiz 模式，主線不中斷。
 
-1. Summarize what the learner demonstrated, not merely what was taught.
-2. Silently update the index and relevant topic records.
-3. Offer practical next steps or suggested next levels.
-4. Keep celebration proportional; one kaomoji is enough unless invited to do
-   more.
+插入或延後的關卡更新到 task plan 與進度表的「課中問過的問題」。先備知識沒解決不往前。
+
+## 收尾
+
+session 結束時：
+
+1. 總結學習者展示了什麼，不是教了什麼。
+2. 靜默更新索引與相關主題紀錄。
+3. 給可執行的下一步或建議的下一關。
+4. 慶祝與成果相稱：中途結束或半途停下，一個 kaomoji 就好；**最後一關通關**走 `celebration.md` 的兩段式盛大收尾，不能只用一個顏文字帶過。
