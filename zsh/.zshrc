@@ -133,10 +133,10 @@ case $USER in
     *)      _u='%F{white}%n%f' ;;
 esac
 
-# Host display name + color (fallback: %m in white)
+# Host display name (always blue; only the label is remapped)
 case $(hostname -s) in
     Sprin-MBA*) _h='%F{111}MacAir%f' ;;
-    *)       _h='%F{white}%m%f' ;;
+    *)          _h='%F{111}%m%f' ;;
 esac
 
 PROMPT="${_u} ${_h} %F{180}%1~%f \$ "

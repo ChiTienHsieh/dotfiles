@@ -12,10 +12,10 @@ case $USER in
     *)      _u='\[\e[97m\]\u\[\e[m\]' ;;
 esac
 
-# Host display name + color (fallback: \h in white)
+# Host display name (always blue; only the label is remapped)
 case $(hostname -s) in
     Sprin-MBA*) _h='\[\e[38;5;111m\]MacAir\[\e[m\]' ;;
-    *)          _h='\[\e[97m\]\h\[\e[m\]' ;;
+    *)          _h='\[\e[38;5;111m\]\h\[\e[m\]' ;;
 esac
 
 PS1="${_u} ${_h} \[\e[38;5;180m\]\W\[\e[m\] \$ "
