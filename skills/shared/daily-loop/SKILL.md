@@ -1,6 +1,7 @@
 ---
 name: "daily-loop"
 description: "Mine recent Claude Code and Codex transcripts, identify durable workflow improvements, and ask the user which proposals to apply. Use for the daily loop, reviews of recent sessions, or requests to find recurring workflow friction."
+disable-model-invocation: true
 ---
 
 # daily-loop

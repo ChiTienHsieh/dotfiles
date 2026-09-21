@@ -48,7 +48,11 @@ ulimit -n 10240
 # 3. Source other config files
 # -----------------------------------------------------------------------------
 # Secrets (~/.secrets/ is a dir of per-provider *.sh files — NEVER commit!)
-[ -f ~/.secrets/index.sh ] && source ~/.secrets/index.sh
+if [ -f "$HOME/.secrets/index.sh" ]; then
+    source "$HOME/.secrets/index.sh"
+elif [ -f "$HOME/.secrets" ]; then
+    source "$HOME/.secrets"
+fi
 
 # Aliases (shared with bash)
 [ -f ~/.aliases ] && source ~/.aliases
@@ -58,9 +62,6 @@ ulimit -n 10240
 # -----------------------------------------------------------------------------
 # fzf - fuzzy finder (Ctrl+R for history, Ctrl+T for files)
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# Suppress zoxide doctor warnings
-export _ZO_DOCTOR=0
 
 # zoxide - smarter cd command
 # Don't use --cmd cd; define our own cd with fallback for CC sandbox compatibility
@@ -132,10 +133,10 @@ case $USER in
     *)      _u='%F{white}%n%f' ;;
 esac
 
-# Host display name + color (fallback: %m in white)
+# Host display name (always blue; only the label is remapped)
 case $(hostname -s) in
     Sprin-MBA*) _h='%F{111}MacAir%f' ;;
-    *)       _h='%F{white}%m%f' ;;
+    *)          _h='%F{111}%m%f' ;;
 esac
 
 PROMPT="${_u} ${_h} %F{180}%1~%f \$ "
@@ -163,7 +164,7 @@ precmd() {
 # - etc.
 
 # bun completions
-[ -s "/Users/shroom/.bun/_bun" ] && source "/Users/shroom/.bun/_bun"
+[ -s "${BUN_INSTALL:-$HOME/.bun}/_bun" ] && source "${BUN_INSTALL:-$HOME/.bun}/_bun"
 
 # >>> grok installer >>>
 export PATH="$HOME/.grok/bin:$PATH"

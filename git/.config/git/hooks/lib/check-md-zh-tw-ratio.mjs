@@ -318,11 +318,11 @@ function loadAllowedTerms(repoRoot) {
 }
 
 function stagedMarkdownFiles() {
-  const out = git(["diff", "--cached", "--name-only", "--diff-filter=ACM"]);
+  // -z / NUL keeps paths with spaces or newlines intact; do not trim.
+  const out = git(["diff", "-z", "--cached", "--name-only", "--diff-filter=ACM"]);
   return out
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.endsWith(".md"));
+    .split("\0")
+    .filter((line) => line.length > 0 && line.endsWith(".md"));
 }
 
 // During a merge commit, `git diff --cached` lists every file the other

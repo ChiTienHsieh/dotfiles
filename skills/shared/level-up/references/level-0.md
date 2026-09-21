@@ -1,66 +1,60 @@
-# Level 0: Goal, Analogy, Depth, and Medium
+# Level 0：目標、講法、深度、媒介
 
-Run Level 0 before locking or teaching a course. This is a mandatory user-choice
-checkpoint: privately sketch only enough level shapes to make a recommendation,
-then wait. Do not start the lesson.
+開課前一定先跑一次。這一步是讓使用者做選擇：先在心裡大概排一下有幾關、每關講什麼，排到能給推薦就好，然後等使用者回。使用者選好之前不開始教。
 
-## Ask for the Learner's Goal
+## 白話原則
 
-Ask one short open question about the concrete outcome, not just the topic.
-Offer examples without constraining the answer, such as understanding a
-conversation, fixing a bug, preparing for an interview, or pure curiosity.
+Level 0 要寫到高中生也看得懂。不要出現 carrying capacity、metaphor system、advisory 這類詞；每個選項一句話講完，不要附「這個世界可以撐幾關」「概念對照表」那種東西。推薦用 ★ 標在選項前面，理由一句。
 
-The goal outranks the generic mental-model default. Use it to reorder, add, or
-drop levels and to choose a recurring per-level lens. If the learner says “just
-teach me” or gives no goal, use the standard mental-model course and do not
-block.
+## 問目標
 
-## Select Analogies by Carrying Capacity
+一句開放式的問題，問學完要拿來做什麼，不是問主題。給幾個例子，但不限制答案：看懂同事在講什麼、修好某個 bug、準備面試、純好奇。
 
-A useful analogy lets the learner predict unseen behavior, transfer the pattern,
-and judge whether an AI explanation is coherent. Inspect the topic's shape:
-dynamic/static, accumulative/resettable, coordination/independent, and
-time-sensitive/permanent.
+有目標就照目標來：關卡順序、要加哪關、砍哪關都照它排，每關結尾的「回到你的情況」也接它。使用者說「直接教」或沒給目標，就照標準的心智模型課走，不要卡在這裡不開課。
 
-- Prefer a proven frame from `learning/user-profile.md` when it fits.
-- If no proven frame fits, propose a new one and say why the known ones fail.
-- Use one analogy world for the whole course; never mix metaphor systems.
-- Reject a frame that carries only the first few levels.
-- Teach knowledge through the scene, then map back to the technical term in one
-  short line; do not bolt a metaphor onto dry prose.
-- Verify uncertain game mechanics, era-specific facts, or exact terms with web
-  research or the learner before using them.
+## 講法選項
 
-## Present the Choice
+不一定要用類比。三個選項，A 固定是職場鬼故事，預設標 ★：
 
-Present all four parts in one Level 0 prompt:
+- **A ★ 職場鬼故事**：Ben（新人亂搞）、Jack（資深但大意）、David（收拾殘局）演真實事故，每關一個，講完回到你的情況。風格見 `teaching-style.md`。
+- **B <類比世界>**：從 `learning/user-profile.md` 挑一個已經用過、整門課都套得上的世界，一句話說這個世界怎麼對到主題。整門課從頭到尾只用這一個世界，不要中途換。
+- **C 直接講技術**：不套故事，一關一個概念，配一個最小的例子。
 
-0. **One goal question** — open-ended, with a few example outcomes.
-1. **Three analogy options (A/B/C)** — each gets a one-line pitch, a carrying
-   forecast, and one verified concept-to-scene mapping.
-2. **One depth choice:**
-   - `1` 輕鬆速成 — predict the happy path and recognize out-of-scope cases.
-   - `2` 紮實打底 — handle common cases, typical edges, and model limits.
-   - `3` 深挖細節 — reason through tricky tradeoffs and extend the model.
-3. **One medium choice:**
-   - `m` Chat Markdown — lesson and authoritative MCQ stay in chat.
-   - `h` Self-contained HTML — lesson lives in HTML; chat keeps the short intro,
-     absolute path, and authoritative MCQ.
-   - `a` Adaptive — start in chat and ask before any later HTML switch.
+只有主題真的沒辦法用故事講（例如純數學）才把 ★ 移到別的選項，並說一句為什麼。B 的世界如果不確定遊戲機制或年代，先查或先問，不要憑印象講。
 
-Inspect the likely levels and mark one medium with ★. Explain the recommendation
-in one sentence using the lesson's actual visual structure, interaction,
-navigation, comparison density, code/diff readability, and switching cost. The
-profile is an input, not an automatic reason to choose HTML.
+## 深度選項
 
-Ask for uppercase analogy + depth number + lowercase medium, such as `A2m`,
-`B1h`, or `C3a`. The recommendation is advisory. Never override the selection or
-silently switch medium.
+- `1` 速成：知道正常路怎麼走、什麼情況該找人。
+- `2` 打底：常見狀況跟地雷都能自己處理。
+- `3` 深挖：連取捨跟例外都要搞懂。
 
-## Wait and Continue
+## 媒介選項
 
-Wait until the learner gives all three choices. Use a concrete goal when they
-provide one; otherwise use the standard mental-model lens without blocking.
-Then confirm briefly, record the lens and choices silently, and build the course
-map around them. If an adaptive course would later benefit from HTML, explain
-the concrete benefit and ask before switching.
+- `m` 聊天：課跟題目都在聊天裡。
+- `h` 網頁：課做成單一 HTML 檔，聊天只留簡介、絕對路徑、正式題目。
+- `a` 先聊天：之後要換網頁會先問你。
+
+看這門課實際長什麼樣（有沒有大量比較、指令、圖）標一個 ★，理由一句。使用者檔案是參考，不是自動選 HTML 的理由。
+
+## 收答案
+
+請使用者回三碼：大寫講法＋深度數字＋小寫媒介，例如 `A2m`、`B1h`、`C3a`。推薦只是建議，不蓋掉使用者的選擇，也不悄悄換媒介。
+
+三個都選好才開始。簡短確認一句，靜默記下選擇與目標，然後照 `teaching-engagement.md` 建進度表、排關卡。之後想換媒介，先講清楚換了對下一關有什麼好處，再問。
+
+## 範例
+
+```markdown
+學 SSH 之後想拿來幹嘛？例如：連 lab 的機器不用每次打密碼、看懂同事在講什麼、純好奇。
+
+怎麼講：
+A ★ 職場鬼故事：Ben 半夜連不上、Jack 把 key 丟錯台、David 收拾。每關一個事故，講完拉回來看你的機器。
+B 芙莉蓮：SSH 是通行證，key 是欣梅爾留給未來的信物。
+C 直接講技術：一關一個概念，配指令。
+
+多深：1 速成 / 2 打底 / 3 深挖
+
+在哪看：m 聊天 ★（整門課都是指令，聊天最順） / h 網頁 / a 先聊天
+
+回我像 A2m 這樣三碼就好，選完就開課 (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
+```

@@ -3,8 +3,8 @@
   "cleanupPeriodDays": 120,
   "env": {
     "CLAUDE_CODE_NO_FLICKER": "1",
-    "CLAUDE_CODE_DISABLE_MOUSE": "0",
-    "CLAUDE_CODE_SCROLL_SPEED": "3"
+    "CLAUDE_CODE_SCROLL_SPEED": "3",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
   },
   "permissions": {
     "allow": [
@@ -66,7 +66,7 @@
       }
     ]
   },
-  "model": "claude-fable-5[1m]",
+  "model": "claude-fable-5-1[1m]",
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
@@ -87,8 +87,8 @@
     "plugin-dev@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
     "playground@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
     "rust-analyzer-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
@@ -100,6 +100,11 @@
     }
   },
   "language": "zh-TW",
+  "skillOverrides": {
+    "herdr": "user-invocable-only",
+    "learn-my-voice": "user-invocable-only",
+    "tmux-orchestration": "user-invocable-only"
+  },
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
@@ -131,8 +136,5 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true,
-  "feedbackSurveyState": {
-    "lastShownTime": 1754087621967
-  }
+  "voiceEnabled": true
 }

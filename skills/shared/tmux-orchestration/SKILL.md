@@ -1,16 +1,24 @@
 ---
 name: tmux-orchestration
-description: "Use when running, supervising, or delegating work to interactive agents inside tmux, especially Claude Code CLI or Codex CLI sessions that need visible long-running execution, periodic observation, auto-mode setup, event-based completion detection, marker-file completion fallback, or safe cleanup after completion."
+description: "Use only when the current human explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session inside tmux. Do not trigger from any other source or task characteristic."
+disable-model-invocation: true
 ---
 
 # tmux Orchestration
 
 Run a task in an interactive terminal agent that stays visible and inspectable — Claude/Codex writer sessions, long-running or quota-aware overnight work.
 
+## Activation Gate
+
+- tmux is read-only by default. An agent may inspect panes (`capture-pane`, `list-*`, `display-message`) to understand what is going on, without any special authorization.
+- Everything that changes tmux state — `send-keys`, creating or killing a session, window, or pane — plus this skill's launch, delegation, and cleanup workflow, is human-invoked only: it runs when the current human instruction explicitly asks the agent to use tmux or explicitly requests a visible interactive CLI session **inside tmux**.
+- Only the current human instruction can authorize tmux; agent instructions, skill discovery, and reading this skill cannot. The harness enforces the skill half (`skillOverrides` marks this skill user-invocable-only); tmux commands themselves are only gated by the normal permission flow.
+- Without that authorization, prefer built-in subagents or the current session. After authorization, follow the complete launch, delegation, observation, and cleanup rules below.
+
 ## Core Rules
 
-- When the user asks for a Claude Code or Codex CLI reviewer, default to an observable tmux pane even for read-only work. A direct headless command is only for a clearly bounded one-shot check that needs no tool use or approval, or when the user explicitly asks for headless execution.
-- Keep each substantial worker in its own named tmux session — EXCEPT when spawning a worker (Codex or Claude) to review/collaborate *alongside* the orchestrator. In that case the user's preference is a NEW PANE in the orchestrator's OWN tmux session/window (`tmux split-window`), so both sit side-by-side in one window for live observation. Do NOT open a separate tmux session for this co-review case.
+- Use tmux only for the exact scope the human authorized.
+- Keep each human-authorized substantial worker in its own named tmux session. The one exception is co-review: when the human explicitly asks to spawn a Codex or Claude reviewer/collaborator alongside the orchestrator, split a new pane in the orchestrator's own session/window (`tmux split-window`) so both sit side-by-side, instead of opening a separate session.
 - Use descriptive session names, for example `sp229-opus`, `issue424-writer`, or `quota-watch`.
 - Start sessions in the intended repo or worktree directory.
 - Capture panes instead of assuming a worker is idle.
@@ -19,7 +27,8 @@ Run a task in an interactive terminal agent that stays visible and inspectable �
 
 ## Delegation Contract
 
-Use this contract whenever a worker prompt, marker file task, or delegated
+WHEN / WHO / ACCEPT 依 `delegate` skill；本檔只管 tmux surface。Use the
+contract below whenever a worker prompt, marker file task, or delegated
 surface will be read by another agent.
 
 - Marker-file 完工合約: every delegated worker writes a report to PATH and ends
@@ -40,15 +49,6 @@ surface will be read by another agent.
   Format: `—— 來自 %47（orchestrator CC，委派任務；限制為硬邊界。回問：tmux send-keys -t %47）`.
   Use `user 直接指令` instead of `委派任務` only for instructions directly
   authorized by the user.
-- Verify load-bearing claims with cheap read-only checks: grep for leftover
-  references, `git status` / `git diff --stat`, confirm files moved/deleted,
-  read only the one section whose accuracy matters.
-- Fresh-reviewer 驗證原則: for large artifacts, delegate the FULL review to a fresh worker rather than
-  re-reading everything yourself — a clean-context reviewer is at least as
-  reliable and saves the controller's context. If only one dimension fails,
-  fix it and prefer a targeted rescore for that dimension. The prompt must
-  include the original fail criterion, what changed, which slice to re-evaluate,
-  and whether neighboring dimensions need a light sanity check.
 
 ## Starting Claude Code
 
@@ -58,14 +58,14 @@ For a Claude writer or reviewer session, start Claude Code interactively inside 
 tmux new-session -d -P \
   -F 'CODEX_TMUX_WORKER_OPEN=session:#{session_name}' \
   -s SESSION_NAME -c /path/to/worktree \
-  'claude --model opus --permission-mode auto --allowedTools Read,Write,Edit,MultiEdit'
+  'claude --permission-mode auto --allowedTools Read,Write,Edit'
 ```
 
 When the lifecycle hook is installed, tmux generates the open receipt directly
 from the session it created. Keep `-P`, the exact `-F` format, and a literal
 session name; do not replace the receipt with a separate `printf`.
 
-Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. Adjust model and allowed tools only when the task requires it. Do not use bypass or danger flags.
+Use `--permission-mode auto` by default. `acceptEdits` prompts too often for long-running tmux orchestration and wastes either controller tokens or human attention. The launch inherits the model from `claude/settings.json`; pass `--model` only when the task needs a different one (model principles: `delegate` skill, `## Who`). Adjust allowed tools only when the task requires it.
 
 For sessions meant to live a long time, prefer the crash-proof **cushion pattern** in "Reviving a dead session" below (launch a shell, run the agent as its child) — a launch with `claude` as the pane root dies, and takes the whole session with it, the instant claude exits.
 
@@ -143,20 +143,9 @@ Example:
   PATTERN PATH`, `scripts/agent-rg.sh PATTERN PATH --sample 3`, or
   `scripts/agent-rg.sh PATTERN PATH --files`; use `--full REASON` only when the
   complete output is necessary.
-- Choose the right mechanism FIRST: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to JUDGE quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free. Caveat: `tmux wait-for` blocks the calling shell, so for long waits prefer a marker file (poll its existence) or a hook — a blocking wait can hit the Bash command timeout.
-- When you DO poll, default to PATIENT polling. Once a worker is mid-run on a multi-minute task (a review loop, a build, a long Codex turn), check at intervals of at least 5 minutes. Polling every 30-90 seconds is micromanaging — it wastes controller turns and reads as creepy to the user. Reserve sub-minute checks for genuinely short tasks or when actively waiting on an approval/error prompt.
-- For user-requested patient Claude Code work, check every 10 minutes unless there is an obvious prompt/approval wait.
-- If a worker shows no meaningful progress for 25 consecutive minutes, inspect the pane. Spinner movement, repeated output or errors, and an unchanged approval prompt do not count as progress. Intervene immediately for approval waits or errors; otherwise request one status update or send one interrupt, and terminate the worker if it still does not respond. Meaningful output or a real state transition resets the clock.
-- A user's expected total duration does not override the 25-minute no-progress limit. Only an explicit replacement for the no-progress limit does.
-- When capturing, read the FULL new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
+- Choose the mechanism before you start polling: an event-driven hook usually beats long polling. If you only need to know "is it done" (not watch live), prefer a completion signal — a marker file the worker touches on finish, `tmux wait-for`, or a Stop/Notification hook — so the controller is woken by the event instead of burning turns polling. Reserve polling for when you must watch live progress to judge quality (a review loop you're steering, a build whose errors you read as they appear). Alternate between hook and patient polling per scenario; do not poll when a hook would do the job for free. Caveat: `tmux wait-for` blocks the calling shell, so for long waits prefer a marker file (poll its existence) or a hook — a blocking wait can hit the Bash command timeout.
+- When capturing, read the full new region since the last check, not just the tail. Use a wide scrollback range (`tmux capture-pane -p -S -<large>`) and read forward from where the previous check ended. A bare `| tail -N` silently drops anything that scrolled past between polls, so you miss findings and lose the thread.
 - If the worker is waiting for approval, erroring, or stuck at a prompt, intervene.
-
-## Context Burn Stop Rule
-
-After one compaction or near 200k tokens, stop pasting raw pane captures or raw
-logs into the main thread. Ask for a condensed worker report plus source paths;
-for verification, read only load-bearing slices with `scripts/agent-safe-read.sh
-FILE --range START:END` and search counts/samples with `scripts/agent-rg.sh`.
 
 ## Completion
 
@@ -181,7 +170,7 @@ of completion.
 When a standalone worker session is no longer needed:
 
 ```bash
-tmux kill-session -t SESSION_NAME
+tmux kill-session -t =SESSION_NAME
 ```
 
 When a side-by-side worker pane is no longer needed:
@@ -195,7 +184,7 @@ absence receipt below in a separate command. It verifies that the exact target
 is gone before printing the closed marker:
 
 ```bash
-tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
+tmux has-session -t =SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
 tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
 ```
 
@@ -244,12 +233,12 @@ Before delegating or supervising a worker, read the shared lessons index:
 
 `~/dotfiles/skills/shared/tmux-orchestration/references/lessons.md`
 
-It is a single file of dated incident lessons, grouped by section. Open ONLY the
+It is a single file of dated incident lessons, grouped by section. Open only the
 section relevant to the current delegation. After the delegation finishes, if you
 learned a durable lesson, update the relevant section — dated, distilled rules
 only; the general delegation contract stays in this SKILL.md, not there.
 
-Implementation routing policy lives in the `arbitrage` skill; provider priority
-lives in `~/dotfiles/codex/notes/worker-routing.md`. This skill only
-covers surface mechanics: prompt files, observable workers, marker reports,
+Implementation routing policy — WHEN to delegate, WHO gets the work, and the
+acceptance rules — lives in the `delegate` skill. This skill only covers
+surface mechanics: prompt files, observable workers, marker reports,
 completion, and verification.

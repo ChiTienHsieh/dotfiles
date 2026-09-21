@@ -24,60 +24,51 @@ blocker.
 - Before commit or push, check all relevant diffs for secrets, credentials,
   private keys, non-public personal data, and private machine details. Treat
   unknown repo visibility conservatively.
-- Never discard, reset, force-push, run `git clean`, delete untracked files,
-  drop stashes, or delete tags without explicit authorization. Never disturb
-  another agent's worktree.
+- Never discard, reset, force-push, run `git clean`, delete untracked files, or
+  drop stashes without explicit authorization.
+- Prefer the recoverable `trash` command over `rm` for deletions; permanently
+  delete only clearly disposable temp files, build artifacts, or what the user
+  explicitly asks to remove.
 
-Leave unrelated work in place. Temporary, stale, or merged means cleanup
-candidate, not proof that deletion is safe.
+## Terminal cleanup
 
-## Clean up branches and worktrees
+The creator or current controller must finish cleanup for branches, worktrees,
+and PRs it created or explicitly took over. Remove an exact target without
+asking only when current evidence establishes all of the following:
 
-The agent that creates a branch, worktree, or PR owns it through terminal
-cleanup. Do not defer cleanup merely because the session is ending. Autonomous
-cleanup is limited to exact resources created by the current agent or assigned
-to it through an explicit, verifiable handoff; unclear ownership means ask.
-Resolve all targets first, then apply this table. One question may cover a
-clearly listed set of targets with the same blocker.
+- the target is precisely identified, owned or explicitly in scope, and no
+  active task, process, or worktree is using it;
+- the worktree is clean, and no dirty, untracked, stashed, or unpushed unique
+  data would be lost;
+- the PR is merged or closed, or the artifact is otherwise no longer needed;
+- a remote, PR, merged base, or other verified copy is sufficient to recover
+  the work after the planned cleanup;
+- the exact cleanup is followed by a readback confirming the target state.
 
-| Evidence | Action |
-| --- | --- |
-| Owned worktree is clean, no live agent/process or open PR uses it, and its branch has no unique data under the rules below | Remove the worktree without asking, then prune only stale worktree metadata. |
-| Owned branch has no worktree or active use, no open PR, and no unique data under the rules below | Delete it without asking when normal non-force deletion succeeds. Delete a matching remote branch only with a server-enforced atomic expected-old-OID guard covering its freshly resolved exact tip; if that capability is unavailable or requires a force option, ask. |
-| Dirty worktree; unpushed or otherwise unique data; active PR/live agent; mismatched, unavailable, or contradictory evidence; or any cleanup requiring `--force`, `-D`, reset, discard, or force-push | Preserve it and ask. State the exact target, evidence, and decision required. |
+For squash merges, Git ancestry alone is not proof. Use the PR head OID, a
+remote copy, patch or diff equivalence, or another simple reliable check. A
+merged or closed PR with a clean, fully pushed worktree is a cleanup candidate,
+but each deletion still needs the evidence above; deleting a remote copy also
+requires another verified recovery copy. If ordinary local branch deletion
+fails only because a squash merge broke ancestry, the complete evidence above
+permits exact-target `git branch -D`; this deletes a verified redundant ref and
+is not history rewriting.
 
-Prove **no unique data** for the exact tip being deleted with one of these
-routes using freshly resolved refs and PR state:
-
-1. The tip is reachable from a retained ref (normally the PR target or its
-   remote-tracking ref).
-2. For a squash or rebase merge, the hosting service reports the PR as merged,
-   the PR's recorded head OID equals the exact branch tip being deleted, and
-   the provider's recorded merge/result OID is currently reachable from the
-   exact retained target ref. Repository and ref identities must also agree.
-   This result evidence replaces source-branch ancestry; a merged label, branch
-   name, patch similarity, commit-message match, or head OID alone does not.
-
-Do not delete the last retained ref that supplies the applicable evidence.
-
-A closed-but-unmerged PR is not proof that its unique head data may be deleted.
-If the branch advanced after the recorded PR head, treat the additional commits
-as unique. Refresh refs, PR state, and available Codex task/tmux status
-immediately before deletion; an old snapshot is not evidence. Run only
-non-force cleanup commands autonomously. If normal deletion rejects a
-squash-merged branch because ancestry is absent, the PR evidence may establish
-safety, but `git branch -D` still requires authorization.
-
-After cleanup, rerun the inspector plus `git worktree list` and relevant branch
-and PR queries. A creator reaches terminal state only when the requested work
-and CI are resolved and every owned cleanup target is removed, explicitly
-handed off, or preserved with a concrete blocker and required decision.
+Stop and ask before cleanup when the worktree is dirty, data exists only in an
+unpushed commit or local artifact, an active task or agent still owns or uses
+the target, ownership is unclear, evidence conflicts, or cleanup needs
+force-push, history rewriting, credentials, billing, or access changes. The
+current task remaining live for wrap-up or reporting is not target use; do not
+defer otherwise-safe cleanup to a future session. Age or staleness alone never
+proves deletion is safe. Leave user and other-agent artifacts untouched unless
+this task explicitly took control of them, and leave all unrelated work in
+place.
 
 ## Report
 
 - repos and branches inspected;
 - actions, tests, and CI completed;
-- removed worktrees/branches and the evidence used;
-- preserved work or decisions still needed, including the exact blocker.
+- terminal cleanup performed and its readback evidence;
+- preserved work or decisions still needed.
 
 If everything was already synchronized and clean, say so directly.

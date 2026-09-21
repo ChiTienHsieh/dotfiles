@@ -1,6 +1,7 @@
 ---
 name: "where-am-i"
-description: "Catch up after a break: when the user returns to a project and asks 'remind me where were we', 'where am I', 'where did we leave off', 'what was I doing here', or wants to pick up where they left off / sync with remote before resuming. Gathers git state + this project's recent agent history into a short recap with suggested next steps. Read-only by default; never auto-commits or auto-pulls without confirmation."
+description: "Catch up after a break: when the user returns to a project and asks where they left off or what they were doing here (e.g. 'remind me where were we'), or wants to sync with remote before resuming. Gathers git state + this project's recent agent history into a short recap with suggested next steps. Read-only by default; never auto-commits or auto-pulls without confirmation."
+disable-model-invocation: true
 ---
 
 # where-am-i
@@ -11,9 +12,10 @@ state is, what was being worked on here recently, and what the sensible next
 step is. This is the **start-of-session** counterpart to `wrap`
 (end-of-session).
 
-If the progress question mentions a tmux pane, combine this skill with
-`tmux-orchestration`: where-am-i handles the recap, tmux-orchestration handles
-pane inspection.
+Reading a pane is read-only and needs no authorization. If the
+current human's progress question explicitly asks the agent to inspect a tmux
+pane and then act on it, combine this skill with `tmux-orchestration`:
+where-am-i handles the recap, tmux-orchestration handles the pane surface.
 
 Read-only by default. The only action it may take is `git pull`, and
 only after the user confirms.

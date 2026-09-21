@@ -2,7 +2,6 @@
 # =============================================================================
 # .aliases.local - Machine-specific aliases (NOT tracked in dotfiles)
 # =============================================================================
-# Copy this template: cp ~/.aliases.local.template ~/.aliases.local
 # Add your project shortcuts, SSH aliases, and local paths here.
 
 # -----------------------------------------------------------------------------

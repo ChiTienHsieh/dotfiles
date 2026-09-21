@@ -11,7 +11,7 @@
 set -e  # Exit on error
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+BACKUP_DIR=""  # Allocate a unique private directory only when a backup is needed.
 DOTFILES_PYTHON="$(command -v python3 || true)"
 
 if [ -z "$DOTFILES_PYTHON" ] || ! "$DOTFILES_PYTHON" -c 'import tomllib' >/dev/null 2>&1; then
@@ -29,6 +29,35 @@ echo ""
 # -----------------------------------------------------------------------------
 # Helper functions
 # -----------------------------------------------------------------------------
+# Move an existing HOME path into $BACKUP_DIR while preserving the path
+# relative to HOME. Refuse to overwrite an existing backup target.
+backup_existing() {
+    local dest="$1"
+    local relative backup
+
+    case "$dest" in
+        "$HOME"/*) relative="${dest#"$HOME"/}" ;;
+        "$GIT_COMMON_DIR/hooks/pre-commit") relative=".repo-hooks/pre-commit" ;;
+        *)
+            echo "  ERROR: refusing to back up path outside HOME: $dest" >&2
+            return 1
+            ;;
+    esac
+
+    if [ -z "$BACKUP_DIR" ]; then
+        mkdir -p "$HOME/.dotfiles_backup"
+        BACKUP_DIR="$(mktemp -d "$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S).XXXXXX")"
+    fi
+    backup="$BACKUP_DIR/$relative"
+    if [ -e "$backup" ] || [ -L "$backup" ]; then
+        echo "  ERROR: backup destination already exists: $backup" >&2
+        return 1
+    fi
+    mkdir -p "$(dirname "$backup")"
+    mv "$dest" "$backup"
+    echo "  Backed up: $dest -> $backup"
+}
+
 backup_and_link() {
     local src="$1"
     local dest="$2"
@@ -46,9 +75,7 @@ backup_and_link() {
 
     # Backup existing file if it's not a symlink
     if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up: $dest -> $BACKUP_DIR/"
-        mv "$dest" "$BACKUP_DIR/"
+        backup_existing "$dest"
     fi
 
     # Remove existing symlink
@@ -67,29 +94,50 @@ backup_and_copy() {
 
     mkdir -p "$(dirname "$dest")"
 
-    if [ -e "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up: $dest -> $BACKUP_DIR/"
-        mv "$dest" "$BACKUP_DIR/"
-    fi
-
     cp "$src" "$dest"
     echo "  Copied: $dest"
 }
 
-ensure_real_dir() {
-    local dest="$1"
+is_real_machine_notes() {
+    local path="$1"
+    [ -f "$path" ] && [ ! -L "$path" ] && ! grep -q '<!-- machine-md-redirect -->' "$path"
+}
 
-    if [ -L "$dest" ]; then
-        echo "  Removing directory symlink: $dest -> $(readlink "$dest")"
-        rm "$dest"
-    elif [ -e "$dest" ] && [ ! -d "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up non-directory: $dest -> $BACKUP_DIR/"
-        mv "$dest" "$BACKUP_DIR/"
+ensure_machine_notes() {
+    local machine_dir="$HOME/.local/share/machine"
+    local canonical="$machine_dir/machine.md"
+    local stub="$HOME/.config/machine.md"
+    local seed="$DOTFILES_DIR/templates/machine.md.template"
+    local redirect_src="$DOTFILES_DIR/templates/machine.md.redirect"
+    local dir_agents_src="$DOTFILES_DIR/templates/machine-dir-AGENTS.md"
+
+    mkdir -p "$machine_dir" "$HOME/.config"
+
+    if [ ! -f "$canonical" ]; then
+        # Prefer an existing REAL notes file (not a redirect stub, not a
+        # symlink) so hand-written notes survive. Only the first match is
+        # migrated — if both agent paths are real files with diverging
+        # content, merge them by hand afterwards (the other is in $BACKUP_DIR).
+        for existing in "$stub" "$HOME/.codex/machine.md" "$HOME/.claude/machine.md"; do
+            if is_real_machine_notes "$existing"; then
+                seed="$existing"
+                break
+            fi
+        done
+        cp "$seed" "$canonical"
+        echo "  Seeded: $canonical (from ${seed##*/})"
     fi
 
-    mkdir -p "$dest"
+    if is_real_machine_notes "$stub"; then
+        backup_existing "$stub"
+    elif [ -L "$stub" ]; then
+        rm "$stub"
+    fi
+    cp "$redirect_src" "$stub"
+    echo "  Wrote redirect: $stub -> $canonical"
+
+    cp "$dir_agents_src" "$machine_dir/AGENTS.md"
+    echo "  Wrote: $machine_dir/AGENTS.md"
 }
 
 configure_codex_local_permissions() {
@@ -158,51 +206,6 @@ PY
     echo "  Configured Codex workspace permissions"
 }
 
-collect_symlinked_dir_entries() {
-    local dest="$1"
-    local manifest="$2"
-    local target entry
-
-    : > "$manifest"
-
-    [ -L "$dest" ] || return 0
-
-    target="$(readlink "$dest")"
-    case "$target" in
-        /*) ;;
-        *) target="$(cd "$(dirname "$dest")" && pwd -P)/$target" ;;
-    esac
-
-    [ -d "$target" ] || return 0
-
-    for entry in "$target"/*; do
-        [ -e "$entry" ] || [ -L "$entry" ] || continue
-        printf '%s\t%s\n' "$(basename "$entry")" "$entry" >> "$manifest"
-    done
-}
-
-restore_preserved_skill_links() {
-    local manifest="$1"
-    local dest="$2"
-    local name entry
-
-    [ -f "$manifest" ] || return 0
-
-    while IFS=$'\t' read -r name entry; do
-        [ -n "$name" ] || continue
-        [ ! -e "$dest/$name" ] && [ ! -L "$dest/$name" ] || continue
-        [ -e "$entry" ] || [ -L "$entry" ] || continue
-        backup_and_link "$entry" "$dest/$name"
-    done < "$manifest"
-}
-
-is_linkable_skill_dir() {
-    local skill="$1"
-
-    [ -d "$skill" ] || return 1
-    [ -f "$skill/SKILL.md" ] || [ "$(basename "$skill")" = ".system" ]
-}
-
 prune_stale_dotfiles_links() {
     local dir="$1"
     local link target
@@ -226,7 +229,7 @@ prune_stale_dotfiles_links() {
 # -----------------------------------------------------------------------------
 # Initialize submodules (for nvim config)
 # -----------------------------------------------------------------------------
-echo "[1/10] Initializing git submodules..."
+echo "[1/11] Initializing git submodules..."
 if [ -f "$DOTFILES_DIR/.gitmodules" ]; then
     git -C "$DOTFILES_DIR" submodule update --init --recursive
     echo "  Done!"
@@ -238,7 +241,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Bash configuration
 # -----------------------------------------------------------------------------
-echo "[2/10] Installing bash configuration..."
+echo "[2/11] Installing bash configuration..."
 backup_and_link "$DOTFILES_DIR/bash/.bash_profile" "$HOME/.bash_profile"
 backup_and_link "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
 backup_and_link "$DOTFILES_DIR/bash/.bash_prompt" "$HOME/.bash_prompt"
@@ -248,7 +251,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Zsh configuration
 # -----------------------------------------------------------------------------
-echo "[3/10] Installing zsh configuration..."
+echo "[3/11] Installing zsh configuration..."
 backup_and_link "$DOTFILES_DIR/zsh/.zshenv" "$HOME/.zshenv"
 backup_and_link "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 echo ""
@@ -256,7 +259,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Git configuration
 # -----------------------------------------------------------------------------
-echo "[4/10] Installing git configuration..."
+echo "[4/11] Installing git configuration..."
 backup_and_link "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
 backup_and_link "$DOTFILES_DIR/git/.config/git/ignore" "$HOME/.config/git/ignore"
 backup_and_link "$DOTFILES_DIR/git/.config/git/hooks" "$HOME/.config/git/hooks"
@@ -265,21 +268,21 @@ echo ""
 # -----------------------------------------------------------------------------
 # Vim configuration
 # -----------------------------------------------------------------------------
-echo "[5/10] Installing vim configuration..."
+echo "[5/11] Installing vim configuration..."
 backup_and_link "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Tmux configuration
 # -----------------------------------------------------------------------------
-echo "[6/10] Installing tmux configuration..."
+echo "[6/11] Installing tmux configuration..."
 backup_and_link "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Other configurations
 # -----------------------------------------------------------------------------
-echo "[7/10] Installing other configurations..."
+echo "[7/11] Installing other configurations..."
 "$DOTFILES_PYTHON" "$DOTFILES_DIR/scripts/configure_package_policies.py" \
     --home "$HOME" --repo-root "$DOTFILES_DIR"
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
@@ -294,10 +297,7 @@ echo ""
 # -----------------------------------------------------------------------------
 # Claude Code configuration
 # -----------------------------------------------------------------------------
-echo "[8/10] Installing Claude Code configuration..."
-CLAUDE_SKILLS_PRESERVE_FILE="${TMPDIR:-/tmp}/dotfiles-claude-skills-preserve.$$"
-collect_symlinked_dir_entries "$HOME/.claude/skills" "$CLAUDE_SKILLS_PRESERVE_FILE"
-ensure_real_dir "$HOME/.claude/skills"
+echo "[8/11] Installing Claude Code configuration..."
 
 # Main config files
 backup_and_link "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
@@ -308,42 +308,22 @@ if [ ! -e "$HOME/.claude/settings.json" ]; then
     cp "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
     echo "  Seeded: $HOME/.claude/settings.json"
 fi
-# machine.md: one machine-local canonical (~/.config/machine.md) shared by
-# Claude Code + Codex via symlink, so both agents always read identical
-# machine notes. Seeded once from a secret-free template, then owned locally
-# (machine-specific, non-syncable content — never committed). Editing a symlink
-# is refused by the agent write-guard, which is what keeps the views from
-# diverging: edits are forced back to the canonical file.
-mkdir -p "$HOME/.config"
-if [ ! -e "$HOME/.config/machine.md" ]; then
-    # On machines predating the canonical, migrate an existing REAL machine.md
-    # (not a symlink) so hand-written notes survive instead of being replaced by
-    # an empty template; else seed the secret-free template. Only the first
-    # match is migrated — if both agent paths are real files with diverging
-    # content, merge them by hand afterwards (the other is in $BACKUP_DIR).
-    machine_seed="$DOTFILES_DIR/templates/machine.md.template"
-    for existing in "$HOME/.codex/machine.md" "$HOME/.claude/machine.md"; do
-        if [ -f "$existing" ] && [ ! -L "$existing" ]; then machine_seed="$existing"; break; fi
-    done
-    cp "$machine_seed" "$HOME/.config/machine.md"
-    echo "  Seeded: $HOME/.config/machine.md (from ${machine_seed##*/})"
-fi
-backup_and_link "$HOME/.config/machine.md" "$HOME/.claude/machine.md"
+# machine.md: one machine-local canonical (~/.local/share/machine/machine.md)
+# shared by Claude Code + Codex via symlink, so both agents always read
+# identical machine notes. Seeded once from a secret-free template, then owned
+# locally (machine-specific, non-syncable content — never committed). ~/.config
+# is not the home: it holds live credentials, and Claude Code may refuse
+# reads that follow a symlink into it. ~/.config/machine.md is a short
+# redirect stub. Editing a symlink is refused by the agent write-guard, which
+# is what keeps the views from diverging: edits are forced back to the
+# canonical file.
+ensure_machine_notes
+backup_and_link "$HOME/.local/share/machine/machine.md" "$HOME/.claude/machine.md"
 backup_and_link "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
-backup_and_link "$DOTFILES_DIR/claude/user-en-vocab.md" "$HOME/.claude/user-en-vocab.md"
 
 # Directories
 backup_and_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 backup_and_link "$DOTFILES_DIR/claude/hooks" "$HOME/.claude/hooks"
-
-# Skills
-for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/claude/*; do
-    is_linkable_skill_dir "$skill" || continue
-    backup_and_link "$skill" "$HOME/.claude/skills/$(basename "$skill")"
-done
-restore_preserved_skill_links "$CLAUDE_SKILLS_PRESERVE_FILE" "$HOME/.claude/skills"
-prune_stale_dotfiles_links "$HOME/.claude/skills"
-rm -f "$CLAUDE_SKILLS_PRESERVE_FILE"
 
 # Legacy command shims were removed (skills are directly user-invocable as
 # /skill-name); prune any leftover shim links from earlier installs.
@@ -355,9 +335,29 @@ prune_stale_dotfiles_links "$HOME/.local/bin"
 # -----------------------------------------------------------------------------
 # Codex CLI configuration
 # -----------------------------------------------------------------------------
-echo "[9/10] Installing Codex CLI configuration..."
+echo "[9/11] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
-backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+build_codex_agents_md() {
+    local dest="$HOME/.codex/AGENTS.md"
+    local tmp
+    tmp="$(mktemp "$HOME/.codex/AGENTS.md.XXXXXX")"
+    {
+        echo "<!-- Generated by dotfiles/install.sh from agents/AGENTS.md + codex/AGENTS.md. Edit those, then rerun ./install.sh. -->"
+        echo
+        cat "$DOTFILES_DIR/agents/AGENTS.md"
+        echo
+        cat "$DOTFILES_DIR/codex/AGENTS.md"
+    } > "$tmp"
+    if [ -L "$dest" ]; then
+        rm "$dest"
+    elif [ -f "$dest" ] && ! cmp -s "$dest" "$tmp"; then
+        backup_existing "$dest"
+    fi
+    mv "$tmp" "$dest"
+    chmod 644 "$dest"
+    echo "  Generated: $dest"
+}
+build_codex_agents_md
 # config.toml is seeded once, then owned by the live Codex runtime (it appends
 # projects/hooks/desktop state). The portable overlay below upserts only the
 # explicitly tracked keys, so the rest of that live state remains untouched.
@@ -374,11 +374,16 @@ if command -v codex >/dev/null 2>&1; then
 else
     echo "  Warning: codex CLI not found; portable config sync skipped" >&2
 fi
-# machine.md symlinks to the shared canonical (~/.config/machine.md) seeded in
-# the Claude Code step above — same file both agents read, no divergence.
-backup_and_link "$HOME/.config/machine.md" "$HOME/.codex/machine.md"
+# machine.md symlinks to the shared canonical (~/.local/share/machine/machine.md)
+# seeded in the Claude Code step above — same file both agents read, no divergence.
+backup_and_link "$HOME/.local/share/machine/machine.md" "$HOME/.codex/machine.md"
 backup_and_link "$DOTFILES_DIR/codex/bin" "$HOME/.codex/bin"
+# Layered permissions profile for sandboxed headless workers (`codex -p cc-worker`)
+backup_and_link "$DOTFILES_DIR/codex/cc-worker.config.toml" "$HOME/.codex/cc-worker.config.toml"
+backup_and_link "$DOTFILES_DIR/codex/cc-worker-ro.config.toml" "$HOME/.codex/cc-worker-ro.config.toml"
 backup_and_link "$DOTFILES_DIR/codex/agents" "$HOME/.codex/agents"
+# Codex TUI pet sprites (pet.json + spritesheet per pet dir)
+backup_and_link "$DOTFILES_DIR/codex/pets" "$HOME/.codex/pets"
 backup_and_link "$DOTFILES_DIR/codex/hooks" "$HOME/.codex/hooks"
 if ! "$DOTFILES_PYTHON" "$DOTFILES_DIR/codex/hooks/install_hooks.py" \
     "$DOTFILES_DIR/codex/hooks.json" "$HOME/.codex/hooks.json"; then
@@ -389,32 +394,30 @@ for rule in "$DOTFILES_DIR"/codex/rules/*.rules; do
     [ -f "$rule" ] || continue
     backup_and_link "$rule" "$HOME/.codex/rules/$(basename "$rule")"
 done
-ensure_real_dir "$HOME/.codex/skills"
-ensure_real_dir "$HOME/.agents/skills"
 # NOTE: codex/skills/.system was removed from the repo — codex-cli manages and
 # updates its own system skills under ~/.codex/skills/.system; vendoring a
 # snapshot here only re-installs stale copies over the live ones.
-# Keep ~/.codex/skills links for Codex surfaces that still use the legacy path.
-for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
-    is_linkable_skill_dir "$skill" || continue
-    backup_and_link "$skill" "$HOME/.codex/skills/$(basename "$skill")"
-done
-prune_stale_dotfiles_links "$HOME/.codex/skills"
-# Current Codex releases discover user-level skills from ~/.agents/skills.
-for skill in "$DOTFILES_DIR"/skills/shared/* "$DOTFILES_DIR"/skills/codex/*; do
-    is_linkable_skill_dir "$skill" || continue
-    backup_and_link "$skill" "$HOME/.agents/skills/$(basename "$skill")"
-done
-prune_stale_dotfiles_links "$HOME/.agents/skills"
+# Grok discovers shared skills through ~/.claude/skills. Current Codex releases
+# use ~/.agents/skills, while ~/.codex/skills remains a compatibility path.
+DOTFILES_BACKUP_DIR="$BACKUP_DIR" "$DOTFILES_DIR/scripts/sync-skills.sh"
+echo ""
+
+# -----------------------------------------------------------------------------
+# Grok CLI sandbox profiles
+# -----------------------------------------------------------------------------
+echo "[10/11] Installing Grok CLI sandbox profiles..."
+mkdir -p "$HOME/.grok"
+backup_and_link "$DOTFILES_DIR/grok/sandbox.toml" "$HOME/.grok/sandbox.toml"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Git hooks (for dotfiles repo itself)
 # -----------------------------------------------------------------------------
-echo "[10/10] Installing git hooks..."
-if [ -d "$DOTFILES_DIR/.git" ]; then
-    mkdir -p "$DOTFILES_DIR/.git/hooks"
-    backup_and_link "$DOTFILES_DIR/hooks/pre-commit" "$DOTFILES_DIR/.git/hooks/pre-commit"
+echo "[11/11] Installing git hooks..."
+GIT_COMMON_DIR="$(git -C "$DOTFILES_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+if [ -e "$DOTFILES_DIR/.git" ] && [ -n "$GIT_COMMON_DIR" ] && [ -d "$GIT_COMMON_DIR" ]; then
+    mkdir -p "$GIT_COMMON_DIR/hooks"
+    backup_and_link "$DOTFILES_DIR/hooks/pre-commit" "$GIT_COMMON_DIR/hooks/pre-commit"
 else
     echo "  Not a git repo, skipping hooks."
 fi
@@ -427,14 +430,32 @@ echo "=========================================="
 echo "  Templates"
 echo "=========================================="
 echo ""
-if [ ! -f "$HOME/.secrets" ]; then
-    cp "$DOTFILES_DIR/templates/.secrets.template" "$HOME/.secrets"
-    chmod 600 "$HOME/.secrets"
-    echo "Created ~/.secrets from template"
-    echo "  -> Edit this file to add your API keys!"
-else
-    echo "~/.secrets already exists, skipping."
-fi
+ensure_secrets() {
+    local secrets_path="$HOME/.secrets"
+    local index="$secrets_path/index.sh"
+
+    if [ -L "$secrets_path" ] || [ -f "$secrets_path" ]; then
+        echo "~/.secrets file or symlink already exists, leaving untouched."
+        return 0
+    fi
+    if [ ! -d "$secrets_path" ]; then
+        mkdir -m 700 "$secrets_path"
+    fi
+    # An existing index (including a broken symlink) belongs to the user.
+    if [ -L "$index" ] || [ -f "$index" ]; then
+        echo "~/.secrets/index.sh already exists, leaving untouched."
+        return 0
+    fi
+    if [ -e "$index" ]; then
+        echo "Warning: ~/.secrets/index.sh is not a file; skipping secrets setup and leaving it untouched." >&2
+        return 0
+    fi
+    (umask 077; cp "$DOTFILES_DIR/templates/.secrets.template" "$index")
+    chmod 600 "$index"
+    echo "Created ~/.secrets/index.sh from template"
+    echo "  -> Edit ~/.secrets/index.sh to add your API keys."
+}
+ensure_secrets
 
 # .aliases.local is symlinked (but gitignored) so CC can edit it in sandbox mode
 if [ ! -f "$DOTFILES_DIR/bash/.aliases.local" ]; then
@@ -474,9 +495,10 @@ if [ -d "$BACKUP_DIR" ]; then
     echo ""
 fi
 echo "Next steps:"
-echo "  1. Edit ~/.secrets to add your API keys"
+echo "  1. Edit ~/.secrets/ (index.sh and provider files) to add your API keys"
 echo "  2. Edit ~/.aliases.local for machine-specific shortcuts"
 echo "  3. Run: source ~/.zshrc (or source ~/.bash_profile for bash)"
+echo "  4. New Mac: ./macos/defaults.sh (Rectangle + macOS keyboard shortcuts)"
 echo ""
 echo "Enjoy your new setup! (◕‿◕)"
 echo ""

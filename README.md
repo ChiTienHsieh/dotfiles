@@ -2,85 +2,71 @@
 
 [![CI](https://github.com/ChiTienHsieh/dotfiles/actions/workflows/ci.yml/badge.svg)](https://github.com/ChiTienHsieh/dotfiles/actions/workflows/ci.yml)
 
-Personal dotfiles for Unix systems. Managed with symlinks.
+English | [繁體中文](README.zh-TW.md)
 
-Prerequisite: Python 3.11 or newer must be available as `python3` on `PATH`.
+Personal dotfiles for macOS / Unix, managed with symlinks. Besides the usual shell, git, tmux and editor configs, this repo also carries the instruction files and skills for the coding agents I use (Claude Code, Codex CLI, Grok).
 
-## Quick Start
+## Quick start
+
+Requires Python 3.11+ available as `python3`.
 
 ```bash
-# Clone the repo
 git clone --recursive https://github.com/ChiTienHsieh/dotfiles.git ~/dotfiles
-
-# Run install script
 cd ~/dotfiles
 ./install.sh
-
-# Reload shell
 source ~/.bash_profile
 ```
 
-## What's Included
+`install.sh` symlinks each file from `~` into this repo. Anything it would overwrite is backed up to `~/.dotfiles_backup/<timestamp>/` first, so uninstalling is just copying those files back.
+
+## What's inside
 
 ```
 dotfiles/
-├── bash/
-│   ├── .bash_profile    # Main bash config (login shell)
-│   ├── .bashrc          # Non-login shell config
-│   ├── .bash_prompt     # Terminal prompt styling
-│   └── .aliases         # Aliases and functions
-├── bun/
-│   └── .bunfig.toml     # Seed for local Bun safeguards
-├── git/
-│   ├── .gitconfig       # Git configuration
-│   └── .config/git/ignore  # Global gitignore
-├── vim/
-│   └── .vimrc           # Vim fallback config
-├── tmux/
-│   └── .tmux.conf       # Tmux configuration
-├── gh/
-│   └── .config/gh/config.yml  # GitHub CLI config
-├── templates/
-│   ├── .secrets.template      # API keys template (copy to ~/.secrets)
-│   └── .aliases.local.template  # Machine-specific aliases
-├── claude/
-│   └── CLAUDE.md        # Claude Code instructions (+ SOUL/USER, agents, settings)
-├── codex/
-│   ├── AGENTS.md        # Codex CLI instructions
-│   ├── config.toml      # First-install seed for the runtime-owned config
-│   ├── config.portable.toml # Git-tracked keys merged into the live config
-│   ├── hooks.json       # Global Codex lifecycle hook registration
-│   └── hooks/           # Stop dispatcher and bounded hook policies
-├── skills/
-│   ├── shared/          # User-authored skills installed for Claude Code + Codex
-│   ├── codex/           # User-authored Codex-only skills
-│   └── claude/          # User-authored Claude Code-only skills
-├── nvim/                # Neovim config (git submodule)
-├── npm/
-│   └── .npmrc            # Seed for local npm safeguards
-├── pnpm/
-│   └── .config/pnpm/rc   # Seed for local pnpm safeguards
-├── install.sh           # Installation script
-└── README.md
+├── bash/ zsh/ vim/ tmux/ ghostty/   # shell, editor, terminal configs
+├── git/                             # .gitconfig, global ignore, pre-commit hooks
+├── gh/                              # GitHub CLI config
+├── bun/ npm/ pnpm/                  # seeds for local package-manager safeguards
+├── nvim/                            # Neovim config (git submodule)
+├── agents/                          # AGENTS.md shared by all agents + notes
+├── claude/                          # Claude Code: CLAUDE.md, settings, hooks, agents
+├── codex/                           # Codex CLI: config seed + portable overlay, hooks, sandbox profiles
+├── grok/                            # Grok: sandbox profile
+├── skills/                          # shared/, claude/, codex/ skills
+├── hooks/                           # jargon allowlist for the pre-commit hook
+├── macos/                           # macOS defaults (keyboard shortcuts), run manually
+├── scripts/                         # sync-skills.sh and installer helpers
+├── userscripts/                     # browser userscripts (Tampermonkey)
+├── templates/                       # secrets and machine-local templates
+├── tests/                           # installer and hook tests (run in CI)
+└── install.sh
 ```
 
-## Post-Installation
+## How the agents load their rules
 
-1. **Edit `~/.secrets`** - Add your API keys (this file is never committed)
-2. **Edit `~/.aliases.local`** - Add machine-specific shortcuts
-3. **Skills** - `skills/shared/` is installed into Claude Code and both Codex user-skill paths; `skills/codex/` is installed into Codex's current `~/.agents/skills` discovery path plus the legacy `~/.codex/skills` path; `skills/claude/` is installed only into Claude Code
-4. **Codex hooks** - Start a new Codex CLI session, open `/hooks`, review the global `PostToolUse` and `Stop` commands, then trust them explicitly. The installer never writes or bypasses hook trust.
-5. **Machine-specific Git settings** - Put credential helpers or host-only Git overrides in optional `~/.gitconfig.local`; the tracked config includes it last.
+One rule file is shared by every agent; each runtime gets it in the way it supports:
 
-## Files NOT Tracked
+```text
+~/.claude/CLAUDE.md -> claude/CLAUDE.md                 # @imports agents/AGENTS.md
+~/.codex/AGENTS.md  =  agents/AGENTS.md + codex/AGENTS.md  # generated by install.sh
+```
 
-These files are created from templates but not tracked in git:
+Edit the files in the repo and rerun `./install.sh`. Only managed files are linked into `~/.codex`; your existing `config.toml` remains a real file owned by the Codex runtime. When the Codex CLI is available, the installer uses its atomic config RPC to synchronize only the keys declared in `codex/config.portable.toml`; unrelated config and session data are preserved.
 
-- `~/.secrets` - API keys and tokens
-- `~/.aliases.local` - Machine-specific aliases
-- `~/.gitconfig.local` - Machine-specific Git settings
-- `~/.codex/config.toml` - Runtime-owned Codex state; when the Codex CLI is installed, `install.sh` uses its atomic config RPC to upsert only keys from `codex/config.portable.toml`
-- `~/.bunfig.toml`, `~/.npmrc`, `~/.config/pnpm/rc` - Real local files; the installer preserves registry credentials and only upserts the tracked release-age policy
+Skills under `skills/shared/` are installed for both Claude Code and Codex; `skills/claude/` and `skills/codex/` are runtime-specific. To resync skills only:
+
+```bash
+./scripts/sync-skills.sh
+```
+
+## Local-only files
+
+Created from templates, never committed:
+
+- `~/.secrets/index.sh`: API keys and tokens, sourced at shell startup
+- `~/.aliases.local`: machine-specific aliases
+- `~/.gitconfig.local`: credential helpers and host-only git overrides
+- `~/.codex/config.toml`: runtime-owned configuration; only the portable overlay keys are managed by dotfiles
 
 ## Updating
 
@@ -88,15 +74,5 @@ These files are created from templates but not tracked in git:
 cd ~/dotfiles
 git pull
 git submodule update --recursive
+./install.sh
 ```
-
-## Adding New Dotfiles
-
-1. Add the file to the appropriate directory in `~/dotfiles/`
-2. Update `install.sh` to create the symlink
-3. Commit and push
-
-## Uninstalling
-
-The install script backs up your original files to `~/.dotfiles_backup/`.
-To restore, copy them back from the backup directory.

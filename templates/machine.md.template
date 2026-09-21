@@ -1,8 +1,8 @@
 # Machine Notes (local-only, single source of truth)
 
-這是本機 machine-specific 行為的**唯一實體檔**。`~/.claude/machine.md` 與 `~/.codex/machine.md` 都 symlink 指向這裡 —— **要改就改這個檔**（改 symlink 會被工具的 write-guard 擋下並提示回這裡）。
+這是本機 machine-specific 行為的**唯一實體檔**（路徑：`~/.local/share/machine/machine.md`）。`~/.claude/machine.md` 與 `~/.codex/machine.md` 都 symlink 指向這裡 —— **要改就改這個檔**（改 symlink 會被工具的 write-guard 擋下並提示回這裡）。舊路徑 `~/.config/machine.md` 只留導向 stub，不要把筆記寫回去。
 
-Secret-free：不要寫 token value、private key、recovery code，或完整 secret env var 內容。本檔屬機器本地、**不進 git**；git 只留這份 secret-free 種子模板 `~/dotfiles/templates/machine.md.template`。Agent 專屬（非機器層級）操作筆記不放這裡：Codex CLI/app quirks 見 `~/dotfiles/codex/notes/codex-cli.md`。
+Secret-free：不要寫 token value、private key、recovery code，或完整 secret env var 內容。本檔屬機器本地、**不進 git**；git 只留這份 secret-free 種子模板 `~/dotfiles/templates/machine.md.template`。Agent 專屬（非機器層級）操作筆記不放這裡：Codex CLI/app quirks 見 `~/dotfiles/codex/notes/codex-cli.md`。整包 `~/.local/share/machine/` 可以當 agent workspace；不要打開整個 `~/.local` 或 `~/.config`。
 
 ## Machine Context
 - **Role**: <這台機器的用途>

@@ -301,6 +301,21 @@ run_case \
   "echo \"tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'\"" \
   "allow"
 
+run_case \
+  "allow: short send-keys + long unrelated commit message in another statement" \
+  "tmux send-keys -t \"\$TMUX_PANE\" '/rename Fix' Enter && git commit -m \"This is a very long commit message that definitely exceeds eighty characters in length and has nothing to do with send-keys at all\"" \
+  "allow"
+
+run_case \
+  "allow: short send-keys + long unrelated string in different pipeline segment" \
+  "python3 -c 'import json; data = {\"key\": \"value\", \"description\": \"This is a very long description that exceeds eighty characters\"}; print(json.dumps(data))' | tmux send-keys -t %24 '/rename x'" \
+  "allow"
+
+run_case \
+  "deny: long send-keys payload still blocked after narrowing" \
+  "tmux send-keys -t %24 'Read /tmp/task.md and complete it exactly, then write the report with the required marker before stopping.'" \
+  "deny"
+
 # --- Fail-open ------------------------------------------------------------
 
 run_case_raw_stdin \

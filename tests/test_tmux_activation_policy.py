@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+"""Regression tests for the human-only tmux activation policy."""
+
+from pathlib import Path
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class TmuxActivationPolicyTests(unittest.TestCase):
+    def read(self, relative_path: str) -> str:
+        return (ROOT / relative_path).read_text(encoding="utf-8")
+
+    def test_canonical_policy_keeps_tmux_read_only_by_default(self) -> None:
+        agents = self.read("agents/AGENTS.md")
+        self.assertIn("tmux 預設唯讀", agents)
+        self.assertIn("runtime 內建的 subagent", agents)
+        self.assertIn("只由 human 從 harness", agents)
+        self.assertIn("agent 不自行觸發", agents)
+
+    def test_skill_discovery_fails_closed_without_human_request(self) -> None:
+        skill = self.read("skills/shared/tmux-orchestration/SKILL.md")
+        openai_metadata = self.read(
+            "skills/shared/tmux-orchestration/agents/openai.yaml"
+        )
+
+        self.assertIn(
+            "Use only when the current human explicitly asks the agent to use tmux",
+            skill,
+        )
+        self.assertIn("## Activation Gate", skill)
+        self.assertIn("Only the current human instruction can authorize tmux", skill)
+        self.assertIn(
+            "only if my current request explicitly asks you to use tmux",
+            openai_metadata,
+        )
+
+    def test_routing_surfaces_prefer_builtin_subagents(self) -> None:
+        required_phrases = {
+            "skills/shared/delegate/SKILL.md": "use your native subagent",
+            "claude/agents/orchestrator.md": "內建 `Agent` subagent",
+            "skills/shared/craft-goal/SKILL.md": "不要替 handoff 自行指定 tmux",
+            "skills/shared/trim/SKILL.md": "Codex 使用可用的 multi-agent tool",
+            "skills/shared/level-up/references/pre-implementation.md": (
+                "內建 teacher subagent"
+            ),
+            "skills/shared/level-up/references/teaching-engagement.md": (
+                "內建 teacher subagent"
+            ),
+            "skills/shared/where-am-i/SKILL.md": (
+                "current human's progress question explicitly asks the agent"
+            ),
+        }
+
+        for path, phrase in required_phrases.items():
+            with self.subTest(path=path):
+                self.assertIn(phrase, self.read(path))
+
+    def test_active_tmux_skill_references_are_human_gated(self) -> None:
+        paths = {
+            ROOT / "agents/AGENTS.md",
+            *ROOT.glob("claude/agents/*.md"),
+            *ROOT.glob("skills/**/SKILL.md"),
+        }
+        canonical_skill = ROOT / "skills/shared/tmux-orchestration/SKILL.md"
+        gate_markers = (
+            "explicitly asks you to use tmux",
+            "explicitly asks the agent to inspect a tmux",
+            "human-only activation gate",
+            "目前這次 human 指令明確要求 agent 使用 tmux",
+            "目前這次 human 明確要求 agent 使用 tmux",
+            "human 已明確授權 tmux",
+            "human 明確要求 agent 使用 tmux",
+            "只由 human 從 harness",
+            "human-invoked only",
+        )
+
+        for path in sorted(paths):
+            if path == canonical_skill:
+                continue
+            for paragraph in self.read(str(path.relative_to(ROOT))).split("\n\n"):
+                if "tmux-orchestration" not in paragraph:
+                    continue
+                with self.subTest(path=path.relative_to(ROOT), paragraph=paragraph):
+                    self.assertTrue(
+                        any(marker in paragraph for marker in gate_markers),
+                        "tmux-orchestration reference lacks current-human gate",
+                    )
+
+    def test_policy_does_not_treat_a_tmux_mention_as_authorization(self) -> None:
+        paths = (
+            "agents/AGENTS.md",
+            "skills/shared/delegate/SKILL.md",
+            "claude/agents/orchestrator.md",
+            "skills/shared/tmux-orchestration/SKILL.md",
+            "skills/shared/tmux-orchestration/agents/openai.yaml",
+        )
+        unsafe_phrases = (
+            "明確點名 tmux",
+            "explicitly names tmux",
+            "explicitly asks for tmux",
+        )
+
+        for path in paths:
+            text = self.read(path)
+            for phrase in unsafe_phrases:
+                with self.subTest(path=path, phrase=phrase):
+                    self.assertNotIn(phrase, text)
+
+    def test_handoff_text_does_not_mint_tmux_authorization(self) -> None:
+        craft_goal = self.read("skills/shared/craft-goal/SKILL.md")
+        self.assertNotIn("codex CLI（tmux session）", craft_goal)
+        self.assertNotIn("claude CLI（tmux session）", craft_goal)
+        self.assertIn("不要替 handoff 自行指定 tmux", craft_goal)
+
+    def test_removed_automatic_tmux_routes_do_not_return(self) -> None:
+        stale_routes = {
+            "skills/shared/tmux-orchestration/SKILL.md": (
+                "default to an observable tmux pane"
+            ),
+            "skills/shared/delegate/SKILL.md": "Worker in tmux",
+            "skills/shared/trim/SKILL.md": "或用 tmux 開一個",
+            "skills/shared/level-up/references/pre-implementation.md": (
+                "走 `tmux-orchestration`"
+            ),
+            "skills/shared/level-up/references/teaching-engagement.md": (
+                "through\n  `tmux-orchestration`"
+            ),
+            "claude/agents/orchestrator.md": "把重活委派給 tmux",
+            "skills/shared/craft-goal/SKILL.md": "codex CLI（tmux session）",
+        }
+
+        for path, phrase in stale_routes.items():
+            with self.subTest(path=path):
+                self.assertNotIn(phrase, self.read(path))
+
+
+if __name__ == "__main__":
+    unittest.main()

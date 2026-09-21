@@ -1,17 +1,12 @@
 @SOUL.md
 @USER.md
-@~/dotfiles/codex/AGENTS.md
+@~/dotfiles/agents/AGENTS.md
 
 ## Terminology
-- "Claude Code" 可縮寫為 "CC"。跨 agent 共用規則在 `~/dotfiles/codex/AGENTS.md`；本檔只放 Claude 專屬行為與更嚴的覆蓋，不重複共用規則。
+- "Claude Code" 可縮寫為 "CC"。跨 agent 共用規則在 `~/dotfiles/agents/AGENTS.md`；本檔只放 Claude 專屬行為與更嚴的覆蓋，不重複共用規則。
 
-## Claude-specific language overrides
-- **ALWAYS reply in Traditional Chinese (zh-tw).** 不跟隨 user 的語言 —— user 打英文是為了快，英文訊息 ≠ 英文回覆。
-- 產出含非程式碼英文詞的回覆前，lazy-Read `~/.claude/user-en-vocab.md`；詞彙分級、台灣／中國用語與禁用詞以該表為準。User 抱怨某詞時立即加進 REJECT；升級詞彙前先問 user。
-
-## File deletion — PREFER `trash` OVER `rm`
-- 刪除一般檔案或目錄優先用 `trash`。
-- 只有 shell script、CI、本來就短命的 `/tmp`/build 產物、或 user 明確要硬刪時才用 `rm` / `rm -rf`。
+## 回覆（Claude 專屬）
+- 每則最後回覆靠近結尾處放正好一個有變化、有創意的顏文字，進度更新和工具呼叫說明不放。
 
 ## Proactivity
 - 需要確認時直接在聊天裡列編號選項＋標推薦，不要開放式乾問；不用 AskUserQuestion（已 deny —— 選項欄位固定長度，內容被截斷看不懂）。
@@ -19,4 +14,5 @@
 
 ## `.claude/` writes — 高摩擦，整併再動
 - 修改 Claude Code 設定或處理可由設定根治的摩擦前，先讀 `~/dotfiles/claude/notes/settings-friction.md`。
-- **絕不寫 plan file 到 `.claude/plans/`**（Plan Mode 專屬路徑）。臨時筆記 / WIP → `~/scratch/`、`/tmp/` 或 repo 內 notes 資料夾，不往 `.claude/` 倒。
+- 規劃與高層對齊用 `level-up` skill 的 preflight，不用 Plan Mode 的 plan file：高層決定會牽動之後一連串低層決定，一份 plan.md 記不住那份共識。
+- 臨時筆記 / WIP 放 `~/scratch/`、`/tmp/` 或 repo 內 notes 資料夾，不往 `.claude/` 倒（`.claude/plans/` 是 Plan Mode 專屬）。

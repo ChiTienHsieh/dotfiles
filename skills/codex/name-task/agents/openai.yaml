@@ -1,4 +1,0 @@
-interface:
-  display_name: "Name Task"
-  short_description: "在重要狀態節點更新精準的 Codex task 標題"
-  default_prompt: "使用 $name-task 檢查目前 Codex task 是否到達重要狀態，必要時更新標題。"

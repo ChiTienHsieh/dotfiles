@@ -15,6 +15,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pr-author-policy:
+    name: pr-author-policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Keep the required code owner available for review
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${EVENT_NAME}" != pull_request ]; then
+            exit 0
+          fi
+          if [ "${PR_AUTHOR}" = ChiTienHsieh ]; then
+            echo "::error::Open this PR with another authorized account so @ChiTienHsieh remains available for the required CODEOWNER approval."
+            exit 1
+          fi
+
   validation:
     name: deterministic-validation
     runs-on: ubuntu-24.04
@@ -65,15 +86,15 @@ jobs:
             esac
           done < <(git ls-files -z)
 
-          if [ "${#bash_files[@]}" -gt 0 ]; then
-            bash -n "${bash_files[@]}"
-          fi
-          if [ "${#sh_files[@]}" -gt 0 ]; then
-            sh -n "${sh_files[@]}"
-          fi
-          if [ "${#zsh_files[@]}" -gt 0 ]; then
-            zsh -n "${zsh_files[@]}"
-          fi
+          for file in "${bash_files[@]}"; do
+            bash -n "$file"
+          done
+          for file in "${sh_files[@]}"; do
+            sh -n "$file"
+          done
+          for file in "${zsh_files[@]}"; do
+            zsh -n "$file"
+          done
 
           shellcheck_files=()
           for file in "${bash_files[@]}"; do
@@ -135,10 +156,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 codex/tests/test_hooks.py -v
-          python3 codex/tests/test_tmux_worker_hooks.py -v
-          python3 tests/test_configure_package_policies.py -v
-          python3 tests/test_merge_codex_config.py -v
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          node tests/test_diagram_editor.mjs
           zsh tests/test_aliases.sh
           bash claude/hooks/test-bash-helper-guard.sh
 
@@ -215,6 +234,7 @@ jobs:
     name: ci-gate
     if: ${{ always() }}
     needs:
+      - pr-author-policy
       - validation
       - secret-scan
       - workflow-security
@@ -224,12 +244,14 @@ jobs:
     steps:
       - name: Require every deterministic check
         env:
+          PR_AUTHOR_POLICY_RESULT: ${{ needs.pr-author-policy.result }}
           SECRET_SCAN_RESULT: ${{ needs.secret-scan.result }}
           VALIDATION_RESULT: ${{ needs.validation.result }}
           WORKFLOW_SECURITY_RESULT: ${{ needs.workflow-security.result }}
         shell: bash
         run: |
           set -euo pipefail
+          test "${PR_AUTHOR_POLICY_RESULT}" = success
           test "${VALIDATION_RESULT}" = success
           test "${SECRET_SCAN_RESULT}" = success
           test "${WORKFLOW_SECURITY_RESULT}" = success

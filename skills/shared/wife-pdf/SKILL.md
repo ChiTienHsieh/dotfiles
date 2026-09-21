@@ -1,6 +1,7 @@
 ---
 name: wife-pdf
 description: Create plain zh-TW Typst/PDF decision documents for non-technical family readers. Use for a wife PDF, spouse/family-friendly summary, or an explanation of technical, career, financial, or household choices.
+disable-model-invocation: true
 ---
 
 # wife-pdf
