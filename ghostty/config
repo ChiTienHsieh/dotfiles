@@ -18,8 +18,8 @@ font-codepoint-map = U+20000-U+2A6DF,U+2A700-U+2B73F=Noto Sans CJK TC
 # 內建 Dracula 配色，前景色用 gu-log 的柔和版本
 theme = Dracula
 foreground = #cecdda
-selection-background = #44475a
-selection-foreground = #cecdda
+selection-background = #4a3a70
+selection-foreground = #e6dcff
 cursor-color = #ff79c6
 
 # ── 視窗 ──────────────────────────────────────
