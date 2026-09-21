@@ -30,7 +30,7 @@ dotfiles/
 ├── nvim/                            # Neovim 設定（git submodule）
 ├── agents/                          # 所有 agent 共用的 AGENTS.md 與 notes
 ├── claude/                          # Claude Code：CLAUDE.md、settings、hooks、agents
-├── codex/                           # Codex CLI：config 種子、hooks、sandbox 設定
+├── codex/                           # Codex CLI：config 種子與可攜設定、hooks、sandbox 設定
 ├── grok/                            # Grok：sandbox 設定
 ├── skills/                          # shared/、claude/、codex/ 三類 skills
 ├── hooks/                           # pre-commit hook 用的英文詞彙 allowlist
@@ -51,7 +51,7 @@ dotfiles/
 ~/.codex/AGENTS.md  =  agents/AGENTS.md + codex/AGENTS.md  # install.sh 串接產生
 ```
 
-改 repo 裡的檔案，再跑一次 `./install.sh`。`~/.codex` 只連結受管理的檔案，既有的 `config.toml` 與 session 資料不動。
+改 repo 裡的檔案，再跑一次 `./install.sh`。`~/.codex` 只連結受管理的檔案，既有的 `config.toml` 保持為 Codex runtime 管理的實體檔。若已安裝 Codex CLI，installer 會透過原子 config RPC，只同步 `codex/config.portable.toml` 宣告的設定；其餘設定與 session 資料保留。
 
 `skills/shared/` 同時裝進 Claude Code 與 Codex；`skills/claude/`、`skills/codex/` 只裝各自的 runtime。只想重新同步 skills：
 
@@ -66,6 +66,7 @@ dotfiles/
 - `~/.secrets/index.sh`：API key 與 token，shell 啟動時 source
 - `~/.aliases.local`：本機專用 alias
 - `~/.gitconfig.local`：credential helper 與只有這台機器要的 git 設定
+- `~/.codex/config.toml`：runtime 管理的設定；dotfiles 只管理可攜設定檔宣告的鍵
 
 ## 更新
 
