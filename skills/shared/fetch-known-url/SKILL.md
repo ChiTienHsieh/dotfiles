@@ -1,6 +1,6 @@
 ---
 name: fetch-known-url
-description: Fetch and parse a supported whitelisted URL into AI-agent-readable artifacts. Use this when the user asks to fetch, read, archive, extract, summarize, or convert a known supported URL into readable files. Supports ChatGPT shared conversation URLs and YouTube video metadata/transcripts with explicit anti-bot fallback rules; add new URL patterns only after their fetch and parse behavior has been learned.
+description: Fetch and parse a supported whitelisted URL into AI-agent-readable artifacts. Use this when the user asks to fetch, read, archive, extract, summarize, or convert a known supported URL into readable files. Supports ChatGPT shared conversation URLs and YouTube transcript artifacts with explicit anti-bot fallback rules; add new URL patterns only after their fetch and parse behavior has been learned.
 disable-model-invocation: true
 metadata:
   short-description: Fetch a supported URL into readable files
@@ -11,7 +11,7 @@ metadata:
 ## Supported URLs
 
 - `chatgpt.com/share/...`: fetches the raw HTML, extracts the shared conversation payload, and writes Markdown plus JSON.
-- `youtube.com/watch?...`, `youtu.be/...`: fetches video information and, when permitted by YouTube and available captions, transcript artifacts. Read [references/youtube.md](references/youtube.md) before fetching YouTube because cloud VM IPs are commonly blocked and credential/proxy choices affect reliability and safety.
+- `youtube.com/watch?...`, `youtu.be/...`: fetches transcript artifacts when YouTube permits access and captions are available. Read [references/youtube.md](references/youtube.md) before fetching YouTube because cloud VM IPs are commonly blocked and credential/proxy choices affect reliability and safety.
 
 Do not add unsupported URL patterns casually. When learning a new pattern, first inspect its fetch behavior, identify the stable embedded data or clean content source, then add the parser and update this list.
 
@@ -23,7 +23,7 @@ Do not add unsupported URL patterns casually. When learning a new pattern, first
    - YouTube video URLs: read [references/youtube.md](references/youtube.md), then use `scripts/fetch_youtube_transcript.py` when transcript extraction is appropriate.
 3. Save outputs under a task-local directory, typically `fetched-chatgpt/` or `fetched-youtube/` depending on URL type.
 4. Prefer the generated Markdown for agent reading and the JSON for structured follow-up work.
-5. Keep raw HTML when possible so future parsers can be improved without refetching.
+5. For ChatGPT shares, keep raw HTML so future parsers can be improved without refetching.
 
 ## ChatGPT Share Fetch
 

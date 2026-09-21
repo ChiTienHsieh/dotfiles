@@ -31,10 +31,12 @@ def video_id_from_url(value: str) -> str:
         return value
 
     parsed = urlparse(value)
-    host = parsed.netloc.lower()
-    if host.endswith("youtu.be"):
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme not in {"http", "https"}:
+        raise SystemExit(f"Unsupported YouTube URL scheme: {parsed.scheme or '(missing)'}")
+    if host == "youtu.be":
         candidate = parsed.path.strip("/").split("/")[0]
-    elif "youtube.com" in host:
+    elif host == "youtube.com" or host.endswith(".youtube.com"):
         if parsed.path == "/watch":
             candidate = parse_qs(parsed.query).get("v", [""])[0]
         elif parsed.path.startswith(("/shorts/", "/embed/")):

@@ -4,24 +4,7 @@ YouTube is a supported target only when the task needs information from a specif
 
 ## What works reliably on cloud VMs
 
-Cloud-provider IPs often cannot fetch YouTube captions directly. Verify before spending time:
-
-```bash
-curl -L --max-time 20 -A "Mozilla/5.0" "https://www.youtube.com/watch?v=VIDEO_ID" -o /tmp/youtube-probe.html
-python3 - <<'PY'
-import json, re, sys
-s = open("/tmp/youtube-probe.html", encoding="utf-8", errors="replace").read()
-m = re.search(r"ytInitialPlayerResponse\s*=\s*(\{.+?\});", s)
-if not m:
-    print("no ytInitialPlayerResponse")
-    sys.exit(0)
-p = json.loads(m.group(1))
-print(p.get("playabilityStatus", {}))
-print("captionTracks", len(p.get("captions", {}).get("playerCaptionsTracklistRenderer", {}).get("captionTracks", [])))
-PY
-```
-
-If this reports `LOGIN_REQUIRED`, `Sign in to confirm you're not a bot`, `RequestBlocked`, `IpBlocked`, or zero caption tracks for a video that should have captions, do not retry blindly. Use one of the authorized fallback paths below.
+Cloud-provider IPs often cannot fetch YouTube captions directly. Use the helper below for the first attempt. If it reports a bot/IP block or missing captions where captions are expected, switch to an authorized fallback instead of retrying blindly. Allow at most two blocked attempts per egress.
 
 ## Preferred transcript path
 
@@ -44,7 +27,7 @@ When the VM is blocked, set one authorized egress mechanism before running it:
 - `YOUTUBE_TRANSCRIPT_WEBSHARE_USERNAME` and `YOUTUBE_TRANSCRIPT_WEBSHARE_PASSWORD` for `youtube-transcript-api`'s rotating residential Webshare support.
 - `YOUTUBE_TRANSCRIPT_HTTP_PROXY` and/or `YOUTUBE_TRANSCRIPT_HTTPS_PROXY` for another authorized rotating residential HTTP(S) proxy.
 
-Use paid proxy services only after the user has approved the account/cost. Never paste proxy credentials into chat, commits, logs, or command-line arguments. Stop after two blocked attempts with the same egress; repeated retries burn IP reputation without adding evidence.
+Use paid proxy services only after the user has approved the account/cost. Never paste proxy credentials into chat, commits, logs, or command-line arguments.
 
 The script writes:
 
