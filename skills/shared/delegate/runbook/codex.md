@@ -40,8 +40,10 @@ codex exec -p cc-worker --skip-git-repo-check \
 - `codex exec` loads `~/.codex/AGENTS.md`. If those rules forbid the task it exits 0 with an
   empty diff and a polite refusal: treat as refused, fix the rule, do not paper over it with a preamble.
 - `--search` is a top-level flag (`codex --search exec ...`) and turns network on; only over trusted inputs.
-- Models: the live default in `~/.codex/config.toml` is `gpt-5.6-sol` (hard work);
-  `gpt-5.6-luna` is the routine worker model. `model_reasoning_effort` low|medium|high|xhigh.
+- Models: the live default in `~/.codex/config.toml` is `gpt-6-astra` (catalog priority 1,
+  "most capable for complex, demanding work"); `gpt-5.6-luna` is the routine worker model.
+  Read the config, do not trust this line: `grep -n '^model' ~/.codex/config.toml`.
+  `model_reasoning_effort` low|medium|high|xhigh|max|ultra (per `~/.codex/models_cache.json`).
   Anything else: `codex exec --help`.
 
 ## Quirks
