@@ -34,5 +34,3 @@
 3. Known unknowns: 還沒查清但已知道會影響什麼。
 4. Implementation outline: 主要步驟與驗證方式。
 5. Mechanical refactors: 低風險、可交給 agent 自行處理的部分。
-
-HTML 可用，但不是必須。user 明確要求 HTML 或內容需要視覺比較時才產生 HTML。

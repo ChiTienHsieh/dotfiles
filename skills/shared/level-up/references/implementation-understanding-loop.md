@@ -20,7 +20,6 @@
 - **Decisions-first, mechanics-last**：先放 user 最可能想改或想審的決策，機械性重構沉底。
 - Pre 示例：`Write an implementation plan, but lead with the decisions most likely to change: data model, type/API contracts, and user-facing behavior.`
 - Post 示例：`Write a post-implementation note, but lead with design choices, data model, interfaces, and user-facing behavior; bury mechanical refactoring at the bottom.`
-- HTML 是可選輸出，不是預設義務；只有 user 明確要求或內容真的需要視覺結構時才用。
 
 ## 三段如何串起來
 

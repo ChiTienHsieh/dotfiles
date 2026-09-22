@@ -18,11 +18,10 @@ description: "使用者要求分關教學、逐題推進或 level-up 教練時�
 只載入這一回合需要的參考文件。
 
 - **每次 level-up**：教學前與更新紀錄前先讀 [`references/learning-records.md`](references/learning-records.md)。這份管靜默記帳、證據、使用者目標、跳過事件、主題與索引結構、隱私與安全。
-- **開課前或選項還沒定**：讀 [`references/level-0.md`](references/level-0.md)。這份管目標、講法、深度、媒介這四項一定要讓使用者選的東西；使用者選好前不開始教。
+- **開課前或選項還沒定**：讀 [`references/level-0.md`](references/level-0.md)。這份管目標、講法、深度這三項一定要讓使用者選的東西；使用者選好前不開始教。
 - **規劃或講關卡**：讀 [`references/teaching-style.md`](references/teaching-style.md)（語氣、角色、每關形狀、用詞）與 [`references/teaching-engagement.md`](references/teaching-engagement.md)（節奏、進度表、課中提問、收尾）。
 - **出任何測驗或 shotcall 之前、回應答案之前**：讀 [`references/mcq-and-response.md`](references/mcq-and-response.md)。這份管一次一題、不洩題、錯誤選項設計、shotcall 與重試規則。
-- **最後一關通關**：讀 [`references/celebration.md`](references/celebration.md)。這份管 ASCII art 與委派通關頁的兩段式收尾。
-- **媒介選了 `h`、課程中途要切成 HTML、或把渲染委派出去**：讀 [`references/html-presentation.md`](references/html-presentation.md)。這份管成品呈現、主題色、渲染交接，以及聊天與 HTML 的分工界線。
+- **最後一關通關**：讀 [`references/celebration.md`](references/celebration.md)。這份管當場畫 ASCII art 的收尾。
 - **實作規劃、決策檢視或理解工作**：讀 [`references/implementation-understanding-loop.md`](references/implementation-understanding-loop.md)，那是依風險觸發的實作前／中／後模型。
 - **preflight 或實作前教練**：另讀 [`references/pre-implementation.md`](references/pre-implementation.md)。
 - **debrief、實作後理解、或合併／push 前測驗**：另讀 [`references/post-implementation.md`](references/post-implementation.md)。
@@ -31,7 +30,7 @@ description: "使用者要求分關教學、逐題推進或 level-up 教練時�
 
 1. 依學習紀錄約定，讀學習索引、學習者檔案與相關主題的證據。
 2. 請求是 preflight／debrief 就選實作類參考文件，否則走一般教學模式。
-3. 課程定案前先跑 Level 0，用白話問四件事：目標、講法（A ★ 職場鬼故事 / B 類比 / C 直接講）、深度、媒介。等使用者選好；有說目標就用目標，沒有就用標準的心智模型視角。
+3. 課程定案前先跑 Level 0，用白話問三件事：目標、講法（A ★ 職場鬼故事 / B 類比 / C 直接講）、深度。等使用者選好；有說目標就用目標，沒有就用標準的心智模型視角。
 4. 在 `~/scratch/` 建一份給學習者看的 Markdown 進度表（不進追蹤檔），路徑告訴學習者；有 task plan 工具也一併建立。從一個窄的關卡開始，答案顯示哪裡不會或少了先備知識再調整。
 5. 每關照 `teaching-style.md` 的形狀：事故開場 → David 收拾 → 一行「這個叫 X」→ 回到你的情況 → 一題。一次只教一個概念或一個決定。
 6. 在聊天裡問正好一題能真正測出東西的問題：測理解就出測驗，真實決定就出 shotcall。等回答再前進。
@@ -43,8 +42,7 @@ description: "使用者要求分關教學、逐題推進或 level-up 教練時�
 
 - 使用者沒問紀錄就不把記帳寫進課程輸出。進度表是給學習者看的，記帳是給 skill 用的，兩者分開。
 - 一次只問一題實質的 MCQ 或 shotcall。一批題目不是 level-up 的互動方式。
-- 聊天裡的那一題是進度的唯一依據。HTML 裡嵌的測驗只是練習，不能推進關卡。
-- 不蓋掉、不悄悄改學習者的講法、深度、媒介或目標。要改就在 Level 0 確認點問，或在課程中途切媒介前問。
+- 不蓋掉、不悄悄改學習者的講法、深度或目標。要改就在 Level 0 確認點問。
 - 關卡和步驟用「意思」命名，不用編號，而且主詞、動作要寫出來。禁止「第幾層」這種要人背的說法，也禁止「它不認你」這種少了主詞受詞的模糊名；順序要講就用名字串起來，例如「找不到那台機器 → 機器沒開門 → 鎖不認你的鑰匙」。
 - 出現 CLI 參數時，每個字母都展開成完整英文字加一句 zh-TW，例如 `-v` verbose 多講話、`-a` archive 原樣保留。禁止只丟 `-avh`。
 - 指令要講清楚在哪台機器上跑、問的是哪台的密碼。學習者有多台機器時，每個指令前標明「在 M2 上」這種字。
