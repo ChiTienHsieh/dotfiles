@@ -92,15 +92,21 @@ backup_and_copy() {
     local src="$1"
     local dest="$2"
 
+    # Guard against backing up a good destination and then failing the copy
+    # (set -e would abort mid-install, leaving the file gone but "backed up").
+    if [ ! -e "$src" ]; then
+        echo "  ERROR: copy source missing: $src" >&2
+        return 1
+    fi
+
     mkdir -p "$(dirname "$dest")"
 
-    # A symlink left over from a prior backup_and_link run must not survive:
     # `cp` writes through an existing symlink into whatever it points at
-    # (here, back into the dotfiles source file itself) instead of replacing
-    # it, so the destination would stay a symlink. No backup for that case —
-    # it was dotfiles' own symlink, not independent content. A real file only
-    # gets backed up when its content actually differs, so a repeat install
-    # with no source changes stays a no-op (matches backup_and_link idempotency).
+    # (here, back into the dotfiles source file itself) rather than replacing
+    # it, so a leftover backup_and_link symlink must be removed first — no
+    # backup for it, it was dotfiles' own link, not independent content.
+    # A real file is backed up only when its content actually differs, so a
+    # repeat install with no source changes stays a no-op.
     if [ -L "$dest" ]; then
         rm "$dest"
     elif [ -e "$dest" ] && ! cmp -s "$src" "$dest"; then
