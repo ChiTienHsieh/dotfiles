@@ -1,7 +1,7 @@
 # MCQ, Shotcall, and Adaptive Response
 
 Ask exactly one substantive question at a time. The chat question is the sole
-authority for progression; any HTML quiz is practice only.
+authority for progression.
 
 ## Choose the Question Type
 
