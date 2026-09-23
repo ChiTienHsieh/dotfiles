@@ -92,7 +92,26 @@ backup_and_copy() {
     local src="$1"
     local dest="$2"
 
+    # Guard against backing up a good destination and then failing the copy
+    # (set -e would abort mid-install, leaving the file gone but "backed up").
+    if [ ! -e "$src" ]; then
+        echo "  ERROR: copy source missing: $src" >&2
+        return 1
+    fi
+
     mkdir -p "$(dirname "$dest")"
+
+    # `cp` writes through an existing symlink into whatever it points at
+    # (here, back into the dotfiles source file itself) rather than replacing
+    # it, so a leftover backup_and_link symlink must be removed first — no
+    # backup for it, it was dotfiles' own link, not independent content.
+    # A real file is backed up only when its content actually differs, so a
+    # repeat install with no source changes stays a no-op.
+    if [ -L "$dest" ]; then
+        rm "$dest"
+    elif [ -e "$dest" ] && ! cmp -s "$src" "$dest"; then
+        backup_existing "$dest"
+    fi
 
     cp "$src" "$dest"
     echo "  Copied: $dest"
@@ -407,7 +426,13 @@ echo ""
 # -----------------------------------------------------------------------------
 echo "[10/11] Installing Grok CLI sandbox profiles..."
 mkdir -p "$HOME/.grok"
-backup_and_link "$DOTFILES_DIR/grok/sandbox.toml" "$HOME/.grok/sandbox.toml"
+# Copy, not symlink: Grok CLI's bwrap-based sandbox on Linux refuses a
+# symlinked sandbox.toml ("hook source path contains a symlink component
+# (retargetable)") and hard-fails startup — discovered 2026-09-22 when this
+# broke clawd-vm's gu-log Tribunal loop for ~22h after a fresh install.sh run
+# turned a pre-existing real file into a symlink. Re-run ./install.sh after
+# editing dotfiles/grok/sandbox.toml to pick up changes.
+backup_and_copy "$DOTFILES_DIR/grok/sandbox.toml" "$HOME/.grok/sandbox.toml"
 echo ""
 
 # -----------------------------------------------------------------------------
