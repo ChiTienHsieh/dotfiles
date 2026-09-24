@@ -40,11 +40,7 @@ class TmuxReadTests(unittest.TestCase):
         )
         self.assert_allowed(
             ["display-message", "-p", "-t", "%3", "#{session_name}"],
-            ["display-message", "-p", "-t", "%3", "#{session_name}"],
-        )
-        self.assert_allowed(
-            ["show-options", "-gv", "prefix"],
-            ["show-options", "-g", "-v", "prefix"],
+            ["display-message", "-p", "-t", "%3", "--", "#{session_name}"],
         )
         self.assert_allowed(
             ["list-sessions", "-F", ""], ["list-sessions", "-F", ""]
@@ -52,7 +48,8 @@ class TmuxReadTests(unittest.TestCase):
 
     def test_mutating_subcommands_are_rejected(self) -> None:
         for sub in ("kill-server", "kill-session", "send-keys", "run-shell",
-                    "set-option", "join-pane", "new-window", "source-file"):
+                    "set-option", "join-pane", "new-window", "source-file",
+                    "show-options", "list-clients"):
             self.assert_rejected([sub])
         self.assert_rejected([])
 
@@ -76,10 +73,16 @@ class TmuxReadTests(unittest.TestCase):
         self.assert_rejected(["display-message", "-p", "-c", "client"])
         self.assert_rejected(["list-panes", "-L", "other-socket"])
 
+    def test_double_dash_cannot_smuggle_flags(self) -> None:
+        self.assert_rejected(["display-message", "-p", "--", "-I"])
+        self.assert_rejected(["display-message", "-p", "--", "-Ic%1"])
+        self.assert_rejected(["capture-pane", "-p", "--", "-b", "buf"])
+        self.assert_rejected(["capture-pane", "-p", "-t", "-I"])
+
     def test_arguments_are_shape_checked(self) -> None:
         self.assert_rejected(["capture-pane", "-p", "-t", "%3 #(id)"])
         self.assert_rejected(["capture-pane", "-p", "-S", "$(id)"])
-        self.assert_rejected(["show-options", "-g", "status-right", "extra"])
+        self.assert_rejected(["display-message", "-p", "a", "b"])
         self.assert_rejected(["list-panes", "stray"])
 
 
