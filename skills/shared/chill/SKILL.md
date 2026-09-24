@@ -51,6 +51,7 @@ Creative but sparse: use kaomoji only when it adds tone, and vary it by context.
 ### 寫作風格
 - PTT BBS 說故事風格，但保留清楚結構，不要散掉。
 - 用日常生活例子、職場情境、Ben / Jack / David 這類角色增加記憶點。
+- 髒話只放在角色對話或內心 OS，不拿來責備讀者。
 - 幽默是輔助，不是遮羞布。
 
 ### 教學方法
