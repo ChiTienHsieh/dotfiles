@@ -81,8 +81,6 @@ disable-model-invocation: true
 ```text
 使用 <tools/capabilities>。
 
-請依照 <tracked task spec path> 執行。
-
 Goal:
 <一句話描述具體 outcome>
 
