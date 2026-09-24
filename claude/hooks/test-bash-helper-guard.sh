@@ -79,6 +79,16 @@ run_case \
   "deny"
 
 run_case \
+  "deny: while-loop polling via the tmux-read wrapper" \
+  'while true; do ~/dotfiles/skills/shared/tmux-orchestration/scripts/tmux-read capture-pane -p -t %3; sleep 5; done' \
+  "deny"
+
+run_case \
+  "allow: single one-off capture-pane via the tmux-read wrapper" \
+  '~/dotfiles/skills/shared/tmux-orchestration/scripts/tmux-read capture-pane -p -t %3 | tail -15' \
+  "allow"
+
+run_case \
   "allow: single one-off capture-pane before send-keys" \
   'tmux capture-pane -p -t %3 | tail -15' \
   "allow"

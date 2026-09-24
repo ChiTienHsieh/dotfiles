@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""Read-only tmux wrapper: the only tmux entry point allowed without review.
+
+Usage: tmux-read SUBCOMMAND [FLAGS...]
+
+Claude Code's sandbox blocks the tmux socket, so every tmux call runs outside
+the sandbox and goes through the auto-mode classifier. A `Bash(tmux list-panes:*)`
+allow rule cannot express "read-only": tmux chains commands with an argument
+`;` (`tmux list-panes \\; kill-server`) and runs shell commands from formats
+(`#(cmd)`). This wrapper is allow-listed instead, so it must reject anything
+that could mutate state or execute code:
+
+- only the subcommands and flags in ALLOWED are accepted;
+- any argument containing `;` is rejected;
+- formats may use only `#{variable_name}` and `##`; any other `#` sequence
+  (`#(`, `#[`, `#S`, `#{E:...}`, conditionals) is rejected;
+- `display-message` and `capture-pane` require `-p`, so nothing is written to
+  the status line or a paste buffer.
+"""
+
+import getopt
+import os
+import re
+import sys
+
+# subcommand -> (getopt spec, flags whose value is a format, required flags)
+ALLOWED = {
+    "list-sessions": ("F:f:", {"-F", "-f"}, set()),
+    "list-windows": ("aF:f:t:", {"-F", "-f"}, set()),
+    "list-panes": ("asF:f:t:", {"-F", "-f"}, set()),
+    "list-clients": ("F:f:t:", {"-F", "-f"}, set()),
+    "display-message": ("pavlt:", set(), {"-p"}),
+    "capture-pane": ("paeJNCTqt:S:E:", set(), {"-p"}),
+    "show-options": ("gwpsqvAHt:", set(), set()),
+}
+
+TARGET_RE = re.compile(r"[A-Za-z0-9_%@$:.+=-]+")
+LINE_RE = re.compile(r"-|-?[0-9]+")
+OPTION_NAME_RE = re.compile(r"@?[A-Za-z0-9_-]+")
+SAFE_FORMAT_TOKEN_RE = re.compile(r"#\{[A-Za-z_][A-Za-z0-9_]*\}|##")
+
+
+class Rejected(Exception):
+    pass
+
+
+def check_format(value):
+    if "#" in SAFE_FORMAT_TOKEN_RE.sub("", value):
+        raise Rejected(
+            f"format {value!r} may only use #{{variable_name}} and ##"
+        )
+
+
+def validate(argv):
+    """Return the tmux argv to exec, or raise Rejected."""
+    if not argv:
+        raise Rejected("missing subcommand")
+    sub, rest = argv[0], argv[1:]
+    if sub not in ALLOWED:
+        raise Rejected(f"subcommand {sub!r} is not read-only allow-listed")
+    for arg in rest:
+        if ";" in arg:
+            raise Rejected(f"argument {arg!r} contains ';'")
+    spec, format_flags, required = ALLOWED[sub]
+    try:
+        opts, positional = getopt.getopt(rest, spec)
+    except getopt.GetoptError as exc:
+        raise Rejected(str(exc)) from None
+
+    for flag, value in opts:
+        if flag in format_flags:
+            check_format(value)
+        elif flag == "-t" and not TARGET_RE.fullmatch(value):
+            raise Rejected(f"target {value!r} has unexpected characters")
+        elif flag in {"-S", "-E"} and not LINE_RE.fullmatch(value):
+            raise Rejected(f"line {value!r} must be a number or '-'")
+    missing = required - {flag for flag, _ in opts}
+    if missing:
+        raise Rejected(f"{sub} requires {', '.join(sorted(missing))}")
+
+    if sub == "display-message":
+        if len(positional) > 1:
+            raise Rejected("display-message takes at most one message")
+        for message in positional:
+            check_format(message)
+    elif sub == "show-options":
+        if len(positional) > 1:
+            raise Rejected("show-options takes at most one option name")
+        for name in positional:
+            if not OPTION_NAME_RE.fullmatch(name):
+                raise Rejected(f"option name {name!r} is invalid")
+    elif positional:
+        raise Rejected(f"{sub} takes no positional arguments")
+
+    tmux_argv = ["tmux", sub]
+    for flag, value in opts:
+        tmux_argv.append(flag)
+        if flag[1] + ":" in spec:
+            tmux_argv.append(value)
+    return tmux_argv + positional
+
+
+def main():
+    try:
+        tmux_argv = validate(sys.argv[1:])
+    except Rejected as exc:
+        print(f"tmux-read: rejected: {exc}", file=sys.stderr)
+        print(
+            "tmux-read only runs read-only tmux queries; run anything else "
+            "as plain tmux so it gets reviewed.",
+            file=sys.stderr,
+        )
+        return 2
+    os.execvp("tmux", tmux_argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
