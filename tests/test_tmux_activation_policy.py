@@ -43,10 +43,10 @@ class TmuxActivationPolicyTests(unittest.TestCase):
             "skills/shared/craft-goal/SKILL.md": "不要替 handoff 自行指定 tmux",
             "skills/shared/trim/SKILL.md": "Codex 使用可用的 multi-agent tool",
             "skills/shared/level-up/references/pre-implementation.md": (
-                "內建 teacher subagent"
+                "另開一個 session 用 level-up"
             ),
             "skills/shared/level-up/references/teaching-engagement.md": (
-                "內建 teacher subagent"
+                "另開一個 session 用 level-up"
             ),
             "skills/shared/where-am-i/SKILL.md": (
                 "current human's progress question explicitly asks the agent"

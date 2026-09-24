@@ -81,25 +81,23 @@ disable-model-invocation: true
 ```text
 使用 <tools/capabilities>。
 
-請依照 <tracked task spec path> 執行。
-
 Goal:
 <一句話描述具體 outcome>
 
 Context:
 - <只放接棒 agent 必須知道的背景>
 
-Instructions:
-1. 先 inspect current state。
-2. 只做 allowed changes。
-3. 在 <risky actions> 前先問使用者。
-4. 用 <specific smoke test> 驗證。
-5. 回報 <specific deliverables>。
+Done when:
+- <可觀察的完成條件>，用 <specific smoke test> 確認。
 
-Local side effects:
+Boundaries:
 - May edit: <paths>
 - Must not edit: <paths>
+- <risky actions> 前先問使用者。
 - 不要 commit / push，除非使用者明確要求。
+
+Report:
+- <specific deliverables>
 ```
 
 若已建立 tracked task spec file，`/goal` prompt 應改用極短 pointer，不要重複 spec：
