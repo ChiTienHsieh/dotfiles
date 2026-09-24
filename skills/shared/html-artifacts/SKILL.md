@@ -65,6 +65,7 @@ Read `references/patterns.md` when choosing artifact structure, interaction patt
 - Do not bury the useful output behind decorative chrome.
 - Do not make card soup: repeated cards are fine for repeated items, but dense operational information often belongs in tables, split panes, timelines, or diagrams.
 - Do not use generic gradient hero pages, emoji section labels, or ornamental SVGs unless they serve the artifact.
+- Unless the user's theme calls for them, avoid these default styles: cream or off-white page backgrounds, italic accent words in headlines, numbered "01/02/03" section labels, monospace labels, and pill-shaped buttons.
 - Do not assume the artifact is a durable product. If the user needs a maintained app, build an app instead.
 
 ## Upstream Inspiration
