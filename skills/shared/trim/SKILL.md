@@ -1,30 +1,23 @@
 ---
 name: trim
-description: Use when the user wants to simplify, trim, declutter, or shrink a skill, prompt, playbook, AGENTS.md/CLAUDE.md, or other agent-instruction prose. `trim` cuts prompt prose; `/simplify` cuts code.
+description: 精簡 skill、prompt、playbook、AGENTS.md／CLAUDE.md 等 agent 指令：刪掉沒作用的句子，把難讀的句子改寫成白話。程式碼改用 `/simplify`。
 disable-model-invocation: true
 ---
 
 # trim
 
-砍掉 skill、prompt 與 agent instructions 裡不會改變行為的 no-op。判斷標準在同層的
-`noop-brief.md`；這裡只定義審查流程。
+刪掉 agent 指令裡沒作用的句子，把難讀的句子改寫成白話。判斷標準見同資料夾的
+`noop-brief.md`。
 
-## 何時使用
+## 流程
 
-- 使用者要求精簡 agent 指令，或剛寫完一份指令需要自我審查時使用。
-- 程式碼精簡改用內建 `/simplify`；一般文章不使用本 skill。
-
-## Workflow
-
-1. 確認目標檔；一個檔案交給一個 worker。
-2. 解析 skill-local `noop-brief.md`，把 brief path 與目標檔路徑交給 fresh、唯讀且
-   沒有 parent context 的 worker。不要把 brief inline 進 prompt。
-   Codex 使用可用的 multi-agent tool；其他 runtime 使用當前內建 worker。
-3. 收回刪減建議，把理由相同的項目歸在一起，再由主 agent 決定是否採納。
-4. 改動走 PR，逐項列出砍掉的規則、理由與約省篇幅；爭議項目留著問使用者。
+1. 每個目標檔開一個新的唯讀子 agent，不帶目前的對話，只給它 `noop-brief.md` 和
+   目標檔這兩個路徑，讓它自己讀。
+2. 收回建議，理由相同的合成一項，由主 agent 決定採用哪些。
+3. 改動走 PR，逐項寫出刪了或改寫了什麼、為什麼、約省幾行；拿不準的先保留，在 PR
+   裡問使用者。
 
 ## 邊界
 
-- Worker 只提供建議，不修改或提交檔案。
-- 寧可漏砍，不誤殺會改變行為的規則；`UNSURE` 預設保留。
-- 這份 skill 也必須通過自己的 no-op test。
+- 寧可漏砍，也別刪掉會改變行為的規則；標 `UNSURE` 的一律保留。
+- 改寫只換說法，行為維持原樣。
