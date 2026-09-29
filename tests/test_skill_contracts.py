@@ -65,9 +65,9 @@ class GitCleanupContractTests(unittest.TestCase):
         cls.wrap = WRAP.read_text(encoding="utf-8")
 
     def test_global_contract_assigns_terminal_responsibility(self) -> None:
-        self.assertIn("建立者或目前 controller", self.agents)
-        self.assertIn("branch、worktree 與 PR 負責到終態", self.agents)
-        self.assertIn("以 `tidy-workspace` skill 為準", self.agents)
+        self.assertIn("自己開的或明確接手的 branch、worktree、PR", self.agents)
+        self.assertIn("要負責到合併或關閉", self.agents)
+        self.assertIn("照 `tidy-workspace` skill", self.agents)
 
     def test_tidy_requires_complete_cleanup_evidence(self) -> None:
         for evidence in (
