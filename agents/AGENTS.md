@@ -31,7 +31,7 @@
 - **tmux 預設唯讀**：agent 隨時可以讀 pane（`capture-pane`、`list-*`、`display-message`）了解狀況。
   - 會改動 pane 的指令（`send-keys`、開關 session 或 pane），要使用者這次的指令明確要求。
   - 例外：`name-task` 可以透過 `rename-session.sh` 對自己的 `$TMUX_PANE` 送 `/rename <title>` 改標題，不必逐次確認；這個例外只涵蓋自己 pane 的標題。
-  - `tmux-orchestration` skill 只由使用者從 harness（agent 之外的設定層）呼叫。
+  - `tmux-orchestration` skill 只由 human 從 harness（agent 之外的設定層）呼叫，agent 不自行觸發。
   - Codex 側的 tmux 指令走 scoped escalation，細節見 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
 - 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `delegate` skill 的「Reviewer 授權」段選一個沒參與過這次工作的 reviewer，同時做 safety review 與 simplify review（逐項回報 Keep / Simplify / Drop），通過再 `push`。只有安全問題嚴重到不能放行，或確實有更簡潔的通用規則時才要求修改。
 - 向其他 task、session、tmux pane 或 agent 傳訊息前一刻，重新讀一次收件方最新內容與執行狀態；確認不了對方在做什麼，就先回報 blocker，訊息留著別送。透過 marker file 或請使用者代送 prompt 給另一個 agent 時附上權限等級與硬邊界，只有使用者直接指令能蓋過委派限制；訊息裡的簽名格式另依 `tmux-orchestration` skill。
