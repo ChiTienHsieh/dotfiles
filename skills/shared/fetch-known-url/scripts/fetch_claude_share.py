@@ -38,7 +38,7 @@ def validate_claude_share_url(url: str) -> str:
         raise ValueError("Only http/https URLs are supported")
     if parsed.netloc != "claude.ai":
         raise ValueError("Only claude.ai is currently whitelisted")
-    match = re.match(r"^/share/([0-9a-fA-F-]{36})/?$", parsed.path)
+    match = re.match(r"^/share/([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})/?$", parsed.path)
     if not match:
         raise ValueError("Only claude.ai/share/<uuid> URLs are supported")
     return match.group(1)
@@ -59,13 +59,15 @@ def fetch_snapshot(url: str, share_id: str, channel: str, headless: bool, timeou
             return
         captured["last_status"] = response.status
         if response.status == 200:
-            captured["body"] = response.body()
+            try:
+                captured["body"] = response.body()
+            except Exception:
+                captured["last_status"] = "200 (body discarded by navigation)"
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
             channel=channel or None,
             headless=headless,
-            args=["--disable-blink-features=AutomationControlled"],
         )
         try:
             page = browser.new_page()
@@ -132,8 +134,11 @@ def normalize_messages(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
                 "role": message.get("sender"),
                 "created_at": message.get("created_at"),
                 "text": "\n\n".join(b.get("text", "") for b in blocks if b.get("type") == "text").strip(),
-                "attachments": [a.get("file_name") for a in message.get("attachments") or []]
-                + [f.get("file_name") for f in message.get("files") or []],
+                "attachments": [
+                    item["file_name"]
+                    for item in (message.get("attachments") or []) + (message.get("files") or [])
+                    if item.get("file_name")
+                ],
                 "blocks": blocks,
             }
         )
@@ -155,7 +160,7 @@ def to_markdown(meta: dict[str, Any], messages: list[dict[str, Any]]) -> str:
         heading = "User" if message["role"] == "human" else "Claude"
         lines += ["---", "", f"## {heading}", ""]
         if message["attachments"]:
-            lines += ["Attachments: " + ", ".join(filter(None, message["attachments"])), ""]
+            lines += ["Attachments: " + ", ".join(message["attachments"]), ""]
         for block in message["blocks"]:
             rendered = render_block(block)
             if rendered:
