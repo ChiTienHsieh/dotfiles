@@ -20,7 +20,7 @@ DELEGATION MAP     [A]=always-loaded  [L]=lazy  [R]=computed at runtime
              >20 same-shape loops, ssh/gh sweeps, bulk edits -> delegate
     2 WHO    [R] scripts/pick-worker -> provider + reason + reset time
              roles: impl -> most quota | review -> bounded read-only
-                    guardrail reviewer -> fresh, strongest Claude
+                    guardrail reviewer -> fresh Claude on Opus
     3 HOW    provider == my runtime? --yes--> native subagent
                       | no                   (Agent / codex / spawn_subagent)
                       v
@@ -49,12 +49,13 @@ Roles, not provider names — `scripts/pick-worker` picks the provider from live
 
 - **Heavy implementation** (bulk edits, many files, long runs) → the current runtime's built-in subagent, or a headless CLI worker under the sandbox profile; take the provider with the most remaining quota. Headless is an option, never an obligation.
 - **Review, read-only research, second opinion** → a bounded read-only worker; a different provider is fine and often useful here. Do not raise the surface cost just to switch provider.
-- **Guardrail / prompt / SSOT reviewer** → always a fresh Claude subagent on the strongest Claude model, doing safety and simplify in one pass. Fresh is what matters, not the provider: the author carries the change's context and is the blindest to stale flags and self-contradiction. Codex is deliberately not used for this role (over-defensive, pads redundant context); keep its bounded read-only reviewer for code review that needs an opposing view.
+- **Guardrail / prompt / SSOT reviewer** → always a fresh Claude subagent on Opus, doing safety and simplify in one pass. Fresh is what matters, not the provider: the author carries the change's context and is the blindest to stale flags and self-contradiction. Codex is deliberately not used for this role (over-defensive, pads redundant context); keep its bounded read-only reviewer for code review that needs an opposing view.
 
 Model principles:
 
 - For any deliverable, prefer `intelligence > taste > cost`; cost is a local override, never the deciding factor.
-- Cheap models are fine for mechanical work with an explicit spec (migrations, log triage, batch file reading, grep-style investigation). Taste work — UI, copy, API design, architecture, plan review — goes to the strongest model available.
+- Cheap models are fine for mechanical work with an explicit spec (migrations, log triage, batch file reading, grep-style investigation). Taste work — UI, copy, API design, architecture, plan review — goes to the strongest model you may use (for Claude, see the next line).
+- Claude subagents run on Opus: pass `model: "opus"` explicitly instead of inheriting, since the session default may be Fable. Use Fable only when the user explicitly agrees; its quota is limited.
 - Never delegate to Haiku; it hallucinated badly in the user's experience.
 - Never silently swap a model the user named. If quota forces a change, say so first.
 
