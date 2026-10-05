@@ -1,6 +1,6 @@
 ---
 name: fetch-known-url
-description: Fetch and parse a supported whitelisted URL into AI-agent-readable artifacts. Use this when the user asks to fetch, read, archive, extract, summarize, or convert a known supported URL into readable files. Supports ChatGPT and claude.ai shared conversation URLs and YouTube transcript artifacts with explicit anti-bot fallback rules; add new URL patterns only after their fetch and parse behavior has been learned.
+description: Fetch and parse a supported whitelisted URL into AI-agent-readable artifacts. Use this when the user asks to fetch, read, archive, extract, summarize, or convert a known supported URL into readable files. Supports ChatGPT and claude.ai shared conversation URLs and YouTube transcript artifacts with explicit anti-bot fallback rules, and routes X / Twitter URLs to gu-log's fetcher; add new URL patterns only after their fetch and parse behavior has been learned.
 disable-model-invocation: true
 metadata:
   short-description: Fetch a supported URL into readable files
@@ -16,9 +16,15 @@ metadata:
 
 Do not add unsupported URL patterns casually. When learning a new pattern, first inspect its fetch behavior, identify the stable embedded data or clean content source, then add the parser and update this list.
 
+## Delegated URLs
+
+Their fetcher lives in another repo; this skill keeps no copy, so fixes land in one place.
+
+- `x.com/.../status/...`, `twitter.com/.../status/...`: gu-log owns this fetcher. Read `paths.local` in the sibling `gu-log` skill directory to locate the checkout, then follow its `x-source-fetch` skill (`.claude/skills/` or `.agents/skills/`). Without a gu-log checkout, say X is unavailable here; do not fall back to WebFetch or a preview snippet.
+
 ## Workflow
 
-1. Confirm the URL matches a supported pattern.
+1. Confirm the URL matches a supported pattern; for a delegated URL, follow its route above instead.
 2. Use the dedicated workflow for the URL type:
    - ChatGPT shared conversation URLs: `scripts/fetch_chatgpt_share.py`.
    - claude.ai shared conversation URLs: `scripts/fetch_claude_share.py` (see Claude Share Fetch below).
