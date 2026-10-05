@@ -44,7 +44,8 @@
       "Bash(git branch --list:*)",
       "Bash(git config --get:*)",
       "Bash(git config --list)",
-      "Bash(trash:*)"
+      "Bash(trash:*)",
+      "Bash(~/dotfiles/skills/shared/tmux-orchestration/scripts/tmux-read:*)"
     ],
     "deny": [
       "NotebookEdit",
@@ -124,7 +125,6 @@
     },
     "excludedCommands": [
       "git",
-      "tmux",
       "docker"
     ]
   },
