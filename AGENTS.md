@@ -19,7 +19,7 @@
 
 - 這個 repo 裡的中文（指示、skills、學習紀錄）會被所有 agent 讀進去，agent 會照讀到的語氣講話、寫文件。寫歪一句，之後每個 agent 都跟著歪。
 - 寫進來前唸一遍：台灣人會這樣講嗎？聽起來有 AI 腔、從英文硬翻，或要讀兩遍才懂，就改到自然、清楚為止。拿不準就挑最白話的寫法，在回報裡標出來。
-- 要避開的詞：`hooks/jargon-allowlist.yml`（pre-commit 會擋）、`skills/shared/level-up/learning/user-profile.md` 的廢詞。發現新的，沒有正當用法的補進 allowlist 的 `zh_tw_terms`，其他寫進回報讓使用者決定。
+- 已知的地雷詞不列在這裡，交給 pre-commit 擋：被擋就照提示改。發現新的，沒有正當用法的補進 `hooks/jargon-allowlist.yml` 的 `zh_tw_terms`，其他寫進回報讓使用者決定。
 
 ## Secrets
 
