@@ -17,9 +17,9 @@
 
 ## 寫進 repo 的 zh-TW
 
-- 這裡的 zh-TW（指示、skills、學習紀錄）會被所有 agent 讀進去，agent 會照讀到的語氣講話、寫文件。寫歪一句，之後每個 agent 都跟著歪。
-- 寫進來前唸一遍：台灣人會這樣講嗎？聽起來像 AI 罐頭文、從英文硬翻，或要讀兩遍才懂，就改到自然、清楚為止。拿不準就問使用者。
-- 已知要避開的詞在 `hooks/jargon-allowlist.yml` 和 `skills/shared/level-up/learning/user-profile.md`；碰到新的地雷詞就補進去。
+- 這個 repo 裡的中文（指示、skills、學習紀錄）會被所有 agent 讀進去，agent 會照讀到的語氣講話、寫文件。寫歪一句，之後每個 agent 都跟著歪。
+- 寫進來前唸一遍：台灣人會這樣講嗎？聽起來有 AI 腔、從英文硬翻，或要讀兩遍才懂，就改到自然、清楚為止。拿不準就挑最白話的寫法，在回報裡標出來。
+- 要避開的詞：`hooks/jargon-allowlist.yml`（pre-commit 會擋）、`skills/shared/level-up/learning/user-profile.md` 的廢詞。發現新的，沒有正當用法的補進 allowlist 的 `zh_tw_terms`，其他寫進回報讓使用者決定。
 
 ## Secrets
 
