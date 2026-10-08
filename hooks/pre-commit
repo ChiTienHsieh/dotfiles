@@ -39,11 +39,11 @@ fi
 ALLOWLIST="$DOTFILES_DIR/hooks/jargon-allowlist.yml"
 
 # Added lines in staged *.md files (shared by sections 2 and 2b).
-# level-up/learning/ records are written by the skill itself and legitimately
+# skills/*/learning/ records are written by the skills themselves and legitimately
 # mention rejected words when documenting them, so they are skipped.
 MD_ADDED_LINES=$(git diff --cached --name-only --diff-filter=AM -z \
     | grep -zE '\.md$' \
-    | grep -zvE '^skills/shared/level-up/learning/' \
+    | grep -zvE '^skills/shared/[^/]+/learning/' \
     | xargs -0r git diff --cached -U0 -- 2>/dev/null \
     | grep '^+' | grep -v '^+++' | sed 's/^\+//')
 
