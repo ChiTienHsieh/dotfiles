@@ -217,6 +217,17 @@ class ZhTwTermsTests(unittest.TestCase):
         result = run_hook_with_diff(content, filename="notes.md")
         self.assertEqual(result.returncode, 0)
 
+    def test_exception_phrase_passes(self) -> None:
+        content = "先整合帳號再上線\n"
+        result = run_hook_with_diff(content, filename="notes.md")
+        self.assertEqual(result.returncode, 0)
+
+    def test_exception_phrase_does_not_hide_bare_term(self) -> None:
+        content = "先整合帳號，兩邊數字合帳\n"
+        result = run_hook_with_diff(content, filename="notes.md")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("合帳 → 對得上", result.stdout + result.stderr)
+
 
 class CommitRangeTests(unittest.TestCase):
     """CI runs check-wording over <base> <head> instead of --cached."""
