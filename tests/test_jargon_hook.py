@@ -12,6 +12,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOOK_PATH = REPO_ROOT / "hooks" / "pre-commit"
+CHECK_WORDING_PATH = REPO_ROOT / "hooks" / "check-wording"
 ALLOWLIST_PATH = REPO_ROOT / "hooks" / "jargon-allowlist.yml"
 
 
@@ -45,6 +46,9 @@ def run_hook_with_diff(
         if allowlist is None:
             allowlist = ALLOWLIST_PATH.read_text(encoding="utf-8")
         (hooks_dir / "jargon-allowlist.yml").write_text(allowlist, encoding="utf-8")
+        check_wording = hooks_dir / "check-wording"
+        check_wording.write_text(CHECK_WORDING_PATH.read_text(encoding="utf-8"))
+        check_wording.chmod(0o755)
 
         # Copy hook
         hook_content = HOOK_PATH.read_text(encoding="utf-8")
@@ -187,6 +191,13 @@ class MarkdownProseJargonTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0)
 
+    def test_other_skill_learning_records_are_skipped(self) -> None:
+        content = "團隊還沒拍板的事\n"
+        result = run_hook_with_diff(
+            content, filename="skills/shared/learn-my-voice/learning/topics/x.md"
+        )
+        self.assertEqual(result.returncode, 0)
+
 
 class ZhTwTermsTests(unittest.TestCase):
     def test_mainland_term_in_markdown_blocks_commit(self) -> None:
@@ -204,6 +215,41 @@ class ZhTwTermsTests(unittest.TestCase):
     def test_taiwan_term_in_markdown_passes(self) -> None:
         content = "這段資訊很重要，預設用使用者介面\n"
         result = run_hook_with_diff(content, filename="notes.md")
+        self.assertEqual(result.returncode, 0)
+
+
+class CommitRangeTests(unittest.TestCase):
+    """CI runs check-wording over <base> <head> instead of --cached."""
+
+    def run_range(self, content: str, filename: str = "notes.md") -> subprocess.CompletedProcess[str]:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = Path(tmpdir)
+            env = {**os.environ, "HOME": tmpdir, "GIT_CONFIG_NOSYSTEM": "1"}
+            run = lambda cmd: subprocess.run(
+                cmd, cwd=repo, capture_output=True, text=True, env=env, timeout=10
+            )
+            run(["git", "init", "-b", "main"])
+            run(["git", "config", "user.email", "test@test.invalid"])
+            run(["git", "config", "user.name", "Test"])
+            (repo / "hooks").mkdir()
+            (repo / "hooks" / "jargon-allowlist.yml").write_text(
+                ALLOWLIST_PATH.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            run(["git", "add", "."])
+            run(["git", "commit", "-m", "base"])
+            base = run(["git", "rev-parse", "HEAD"]).stdout.strip()
+            (repo / filename).write_text(content, encoding="utf-8")
+            run(["git", "add", "."])
+            run(["git", "commit", "--no-verify", "-m", "change"])
+            return run(["zsh", str(CHECK_WORDING_PATH), base, "HEAD"])
+
+    def test_blocked_term_in_range_fails(self) -> None:
+        result = self.run_range("這件事先拍板\n")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("拍板 → 決定", result.stdout + result.stderr)
+
+    def test_clean_range_passes(self) -> None:
+        result = self.run_range("這件事先決定\n")
         self.assertEqual(result.returncode, 0)
 
 
