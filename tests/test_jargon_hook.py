@@ -46,15 +46,15 @@ def run_hook_with_diff(
         if allowlist is None:
             allowlist = ALLOWLIST_PATH.read_text(encoding="utf-8")
         (hooks_dir / "jargon-allowlist.yml").write_text(allowlist, encoding="utf-8")
-        check_wording = hooks_dir / "check-wording"
-        check_wording.write_text(CHECK_WORDING_PATH.read_text(encoding="utf-8"))
-        check_wording.chmod(0o755)
 
         # Copy hook
         hook_content = HOOK_PATH.read_text(encoding="utf-8")
         hook_file = repo / ".git" / "hooks" / "pre-commit"
         hook_file.write_text(hook_content)
         hook_file.chmod(0o755)
+        check_wording = hook_file.parent / "check-wording"
+        check_wording.write_text(CHECK_WORDING_PATH.read_text(encoding="utf-8"))
+        check_wording.chmod(0o755)
 
         # Stage the test file
         (repo / filename).parent.mkdir(parents=True, exist_ok=True)
@@ -251,6 +251,19 @@ class CommitRangeTests(unittest.TestCase):
     def test_clean_range_passes(self) -> None:
         result = self.run_range("這件事先決定\n")
         self.assertEqual(result.returncode, 0)
+
+    def test_no_arguments_is_usage_error(self) -> None:
+        result = subprocess.run(
+            ["zsh", str(CHECK_WORDING_PATH)], cwd=REPO_ROOT, capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 2)
+
+    def test_unknown_revision_is_error(self) -> None:
+        result = subprocess.run(
+            ["zsh", str(CHECK_WORDING_PATH), "no-such-rev", "HEAD"],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 2)
 
 
 if __name__ == "__main__":

@@ -5,16 +5,29 @@
 # Usage:
 #   hooks/check-wording --cached          # staged changes (pre-commit)
 #   hooks/check-wording <base> <head>     # a commit range (CI)
-# Arguments go straight to `git diff`. Exits 1 when a blocked word is added.
+# Arguments go straight to `git diff`. Exits 1 when a blocked word is added,
+# 2 on missing arguments or an unknown revision.
+
+if (( $# == 0 )); then
+    echo "usage: check-wording --cached | check-wording <base> <head>" >&2
+    exit 2
+fi
+for rev in "$@"; do
+    [[ "$rev" == -* ]] && continue
+    if ! git rev-parse --verify --quiet "${rev}^{commit}" >/dev/null; then
+        echo "❌ check-wording: unknown revision: $rev" >&2
+        exit 2
+    fi
+done
 
 DOTFILES_DIR="$(git rev-parse --show-toplevel)"
 DIFF_ARGS=("$@")
 # -----------------------------------------------------------------------------
-# 2. Jargon scan (comment lines in diff + added lines in *.md)
+# Jargon scan (comment lines in diff + added lines in *.md)
 # -----------------------------------------------------------------------------
 ALLOWLIST="$DOTFILES_DIR/hooks/jargon-allowlist.yml"
 
-# Added lines in *.md files (shared by sections 2 and 2b).
+# Added lines in *.md files (shared by both scans).
 # skills/*/learning/ records are written by the skills themselves and legitimately
 # mention rejected words when documenting them, so they are skipped.
 MD_ADDED_LINES=$(git diff "${DIFF_ARGS[@]}" --name-only --diff-filter=AM -z \
@@ -100,7 +113,7 @@ if [[ -f "$ALLOWLIST" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 2b. Taiwan-terms scan (added lines in *.md files)
+# Taiwan-terms scan (added lines in *.md files)
 # -----------------------------------------------------------------------------
 if [[ -f "$ALLOWLIST" ]]; then
     ZH_TW_ENTRIES=$(sed -n '/^zh_tw_terms:/,/^[a-z]/p' "$ALLOWLIST" | grep '^  - ' | sed 's/^  - //')
