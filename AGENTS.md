@@ -15,6 +15,12 @@
 - 只在這些情況停下來問：安全疑慮、破壞性操作、force-push／reset／discard 的決定、付費或資料遺失風險、現有指示推不出來的產品或設計取捨。
 - push 被拒或 CI 紅：先自己查，安全的問題自己修。
 
+## 寫進 repo 的 zh-TW
+
+- 這裡的 zh-TW（指示、skills、學習紀錄）會被所有 agent 讀進去，agent 會照讀到的語氣講話、寫文件。寫歪一句，之後每個 agent 都跟著歪。
+- 寫進來前唸一遍：台灣人會這樣講嗎？聽起來像 AI 罐頭文、從英文硬翻，或要讀兩遍才懂，就改到自然、清楚為止。拿不準就問使用者。
+- 已知要避開的詞在 `hooks/jargon-allowlist.yml` 和 `skills/shared/level-up/learning/user-profile.md`；碰到新的地雷詞就補進去。
+
 ## Secrets
 
 - 不進追蹤檔。Secrets 放 `~/.secrets/index.sh`（從 `templates/.secrets.template` 建），shell 啟動時 source，永不 commit。
