@@ -1,96 +1,96 @@
 ---
 name: delegate
-description: "Use when planning or delegating implementation, research, or review to another agent — choosing which provider or worker gets the job, answering quota / rate-limit / usage-reset questions, or running the codex, grok, or claude CLIs headlessly (codex exec, grok -p, claude -p). Owns the whole path: when to delegate at all, which role goes where, the sandbox profile that makes write mode safe, the spec contract, and the acceptance rules."
+description: "規劃或把實作、研究、review 委派給另一個 agent 時使用：決定交給哪個 provider 或 worker、回答 quota / rate-limit / usage-reset 問題，或以 headless 方式跑 codex、grok、claude CLI（codex exec、grok -p、claude -p）。整條流程都在這裡：要不要委派、哪個角色交給誰、讓寫入模式安全的 sandbox profile、spec 格式，以及驗收規則。"
 allowed-tools: Bash
 ---
 
 # Delegate
 
-Loaded by Claude Code, Codex, and Grok alike (Grok discovers it through `~/.claude/skills`).
+Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/skills` 找到它）。
 
 ```
-DELEGATION MAP     [A]=always-loaded  [L]=lazy  [R]=computed at runtime
+委派地圖           [A]=一直載入  [L]=需要時才讀  [R]=執行時算出來
 ------------------------------------------------------------------------
-[A] agents/AGENTS.md "委派與跨 agent": native subagent first; file-writing
-    CLI only via `delegate`; never bypass; tmux read-only by default
-                 |  "heavy task / tool loop / need a 2nd opinion"
+[A] agents/AGENTS.md「委派與跨 agent」：先用內建 subagent；會寫檔的
+    CLI 只能走 `delegate`；永不 bypass；tmux 預設唯讀
+                 |  「任務很重／工具迴圈很長／想要第二意見」
                  v
-[L] skills/shared/delegate/SKILL.md   (this file; README.md points here)
-    1 WHEN   <=10-line edit -> do it yourself
-             >20 same-shape loops, ssh/gh sweeps, bulk edits -> delegate
-    2 WHO    [R] scripts/pick-worker -> provider + reason + reset time
-             roles: impl -> most quota | review -> bounded read-only
-                    guardrail reviewer -> fresh Claude on Fable
-    3 HOW    provider == my runtime? --yes--> native subagent
-                      | no                   (Agent / codex / spawn_subagent)
+[L] skills/shared/delegate/SKILL.md   （本檔；README.md 指到這裡）
+    1 WHEN   ≤10 行的修改 -> 自己做
+             >20 次同樣形狀的迴圈、ssh/gh 大量掃描、大批修改 -> 委派
+    2 WHO    [R] scripts/pick-worker -> provider + 理由 + reset 時間
+             角色：實作 -> quota 最多的 | review -> 有範圍限制的唯讀
+                   guardrail reviewer -> 全新的 Claude，用 Fable
+    3 HOW    provider == 自己的 runtime？--是--> 內建 subagent
+                      | 否                   （Agent / codex / spawn_subagent）
                       v
-             spec in a file; runbook/<provider>.md  <- profile:
-             (exact CLI flags + quirks)   codex/cc-worker[-ro].config.toml
+             spec 寫進檔案；runbook/<provider>.md  <- profile：
+             （精確的 CLI flag 與怪癖）   codex/cc-worker[-ro].config.toml
                                           grok/sandbox.toml
-    4 ACCEPT re-run verification yourself; empty diff = refusal;
-             guardrail changes -> fresh reviewer before push
+    4 ACCEPT 驗證指令自己重跑；空 diff = 拒絕；
+             guardrail 修改 -> push 前找全新 reviewer
 ------------------------------------------------------------------------
-[persona] claude/agents/orchestrator.md (`cldo`): same path, stricter WHEN
-[L] skills/shared/tmux-orchestration: a different SURFACE (visible panes),
-    human-invoked only; WHEN/WHO/ACCEPT still come from here
+[persona] claude/agents/orchestrator.md（`cldo`）：同一條路，WHEN 更嚴
+[L] skills/shared/tmux-orchestration：另一種介面（看得到的 pane），
+    只由人呼叫；WHEN/WHO/ACCEPT 仍以本檔為準
 ```
 
 ## When
 
-- A single-file edit of ~10 lines or less, or anything where the delegation overhead exceeds the work: do it yourself.
-- Delegate by default when a task is about to burn the controller's context on mechanical iteration, even if each step looks trivial: more than ~20 same-shaped tool loops (read/grep/edit cycles, log trawling), SSH command batches against remote hosts, GitHub sweeps across many issues/PRs/runs, broad web research with many fetches, bulk edits across many files.
-- Delegate when the work needs a spec, acceptance criteria, and a separate implementation owner — including frontend work, where the controller keeps design intent and does the visual validation.
-- Keep judgment, scope, architecture, debugging root-cause analysis, diff review, and git ownership in the controller session. Delegate the concrete fix once the cause is clear.
-- Escape hatch: do not predict that a worker will fail — dispatch first. If it misses the acceptance criteria twice after concrete corrective feedback, keep the useful parts of the diff and finish it yourself.
+- 單一檔案、大約 10 行以內的修改，或委派的成本比工作本身還高：自己做。
+- 任務眼看要把 controller 的 context 燒在機械式的反覆操作上，就算每一步看起來都很簡單，也預設委派：超過大約 20 次同樣形狀的工具迴圈（讀檔／grep／修改來回、翻 log）、對遠端主機跑一批 SSH 指令、掃過大量 GitHub issue／PR／run、需要抓很多頁的大範圍網路研究、跨很多檔案的大批修改。
+- 工作需要 spec、驗收標準和另一個負責實作的人時就委派，前端工作也一樣：controller 握著設計意圖，自己做畫面驗證。
+- 判斷、範圍、架構、debug 找根因、看 diff、git 所有權都留在 controller 這邊。原因查清楚之後，再把具體的修正委派出去。
+- 退路：不要預先猜 worker 會失敗，先派出去再說。給了具體的修正回饋、它還是連兩次沒達到驗收標準，就留下 diff 裡有用的部分，自己收尾。
 
 ## Who
 
-Roles, not provider names — `scripts/pick-worker` picks the provider from live quota.
+用角色分派，不寫死 provider 名稱：`scripts/pick-worker` 會依即時 quota 挑 provider。
 
-- **Heavy implementation** (bulk edits, many files, long runs) → the current runtime's built-in subagent, or a headless CLI worker under the sandbox profile; take the provider with the most remaining quota. Headless is an option, never an obligation.
-- **Review, read-only research, second opinion** → a bounded read-only worker; a different provider is fine and often useful here. Do not raise the surface cost just to switch provider.
-- **Guardrail / prompt / SSOT reviewer** → always a fresh Claude subagent on Fable, doing safety and simplify in one pass. Fresh is what matters, not the provider: the author carries the change's context and is the blindest to stale flags and self-contradiction. Codex is deliberately not used for this role (over-defensive, pads redundant context); keep its bounded read-only reviewer for code review that needs an opposing view.
+- **重度實作**（大批修改、很多檔案、跑很久）→ 目前 runtime 的內建 subagent，或套 sandbox profile 的 headless CLI worker；挑剩餘 quota 最多的 provider。headless 只是選項，不是非用不可。
+- **Review、唯讀研究、第二意見** → 有範圍限制的唯讀 worker；這裡換一個 provider 沒問題，常常還更有用。不要只為了換 provider 就把成本拉高。
+- **Guardrail / prompt / SSOT reviewer** → 一律找全新的 Claude subagent，用 Fable，一次做完 safety 與 simplify。重點是「全新」，不是哪家 provider：作者腦中帶著這次修改的脈絡，最看不出過時的 flag 和自相矛盾。這個角色刻意不用 Codex（太過防禦、會塞一堆多餘的脈絡）；需要對立觀點的 code review，還是可以用它的唯讀 reviewer。
 
-Model principles:
+模型原則：
 
-- For any deliverable, prefer `intelligence > taste > cost`; cost is a local override, never the deciding factor.
-- Cheap models are fine for mechanical work with an explicit spec (migrations, log triage, batch file reading, grep-style investigation). Taste work — UI, copy, API design, architecture, plan review — goes to the strongest model you may use (for Claude, see the next line).
-- Claude subagents always get an explicit `model` instead of inheriting. Judgment work (review, plan, architecture, taste, hard debugging) goes to `fable` without asking; everything else goes to `opus`. If `pick-worker` shows Claude quota low or Fable hits a limit, fall back to `opus` and say so.
-- Never delegate to Haiku; it hallucinated badly in the user's experience.
-- Never silently swap a model the user named. If quota forces a change, say so first.
+- 任何交付物都照 `intelligence > taste > cost` 取捨；成本只在局部情況下調整，從來不是決定性因素。
+- 便宜的模型適合 spec 寫清楚的機械工作（migration、log 分類、批次讀檔、grep 式調查）。需要品味的工作，像 UI、文案、API 設計、架構、計畫 review，交給你能用的最強模型（Claude 的部分看下一條）。
+- Claude subagent 一律明確指定 `model`，不靠繼承。判斷類工作（review、規劃、架構、taste、難解的 debug）直接用 `fable`，不用先問；其他工作用 `opus`。`pick-worker` 顯示 Claude quota 偏低、或 Fable 撞到上限時，退回 `opus` 並講明。
+- 絕不委派給 Haiku；使用者用過，幻覺很嚴重。
+- 使用者指定的模型絕不偷偷換掉。quota 逼得非換不可，先講再換。
 
 ## How
 
-1. Run `~/.claude/skills/delegate/scripts/pick-worker` (use that absolute path; from Claude Code run with `dangerouslyDisableSandbox`). It prints remaining quota, a recommendation with a reason, and the matching `runbook/<provider>.md`. `--provider <name>` forces one; `--quiet` prints only the recommendation.
-2. **If the recommended provider is the runtime you are running in, use your native subagent** (Claude Code: `Agent` tool; Codex: built-in subagent; Grok: `spawn_subagent`). Never shell out to your own CLI. The CLI lane in each runbook is for callers on a *different* runtime.
-3. Write the spec, dispatch per the runbook, then apply the acceptance rules below.
+1. 執行 `~/.claude/skills/delegate/scripts/pick-worker`（照寫這個絕對路徑；在 Claude Code 裡要帶 `dangerouslyDisableSandbox`）。它會印出剩餘 quota、推薦人選與理由，以及對應的 `runbook/<provider>.md`。`--provider <name>` 強制指定；`--quiet` 只印推薦結果。
+2. **推薦的 provider 就是你目前所在的 runtime 時，用內建 subagent**（Claude Code：`Agent` tool；Codex：內建 subagent；Grok：`spawn_subagent`）。絕不從 shell 呼叫自己的 CLI。每份 runbook 裡的 CLI 用法是給「不同 runtime」的呼叫方用的。
+3. 寫 spec，照 runbook 派出去，再套用下面的驗收規則。
 
-Three absolute rules:
+三條絕對規則：
 
-1. **Write mode needs the sandbox profile.** Any headless CLI that may touch files runs under a kernel sandbox profile that limits writes to the workspace plus temp dirs (`/tmp`, `$TMPDIR`; grok also `~/.grok/`), denies *reading* credential paths, and turns network off where the platform supports it. **Read-only mode also needs the profile**: read-only blocks writes, not reads, so without the profile credentials would still be read into the model context. Two lanes run without a kernel profile — `codex review` (has no `-p` flag; check `codex review --help`) and the `claude -p` lane (settings-based limits only, see `runbook/claude.md`) — both get trusted input only.
-2. **Never bypass.** `danger-full-access`, `--dangerously-bypass-*`, `--yolo`, `bypassPermissions` are banned in every mode, no exceptions.
-3. **A CLI with its own sandbox runs outside Claude Code's Bash sandbox** (`dangerouslyDisableSandbox: true`; nested Seatbelt fails with `sandbox initialization failed`) and gets absolute paths — `$TMPDIR` differs inside and outside the sandbox.
+1. **寫入模式一定要套 sandbox profile。** 任何可能碰到檔案的 headless CLI，都要跑在 kernel 層的 sandbox profile 下：寫入只限 workspace 和暫存目錄（`/tmp`、`$TMPDIR`；grok 另加 `~/.grok/`），禁止「讀取」憑證路徑，平台支援的話把網路關掉。**唯讀模式也要套 profile**：唯讀只擋寫入、不擋讀取，沒套 profile 的話，憑證還是會被讀進模型 context。有兩條路沒有 kernel profile：`codex review`（沒有 `-p` flag，看 `codex review --help`）和 `claude -p`（只有設定層的限制，見 `runbook/claude.md`），這兩條都只能餵可信任的輸入。
+2. **永不 bypass。** `danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 在任何模式都禁止，沒有例外。
+3. **自帶 sandbox 的 CLI 要跑在 Claude Code 的 Bash sandbox 外面**（`dangerouslyDisableSandbox: true`；巢狀 Seatbelt 會報 `sandbox initialization failed`），路徑一律給絕對路徑：sandbox 內外的 `$TMPDIR` 不一樣。
 
-Spec contract, six parts, every delegation: objective · files in scope · interfaces (signatures, schemas, CLI contracts to honor) · constraints · verification command · reasoning effort. Put it in a file and pass the absolute path.
+Spec 格式，每次委派都要有這六項：目標 · 範圍內的檔案 · 介面（要遵守的 signature、schema、CLI 合約）· 限制 · 驗證指令 · reasoning effort。寫成檔案，傳絕對路徑過去。
 
-Frontend: the controller puts design intent in the spec, then runs the app, screenshots it, and re-dispatches with concrete visual feedback until the UI matches intent.
+前端：controller 把設計意圖寫進 spec，然後自己跑 app、截圖，帶著具體的畫面回饋重新派工，直到 UI 符合設計意圖。
 
 ## Accept
 
-- The controller re-runs the verification command itself; the worker's "tests pass" is a claim, not proof.
-- "Done" with an empty diff is a refusal (often the worker's own instructions blocked it), never a success.
-- Verify load-bearing claims with cheap read-only checks: grep for leftover references, `git status` / `git diff --stat`, confirm files moved or deleted, read only the one section whose accuracy matters.
-- `wc -l` before opening a big file, then read the load-bearing slice. For long worker output, have a cheap subagent summarize it and personally verify only the slices that decide acceptance — a clean-context reviewer is at least as reliable as a controller carrying a long thread.
-- For a large artifact, delegate the FULL review to a fresh worker instead of re-reading everything. If one dimension fails, fix it and rescore only that dimension; the rescore prompt carries the original failure criteria and what changed.
-- Every worker contract states "an out-of-contract CI failure is reported, not fixed" — otherwise parallel workers each fix the same inherited red gate and it lands N times.
-- Guardrail / SSOT changes: commit, then a fresh reviewer per `## Reviewer 授權`, then push.
+- 驗證指令由 controller 自己重跑；worker 說「測試通過」只是宣稱，不是證據。
+- 回報「完成」但 diff 是空的，就是拒絕（常常是 worker 自己的指示擋住了），絕不算成功。
+- 關鍵宣稱用便宜的唯讀檢查確認：grep 有沒有殘留的引用、`git status` / `git diff --stat`、確認檔案真的搬了或刪了、只讀那一段準確度有影響的內容。
+- 打開大檔案前先 `wc -l`，再讀關鍵的那一段。worker 輸出很長時，叫便宜的 subagent 摘要，自己只核對決定能不能驗收的那幾段：context 乾淨的 reviewer 至少跟帶著一長串對話的 controller 一樣可靠。
+- 大型交付物把「完整」review 交給全新的 worker，不要自己從頭重讀。某個面向沒過，就修那個面向、只重評那個面向；重評的 prompt 要帶上原本的失敗標準和這次改了什麼。
+- 每份 worker 合約都寫明「合約範圍外的 CI 失敗只回報、不修」：不然平行的 worker 會各自修同一個繼承來的紅燈，同樣的修正進來 N 次。
+- Guardrail / SSOT 修改：先 commit，再照 `## Reviewer 授權` 找全新 reviewer，通過再 push。
 
 ## Fallback
 
-1. Built-in subagent hits a wall → finish it in the current agent if that stays inside the `## When` threshold.
-2. Still blocked → move review or research to another provider's bounded read-only worker.
-3. Every provider low → `pick-worker` prints the earliest reset time; sleep until then (small buffer, keep no locks or half-written files) or run `--provider grok`, whose quota codexbar cannot see.
-4. Re-run `pick-worker` after waking, then continue the interrupted work. Never recite quota numbers from memory; if the reset time is unclear, report the blocker instead of guessing.
+1. 內建 subagent 卡住 → 如果還在 `## When` 的門檻內，就由目前的 agent 自己收尾。
+2. 還是卡住 → 把 review 或研究改交給另一家 provider 的唯讀 worker。
+3. 每家 provider 的 quota 都偏低 → `pick-worker` 會印出最早的 reset 時間；睡到那時候（留一點緩衝，不要留著 lock 或寫一半的檔案），或用 `--provider grok`，codexbar 看不到 grok 的 quota。
+4. 醒來後重跑 `pick-worker`，再繼續被打斷的工作。quota 數字絕不憑記憶背；reset 時間不清楚就回報 blocker，不要用猜的。
 
 ## Reviewer 授權
 
@@ -99,4 +99,4 @@ Frontend: the controller puts design intent in the spec, then runs the app, scre
 - 這項授權只涵蓋 review：不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
 - guardrail / SSOT 改動的 reviewer 同時做 safety 與 simplify review。simplify 看三件事：只針對單次事故的過窄規則、過度工程化、能不能換成更通用的說法；逐項回報 Keep / Simplify / Drop。
 
-Upstream: adapted from `blader/arbitrage` at `ccfd55098cc9e0b9910bc5c0f67a16a2fd61d5bd`.
+上游來源：改寫自 `blader/arbitrage`，commit `ccfd55098cc9e0b9910bc5c0f67a16a2fd61d5bd`。
