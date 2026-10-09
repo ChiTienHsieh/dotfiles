@@ -1,0 +1,10 @@
+// Zed keymap — 對齊 ~/.config/nvim/init.lua 的 insert mode 跳出
+[
+  {
+    "context": "vim_mode == insert",
+    "bindings": {
+      "j k": "vim::NormalBefore",
+      "k j": "vim::NormalBefore"
+    }
+  }
+]
