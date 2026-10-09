@@ -8,8 +8,8 @@
 
 ## 主 checkout 固定留在 main
 
-- `~/dotfiles` 就是使用者正在用的設定：在這裡切 branch，shell、編輯器、agent 的設定會跟著換；使用者在 app 裡改設定（例如 Zed），也會寫進當下 checkout 所在的 branch。
-- 要改這個 repo 就另開 worktree（`git worktree add <路徑> -b <branch> origin/main`），在 worktree 裡 commit、push、開 PR。主 checkout 只跑 `git pull --ff-only`，不切 branch、不 commit。
+- `~/dotfiles` 就是使用者正在用的設定：在這裡切 branch，shell、編輯器、agent 的設定會跟著換；使用者在 app 裡改設定（例如 Zed），也會寫進目前 checkout 的 branch。
+- 要改這個 repo 就另開 worktree（`git fetch && git worktree add <路徑> -b <branch> origin/main`），在 worktree 裡 commit、push、開 PR。主 checkout 只跑 `git pull --ff-only`，不切 branch、不 commit；發現它不在 main，回報使用者，不自己切回去。
 - 主 checkout 出現不是你改的 dirty 檔，多半是使用者從 app 改的設定：不要收進自己的 commit，寫進回報。
 
 ## 自主做完
