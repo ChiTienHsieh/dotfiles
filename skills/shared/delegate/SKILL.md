@@ -39,7 +39,7 @@ Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/ski
 
 - 單一檔案、大約 10 行以內的修改，或委派的成本比工作本身還高：自己做。
 - 任務眼看要把 controller 的 context 燒在機械式的反覆操作上，就算每一步看起來都很簡單，也預設委派：超過大約 20 次同樣形狀的工具迴圈（讀檔／grep／修改來回、翻 log）、對遠端主機跑一批 SSH 指令、掃過大量 GitHub issue／PR／run、需要抓很多頁的大範圍網路研究、跨很多檔案的大批修改。
-- 工作需要 spec、驗收標準和另一個負責實作的人時就委派，前端工作也一樣：controller 握著設計意圖，自己做畫面驗證。
+- 工作需要 spec、驗收標準和另一個負責實作的 owner時就委派，前端工作也一樣：controller 握著設計意圖，自己做畫面驗證。
 - 判斷、範圍、架構、debug 找根因、看 diff、git 所有權都留在 controller 這邊。原因查清楚之後，再把具體的修正委派出去。
 - 退路：不要預先猜 worker 會失敗，先派出去再說。給了具體的修正回饋、它還是連兩次沒達到驗收標準，就留下 diff 裡有用的部分，自己收尾。
 
@@ -48,12 +48,12 @@ Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/ski
 用角色分派，不寫死 provider 名稱：`scripts/pick-worker` 會依即時 quota 挑 provider。
 
 - **重度實作**（大批修改、很多檔案、跑很久）→ 目前 runtime 的內建 subagent，或套 sandbox profile 的 headless CLI worker；挑剩餘 quota 最多的 provider。headless 只是選項，不是非用不可。
-- **Review、唯讀研究、第二意見** → 有範圍限制的唯讀 worker；這裡換一個 provider 沒問題，常常還更有用。不要只為了換 provider 就把成本拉高。
-- **Guardrail / prompt / SSOT reviewer** → 一律找全新的 Claude subagent，用 Fable，一次做完 safety 與 simplify。重點是「全新」，不是哪家 provider：作者腦中帶著這次修改的脈絡，最看不出過時的 flag 和自相矛盾。這個角色刻意不用 Codex（太過防禦、會塞一堆多餘的脈絡）；需要對立觀點的 code review，還是可以用它的唯讀 reviewer。
+- **Review、唯讀研究、第二意見** → 有範圍限制的唯讀 worker；這裡換一個 provider 沒問題，常常還更有用。不要只為了換 provider 就多扛一套介面的成本。
+- **Guardrail / prompt / SSOT reviewer** → 一律找全新的 Claude subagent，用 Fable，一次做完 safety 與 simplify。重點是「全新」，不是哪家 provider：作者腦中帶著這次修改的脈絡，最看不出過時的 flag 和自相矛盾。這個角色刻意不用 Codex（太過防禦、會塞一堆多餘的脈絡）；需要對立觀點的 code review，還是可以用它有範圍限制的唯讀 reviewer。
 
 模型原則：
 
-- 任何交付物都照 `intelligence > taste > cost` 取捨；成本只在局部情況下調整，從來不是決定性因素。
+- 任何交付物都照 `intelligence > taste > cost` 取捨；成本只能當個案的例外，從來不是決定性因素。
 - 便宜的模型適合 spec 寫清楚的機械工作（migration、log 分類、批次讀檔、grep 式調查）。需要品味的工作，像 UI、文案、API 設計、架構、計畫 review，交給你能用的最強模型（Claude 的部分看下一條）。
 - Claude subagent 一律明確指定 `model`，不靠繼承。判斷類工作（review、規劃、架構、taste、難解的 debug）直接用 `fable`，不用先問；其他工作用 `opus`。`pick-worker` 顯示 Claude quota 偏低、或 Fable 撞到上限時，退回 `opus` 並講明。
 - 絕不委派給 Haiku；使用者用過，幻覺很嚴重。
@@ -61,7 +61,7 @@ Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/ski
 
 ## How
 
-1. 執行 `~/.claude/skills/delegate/scripts/pick-worker`（照寫這個絕對路徑；在 Claude Code 裡要帶 `dangerouslyDisableSandbox`）。它會印出剩餘 quota、推薦人選與理由，以及對應的 `runbook/<provider>.md`。`--provider <name>` 強制指定；`--quiet` 只印推薦結果。
+1. 執行 `~/.claude/skills/delegate/scripts/pick-worker`（照寫這個絕對路徑；在 Claude Code 裡要帶 `dangerouslyDisableSandbox`）。它會印出剩餘 quota、推薦的 provider 與理由，以及對應的 `runbook/<provider>.md`。`--provider <name>` 強制指定；`--quiet` 只印推薦結果。
 2. **推薦的 provider 就是你目前所在的 runtime 時，用內建 subagent**（Claude Code：`Agent` tool；Codex：內建 subagent；Grok：`spawn_subagent`）。絕不從 shell 呼叫自己的 CLI。每份 runbook 裡的 CLI 用法是給「不同 runtime」的呼叫方用的。
 3. 寫 spec，照 runbook 派出去，再套用下面的驗收規則。
 
@@ -79,7 +79,7 @@ Spec 格式，每次委派都要有這六項：目標 · 範圍內的檔案 · �
 
 - 驗證指令由 controller 自己重跑；worker 說「測試通過」只是宣稱，不是證據。
 - 回報「完成」但 diff 是空的，就是拒絕（常常是 worker 自己的指示擋住了），絕不算成功。
-- 關鍵宣稱用便宜的唯讀檢查確認：grep 有沒有殘留的引用、`git status` / `git diff --stat`、確認檔案真的搬了或刪了、只讀那一段準確度有影響的內容。
+- 關鍵宣稱用便宜的唯讀檢查確認：grep 有沒有殘留的引用、`git status` / `git diff --stat`、確認檔案真的搬了或刪了、只讀準確度真正要緊的那一段。
 - 打開大檔案前先 `wc -l`，再讀關鍵的那一段。worker 輸出很長時，叫便宜的 subagent 摘要，自己只核對決定能不能驗收的那幾段：context 乾淨的 reviewer 至少跟帶著一長串對話的 controller 一樣可靠。
 - 大型交付物把「完整」review 交給全新的 worker，不要自己從頭重讀。某個面向沒過，就修那個面向、只重評那個面向；重評的 prompt 要帶上原本的失敗標準和這次改了什麼。
 - 每份 worker 合約都寫明「合約範圍外的 CI 失敗只回報、不修」：不然平行的 worker 會各自修同一個繼承來的紅燈，同樣的修正進來 N 次。
