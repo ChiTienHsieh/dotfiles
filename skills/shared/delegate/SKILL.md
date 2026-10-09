@@ -19,8 +19,8 @@ Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/ski
     1 WHEN   ≤10 行的修改 -> 自己做
              >20 次同樣形狀的迴圈、ssh/gh 大量掃描、大批修改 -> 委派
     2 WHO    [R] scripts/pick-worker -> provider + 理由 + reset 時間
-             角色：實作 -> quota 最多的 | review -> 有範圍限制的唯讀
-                   reviewer -> 全新的 Claude，用 Fable，先審意圖
+             角色：實作 -> quota 最多的 | 研究 -> 有範圍限制的唯讀
+                   review -> 全新的 Claude 唯讀 subagent，用 Fable，先審意圖
     3 HOW    provider == 自己的 runtime？--是--> 內建 subagent
                       | 否                   （Agent / codex / spawn_subagent）
                       v
@@ -48,9 +48,9 @@ Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/ski
 用角色分派，不寫死 provider 名稱：`scripts/pick-worker` 會依即時 quota 挑 provider。
 
 - **重度實作**（大批修改、很多檔案、跑很久）→ 目前 runtime 的內建 subagent，或套 sandbox profile 的 headless CLI worker；挑剩餘 quota 最多的 provider。headless 只是選項，不是非用不可。
-- **Review、第二意見** → 優先派全新的 Claude subagent，用 Fable，照 `## Reviewer 授權` 先審意圖；Fable quota 偏低時退回 Opus。需要對立觀點時，另外加一個別家 provider 的唯讀 worker。
+- **Review、第二意見** → 全新的 Claude 唯讀 subagent，用 Fable，照 `## Reviewer 授權` 先審意圖。
 - **唯讀研究** → 有範圍限制的唯讀 worker；這裡換一個 provider 沒問題，常常還更有用。不要只為了換 provider 就多扛一套介面的成本。
-- **Guardrail / prompt / SSOT reviewer** → 一律找全新的 Claude subagent，用 Fable，一次做完 intent、safety 與 simplify。重點是「全新」，不是哪家 provider：作者腦中帶著這次修改的脈絡，最看不出過時的 flag 和自相矛盾。這個角色刻意不用 Codex（太過防禦、會塞一堆多餘的脈絡）；需要對立觀點的 code review，還是可以用它有範圍限制的唯讀 reviewer。
+- **Guardrail / prompt / SSOT reviewer** → 同上，一次做完 intent、safety 與 simplify。重點是「全新」：作者腦中帶著這次修改的脈絡，最看不出過時的 flag 和自相矛盾。這個角色刻意不用 Codex（太過防禦、會塞一堆多餘的脈絡）；需要對立觀點時，另外加一個別家 provider 的唯讀 worker。
 
 模型原則：
 
@@ -98,8 +98,8 @@ Spec 格式，每次委派都要有這六項：目標 · 範圍內的檔案 · �
 - 使用者持續授權其他 agent（含已設定的外部 AI reviewer）做 review，不必逐次詢問。
 - 送出 diff、prompt 或檔案前先檢查實際待傳資料有沒有 secret、憑證、private key 或未公開個資；發現敏感內容、無法判斷，或目的地與範圍超出既有 reviewer workflow 時才停下確認。
 - 這項授權只涵蓋 review：不授權 reviewer 寫檔、執行外部 mutation，或繞過其他工具與權限邊界。
-- 每個 reviewer 都先審意圖，再看程式碼與措辭：prompt 照抄使用者原話和要解決的問題，不轉述，因為 reviewer 只看得到 diff。請 reviewer 先寫出它理解的使用者真正意圖，再判斷有沒有更理想、更簡潔的解法能更好達成這個意圖，最後才看實作細節。
-- 意圖層的建議是推薦，不是阻擋：controller 轉給使用者決定，不因此卡住 push。
+- 每個 reviewer 都先審意圖再看實作：prompt 照抄使用者原話與要解決的問題，不轉述，因為 reviewer 沒有對話脈絡。請它先寫出自己理解的使用者意圖，再判斷有沒有更理想、更簡潔的做法，最後才看程式碼與措辭。
+- 會改變做法或範圍的意圖層建議只是推薦：controller 轉給使用者決定，不因此卡住 push；同一意圖下更簡潔的寫法照 simplify 規則處理。
 - guardrail / SSOT 改動的 reviewer 同時做 intent、safety 與 simplify review。simplify 看三件事：只針對單次事故的過窄規則、過度工程化、能不能換成更通用的說法；逐項回報 Keep / Simplify / Drop。
 
 上游來源：改寫自 `blader/arbitrage`，commit `ccfd55098cc9e0b9910bc5c0f67a16a2fd61d5bd`。
