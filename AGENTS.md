@@ -10,8 +10,8 @@
 
 - `~/dotfiles` 就是使用者正在用的設定：在這裡切 branch，shell、編輯器、agent 的設定會跟著換；使用者在 app 裡改設定（例如 Zed），也會寫進目前 checkout 的 branch。
 - 要改這個 repo 就另開 worktree（`git fetch && git worktree add <路徑> -b <branch> origin/main`），在 worktree 裡 commit、push、開 PR；主 checkout 不開 branch、不 commit。
-- 主 checkout 要跟 main 保持同步，這件事 agent 直接做：在 main 上就 `git pull --ff-only`；不在 main，而且原本的 branch 已經 push、沒有只存在本機的 commit，就 `git switch main && git pull --ff-only`，使用者的 dirty 檔會跟著帶過來。只有 Git 因為 dirty 檔和 main 衝突而拒絕切換、或有沒 push 的 commit 時，才停下來回報。
-- 主 checkout 出現不是你改的 dirty 檔，多半是使用者從 app 改的設定：不要混進其他任務的 commit；使用者要同步時，另開 worktree 把它們單獨送一個 PR。
+- 主 checkout 要跟 main 同步，agent 直接做。在 main 上就 `git pull --ff-only --no-rebase`（`~/.gitconfig` 設了 `pull.rebase=true`，rebase 模式只要有 dirty 檔就整個拒絕，所以 `--no-rebase` 不能拿掉）。不在 main 時，`git branch -r --contains HEAD` 有輸出（目前的 commit 已經在遠端）就 `git switch main` 再照上面 pull，dirty 檔會跟著帶過來；切回 main 後，原 branch 還沒合併的改動會暫時不生效，回報時提一句。只有 HEAD 還沒 push，或 Git 因為 dirty 檔衝突拒絕切換或 pull，才停下來回報。
+- 主 checkout 出現不是你改的 dirty 檔，多半是使用者從 app 改的設定：不要混進其他任務的 commit；使用者要把它們收進 main 時，另開 worktree 單獨送一個 PR。PR 合併後那些檔內容已經和 main 一樣，Git 卻還是會擋 pull：`git diff origin/main -- <檔>` 沒輸出，就 `git restore <檔>` 再 pull。
 
 ## 自主做完
 
