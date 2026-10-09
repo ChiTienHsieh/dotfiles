@@ -15,6 +15,12 @@
 - 只在這些情況停下來問：安全疑慮、破壞性操作、force-push／reset／discard 的決定、付費或資料遺失風險、現有指示推不出來的產品或設計取捨。
 - push 被拒或 CI 紅：先自己查，安全的問題自己修。
 
+## 寫進 repo 的 zh-TW
+
+- 這個 repo 裡的中文（指示、skills、學習紀錄）會被所有 agent 讀進去，agent 會照讀到的語氣講話、寫文件。寫歪一句，之後每個 agent 都跟著歪。
+- 寫進來前唸一遍：台灣人會這樣講嗎？聽起來有 AI 腔、從英文硬翻，或要讀兩遍才懂，就改到自然、清楚為止。拿不準就挑最白話的寫法，在回報裡標出來。
+- 已知的地雷詞不列在這裡，交給 pre-commit 和 CI 擋：被擋就照提示改；誤擋就把整段片語加進 `hooks/jargon-allowlist.yml` 的 `zh_tw_exceptions`。發現新的，沒有正當用法的補進同檔的 `zh_tw_terms`，其他寫進回報讓使用者決定。
+
 ## Secrets
 
 - 不進追蹤檔。Secrets 放 `~/.secrets/index.sh`（從 `templates/.secrets.template` 建），shell 啟動時 source，永不 commit。
