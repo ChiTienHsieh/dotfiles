@@ -161,6 +161,16 @@ jobs:
           zsh tests/test_aliases.sh
           bash claude/hooks/test-bash-helper-guard.sh
 
+      - name: Check wording in pull request changes
+        # Same check as the local pre-commit hook, for commits made where the
+        # hook is not installed (for example cloud agent sessions).
+        # On pull_request, HEAD is the merge commit and HEAD^1 is the base.
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          hooks/check-wording HEAD^1 HEAD
+
       - name: Smoke-test installation in an isolated home
         shell: bash
         run: |
