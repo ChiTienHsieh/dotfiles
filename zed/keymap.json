@@ -5,5 +5,12 @@
       "j k": "vim::NormalBefore",
       "k j": "vim::NormalBefore"
     }
+  },
+  {
+    "context": "AcpThread > Editor",
+    "bindings": {
+      "enter": "editor::Newline",
+      "shift-enter": "agent::Chat"
+    }
   }
 ]
