@@ -134,12 +134,14 @@ seed_copy() {
 
     mkdir -p "$(dirname "$dest")"
 
-    if [ -L "$dest" ]; then
-        local live
-        live="$(mktemp)"
-        cp "$dest" "$live"
+    # A dangling link holds no content; drop it and seed fresh.
+    if [ -L "$dest" ] && [ ! -e "$dest" ]; then
         rm "$dest"
-        mv "$live" "$dest"
+    fi
+
+    if [ -L "$dest" ]; then
+        cp -L "$dest" "$dest.tmp"
+        mv -f "$dest.tmp" "$dest"
         echo "  Unlinked (kept live content): $dest"
     elif [ -e "$dest" ]; then
         echo "  Kept existing: $dest"
