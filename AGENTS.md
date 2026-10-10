@@ -6,6 +6,14 @@
 
 - `~/.claude/CLAUDE.md` -> `./claude/CLAUDE.md`（用 `@` 引入 `agents/AGENTS.md`）。`~/.codex/AGENTS.md` 由 `install.sh` 用 `agents/AGENTS.md` + `codex/AGENTS.md` 串接產生；改 repo 裡的檔案，再跑一次 `./install.sh`。
 
+## 主 checkout 固定留在 main
+
+- `~/dotfiles` 就是使用者正在用的設定：在這裡切 branch，shell、編輯器、agent 的設定會跟著換；使用者在 app 裡改的設定，只要那個檔是 symlink 連進 repo 的，也會寫進目前 checkout 的 branch。
+- 要改這個 repo 就另開 worktree（`git fetch && git worktree add <路徑> -b <branch> origin/main`），在 worktree 裡 commit、push、開 PR；主 checkout 不開 branch、不 commit。
+- 主 checkout 要跟 main 同步，agent 直接做。在 main 上就 `git pull --ff-only --no-rebase`（`~/.gitconfig` 設了 `pull.rebase=true`，rebase 模式只要有 dirty 檔就整個拒絕，所以 `--no-rebase` 不能拿掉）。不在 main 時，`git branch -r --contains HEAD` 有輸出（目前的 commit 已經在遠端）就 `git switch main` 再照上面 pull，dirty 檔會跟著帶過來；切回 main 後，原 branch 還沒合併的改動會暫時不生效，回報時提一句。只有 HEAD 還沒 push，或 Git 因為 dirty 檔衝突拒絕切換或 pull，才停下來回報。
+- 主 checkout 出現不是你改的 dirty 檔，多半是使用者從 app 改的設定：不要混進其他任務的 commit；使用者要把它們收進 main 時，另開 worktree 單獨送一個 PR。PR 合併後那些檔內容已經和 main 一樣，Git 卻還是會擋 pull：`git diff origin/main -- <檔>` 沒輸出，就 `git restore <檔>` 再 pull。
+- 常從 app UI 改的設定（目前是 Zed）不用 symlink，`install.sh` 用 `seed_copy` 只在本機還沒有時複製一次，之後的修改留在本機；repo 裡的版本會落後，使用者說要收時，再把本機檔案複製進 worktree 送 PR。
+
 ## 自主做完
 
 - 安全、明確的修改：自己走完 review、commit、push 到 `origin`，不要停在還沒 push 的狀態。

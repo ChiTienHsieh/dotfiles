@@ -45,6 +45,33 @@ class InstallationTests(unittest.TestCase):
         self.install()
         self.assertEqual(index.read_text(), "export FIXTURE_VALUE=retained\n")
 
+    def test_zed_settings_are_seeded_once_then_left_alone(self):
+        live = self.home / ".config/zed/settings.json"
+        self.install()
+        self.assertFalse(live.is_symlink())
+        self.assertEqual(live.read_text(), (self.repo / "zed/settings.json").read_text())
+        live.write_text('{"theme": "edited in Zed"}\n')
+        self.install()
+        self.assertEqual(live.read_text(), '{"theme": "edited in Zed"}\n')
+
+    def test_zed_symlink_from_older_install_keeps_live_content(self):
+        source = self.repo / "zed/settings.json"
+        source.write_text('{"theme": "live"}\n')
+        live = self.home / ".config/zed/settings.json"
+        live.parent.mkdir(parents=True)
+        live.symlink_to(source)
+        self.install()
+        self.assertFalse(live.is_symlink())
+        self.assertEqual(live.read_text(), '{"theme": "live"}\n')
+
+    def test_dangling_zed_symlink_is_replaced_by_seed(self):
+        live = self.home / ".config/zed/settings.json"
+        live.parent.mkdir(parents=True)
+        live.symlink_to(self.home / "renamed-away/settings.json")
+        self.install()
+        self.assertFalse(live.is_symlink())
+        self.assertEqual(live.read_text(), (self.repo / "zed/settings.json").read_text())
+
     def test_public_learning_is_shared_without_a_private_store(self):
         # Keep excluding real records in setUp; installer coverage uses fixtures.
         learning = self.repo / "skills/shared/level-up/learning"
