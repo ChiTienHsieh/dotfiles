@@ -117,6 +117,38 @@ backup_and_copy() {
     echo "  Copied: $dest"
 }
 
+seed_copy() {
+    local src="$1"
+    local dest="$2"
+
+    # For configs an app rewrites from its own UI (e.g. Zed): copy the repo
+    # version once as a starting point, then leave the live file alone so UI
+    # edits never dirty the dotfiles checkout. A leftover dotfiles symlink is
+    # turned into a real file holding whatever it currently points at, so the
+    # live settings survive the migration. Snapshots back into the repo are a
+    # deliberate PR, not a side effect.
+    if [ ! -e "$src" ]; then
+        echo "  ERROR: seed source missing: $src" >&2
+        return 1
+    fi
+
+    mkdir -p "$(dirname "$dest")"
+
+    if [ -L "$dest" ]; then
+        local live
+        live="$(mktemp)"
+        cp "$dest" "$live"
+        rm "$dest"
+        mv "$live" "$dest"
+        echo "  Unlinked (kept live content): $dest"
+    elif [ -e "$dest" ]; then
+        echo "  Kept existing: $dest"
+    else
+        cp "$src" "$dest"
+        echo "  Seeded: $dest"
+    fi
+}
+
 is_real_machine_notes() {
     local path="$1"
     [ -f "$path" ] && [ ! -L "$path" ] && ! grep -q '<!-- machine-md-redirect -->' "$path"
@@ -306,8 +338,8 @@ echo "[7/11] Installing other configurations..."
     --home "$HOME" --repo-root "$DOTFILES_DIR"
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 backup_and_link "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
-backup_and_link "$DOTFILES_DIR/zed/settings.json" "$HOME/.config/zed/settings.json"
-backup_and_link "$DOTFILES_DIR/zed/keymap.json" "$HOME/.config/zed/keymap.json"
+seed_copy "$DOTFILES_DIR/zed/settings.json" "$HOME/.config/zed/settings.json"
+seed_copy "$DOTFILES_DIR/zed/keymap.json" "$HOME/.config/zed/keymap.json"
 
 # Nvim (if submodule exists)
 if [ -d "$DOTFILES_DIR/nvim" ] && [ "$(ls -A "$DOTFILES_DIR/nvim" 2>/dev/null)" ]; then

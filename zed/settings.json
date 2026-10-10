@@ -15,7 +15,7 @@
   "agent_servers": {
     "claude-acp": {
       "default_config_options": {
-        "effort": "medium",
+        "effort": "low",
         "fast": false
       },
       "type": "registry"
@@ -23,5 +23,9 @@
   },
   "ui_font_size": 16,
   "buffer_font_size": 15,
-  "theme": "Gruvbox Dark Soft"
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "Gruvbox Dark Soft"
+  }
 }
