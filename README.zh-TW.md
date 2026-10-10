@@ -23,7 +23,7 @@ source ~/.bash_profile
 
 ```
 dotfiles/
-├── bash/ zsh/ vim/ tmux/ ghostty/   # shell、編輯器、終端機設定
+├── bash/ zsh/ vim/ tmux/ ghostty/ zed/   # shell、編輯器、終端機設定
 ├── git/                             # .gitconfig、全域 ignore、pre-commit hooks
 ├── gh/                              # GitHub CLI 設定
 ├── bun/ npm/ pnpm/                  # 本機套件管理器防護的種子檔

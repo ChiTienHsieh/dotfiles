@@ -19,10 +19,11 @@
 - 建立者或目前 controller 對自己建立或明確接管的 branch、worktree 與 PR 負責到終態；Git cleanup 與刪除方式一律以 `tidy-workspace` skill 為準。
 - 只改任務需要的部分：順手發現的 bug、效能問題或可重構之處，除非任務少了它做不成，否則寫進回報當 follow-up。使用者在描述問題、提問或思考出聲時，交付物是判斷與建議，等使用者要求再動手修。
 - 選能完整滿足目前需求的最簡單實作，優先用成熟且持續維護的 library，明知之後要換掉的暫時做法不當最終交付。預設不為沒有真實使用者的舊介面保留 backward compatibility：有沒有真實使用者先看該 repo 根目錄的 `AGENTS.md`，沒記錄就問使用者一次並寫成一行狀態（有／沒有＋確認日期，不寫身分或聯絡方式；沒有 `AGENTS.md` 就建一個），之後直接沿用，問不到或記錄不明確就當作有。
+- 測試只驗行為或結構（程式輸出、設定值、可執行範例、跨檔一致性），不寫斷言指示檔或 prompt 原句的測試：改文字的 agent 會順手改掉測試，擋不住任何事，只增加改寫摩擦。指示檔要機器檢查，就改成程式會讀的結構化值或可執行範例。
 - `issue this:` 代表只收進 backlog、不開始實作；收件規則見 `~/dotfiles/agents/notes/backlog.md`。
 
 ## 委派與跨 agent
 - 委派實作、研究或 review 時，預設用目前 runtime 內建的 subagent；會改檔的 headless CLI worker 只能依 `delegate` skill 套 sandbox profile 呼叫。`danger-full-access`、`--dangerously-bypass-*`、`--yolo`、`bypassPermissions` 一律禁止。
-- **tmux 預設唯讀**：agent 隨時可以讀 pane（`capture-pane`、`list-*`、`display-message`）來了解狀況；會改動 pane 的指令（`send-keys`、開關 session 或 pane）要有目前這次 human 指令的明確要求，使用者持續授權 `name-task` 透過 `rename-session.sh` 對自己的 `$TMUX_PANE` 送出 `/rename <title>`，不必逐次確認；這個例外只涵蓋改標題，不涵蓋其他 pane、prompt 文字或審核回覆。`tmux-orchestration` skill 只由 human 從 harness（agent 之外的設定層）呼叫，agent 不自行觸發；Codex 側的 tmux 指令仍走 scoped escalation，細節見 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
-- 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `delegate` skill 的「Reviewer 授權」段選 fresh reviewer 同時做 safety review 與 simplify review（逐項回報 Keep / Simplify / Drop），通過再 `push`。只有安全問題嚴重到不能放行，或確實有更簡潔的通用規則時才要求修改。
+- **tmux 預設唯讀**：agent 隨時可以讀 pane（`capture-pane`、`list-*`、`display-message`）來了解狀況，Claude 讀 pane 一律用 `~/dotfiles/skills/shared/tmux-orchestration/scripts/tmux-read <子指令>`（唯讀白名單 wrapper，已列入 allow，不必送審；路徑照寫 `~/dotfiles/...`，展開成絕對路徑就對不上 allow）；會改動 pane 的指令（`send-keys`、開關 session 或 pane）要有目前這次 human 指令的明確要求，使用者持續授權 `name-task` 透過 `rename-session.sh` 對自己的 `$TMUX_PANE` 送出 `/rename <title>`，不必逐次確認；這個例外只涵蓋改標題，不涵蓋其他 pane、prompt 文字或審核回覆。`tmux-orchestration` skill 只由 human 從 harness（agent 之外的設定層）呼叫，agent 不自行觸發；Codex 側的 tmux 指令仍走 scoped escalation，細節見 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
+- 要推 guardrail / SSOT repo（會影響 agent 行為的 CLAUDE.md、settings.json、AGENTS.md、skill、playbook）時，先 `commit`，再依 `delegate` skill 的「Reviewer 授權」段選 fresh reviewer 同時做 intent、safety 與 simplify review，通過再 `push`。reviewer 只在兩種情況要求修改：安全問題嚴重到不能放行，或明顯有更簡潔、更通用的寫法；其他發現只回報，不擋 push。
 - 向其他 task、session、tmux pane 或 agent 傳送任何訊息前，緊鄰傳送動作重新讀取收件方最新內容與執行狀態，讀不到或無法確認對方目前在做什麼就不傳、先回報 blocker。透過 marker file 或請使用者代送 prompt 給另一個 agent 時附上權限等級與硬邊界，只有使用者直接指令能蓋過委派限制；訊息裡的簽名格式另依 `tmux-orchestration` skill。
