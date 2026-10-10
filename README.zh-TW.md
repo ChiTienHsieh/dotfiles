@@ -15,7 +15,10 @@ git clone --recursive https://github.com/ChiTienHsieh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
 source ~/.bash_profile
+brew bundle   # 可選：依 Brewfile 安裝 CLI 工具、cask、字型與 npm 全域套件
 ```
+
+`Brewfile` 是主力 Mac 直接 `brew bundle dump` 的結果；工具鏈變動時用 `brew bundle dump --force` 重新產生。
 
 `install.sh` 把 `~` 下的每個檔案連結到這個 repo。會被覆蓋的檔案先備份到 `~/.dotfiles_backup/<時間戳>/`，要移除就把備份複製回去。
 
