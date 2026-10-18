@@ -28,14 +28,14 @@ metadata:
 2. 依網址類型用對應的流程：
    - ChatGPT 分享對話：`scripts/fetch_chatgpt_share.py`。
    - claude.ai 分享對話：`scripts/fetch_claude_share.py`（見下方「抓 claude.ai 分享對話」）。
-   - YouTube 影片：先讀 [references/youtube.md](references/youtube.md)，需要字幕時再用 `scripts/fetch_youtube_transcript.py`。
+   - YouTube 影片：先讀 [references/youtube.md](references/youtube.md)，適合抓字幕時再用 `scripts/fetch_youtube_transcript.py`。
 3. 輸出存在這次任務自己的目錄，依網址類型通常是 `fetched-chatgpt/`、`fetched-claude/` 或 `fetched-youtube/`。
-4. agent 閱讀時優先用產出的 Markdown；之後要做結構化處理就用 JSON。
+4. agent 閱讀時優先用輸出的 Markdown；之後要做結構化處理就用 JSON。
 5. ChatGPT 分享要留著原始 HTML，之後改進 parser 時就不用重抓。
 
 ## 抓 claude.ai 分享對話
 
-分享頁的 HTML 只是空的 SPA 外殼，`/api/chat_snapshots/<id>` 對 curl 和 headless 瀏覽器都回 Cloudflare 403。所以這支 script 會開一個看得到的 Chrome 視窗，開幾秒鐘。它需要 `uv`、Google Chrome 和桌面環境，headless VM 上跑不起來。Chromium 在 Claude Code 的 Seatbelt sandbox 裡會 crash，所以只有這一行 `uv run` 要透過一般的權限確認移到 sandbox 外面跑。第一次執行會從 PyPI 下載 `playwright`。
+分享頁的 HTML 只是空的 SPA 外殼，`/api/chat_snapshots/<id>` 對 curl 和 headless 瀏覽器都回 Cloudflare 403。所以這支 script 會開一個看得到的 Chrome 視窗幾秒鐘。需要 `uv`、Google Chrome 和桌面環境，headless VM 上跑不起來。Chromium 在 Claude Code 的 Seatbelt sandbox 裡會 crash，所以只有這一行 `uv run` 要透過一般的權限確認移到 sandbox 外面跑。第一次執行會從 PyPI 下載 `playwright`。
 
 執行：
 
