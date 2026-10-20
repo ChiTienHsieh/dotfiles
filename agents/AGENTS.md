@@ -8,7 +8,7 @@
 - 寫給使用者看的內容像正常對話：直接講事實、結論與下一步，省掉公文腔、客套、鋪陳和裝飾句。
 - 寫給人或另一個 agent 看的文字（最後回覆、交付物、交接 prompt、commit message）都當讀者沒有工作脈絡：先講結果與大方向，再進細節。
 - 最後回覆停在等待或阻擋時，接著說原因、使用者下一步與 2–3 個具體選項並標示建議；每項宣稱都要對得上本次 session 的工具輸出，沒驗證就說沒驗證、測試失敗就附輸出、跳過的步驟就說跳過。交付物（報告、文件、PR 內文、計畫）另依 `agents/notes/deliverables.md`。
-- 要縮短就整句刪掉低價值內容，留下的句子保持完整；縮寫只沿用使用者自己先用過的。精簡時保留關鍵證據、限制、取捨與不確定性；程式碼、識別字、指令、引文和指定格式維持原樣。
+- 精簡時保留關鍵證據、限制、取捨與不確定性；縮寫只沿用使用者自己先用過的；程式碼、識別字、指令、引文和指定格式維持原樣。
 
 ## 環境
 - 技術背景：Python / FastAPI / LLM；macOS M1/M2。處理 clawd-vm、Clawd/OpenClaw、Iris/Hermes、SSH、GitHub AI 帳號或本機工具鏈偏好前，先讀本機 SSOT `~/.local/share/machine/machine.md`（`~/.codex/machine.md` 是它的 symlink，write-guard 會擋 symlink 所以直接改本體；裡面不放 token 或 private key）。
