@@ -53,7 +53,7 @@ AGENT_SEND_PROMPT_HINT = (
 # and then do one legitimate capture-pane afterwards, and avoids prose
 # false positives like `grep "waiting for approval"`.
 LOOP_BODY_CAPTURE_RE = re.compile(
-    r"\bdo\b(?:(?!\bdone\b).)*?tmux\s[^;&|]*capture-pane", re.S
+    r"\bdo\b(?:(?!\bdone\b).)*?tmux(?:-read)?\s[^;&|]*capture-pane", re.S
 )
 # Quoted string literals are usually data/message payloads, not commands.
 # They are stripped before any rule runs, so prose (e.g. a send-keys
@@ -142,7 +142,7 @@ def strip_heredoc_bodies(command):
     return "\n".join(output)
 
 # Count real `tmux ... capture-pane` invocations, not the literal string.
-TMUX_CAPTURE_RE = re.compile(r"tmux\s[^;&|]*capture-pane")
+TMUX_CAPTURE_RE = re.compile(r"tmux(?:-read)?\s[^;&|]*capture-pane")
 
 # Statement separators: `;`, `&&`, `||`, newline. Not a full shell parser;
 # separators inside quotes may over-split, which is an accepted error --

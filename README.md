@@ -23,7 +23,7 @@ source ~/.bash_profile
 
 ```
 dotfiles/
-├── bash/ zsh/ vim/ tmux/ ghostty/   # shell, editor, terminal configs
+├── bash/ zsh/ vim/ tmux/ ghostty/ zed/   # shell, editor, terminal configs
 ├── git/                             # .gitconfig, global ignore, pre-commit hooks
 ├── gh/                              # GitHub CLI config
 ├── bun/ npm/ pnpm/                  # seeds for local package-manager safeguards
