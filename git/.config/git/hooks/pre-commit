@@ -2,21 +2,21 @@
 # Global pre-commit dispatcher.
 #
 # This hook runs for every repo through core.hooksPath. It enforces the
-# user-wide Markdown zh-tw default, then chains a repo-local
-# .git/hooks/pre-commit if one exists.
+# user-wide Markdown zh-tw default and the per-file token budget, then chains
+# a repo-local .git/hooks/pre-commit if one exists.
 
 set -eu
 
 HOOK_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-CHECKER="$HOOK_DIR/lib/check-md-zh-tw-ratio.mjs"
 
-if [ -x "$CHECKER" ]; then
+for CHECKER in "$HOOK_DIR/lib/check-md-zh-tw-ratio.mjs" "$HOOK_DIR/lib/check-token-budget.mjs"; do
+    [ -x "$CHECKER" ] || continue
     if command -v node >/dev/null 2>&1; then
         node "$CHECKER"
     else
-        echo "⚠️  node not found; skipping Markdown zh-tw ratio check"
+        echo "⚠️  node not found; skipping $(basename "$CHECKER")"
     fi
-fi
+done
 
 # Repo hooks live in the common git dir. Linked worktrees have a per-worktree
 # git dir under .git/worktrees/<name>, so absolute-git-dir alone misses hooks.

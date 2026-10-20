@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
-import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { execFileSync } from "node:child_process";
+import {
+  git,
+  isIgnored,
+  loadIgnoreRules,
+  mergeParentRefs,
+  readIfExists,
+  unchangedFromAnyParent,
+} from "./staged-files.mjs";
 
 const DEFAULT_THRESHOLD = 0.8;
 const DEFAULT_MIN_CHARS = 30;
@@ -187,24 +193,8 @@ const DEFAULT_ALLOWED_TERMS = new Set(
   ].map(normalizeTerm),
 );
 
-function git(args, options = {}) {
-  return execFileSync("git", args, {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-    ...options,
-  });
-}
-
 function normalizeTerm(term) {
   return String(term).trim().toLowerCase().replace(/^[-_./]+|[-_./]+$/g, "");
-}
-
-function readIfExists(file) {
-  try {
-    return fs.readFileSync(file, "utf8");
-  } catch {
-    return "";
-  }
 }
 
 function parsePolicy(repoRoot) {
@@ -240,61 +230,6 @@ function parsePolicy(repoRoot) {
   return policy;
 }
 
-function globToRegExp(pattern) {
-  const anchored = pattern.startsWith("/");
-  let source = anchored ? pattern.slice(1) : pattern;
-  const dirPattern = source.endsWith("/");
-  if (dirPattern) {
-    source = `${source}**`;
-  }
-
-  let regex = "";
-  for (let i = 0; i < source.length; i += 1) {
-    const char = source[i];
-    const next = source[i + 1];
-    if (char === "*" && next === "*") {
-      regex += ".*";
-      i += 1;
-    } else if (char === "*") {
-      regex += "[^/]*";
-    } else if (char === "?") {
-      regex += "[^/]";
-    } else if (/[.+^${}()|[\]\\]/.test(char)) {
-      regex += `\\${char}`;
-    } else {
-      regex += char;
-    }
-  }
-
-  if (!anchored && !source.includes("/")) {
-    regex = `(^|.*/)${regex}$`;
-  } else {
-    regex = `^${regex}$`;
-  }
-  return new RegExp(regex);
-}
-
-function loadIgnoreRules(repoRoot) {
-  const rules = [];
-  const ignoreText = readIfExists(path.join(repoRoot, ".md-zh-tw-ignore"));
-  for (const rawLine of ignoreText.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    const negated = line.startsWith("!");
-    const pattern = negated ? line.slice(1) : line;
-    rules.push({ negated, re: globToRegExp(pattern) });
-  }
-  return rules;
-}
-
-function isIgnored(file, rules) {
-  let ignored = false;
-  for (const rule of rules) {
-    if (rule.re.test(file)) ignored = !rule.negated;
-  }
-  return ignored;
-}
-
 function addAllowedTermsFromFile(allowed, file) {
   const text = readIfExists(file);
   for (const rawLine of text.split(/\r?\n/)) {
@@ -323,39 +258,6 @@ function stagedMarkdownFiles() {
   return out
     .split("\0")
     .filter((line) => line.length > 0 && line.endsWith(".md"));
-}
-
-// During a merge commit, `git diff --cached` lists every file the other
-// branch brings in — including files this branch never touched, which
-// already passed this check on their own commits/PRs. Flagging those is a
-// false positive (observed 2026-07-06: merges blocked on unchanged files
-// from main). A file is exempt when its staged blob is byte-identical to
-// the blob in ANY merge parent; conflict resolutions and genuinely edited
-// files differ from every parent and are still checked.
-function mergeParentRefs() {
-  try {
-    const mergeHeadPath = git(["rev-parse", "--git-path", "MERGE_HEAD"]).trim();
-    return readIfExists(mergeHeadPath)
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-function blobOid(spec) {
-  try {
-    return git(["rev-parse", "--verify", "--quiet", spec]).trim() || null;
-  } catch {
-    return null;
-  }
-}
-
-function unchangedFromAnyParent(file, parents) {
-  const staged = blobOid(`:${file}`);
-  if (!staged) return false;
-  return parents.some((parent) => blobOid(`${parent}:${file}`) === staged);
 }
 
 function stagedContent(file) {
@@ -426,7 +328,7 @@ function main() {
   }
   if (files.length === 0) return;
 
-  const ignoreRules = loadIgnoreRules(repoRoot);
+  const ignoreRules = loadIgnoreRules(repoRoot, ".md-zh-tw-ignore");
   const allowedTerms = loadAllowedTerms(repoRoot);
   const failures = [];
 
