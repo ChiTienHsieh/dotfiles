@@ -23,7 +23,11 @@ def in_home(relative: str) -> Destination:
 
 
 def pnpm_global_rc(home: Path, platform: str, env: Mapping[str, str]) -> Path:
-    """Return the global rc path in the same order as pnpm's getConfigDir."""
+    """Mirror pnpm's getConfigDir on macOS and Linux; Windows is not supported.
+
+    Only pnpm 10 reads minimum-release-age from this rc; pnpm 11+ reads its own
+    settings from config.yaml in the same directory.
+    """
     if env.get("XDG_CONFIG_HOME"):
         return Path(env["XDG_CONFIG_HOME"]) / "pnpm/rc"
     if platform == "darwin":
