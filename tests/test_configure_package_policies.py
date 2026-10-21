@@ -13,10 +13,16 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import configure_package_policies  # noqa: E402
 
-PNPM_POLICY = next(
-    policy
-    for policy in configure_package_policies.POLICIES
-    if policy.source.startswith("pnpm/")
+PNPM_RC_POLICY = configure_package_policies.PNPM_RC_POLICY
+PNPM_YAML_LINE = f"minimumReleaseAge: {PNPM_RC_POLICY.value}"
+PNPM_YAML_NEW_FILE = f"{PNPM_RC_POLICY.comment}\n{PNPM_YAML_LINE}\n"
+
+# (platform, XDG_CONFIG_HOME, pnpm config dir relative to the temporary root)
+PNPM_CONFIG_DIR_CASES = (
+    ("darwin", "xdg", "xdg/pnpm"),
+    ("darwin", None, "home/Library/Preferences/pnpm"),
+    ("darwin", "", "home/Library/Preferences/pnpm"),
+    ("linux", None, "home/.config/pnpm"),
 )
 
 
@@ -27,15 +33,8 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
             home, REPO_ROOT, platform="linux", env={}
         )
 
-    def test_pnpm_rc_follows_pnpm_config_dir_order(self) -> None:
-        # (platform, XDG_CONFIG_HOME, rc path relative to the temporary root)
-        cases = (
-            ("darwin", "xdg", "xdg/pnpm/rc"),
-            ("darwin", None, "home/Library/Preferences/pnpm/rc"),
-            ("darwin", "", "home/Library/Preferences/pnpm/rc"),
-            ("linux", None, "home/.config/pnpm/rc"),
-        )
-        for platform, xdg, expected in cases:
+    def for_each_pnpm_config_dir(self, check) -> None:
+        for platform, xdg, expected in PNPM_CONFIG_DIR_CASES:
             with self.subTest(platform=platform, xdg=xdg):
                 with tempfile.TemporaryDirectory() as temporary_directory:
                     root = Path(temporary_directory)
@@ -43,17 +42,109 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
                     if xdg is not None:
                         env["XDG_CONFIG_HOME"] = str(root / xdg) if xdg else ""
 
-                    configured = configure_package_policies.configure_package_policies(
-                        root / "home", REPO_ROOT, platform=platform, env=env
-                    )
+                    def configure() -> list[Path]:
+                        return configure_package_policies.configure_package_policies(
+                            root / "home", REPO_ROOT, platform=platform, env=env
+                        )
 
-                    written = [path.relative_to(root) for path in root.rglob("pnpm/rc")]
-                    self.assertEqual(written, [Path(expected)])
-                    self.assertIn(root / expected, configured)
-                    self.assertIn(
-                        f"{PNPM_POLICY.key}={PNPM_POLICY.value}",
-                        (root / expected).read_text(encoding="utf-8"),
-                    )
+                    check(root, root / expected, configure)
+
+    def test_pnpm_files_follow_pnpm_config_dir_order(self) -> None:
+        def check(root: Path, config_dir: Path, configure) -> None:
+            configured = configure()
+
+            for name in ("rc", "config.yaml"):
+                written = list(root.rglob(f"pnpm/{name}"))
+                self.assertEqual(written, [config_dir / name])
+                self.assertIn(config_dir / name, configured)
+            self.assertIn(
+                f"{PNPM_RC_POLICY.key}={PNPM_RC_POLICY.value}",
+                (config_dir / "rc").read_text(encoding="utf-8"),
+            )
+            self.assertEqual(
+                (config_dir / "config.yaml").read_text(encoding="utf-8"),
+                PNPM_YAML_NEW_FILE,
+            )
+            self.assertEqual(
+                stat.S_IMODE((config_dir / "config.yaml").stat().st_mode), 0o600
+            )
+
+        self.for_each_pnpm_config_dir(check)
+
+    def test_pnpm_config_yaml_keeps_other_settings(self) -> None:
+        existing = (
+            "# Written by pnpm login\n"
+            "registries:\n"
+            "  default: https://registry.example.invalid/\n"
+            "_auth:\n"
+            "  authToken: ${PNPM_TOKEN}\n"
+            "minimumReleaseAgeExclude:\n"
+            "- '@example/*'\n"
+        )
+
+        def check(_root: Path, config_dir: Path, configure) -> None:
+            config_dir.mkdir(parents=True)
+            (config_dir / "config.yaml").write_text(existing, encoding="utf-8")
+
+            configure()
+
+            self.assertEqual(
+                (config_dir / "config.yaml").read_text(encoding="utf-8"),
+                f"{existing}\n{PNPM_YAML_NEW_FILE}",
+            )
+
+        self.for_each_pnpm_config_dir(check)
+
+    def test_pnpm_config_yaml_replaces_old_value(self) -> None:
+        existing = (
+            "registries:\n"
+            "  default: https://registry.example.invalid/\n"
+            "minimumReleaseAge: 1440 # one day\n"
+            "minimumReleaseAgeExclude:\n"
+            "- '@example/*'\n"
+            '"minimumReleaseAge":\n'
+            "  2880\n"
+            "storeDir: store\n"
+        )
+        expected = (
+            "registries:\n"
+            "  default: https://registry.example.invalid/\n"
+            f"{PNPM_YAML_LINE}\n"
+            "minimumReleaseAgeExclude:\n"
+            "- '@example/*'\n"
+            "storeDir: store\n"
+        )
+
+        def check(_root: Path, config_dir: Path, configure) -> None:
+            config_dir.mkdir(parents=True)
+            (config_dir / "config.yaml").write_text(existing, encoding="utf-8")
+
+            configure()
+
+            self.assertEqual(
+                (config_dir / "config.yaml").read_text(encoding="utf-8"), expected
+            )
+
+        self.for_each_pnpm_config_dir(check)
+
+    def test_pnpm_config_yaml_refuses_layouts_it_cannot_edit_safely(self) -> None:
+        layouts = (
+            "{minimumReleaseAge: 1440}\n",
+            "---\nminimumReleaseAge: 1440\n",
+            "  minimumReleaseAge: 1440\n",
+            "- minimumReleaseAge\n",
+        )
+        for layout in layouts:
+            with self.subTest(layout=layout):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    home = Path(temporary_directory)
+                    config = home / ".config/pnpm/config.yaml"
+                    config.parent.mkdir(parents=True)
+                    config.write_text(layout, encoding="utf-8")
+
+                    with self.assertRaisesRegex(RuntimeError, "by hand in .*config.yaml"):
+                        self.configure(home)
+                    self.assertEqual(config.read_text(encoding="utf-8"), layout)
 
     def test_preserves_existing_registry_settings_and_credentials(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -127,6 +218,9 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
             (home / ".config/pnpm/rc").write_text(
                 "minimum-release-age=1\nminimum-release-age=2\n", encoding="utf-8"
             )
+            (home / ".config/pnpm/config.yaml").write_text(
+                "minimumReleaseAge: 1\nminimumReleaseAge: 2\n", encoding="utf-8"
+            )
             (home / ".bunfig.toml").write_text(
                 "[install]\nminimumReleaseAge = 1\nminimumReleaseAge = 2\n",
                 encoding="utf-8",
@@ -139,6 +233,7 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
                     home / ".bunfig.toml",
                     home / ".npmrc",
                     home / ".config/pnpm/rc",
+                    home / ".config/pnpm/config.yaml",
                 )
             }
             self.configure(home)
@@ -151,6 +246,10 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
                 .read_text()
                 .count("minimum-release-age="),
                 1,
+            )
+            self.assertEqual(
+                (home / ".config/pnpm/config.yaml").read_text(),
+                f"{PNPM_YAML_LINE}\n",
             )
             self.assertEqual(
                 (home / ".bunfig.toml").read_text().count("minimumReleaseAge ="),
