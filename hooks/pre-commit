@@ -13,7 +13,8 @@ if command -v gitleaks >/dev/null 2>&1; then
     if ! gitleaks git --pre-commit --staged --no-banner --redact -v; then
         echo "❌ gitleaks found potential secrets in staged changes, commit aborted"
         echo "   Real secret: unstage it and keep it in ~/.secrets instead."
-        echo "   False positive: add the Fingerprint shown above to .gitleaksignore."
+        echo "   False positive: confirm with the user, then add the Fingerprint shown"
+        echo "   above to .gitleaksignore (CI's secret scan honors it too)."
         exit 1
     fi
 else
@@ -24,7 +25,8 @@ else
         echo "❌ Potential secret detected in staged changes, commit aborted:"
         echo "$ADDED_LINES" | grep -nE "$SECRET_PATTERN" | head -5
         echo "   Real secret: unstage it and keep it in ~/.secrets instead."
-        echo "   False positive: narrow SECRET_PATTERN in hooks/pre-commit."
+        echo "   False positive: install gitleaks (more precise) and commit again,"
+        echo "   or ask the user."
         exit 1
     fi
 fi
