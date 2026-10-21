@@ -15,6 +15,7 @@
 
 ## 執行任務
 - 清楚、安全的任務一路做完：修正、測試、`commit`、`push`，開 PR 後自己追 CI。
+- 被 hook 擋下就修 code，hook 本身有錯就修 hook；不准用 `--no-verify`、`git commit -n` 或改 `core.hooksPath` 繞過，真的要跳過，每次都要使用者明確同意。
 - 安全的指令被 sandbox、權限、Keychain 或網路擋住時，先用合適的 escalation 重試；高風險指令要不要 escalation 由使用者決定。
 - 只有這些情況才停下來問：破壞性 Git 操作、機密、`force-push`、付費、資料遺失風險，或中大型任務可能理解錯需求。
 - 收尾時還有沒 commit 的變更，就列出整理選項（commit/push、拆分 stage、stash、經同意 discard、維持原狀）；使用者沒交代的變更要留著。
