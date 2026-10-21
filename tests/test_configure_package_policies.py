@@ -73,11 +73,10 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
 
     def test_pnpm_config_yaml_keeps_other_settings(self) -> None:
         existing = (
-            "# Written by pnpm login\n"
+            "# Global pnpm settings\n"
             "registries:\n"
             "  default: https://registry.example.invalid/\n"
-            "_auth:\n"
-            "  authToken: ${PNPM_TOKEN}\n"
+            "storeDir: store\n"
             "minimumReleaseAgeExclude:\n"
             "- '@example/*'\n"
         )
