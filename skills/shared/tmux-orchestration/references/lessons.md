@@ -58,7 +58,7 @@ Use when a worker's commit is blocked by a pre-commit/pre-push hook.
 - Per-file hooks that are not merge-aware will re-flag files a merge brings in
   from main unchanged (they already passed CI on their own PRs). That is a
   false positive, not a violation — but the fix still needs authority.
-- Bypassing the hook: follow the rule in `agents/AGENTS.md` (執行任務).
+- Bypassing the hook: follow the rule in `~/dotfiles/agents/AGENTS.md` (執行任務).
 - Resolution ladder: (1) propose the durable fix to the user — make the hook
   merge-aware, or commit a permanent ignore entry (that is repo/machine
   policy, so it is the user's call); (2) only when the user has already

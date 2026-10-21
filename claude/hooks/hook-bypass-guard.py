@@ -29,10 +29,9 @@ import sys
 
 REASON = (
     "Bypassing git hooks is not allowed (--no-verify, git commit -n, "
-    "-c core.hooksPath=...). When a hook blocks you, fix the code, or fix "
-    "the hook itself in its own commit. Only the user can allow a bypass, "
-    "one case at a time; if they do, ask them to run the command "
-    "themselves. Rule: ~/dotfiles/agents/AGENTS.md."
+    "-c core.hooksPath=..., or any other way). When a hook blocks you, fix "
+    "the code. A bypass needs the user's explicit OK every time, and the "
+    "user runs that command themselves. Rule: ~/dotfiles/agents/AGENTS.md."
 )
 
 # Subcommands with a --no-verify that skips hooks.
