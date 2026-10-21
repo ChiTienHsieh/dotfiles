@@ -31,6 +31,11 @@ DENY = [
     'git -c "core.hooksPath=/dev/null" commit -m wip',
     "git -c core.hookspath= push",
     "git --config-env=core.hooksPath=EMPTY commit -m wip",
+    # `#` inside a word starts no comment.
+    "echo a#b; git commit --no-verify -m x",
+    "[ ${#files[@]} -gt 0 ] && git commit --no-verify -m x",
+    "curl -s https://x.example/#frag && git commit -n -m x",
+    "git commit -m fix#1 --no-verify",
 ]
 
 ALLOW = [
@@ -39,6 +44,7 @@ ALLOW = [
     "git commit -m \"$(cat <<'EOF'\nfix: drop --no-verify and -n hints\nit's \"quoted\" text\nEOF\n)\"",
     "git commit -F - <<'EOF'\ngit commit --no-verify is banned\nEOF",
     "git commit -m wip # don't add --no-verify\necho -n done",
+    "git status;# git commit -n",
     "git commit -m wip 2>&1 | tail -n 3",
     "git push -n origin main",
     "git commit -mn",

@@ -15,7 +15,9 @@ matches; heredoc bodies are dropped before lexing for the same reason.
 Threat model: an honest agent following a misleading hint, not an
 adversary. Wrappers such as `bash -c '...'`, eval, git aliases and
 variables are out of scope. Any parsing failure fails OPEN (exit 0, no
-output) so a bug here can never block Bash entirely.
+output) so a bug here can never block Bash entirely. Known gaps:
+abbreviated long options (`--no-veri`) pass, and any word named `git`
+starts a check, so `echo git commit -n` is denied too.
 """
 
 import io
@@ -63,9 +65,15 @@ PUNCTUATION = ";&|()<>\n"
 
 class _CommentKeepsNewline(io.StringIO):
     """shlex skips a `# comment` with readline(); leave its newline behind
-    so the next line still starts a new statement."""
+    so the next line still starts a new statement. A `#` inside a word
+    (`fix#1`, `${#a[@]}`, a URL fragment) is no comment in a shell, so skip
+    nothing there; shlex then just splits the word at the `#`."""
+
+    lexer = None
 
     def readline(self, size=-1):
+        if self.lexer is not None and self.lexer.state == "a":
+            return ""
         line = super().readline(size)
         if line.endswith("\n"):
             self.seek(self.tell() - 1)
@@ -95,9 +103,9 @@ def drop_heredoc_bodies(command):
 def statements(command):
     """Yield each simple command as a list of words, redirections removed."""
     command = drop_heredoc_bodies(command).replace("\\\n", " ").replace("`", " ; ")
-    lexer = shlex.shlex(
-        _CommentKeepsNewline(command), posix=True, punctuation_chars=PUNCTUATION
-    )
+    stream = _CommentKeepsNewline(command)
+    lexer = shlex.shlex(stream, posix=True, punctuation_chars=PUNCTUATION)
+    stream.lexer = lexer
     lexer.whitespace = " \t\r"
     lexer.whitespace_split = True
     words = []
