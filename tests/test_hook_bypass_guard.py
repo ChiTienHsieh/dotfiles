@@ -43,6 +43,7 @@ ALLOW = [
     "git commit -m 'never use git commit -n'",
     "git commit -m \"$(cat <<'EOF'\nfix: drop --no-verify and -n hints\nit's \"quoted\" text\nEOF\n)\"",
     "git commit -F - <<'EOF'\ngit commit --no-verify is banned\nEOF",
+    "git commit -F- <<\\EOF\ngit commit --no-verify is banned\nEOF",
     "git commit -m wip # don't add --no-verify\necho -n done",
     "git status;# git commit -n",
     "git commit -m wip 2>&1 | tail -n 3",

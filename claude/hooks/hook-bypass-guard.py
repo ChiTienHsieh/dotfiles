@@ -59,7 +59,7 @@ GLOBAL_VALUE_OPTIONS = {
     "--namespace", "--super-prefix", "--work-tree",
 }
 
-HEREDOC_RE = re.compile(r"(?<!<)<<(?!<)-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+HEREDOC_RE = re.compile(r"(?<!<)<<(?!<)-?\s*\\?(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
 PUNCTUATION = ";&|()<>\n"
 
 
