@@ -20,7 +20,10 @@ class InstallationTests(unittest.TestCase):
         shutil.copytree(ROOT, self.repo, symlinks=True, ignore=shutil.ignore_patterns(
             ".git", "nvim", "__pycache__", "output", "*.local", "learning"))
         (self.repo / "nvim").mkdir()
+        # XDG_CONFIG_HOME moves pnpm's rc and config.yaml; a host value would put
+        # them outside this home.
         self.env = dict(os.environ, HOME=str(self.home), TMPDIR=str(base),
+                        XDG_CONFIG_HOME=str(self.home / ".config"),
                         GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
         self.git("init", "-q")
         self.git("config", "user.name", "Fixture")
