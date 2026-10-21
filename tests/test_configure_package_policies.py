@@ -126,6 +126,35 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
 
         self.for_each_pnpm_config_dir(check)
 
+    def test_pnpm_config_yaml_leaves_nested_lookalike_keys_alone(self) -> None:
+        # Not a real pnpm config: these lines only look like the policy key.
+        lookalikes = (
+            "notes: |\n"
+            "  minimumReleaseAge: 5\n"
+            "nested:\n"
+            "  minimumReleaseAge: 1\n"
+            "items:\n"
+            "- minimumReleaseAge: 2\n"
+        )
+        cases = (
+            (lookalikes, f"{lookalikes}\n{PNPM_YAML_NEW_FILE}"),
+            (
+                f"{lookalikes}minimumReleaseAge: 1440\n",
+                f"{lookalikes}{PNPM_YAML_LINE}\n",
+            ),
+        )
+        for existing, expected in cases:
+            with self.subTest(existing=existing):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    home = Path(temporary_directory)
+                    config = home / ".config/pnpm/config.yaml"
+                    config.parent.mkdir(parents=True)
+                    config.write_text(existing, encoding="utf-8")
+
+                    self.configure(home)
+
+                    self.assertEqual(config.read_text(encoding="utf-8"), expected)
+
     def test_pnpm_config_yaml_refuses_layouts_it_cannot_edit_safely(self) -> None:
         layouts = (
             "{minimumReleaseAge: 1440}\n",
