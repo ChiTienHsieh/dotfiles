@@ -126,6 +126,22 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
 
         self.for_each_pnpm_config_dir(check)
 
+    def test_pnpm_config_yaml_drops_byte_order_mark(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            home = Path(temporary_directory)
+            config = home / ".config/pnpm/config.yaml"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                "\ufeffminimumReleaseAge: 1440\nstoreDir: store\n", encoding="utf-8"
+            )
+
+            self.configure(home)
+
+            self.assertEqual(
+                config.read_text(encoding="utf-8"),
+                f"{PNPM_YAML_LINE}\nstoreDir: store\n",
+            )
+
     def test_pnpm_config_yaml_leaves_nested_lookalike_keys_alone(self) -> None:
         # Not a real pnpm config: these lines only look like the policy key.
         lookalikes = (

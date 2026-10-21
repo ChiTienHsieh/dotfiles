@@ -147,7 +147,10 @@ def upsert_yaml(text: str, policy: Policy) -> str:
     else, such as `{...}`, `---` or an indented top level, raises ValueError
     rather than risk a broken file. Nested keys with the same name are left
     alone, and the value is written as is, so it must be a plain scalar.
+    A leading byte order mark is dropped so that a key on the first line
+    still matches.
     """
+    text = text.removeprefix("\ufeff")
     key_name = re.escape(policy.key)
     key_pattern = re.compile(
         rf"""^(?:{key_name}|"{key_name}"|'{key_name}')\s*:(?:\s|$)"""
