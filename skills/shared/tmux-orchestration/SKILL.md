@@ -110,6 +110,7 @@ Some terminals map `Shift+Tab` differently. If `BTab` does not work, proceed wit
 
 ## Sending Prompts
 
+- Right before sending, re-capture the target pane and confirm what it is doing now. If you cannot read it or cannot tell what it is doing, do not send; report the blocker instead.
 - Put long prompts in a scratch file.
 - Send one concise instruction that tells the worker to read that file.
 - Default to `scripts/agent-send-prompt.sh PANE 'ONE-LINE PROMPT'`; it pastes the literal prompt, verifies it is visible, sends Enter separately, and retries Enter once if needed.
@@ -170,7 +171,7 @@ of completion.
 When a standalone worker session is no longer needed:
 
 ```bash
-tmux kill-session -t SESSION_NAME
+tmux kill-session -t =SESSION_NAME
 ```
 
 When a side-by-side worker pane is no longer needed:
@@ -184,7 +185,7 @@ absence receipt below in a separate command. It verifies that the exact target
 is gone before printing the closed marker:
 
 ```bash
-tmux has-session -t SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
+tmux has-session -t =SESSION_NAME 2>/dev/null || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=session:SESSION_NAME'
 tmux display-message -p -t %42 '#{pane_id}' >/dev/null 2>&1 || printf '%s\n' 'CODEX_TMUX_WORKER_CLOSED=pane:%42'
 ```
 

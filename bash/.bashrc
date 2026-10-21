@@ -34,4 +34,6 @@ export NODE_NO_WARNINGS=1
 # Bun - fast JavaScript runtime
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-. "$HOME/.cargo/env"
+
+# rustup (only if installed)
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"

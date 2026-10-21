@@ -19,11 +19,16 @@ playwright-cli state-save my-auth-state.json
 ### Restore Storage State
 
 ```bash
-# Load storage state from file
+# Open a blank session first — open restarts the browser context
+# (no URL → about:blank). Do not open the protected URL yet: without
+# cookies the app may redirect to /login and leave you on the wrong page.
+playwright-cli open
+
+# Load storage state into the existing session
 playwright-cli state-load my-auth-state.json
 
-# Reload page to apply cookies
-playwright-cli open https://example.com
+# Navigate to the intended URL so cookies / storage apply on first load
+playwright-cli goto https://example.com
 ```
 
 ### Storage State File Format
@@ -243,8 +248,11 @@ playwright-cli click e3
 playwright-cli state-save auth.json
 
 # Step 2: Later, restore state and skip login
+# open blank → load auth → goto dashboard (not open dashboard then reload:
+# an unauthenticated open of /dashboard redirects to /login first)
+playwright-cli open
 playwright-cli state-load auth.json
-playwright-cli open https://app.example.com/dashboard
+playwright-cli goto https://app.example.com/dashboard
 # Already logged in!
 ```
 
@@ -260,9 +268,10 @@ playwright-cli state-save my-session.json
 
 # ... later, in a new session ...
 
-# Restore state
+# Restore state into a blank session, then navigate with auth already applied
+playwright-cli open
 playwright-cli state-load my-session.json
-playwright-cli open https://example.com
+playwright-cli goto https://example.com
 # Cookies and localStorage are restored!
 ```
 

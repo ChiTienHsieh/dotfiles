@@ -5,10 +5,12 @@
 # -----------------------------------------------------------------------------
 # 1. Homebrew (MUST come first - other configs depend on homebrew binaries!)
 # -----------------------------------------------------------------------------
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
-# GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
-PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+# Linux 主機（例如 clawd-vm）沒有 Homebrew，直接跳過，不然每次登入都噴錯。
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+    # GNU coreutils (use GNU versions of ls, cat, etc. instead of BSD)
+    PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+fi
 
 # -----------------------------------------------------------------------------
 # 2. Source other config files
@@ -21,6 +23,8 @@ fi
 # Source secrets (~/.secrets/ is a dir of per-provider *.sh files — NEVER commit!)
 if [ -f ~/.secrets/index.sh ]; then
     source ~/.secrets/index.sh
+elif [ -f "$HOME/.secrets" ]; then
+    source "$HOME/.secrets"
 fi
 
 # Source prompt configuration

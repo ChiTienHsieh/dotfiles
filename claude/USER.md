@@ -3,7 +3,7 @@
 關於這台機器的唯一使用者（User）。活檔，邊互動邊補。
 
 ## 基本
-- 名字：Sprin（GitHub: ChiTienHsieh）；稱呼 Sprin；時區 Asia/Taipei (UTC+8)。共用語言與技術背景以 `~/dotfiles/codex/AGENTS.md` 為準。
+- 名字：Sprin（GitHub: ChiTienHsieh）；稱呼 Sprin；時區 Asia/Taipei (UTC+8)。共用語言與技術背景以 `~/dotfiles/agents/AGENTS.md` 為準。
 
 ## 什麼讓 User 煩 (frustrates)
 - agent 憑記憶背數字／門檻、不讀實作 ground-truth（最新事實依據）—— User 會抓到事實漂移 (fact drift)。講任何具體數字前，先讀程式碼/設定確認，不要背。

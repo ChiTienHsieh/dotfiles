@@ -19,6 +19,18 @@ Use when driving an interactive agent in a tmux pane from a controller.
   showing an interactive dialog such as AskUserQuestion or an approval UI.
   Text plus Enter sent into that dialog can choose an option on the user's
   behalf (2026-07-04). User-pending dialogs must be operated by the user.
+- Claude Code ghost text (2026-09-29): when idle, Claude Code may show a
+  suggested next prompt in the empty input box after `❯`. Plain `capture-pane -p`
+  drops the styling, so the suggestion looks exactly like text the user typed
+  and has not sent. Before treating it as a user draft (or as the worker's next
+  instruction), run `tmux capture-pane -p -e -t PANE | grep -F '<substring>' | cat -v`,
+  where the substring starts after the first character: the escape code sits
+  right after it, so grepping the whole text never matches.
+  A suggestion is dim: the first character is in reverse video (the cursor) and
+  the rest follows `^[[0;2m`, for example `^[[7mR^[[0;2mead .dedup-orch/...`.
+  Dim means the input box is empty, so it is safe to send with
+  `agent-send-prompt.sh`. Do not press a bare Enter to "clear" it. If the text is
+  not dim, it is a real unsent draft: do not overwrite it; ask the user.
 - Shared-tree commit mutex (2026-07-04): when another controller edits the same
   working tree, notify it and wait for an ACK before committing; otherwise one
   side's staged files end up under the other's commit message.

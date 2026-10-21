@@ -11,7 +11,7 @@
 set -e  # Exit on error
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+BACKUP_DIR=""  # Allocate a unique private directory only when a backup is needed.
 DOTFILES_PYTHON="$(command -v python3 || true)"
 
 if [ -z "$DOTFILES_PYTHON" ] || ! "$DOTFILES_PYTHON" -c 'import tomllib' >/dev/null 2>&1; then
@@ -29,6 +29,35 @@ echo ""
 # -----------------------------------------------------------------------------
 # Helper functions
 # -----------------------------------------------------------------------------
+# Move an existing HOME path into $BACKUP_DIR while preserving the path
+# relative to HOME. Refuse to overwrite an existing backup target.
+backup_existing() {
+    local dest="$1"
+    local relative backup
+
+    case "$dest" in
+        "$HOME"/*) relative="${dest#"$HOME"/}" ;;
+        "$GIT_COMMON_DIR/hooks/pre-commit") relative=".repo-hooks/pre-commit" ;;
+        *)
+            echo "  ERROR: refusing to back up path outside HOME: $dest" >&2
+            return 1
+            ;;
+    esac
+
+    if [ -z "$BACKUP_DIR" ]; then
+        mkdir -p "$HOME/.dotfiles_backup"
+        BACKUP_DIR="$(mktemp -d "$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S).XXXXXX")"
+    fi
+    backup="$BACKUP_DIR/$relative"
+    if [ -e "$backup" ] || [ -L "$backup" ]; then
+        echo "  ERROR: backup destination already exists: $backup" >&2
+        return 1
+    fi
+    mkdir -p "$(dirname "$backup")"
+    mv "$dest" "$backup"
+    echo "  Backed up: $dest -> $backup"
+}
+
 backup_and_link() {
     local src="$1"
     local dest="$2"
@@ -46,9 +75,7 @@ backup_and_link() {
 
     # Backup existing file if it's not a symlink
     if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up: $dest -> $BACKUP_DIR/"
-        mv "$dest" "$BACKUP_DIR/"
+        backup_existing "$dest"
     fi
 
     # Remove existing symlink
@@ -65,10 +92,63 @@ backup_and_copy() {
     local src="$1"
     local dest="$2"
 
+    # Guard against backing up a good destination and then failing the copy
+    # (set -e would abort mid-install, leaving the file gone but "backed up").
+    if [ ! -e "$src" ]; then
+        echo "  ERROR: copy source missing: $src" >&2
+        return 1
+    fi
+
     mkdir -p "$(dirname "$dest")"
+
+    # `cp` writes through an existing symlink into whatever it points at
+    # (here, back into the dotfiles source file itself) rather than replacing
+    # it, so a leftover backup_and_link symlink must be removed first — no
+    # backup for it, it was dotfiles' own link, not independent content.
+    # A real file is backed up only when its content actually differs, so a
+    # repeat install with no source changes stays a no-op.
+    if [ -L "$dest" ]; then
+        rm "$dest"
+    elif [ -e "$dest" ] && ! cmp -s "$src" "$dest"; then
+        backup_existing "$dest"
+    fi
 
     cp "$src" "$dest"
     echo "  Copied: $dest"
+}
+
+seed_copy() {
+    local src="$1"
+    local dest="$2"
+
+    # For configs an app rewrites from its own UI (e.g. Zed): copy the repo
+    # version once as a starting point, then leave the live file alone so UI
+    # edits never dirty the dotfiles checkout. A leftover dotfiles symlink is
+    # turned into a real file holding whatever it currently points at, so the
+    # live settings survive the migration. Snapshots back into the repo are a
+    # deliberate PR, not a side effect.
+    if [ ! -e "$src" ]; then
+        echo "  ERROR: seed source missing: $src" >&2
+        return 1
+    fi
+
+    mkdir -p "$(dirname "$dest")"
+
+    # A dangling link holds no content; drop it and seed fresh.
+    if [ -L "$dest" ] && [ ! -e "$dest" ]; then
+        rm "$dest"
+    fi
+
+    if [ -L "$dest" ]; then
+        cp -L "$dest" "$dest.tmp"
+        mv -f "$dest.tmp" "$dest"
+        echo "  Unlinked (kept live content): $dest"
+    elif [ -e "$dest" ]; then
+        echo "  Kept existing: $dest"
+    else
+        cp "$src" "$dest"
+        echo "  Seeded: $dest"
+    fi
 }
 
 is_real_machine_notes() {
@@ -102,9 +182,7 @@ ensure_machine_notes() {
     fi
 
     if is_real_machine_notes "$stub"; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up old canonical: $stub -> $BACKUP_DIR/"
-        mv "$stub" "$BACKUP_DIR/"
+        backup_existing "$stub"
     elif [ -L "$stub" ]; then
         rm "$stub"
     fi
@@ -262,6 +340,8 @@ echo "[7/11] Installing other configurations..."
     --home "$HOME" --repo-root "$DOTFILES_DIR"
 backup_and_link "$DOTFILES_DIR/gh/.config/gh/config.yml" "$HOME/.config/gh/config.yml"
 backup_and_link "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+seed_copy "$DOTFILES_DIR/zed/settings.json" "$HOME/.config/zed/settings.json"
+seed_copy "$DOTFILES_DIR/zed/keymap.json" "$HOME/.config/zed/keymap.json"
 
 # Nvim (if submodule exists)
 if [ -d "$DOTFILES_DIR/nvim" ] && [ "$(ls -A "$DOTFILES_DIR/nvim" 2>/dev/null)" ]; then
@@ -312,14 +392,42 @@ prune_stale_dotfiles_links "$HOME/.local/bin"
 # -----------------------------------------------------------------------------
 echo "[9/11] Installing Codex CLI configuration..."
 mkdir -p "$HOME/.codex"
-backup_and_link "$DOTFILES_DIR/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+build_codex_agents_md() {
+    local dest="$HOME/.codex/AGENTS.md"
+    local tmp
+    tmp="$(mktemp "$HOME/.codex/AGENTS.md.XXXXXX")"
+    {
+        echo "<!-- Generated by dotfiles/install.sh from agents/AGENTS.md + codex/AGENTS.md. Edit those, then rerun ./install.sh. -->"
+        echo
+        cat "$DOTFILES_DIR/agents/AGENTS.md"
+        echo
+        cat "$DOTFILES_DIR/codex/AGENTS.md"
+    } > "$tmp"
+    if [ -L "$dest" ]; then
+        rm "$dest"
+    elif [ -f "$dest" ] && ! cmp -s "$dest" "$tmp"; then
+        backup_existing "$dest"
+    fi
+    mv "$tmp" "$dest"
+    chmod 644 "$dest"
+    echo "  Generated: $dest"
+}
+build_codex_agents_md
 # config.toml is seeded once, then owned by the live Codex runtime (it appends
-# projects/hooks/desktop state); unconditional copy would clobber live drift.
+# projects/hooks/desktop state). The portable overlay below upserts only the
+# explicitly tracked keys, so the rest of that live state remains untouched.
 if [ ! -e "$HOME/.codex/config.toml" ]; then
     backup_and_copy "$DOTFILES_DIR/codex/config.toml" "$HOME/.codex/config.toml"
     configure_codex_local_permissions "$HOME/.codex/config.toml"
 else
     echo "  ~/.codex/config.toml already exists, skipping config seed"
+fi
+if command -v codex >/dev/null 2>&1; then
+    "$DOTFILES_PYTHON" "$DOTFILES_DIR/scripts/merge_codex_config.py" \
+        --portable "$DOTFILES_DIR/codex/config.portable.toml" \
+        --destination "$HOME/.codex/config.toml"
+else
+    echo "  Warning: codex CLI not found; portable config sync skipped" >&2
 fi
 # machine.md symlinks to the shared canonical (~/.local/share/machine/machine.md)
 # seeded in the Claude Code step above — same file both agents read, no divergence.
@@ -354,16 +462,23 @@ echo ""
 # -----------------------------------------------------------------------------
 echo "[10/11] Installing Grok CLI sandbox profiles..."
 mkdir -p "$HOME/.grok"
-backup_and_link "$DOTFILES_DIR/grok/sandbox.toml" "$HOME/.grok/sandbox.toml"
+# Copy, not symlink: Grok CLI's bwrap-based sandbox on Linux refuses a
+# symlinked sandbox.toml ("hook source path contains a symlink component
+# (retargetable)") and hard-fails startup — discovered 2026-09-22 when this
+# broke clawd-vm's gu-log Tribunal loop for ~22h after a fresh install.sh run
+# turned a pre-existing real file into a symlink. Re-run ./install.sh after
+# editing dotfiles/grok/sandbox.toml to pick up changes.
+backup_and_copy "$DOTFILES_DIR/grok/sandbox.toml" "$HOME/.grok/sandbox.toml"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Git hooks (for dotfiles repo itself)
 # -----------------------------------------------------------------------------
 echo "[11/11] Installing git hooks..."
-if [ -d "$DOTFILES_DIR/.git" ]; then
-    mkdir -p "$DOTFILES_DIR/.git/hooks"
-    backup_and_link "$DOTFILES_DIR/hooks/pre-commit" "$DOTFILES_DIR/.git/hooks/pre-commit"
+GIT_COMMON_DIR="$(git -C "$DOTFILES_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+if [ -e "$DOTFILES_DIR/.git" ] && [ -n "$GIT_COMMON_DIR" ] && [ -d "$GIT_COMMON_DIR" ]; then
+    mkdir -p "$GIT_COMMON_DIR/hooks"
+    backup_and_link "$DOTFILES_DIR/hooks/pre-commit" "$GIT_COMMON_DIR/hooks/pre-commit"
 else
     echo "  Not a git repo, skipping hooks."
 fi
@@ -376,14 +491,32 @@ echo "=========================================="
 echo "  Templates"
 echo "=========================================="
 echo ""
-if [ ! -f "$HOME/.secrets" ]; then
-    cp "$DOTFILES_DIR/templates/.secrets.template" "$HOME/.secrets"
-    chmod 600 "$HOME/.secrets"
-    echo "Created ~/.secrets from template"
-    echo "  -> Edit this file to add your API keys!"
-else
-    echo "~/.secrets already exists, skipping."
-fi
+ensure_secrets() {
+    local secrets_path="$HOME/.secrets"
+    local index="$secrets_path/index.sh"
+
+    if [ -L "$secrets_path" ] || [ -f "$secrets_path" ]; then
+        echo "~/.secrets file or symlink already exists, leaving untouched."
+        return 0
+    fi
+    if [ ! -d "$secrets_path" ]; then
+        mkdir -m 700 "$secrets_path"
+    fi
+    # An existing index (including a broken symlink) belongs to the user.
+    if [ -L "$index" ] || [ -f "$index" ]; then
+        echo "~/.secrets/index.sh already exists, leaving untouched."
+        return 0
+    fi
+    if [ -e "$index" ]; then
+        echo "Warning: ~/.secrets/index.sh is not a file; skipping secrets setup and leaving it untouched." >&2
+        return 0
+    fi
+    (umask 077; cp "$DOTFILES_DIR/templates/.secrets.template" "$index")
+    chmod 600 "$index"
+    echo "Created ~/.secrets/index.sh from template"
+    echo "  -> Edit ~/.secrets/index.sh to add your API keys."
+}
+ensure_secrets
 
 # .aliases.local is symlinked (but gitignored) so CC can edit it in sandbox mode
 if [ ! -f "$DOTFILES_DIR/bash/.aliases.local" ]; then
@@ -423,9 +556,10 @@ if [ -d "$BACKUP_DIR" ]; then
     echo ""
 fi
 echo "Next steps:"
-echo "  1. Edit ~/.secrets to add your API keys"
+echo "  1. Edit ~/.secrets/ (index.sh and provider files) to add your API keys"
 echo "  2. Edit ~/.aliases.local for machine-specific shortcuts"
 echo "  3. Run: source ~/.zshrc (or source ~/.bash_profile for bash)"
+echo "  4. New Mac: ./macos/defaults.sh (Rectangle + macOS keyboard shortcuts)"
 echo ""
 echo "Enjoy your new setup! (◕‿◕)"
 echo ""

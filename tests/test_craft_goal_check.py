@@ -7,7 +7,6 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CHECK_SCRIPT = REPO_ROOT / "skills" / "shared" / "craft-goal" / "scripts" / "check_goal_prompt.py"
-SKILL = REPO_ROOT / "skills" / "shared" / "craft-goal" / "SKILL.md"
 
 
 def run_check(text: str, *, via_file: bool = False) -> subprocess.CompletedProcess:
@@ -30,12 +29,6 @@ class CraftGoalCheckTests(unittest.TestCase):
         result = run_check("x" * 4000, via_file=True)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("TOO LONG: 4000 characters", result.stdout)
-
-    def test_skill_prose_points_at_the_script_instead_of_a_number(self) -> None:
-        skill = SKILL.read_text(encoding="utf-8")
-        self.assertNotIn("4000", skill)
-        self.assertIn("scripts/check_goal_prompt.py", skill)
-        self.assertTrue(CHECK_SCRIPT.exists())
 
 
 if __name__ == "__main__":

@@ -18,10 +18,12 @@ if [ -x "$CHECKER" ]; then
     fi
 fi
 
-GIT_DIR=$(git rev-parse --absolute-git-dir 2>/dev/null || true)
+# Repo hooks live in the common git dir. Linked worktrees have a per-worktree
+# git dir under .git/worktrees/<name>, so absolute-git-dir alone misses hooks.
+GIT_COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
 LEGACY_HOOK=""
-if [ -n "$GIT_DIR" ]; then
-    LEGACY_HOOK="$GIT_DIR/hooks/pre-commit"
+if [ -n "$GIT_COMMON_DIR" ]; then
+    LEGACY_HOOK="$GIT_COMMON_DIR/hooks/pre-commit"
 fi
 if [ -n "$LEGACY_HOOK" ] && [ -x "$LEGACY_HOOK" ]; then
     # Avoid self-recursion when a repo points .git/hooks/pre-commit back here.

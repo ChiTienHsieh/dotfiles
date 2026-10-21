@@ -2,6 +2,13 @@
 
 Codex CLI / app 的怪癖、死路、綁定版本的發現。每條標日期，過時就刪。委派相關的怪癖（tmux 經 Guardian、hooks、CodexBar、`codex review`）在 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
 
+## Portable config sync（2026-08-08、`codex-cli 0.145.0` 官方文件與 live RPC 驗證）
+
+- `~/.codex/config.toml` 會累積 projects 與 app/runtime state，保持為本機實體檔；Git 只追蹤 `codex/config.portable.toml` 裡明確納管的穩定 defaults。
+- `scripts/merge_codex_config.py` 透過 app-server `config/read` 取得 user layer `version`，再用單次 `config/batchWrite` + `expectedVersion` 寫入；不要自己用 regex 編輯 TOML。
+- `expectedVersion` 會拒絕 stale write，已驗證失敗時 config bytes 不變；same-value batch write 也不會改變 bytes。
+- `config/batchWrite.filePath` 不能當通用 TOML editor 寫任意 `/tmp` 檔；app-server 會以 `configLayerReadonly` 拒絕非 user config layer。
+
 ## 已知的 TUI 死路
 
 - 截至 2026-06-13、`codex-cli 0.139.0`，官方 Codex config docs 沒有提供 `config.toml` 設定可讓 TUI 的 tool call / tool result 區塊預設收合、摺疊，或像 Claude Code 一樣手動 fold/unfold。
@@ -21,7 +28,7 @@ Codex CLI / app 的怪癖、死路、綁定版本的發現。每條標日期，�
 ## CLI thread rename（2026-08-05、`codex 0.145.0` 驗證；2026-08-07 更新）
 
 - TUI 的 `/rename` 是使用者入口；app-server 的對應 operation 是穩定的 `thread/name/set`，接受 `threadId` 與 `name`，可更新 loaded thread 或 persisted rollout。
-- Standalone CLI 的 model 不保證擁有 Codex App 注入的 `set_thread_title` tool，也不能假裝自己在 TUI 輸入 `/rename`。曾驗證可用的 private temp-file Stop-hook fallback 已於 2026-08-07 移除：它會在正常 final answer 後產生可見 continuation，使 task 難以閱讀。現在由 `name-task` skill 在有工具時改名；沒有工具時只提出標題，由使用者用 `/rename` 套用。
+- Standalone CLI 的 model 不保證擁有 Codex App 注入的 `set_thread_title` tool。`name-task` 的順序：有原生改名工具（Codex App 的 `set_thread_title`）就用；沒有就用 script 在自己的 tmux pane 送 `/rename`；都不行就給使用者建議標題，由使用者自己改名。
 
 ## Codex.app 字級爆掉（desktop / Electron）
 

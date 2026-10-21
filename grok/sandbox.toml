@@ -1,5 +1,7 @@
-# Grok CLI sandbox profiles. Installed as ~/.grok/sandbox.toml;
-# use with `grok --sandbox cc-worker ...`.
+# Grok CLI sandbox profiles. Installed as a copy at ~/.grok/sandbox.toml (not
+# a symlink — Grok's Linux bwrap sandbox refuses a symlinked config file), so
+# edit this source and rerun ./install.sh to update it. Use with
+# `grok --sandbox cc-worker ...`.
 [profiles.cc-worker]
 # workspace = read everywhere, write only CWD + temp dirs + ~/.grok/.
 extends = "workspace"
