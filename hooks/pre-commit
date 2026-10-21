@@ -2,7 +2,6 @@
 # =============================================================================
 # pre-commit hook - secret scan + jargon check + run tests before commit
 # =============================================================================
-# Skip with: git commit --no-verify
 
 DOTFILES_DIR="$(git rev-parse --show-toplevel)"
 
@@ -13,7 +12,8 @@ if command -v gitleaks >/dev/null 2>&1; then
     # -v prints each finding (secret redacted); keep stderr for the summary.
     if ! gitleaks git --pre-commit --staged --no-banner --redact -v; then
         echo "❌ gitleaks found potential secrets in staged changes, commit aborted"
-        echo "   Review the findings above or use 'git commit --no-verify' to skip"
+        echo "   Real secret: unstage it and keep it in ~/.secrets instead."
+        echo "   False positive: add the Fingerprint shown above to .gitleaksignore."
         exit 1
     fi
 else
@@ -23,7 +23,8 @@ else
     if echo "$ADDED_LINES" | grep -qE "$SECRET_PATTERN"; then
         echo "❌ Potential secret detected in staged changes, commit aborted:"
         echo "$ADDED_LINES" | grep -nE "$SECRET_PATTERN" | head -5
-        echo "   If this is a false positive, use 'git commit --no-verify'"
+        echo "   Real secret: unstage it and keep it in ~/.secrets instead."
+        echo "   False positive: narrow SECRET_PATTERN in hooks/pre-commit."
         exit 1
     fi
 fi
@@ -65,7 +66,7 @@ if echo "$STAGED_FILES" | grep -qE "$SHELL_FILES_PATTERN"; then
     else
         echo ""
         echo "❌ Tests failed, commit aborted"
-        echo "   Fix the issues or use 'git commit --no-verify' to skip"
+        echo "   Fix the code (or the test, if the test is wrong) and commit again."
         exit 1
     fi
 else
