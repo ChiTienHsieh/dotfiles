@@ -81,7 +81,7 @@ POLICIES = (
         comment="# Delay new package releases for seven days to reduce supply-chain risk.",
     ),
     PNPM_RC_POLICY,
-    # pnpm 11+ ignores rc; it reads the same minutes, in camelCase, from config.yaml.
+    # pnpm 11+ ignores rc and reads the same value from config.yaml under the camelCase key.
     replace(
         PNPM_RC_POLICY,
         source=None,
@@ -144,13 +144,15 @@ def upsert_yaml(text: str, policy: Policy) -> str:
 
     Only a block mapping that starts at column 0 is supported: `key: value`
     lines, comments and blank lines. Indented lines and `- item` lines belong
-    to the key above them and are dropped along with the old value. Anything
-    else, such as `{...}`, `---`, an indented top level or an anchor on the
-    old value (an alias elsewhere may point at it), raises ValueError rather
-    than risk a broken file. Nested keys with the same name are left
-    alone, and the value is written as is, so it must be a plain scalar.
-    A leading byte order mark is dropped so that a key on the first line
-    still matches.
+    to the key above them. They are kept, except under the key being
+    replaced, where they go away with the old value; nested keys with the
+    same name are therefore left alone. A leading byte order mark is dropped
+    so that a key on the first line still matches.
+
+    Anything else, such as `{...}`, `---`, an indented top level or an anchor
+    on the old value (an alias elsewhere may point at it), raises ValueError
+    rather than risk a broken file. The new value is written as is, so it
+    must be a plain scalar.
     """
     text = text.removeprefix("\ufeff")
     key_name = re.escape(policy.key)
