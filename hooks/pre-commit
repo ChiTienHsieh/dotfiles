@@ -2,7 +2,6 @@
 # =============================================================================
 # pre-commit hook - secret scan + jargon check + run tests before commit
 # =============================================================================
-# Skip with: git commit --no-verify
 
 DOTFILES_DIR="$(git rev-parse --show-toplevel)"
 
@@ -10,9 +9,13 @@ DOTFILES_DIR="$(git rev-parse --show-toplevel)"
 # 1. Secret scan (public repo guard)
 # -----------------------------------------------------------------------------
 if command -v gitleaks >/dev/null 2>&1; then
-    if ! gitleaks protect --staged --no-banner --redact 2>/dev/null; then
+    # -v prints each finding (secret redacted); keep stderr for the summary.
+    # --log-level warn keeps a clean scan quiet; a hit still logs a warning.
+    if ! gitleaks git --pre-commit --staged --no-banner --redact -v --log-level warn; then
         echo "❌ gitleaks found potential secrets in staged changes, commit aborted"
-        echo "   Review the findings above or use 'git commit --no-verify' to skip"
+        echo "   Real secret: unstage it and keep it in ~/.secrets instead."
+        echo "   False positive: confirm with the user, then add the Fingerprint shown"
+        echo "   above to .gitleaksignore (CI's secret scan honors it too)."
         exit 1
     fi
 else
@@ -22,7 +25,9 @@ else
     if echo "$ADDED_LINES" | grep -qE "$SECRET_PATTERN"; then
         echo "❌ Potential secret detected in staged changes, commit aborted:"
         echo "$ADDED_LINES" | grep -nE "$SECRET_PATTERN" | head -5
-        echo "   If this is a false positive, use 'git commit --no-verify'"
+        echo "   Real secret: unstage it and keep it in ~/.secrets instead."
+        echo "   False positive: install gitleaks (more precise) and commit again,"
+        echo "   or ask the user."
         exit 1
     fi
 fi
@@ -64,7 +69,7 @@ if echo "$STAGED_FILES" | grep -qE "$SHELL_FILES_PATTERN"; then
     else
         echo ""
         echo "❌ Tests failed, commit aborted"
-        echo "   Fix the issues or use 'git commit --no-verify' to skip"
+        echo "   Fix the code (or the test, if the test is wrong) and commit again."
         exit 1
     fi
 else
