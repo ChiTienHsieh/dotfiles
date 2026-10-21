@@ -13,10 +13,47 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import configure_package_policies  # noqa: E402
 
+PNPM_POLICY = next(
+    policy
+    for policy in configure_package_policies.POLICIES
+    if policy.source.startswith("pnpm/")
+)
+
 
 class ConfigurePackagePoliciesTests(unittest.TestCase):
     def configure(self, home: Path) -> None:
-        configure_package_policies.configure_package_policies(home, REPO_ROOT)
+        # Pin platform and env so a host XDG_CONFIG_HOME cannot redirect writes.
+        configure_package_policies.configure_package_policies(
+            home, REPO_ROOT, platform="linux", env={}
+        )
+
+    def test_pnpm_rc_follows_pnpm_config_dir_order(self) -> None:
+        # (platform, XDG_CONFIG_HOME, rc path relative to the temporary root)
+        cases = (
+            ("darwin", "xdg", "xdg/pnpm/rc"),
+            ("darwin", None, "home/Library/Preferences/pnpm/rc"),
+            ("darwin", "", "home/Library/Preferences/pnpm/rc"),
+            ("linux", None, "home/.config/pnpm/rc"),
+        )
+        for platform, xdg, expected in cases:
+            with self.subTest(platform=platform, xdg=xdg):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    root = Path(temporary_directory)
+                    env = {}
+                    if xdg is not None:
+                        env["XDG_CONFIG_HOME"] = str(root / xdg) if xdg else ""
+
+                    configured = configure_package_policies.configure_package_policies(
+                        root / "home", REPO_ROOT, platform=platform, env=env
+                    )
+
+                    written = [path.relative_to(root) for path in root.rglob("pnpm/rc")]
+                    self.assertEqual(written, [Path(expected)])
+                    self.assertIn(root / expected, configured)
+                    self.assertIn(
+                        f"{PNPM_POLICY.key}={PNPM_POLICY.value}",
+                        (root / expected).read_text(encoding="utf-8"),
+                    )
 
     def test_preserves_existing_registry_settings_and_credentials(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

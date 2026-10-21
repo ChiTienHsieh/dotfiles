@@ -7,16 +7,34 @@ import argparse
 import os
 import re
 import stat
+import sys
 import tempfile
 import tomllib
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+
+
+Destination = Callable[[Path, str, Mapping[str, str]], Path]
+
+
+def in_home(relative: str) -> Destination:
+    return lambda home, _platform, _env: home / relative
+
+
+def pnpm_global_rc(home: Path, platform: str, env: Mapping[str, str]) -> Path:
+    """Return the global rc path in the same order as pnpm's getConfigDir."""
+    if env.get("XDG_CONFIG_HOME"):
+        return Path(env["XDG_CONFIG_HOME"]) / "pnpm/rc"
+    if platform == "darwin":
+        return home / "Library/Preferences/pnpm/rc"
+    return home / ".config/pnpm/rc"
 
 
 @dataclass(frozen=True)
 class Policy:
     source: str
-    destination: str
+    destination: Destination
     kind: str
     key: str
     value: str
@@ -27,7 +45,7 @@ class Policy:
 POLICIES = (
     Policy(
         source="bun/.bunfig.toml",
-        destination=".bunfig.toml",
+        destination=in_home(".bunfig.toml"),
         kind="toml",
         section="install",
         key="minimumReleaseAge",
@@ -36,7 +54,7 @@ POLICIES = (
     ),
     Policy(
         source="npm/.npmrc",
-        destination=".npmrc",
+        destination=in_home(".npmrc"),
         kind="key-value",
         key="min-release-age",
         value="7",
@@ -44,7 +62,7 @@ POLICIES = (
     ),
     Policy(
         source="pnpm/.config/pnpm/rc",
-        destination=".config/pnpm/rc",
+        destination=pnpm_global_rc,
         kind="key-value",
         key="minimum-release-age",
         value="10080",
@@ -174,11 +192,16 @@ def atomic_write_private(destination: Path, text: str) -> None:
         raise
 
 
-def configure_package_policies(home: Path, repo_root: Path) -> list[Path]:
+def configure_package_policies(
+    home: Path,
+    repo_root: Path,
+    platform: str = sys.platform,
+    env: Mapping[str, str] = os.environ,
+) -> list[Path]:
     configured: list[Path] = []
     for policy in POLICIES:
         source = repo_root / policy.source
-        destination = home / policy.destination
+        destination = policy.destination(home, platform, env)
         text = existing_or_seed_text(destination, source)
         if policy.kind == "key-value":
             text = upsert_key_value(text, policy)

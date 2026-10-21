@@ -179,7 +179,9 @@ jobs:
           mkdir -p "${smoke_home}"
           mkdir -p "${smoke_home}/.codex"
           ln -s "${GITHUB_WORKSPACE}/codex/hooks.json" "${smoke_home}/.codex/hooks.json"
-          HOME="${smoke_home}" TMPDIR="${RUNNER_TEMP}" ./install.sh
+          # The runner image sets XDG_CONFIG_HOME; keep pnpm's rc inside the isolated home.
+          HOME="${smoke_home}" XDG_CONFIG_HOME="${smoke_home}/.config" \
+            TMPDIR="${RUNNER_TEMP}" ./install.sh
           test -f "${smoke_home}/.codex/hooks.json"
           test ! -L "${smoke_home}/.codex/hooks.json"
           test "$(stat -c '%a' "${smoke_home}/.codex/hooks.json")" = 600
