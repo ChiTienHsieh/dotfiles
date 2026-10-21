@@ -10,7 +10,8 @@ DOTFILES_DIR="$(git rev-parse --show-toplevel)"
 # -----------------------------------------------------------------------------
 if command -v gitleaks >/dev/null 2>&1; then
     # -v prints each finding (secret redacted); keep stderr for the summary.
-    if ! gitleaks git --pre-commit --staged --no-banner --redact -v; then
+    # --log-level warn keeps a clean scan quiet; a hit still logs a warning.
+    if ! gitleaks git --pre-commit --staged --no-banner --redact -v --log-level warn; then
         echo "❌ gitleaks found potential secrets in staged changes, commit aborted"
         echo "   Real secret: unstage it and keep it in ~/.secrets instead."
         echo "   False positive: confirm with the user, then add the Fingerprint shown"
