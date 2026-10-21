@@ -92,6 +92,7 @@ POLICIES = (
 )
 
 YAML_SEQUENCE_ENTRY = re.compile(r"^-(?:\s|$)")
+YAML_ANCHOR = re.compile(r"(?:^|[\s\[{,])&[^\s\[\]{},]")
 YAML_TOP_LEVEL_KEY = re.compile(
     r"""^(?:"[^"]*"|'[^']*'|[^\s#"'\[\]{},&*!|>%@`?:-][^#]*?)\s*:(?:\s|$)"""
 )
@@ -144,8 +145,9 @@ def upsert_yaml(text: str, policy: Policy) -> str:
     Only a block mapping that starts at column 0 is supported: `key: value`
     lines, comments and blank lines. Indented lines and `- item` lines belong
     to the key above them and are dropped along with the old value. Anything
-    else, such as `{...}`, `---` or an indented top level, raises ValueError
-    rather than risk a broken file. Nested keys with the same name are left
+    else, such as `{...}`, `---`, an indented top level or an anchor on the
+    old value (an alias elsewhere may point at it), raises ValueError rather
+    than risk a broken file. Nested keys with the same name are left
     alone, and the value is written as is, so it must be a plain scalar.
     A leading byte order mark is dropped so that a key on the first line
     still matches.
@@ -169,14 +171,20 @@ def upsert_yaml(text: str, policy: Policy) -> str:
                 raise ValueError("YAML top level is not a block mapping at column 0")
             if not dropping_value:
                 output.append(line)
+            elif YAML_ANCHOR.search(line):
+                raise ValueError(f"the old {policy.key} value defines a YAML anchor")
             continue
         if not YAML_TOP_LEVEL_KEY.match(line):
             raise ValueError("YAML top level has a line that is not a simple key")
         in_mapping = True
-        dropping_value = bool(key_pattern.match(line))
+        key_match = key_pattern.match(line)
+        dropping_value = key_match is not None
         if not dropping_value:
             output.append(line)
-        elif not found:
+            continue
+        if YAML_ANCHOR.search(line[key_match.end():]):
+            raise ValueError(f"the old {policy.key} value defines a YAML anchor")
+        if not found:
             output.append(f"{policy.key}: {policy.value}")
             found = True
 

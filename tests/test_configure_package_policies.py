@@ -177,6 +177,8 @@ class ConfigurePackagePoliciesTests(unittest.TestCase):
             "---\nminimumReleaseAge: 1440\n",
             "  minimumReleaseAge: 1440\n",
             "- minimumReleaseAge\n",
+            "minimumReleaseAge: &age 1440\ndlxCacheMaxAge: *age\n",
+            "minimumReleaseAge:\n  &age 1440\ndlxCacheMaxAge: *age\n",
         )
         for layout in layouts:
             with self.subTest(layout=layout):
