@@ -10,7 +10,8 @@ DOTFILES_DIR="$(git rev-parse --show-toplevel)"
 # 1. Secret scan (public repo guard)
 # -----------------------------------------------------------------------------
 if command -v gitleaks >/dev/null 2>&1; then
-    if ! gitleaks protect --staged --no-banner --redact 2>/dev/null; then
+    # -v prints each finding (secret redacted); keep stderr for the summary.
+    if ! gitleaks git --pre-commit --staged --no-banner --redact -v; then
         echo "❌ gitleaks found potential secrets in staged changes, commit aborted"
         echo "   Review the findings above or use 'git commit --no-verify' to skip"
         exit 1
