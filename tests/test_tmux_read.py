@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""The allow-listed tmux-read wrapper must never mutate tmux or run code."""
+"""The allow-listed tmux-read wrapper must never mutate tmux or run code,
+and every tmux binary it may exec must hit a prompt rule in codex/rules/tmux.rules."""
 
 import ast
 from importlib.machinery import SourceFileLoader
