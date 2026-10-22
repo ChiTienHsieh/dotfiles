@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -92,6 +93,38 @@ class DirtyWorktreeStateTests(unittest.TestCase):
             target.write_text('{"roots": []}\n', encoding="utf-8")
             (root / "link.json").symlink_to(target)
             self.assertEqual(stop_dirty_worktree.recent_track_paths(), [safe])
+
+
+class DirtyWorktreePathTests(unittest.TestCase):
+    def test_absolute_paths_follow_linux_home(self) -> None:
+        tool_input = {
+            "command": "cat /home/x/repo/a.py /home/xy/b.py /Users/x/c.py /etc/hosts"
+        }
+        with mock.patch.dict(os.environ, {"HOME": "/home/x"}):
+            paths = stop_dirty_worktree.absolute_paths_in(tool_input)
+        self.assertEqual(paths, {Path("/home/x/repo/a.py")})
+
+    def test_tracks_repo_outside_cwd_under_home(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            base = Path(temporary_directory).resolve()
+            home = base / "home" / "x"
+            repo = home / "repo"
+            repo.mkdir(parents=True)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            outside = base / "outside"
+            outside.mkdir()
+            payload = {
+                "session_id": "session",
+                "cwd": str(outside),
+                "tool_input": {"command": f"touch {repo}/new.txt"},
+            }
+            env = {"HOME": str(home), "GIT_CEILING_DIRECTORIES": str(base)}
+            with mock.patch.dict(os.environ, env), mock.patch.object(
+                stop_dirty_worktree, "TRACK_DIR", base / "tracked"
+            ):
+                stop_dirty_worktree.track_touched_worktrees(payload)
+                roots = stop_dirty_worktree.load_tracked_roots("session")
+            self.assertEqual(roots, {repo})
 
 
 class DirtyWorktreeCompatibilityTests(unittest.TestCase):
