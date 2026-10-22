@@ -4,9 +4,6 @@
 *.swo
 *~
 
-# AI chatroom (subagent working files)
-ai_chatroom/
-
 # Generated run artifacts
 output/
 __pycache__/
