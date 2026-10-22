@@ -9,6 +9,21 @@ import unittest
 
 ALIASES = Path(__file__).resolve().parents[1] / "bash/.aliases"
 SHELLS = ("bash", "zsh")
+# Prints the names of addali/addcd variables left behind as globals.
+LEAKS = ('; printf "leaked:<%s>" "${alias_name+alias_name }${choice+choice }'
+         '${alias_command+alias_command }${alias_command_escaped+alias_command_escaped }'
+         '${full_alias+full_alias }${suggested_name+suggested_name }"')
+# Stub curl: keep the request body, answer with $FAKE_RESPONSE.
+CURL_STUB = ('curl() { while [ $# -gt 0 ]; do [ "$1" = -d ] && printf "%s" "$2" > "$HOME/body.json"; '
+             'shift; done; printf "%s" "$FAKE_RESPONSE"; }; ')
+
+
+def reply(text):
+    """An OpenAI Responses API reply whose message comes after a reasoning item."""
+    return json.dumps({"output": [
+        {"type": "reasoning", "summary": []},
+        {"type": "message", "content": [{"type": "output_text", "text": text}]},
+    ]})
 
 
 def run(shell, script, home, stdin="", cwd=None, **extra_env):
@@ -48,9 +63,10 @@ class AddcdTests(unittest.TestCase):
                 home = Path(directory)
                 project = home / "project"
                 project.mkdir()
-                result = run(shell, "addcd", home, stdin="ls\njumphere\n", cwd=project)
+                result = run(shell, "addcd" + LEAKS, home, stdin="ls\njumphere\n", cwd=project)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertNotIn("not a valid identifier", result.stderr)
+                self.assertTrue(result.stdout.endswith("leaked:<>"), result.stdout)
                 self.assertEqual((home / ".aliases.local").read_text(),
                                  f"alias jumphere='cd {project.resolve()}'\n")
 
@@ -68,6 +84,17 @@ class AddaliTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(result.stdout, "hi there\n")
 
+    def test_accepting_ai_suggestion_creates_alias(self):
+        for shell in SHELLS:
+            with self.subTest(shell=shell), tempfile.TemporaryDirectory() as home:
+                result = run(shell, CURL_STUB + "addali" + LEAKS, home,
+                             stdin="ls\ny\necho hi\n", OPENAI_API_KEY="dummy",
+                             FAKE_RESPONSE=reply("zzqq_ai"))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(result.stdout.endswith("leaked:<>"), result.stdout)
+                self.assertEqual((Path(home) / ".aliases.local").read_text(),
+                                 "alias zzqq_ai='echo hi'\n")
+
     def test_empty_name_aborts_without_writing(self):
         for shell in SHELLS:
             with self.subTest(shell=shell), tempfile.TemporaryDirectory() as home:
@@ -77,16 +104,10 @@ class AddaliTests(unittest.TestCase):
 
 
 class SuggestNameTests(unittest.TestCase):
-    # Stub curl: keep the request body, answer with $FAKE_RESPONSE.
-    STUB = ('curl() { while [ $# -gt 0 ]; do [ "$1" = -d ] && printf "%s" "$2" > "$HOME/body.json"; '
-            'shift; done; printf "%s" "$FAKE_RESPONSE"; }; ')
-    REASONING_REPLY = json.dumps({"output": [
-        {"type": "reasoning", "summary": []},
-        {"type": "message", "content": [{"type": "output_text", "text": " qq "}]},
-    ]})
+    REASONING_REPLY = reply(" qq ")
 
     def suggest(self, shell, home, response, **extra_env):
-        return run(shell, self.STUB + "suggest_alternative_name 'l\"s' 'l\"s, ll'", home,
+        return run(shell, CURL_STUB + "suggest_alternative_name 'l\"s' 'l\"s, ll'", home,
                    OPENAI_API_KEY="dummy", FAKE_RESPONSE=response, **extra_env)
 
     def test_model_comes_from_env_and_reply_after_reasoning_is_used(self):

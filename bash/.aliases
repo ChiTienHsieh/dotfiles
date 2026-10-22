@@ -302,6 +302,7 @@ addali() {
     local conflicted_names=""
     local llm_calls=0
     local max_llm_calls=5
+    local suggested_name choice alias_command alias_command_escaped full_alias
 
     _ask alias_name "Enter the alias name: "
 
@@ -363,6 +364,7 @@ addali() {
 # Usage: navigate to a directory, run `addcd`, enter alias name
 addcd() {
     local current_dir="$(pwd)"
+    local alias_name
 
     _ask alias_name "Alias name to cd here ($current_dir): "
 
@@ -460,6 +462,7 @@ pp() {
 # pc - Preview prompt, confirm, send to claude (interactive mode)
 pc() {
     local prompts_dir="/tmp/prompts"
+    local confirm confirm2
 
     if [[ ! -d "$prompts_dir" ]]; then
         echo "(´・ω・\`) $prompts_dir doesn't exist"
