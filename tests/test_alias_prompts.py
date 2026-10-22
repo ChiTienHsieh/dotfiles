@@ -50,9 +50,12 @@ class AskTests(unittest.TestCase):
     def test_no_zsh_only_read_prompt_left(self):
         # bash reads `read "var?prompt"` as an invalid variable name, so every
         # prompt has to go through _ask (pc needs a real /tmp/prompts to run).
+        # Only a `read` in command position counts, so an echo that happens
+        # to say "read it?" is not flagged.
+        zsh_read = re.compile(r"(?:^|[;&|()]|\b(?:then|do|else))\s*read\b[^;|&#]*\w\?")
         code = [line for line in ALIASES.read_text().splitlines()
                 if not line.lstrip().startswith("#")]
-        offenders = [line for line in code if re.search(r"\bread\b[^;|&]*\w\?", line)]
+        offenders = [line for line in code if zsh_read.search(line)]
         self.assertEqual(offenders, [])
 
 
