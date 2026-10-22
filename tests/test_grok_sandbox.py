@@ -26,10 +26,12 @@ class GrokSandboxDenyTests(unittest.TestCase):
         self.assertEqual(sorted(macos - linux), [], "/Users/* deny without /home/* twin")
         self.assertEqual(sorted(linux - macos), [], "/home/* deny without /Users/* twin")
 
-    def test_home_entries_are_absolute(self) -> None:
+    def test_entries_are_absolute_or_workspace_wide(self) -> None:
+        # Relative globs anchor at the workspace, so `~/.ssh/**` or `.ssh/**`
+        # would never reach the real home directory.
         for entry in deny_list():
             with self.subTest(entry=entry):
-                self.assertFalse(entry.startswith("~"))
+                self.assertTrue(entry.startswith(("/", "**/")), "relative deny entry")
 
     def test_secrets_directory_contents_are_denied(self) -> None:
         deny = deny_list()
