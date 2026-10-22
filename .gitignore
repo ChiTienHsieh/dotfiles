@@ -16,7 +16,10 @@ __pycache__/
 # Claude Code worktrees (created locally, never version-controlled)
 .claude/worktrees/
 
-# Auto-downloaded plugin skills
+# 只為舊安裝保留：2026-06 以前的 install.sh 會把 ~/.claude/skills 整個連到這裡，
+# 舊機器上 plugin 自動下載的 skill 可能還留在這。
+# Claude 專用 skill 放 skills/claude/，放在這裡會被 git 忽略，也不會被安裝。
+# 每台機器的 claude/skills/ 都清空後，就刪掉這條。
 claude/skills/
 
 # playwright-cli page snapshots
