@@ -487,20 +487,8 @@ wheredef() {
 }
 
 # -----------------------------------------------------------------------------
-# Claude Code MCP helpers
+# Claude Code helpers
 # -----------------------------------------------------------------------------
-cldaddcontext7() {
-    echo "(°ロ°) Adding Context7 MCP..."
-    claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
-    echo "(ﾉ◕ヮ◕)ﾉ Use 'use context7' in prompts"
-}
-
-cldaddplaywright() {
-    echo "(°ロ°) Adding Playwright MCP..."
-    claude mcp add playwright npx @playwright/mcp@latest
-    echo "(ﾉ◕ヮ◕)ﾉ Say 'use playwright mcp to open browser'"
-}
-
 # Safe planning session for sensitive dirs (e.g. ~).
 # plan mode  = CC can read & propose a plan, but cannot edit/move/delete anything.
 # safe-mode disables customizations, hooks, plugins, skills, and MCP servers.
