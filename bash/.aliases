@@ -193,6 +193,14 @@ alias barc="vi ~/.bashrc"               # Edit bashrc
 alias viprofile="vi ~/.bash_profile"
 alias prompt="vi ~/.bash_prompt"
 
+# _ask <var> <prompt> - read one line into <var> in both bash and zsh.
+# zsh's `read "var?prompt"` makes bash fail with "not a valid identifier".
+# No locals here, so the caller's local <var> is the one that gets set.
+_ask() {
+    printf '%s' "$2" >&2
+    read -r "$1"
+}
+
 # -----------------------------------------------------------------------------
 # Smart alias creator with conflict detection and AI suggestions
 # -----------------------------------------------------------------------------
@@ -236,7 +244,7 @@ addali() {
     local llm_calls=0
     local max_llm_calls=5
 
-    read "alias_name?Enter the alias name: "
+    _ask alias_name "Enter the alias name: "
 
     if [ -z "$alias_name" ]; then
         echo "Alias name cannot be empty!"
@@ -251,7 +259,7 @@ addali() {
 
         if [ $llm_calls -ge $max_llm_calls ]; then
             echo "(╯°□°)╯ Max LLM calls reached"
-            read "alias_name?Enter name: "
+            _ask alias_name "Enter name: "
             [ -z "$alias_name" ] && return 1
             continue
         fi
@@ -262,14 +270,14 @@ addali() {
 
         if [ -z "$suggested_name" ]; then
             echo "(´・ω・\`) AI failed"
-            read "alias_name?Enter name: "
+            _ask alias_name "Enter name: "
         else
             echo "(°▽°) Suggestion: '$suggested_name'"
-            read "choice?Accept? (y/n/manual): "
+            _ask choice "Accept? (y/n/manual): "
             case $choice in
                 y|Y) alias_name="$suggested_name" ;;
                 n|N) conflicted_names="$conflicted_names, $alias_name"; continue ;;
-                *)   read "alias_name?Enter your preferred name: " ;;
+                *)   _ask alias_name "Enter your preferred name: " ;;
             esac
         fi
 
@@ -278,7 +286,7 @@ addali() {
 
     echo "(・∀・) '$alias_name' available"
 
-    read "alias_command?Enter the command to alias: "
+    _ask alias_command "Enter the command to alias: "
     [ -z "$alias_command" ] && echo "Command cannot be empty!" && return 1
 
     alias_command_escaped=$(echo "$alias_command" | sed "s/'/'\\\\''/g")
@@ -297,7 +305,7 @@ addali() {
 addcd() {
     local current_dir="$(pwd)"
 
-    read "alias_name?Alias name to cd here ($current_dir): "
+    _ask alias_name "Alias name to cd here ($current_dir): "
 
     if [ -z "$alias_name" ]; then
         echo "(´・ω・\`) Name required"
@@ -307,7 +315,7 @@ addcd() {
     # Check for conflicts
     if check_name_conflict "$alias_name"; then
         echo "(・_・;) '$alias_name' exists: $(type "$alias_name" 2>&1 | head -1)"
-        read "alias_name?Different name: "
+        _ask alias_name "Different name: "
         [ -z "$alias_name" ] && return 1
 
         if check_name_conflict "$alias_name"; then
@@ -412,7 +420,7 @@ pc() {
     echo "=== END PREVIEW ==="
     echo ""
 
-    read "confirm?Send to claude? (y/n/e to edit): "
+    _ask confirm "Send to claude? (y/n/e to edit): "
     case "$confirm" in
         y|Y)
             claude "$(cat "$latest")"
@@ -420,7 +428,7 @@ pc() {
         e|E)
             nvim "$latest"
             # After editing, ask again
-            read "confirm2?Send now? (y/n): "
+            _ask confirm2 "Send now? (y/n): "
             [[ "$confirm2" == "y" || "$confirm2" == "Y" ]] && claude "$(cat "$latest")"
             ;;
         *)
