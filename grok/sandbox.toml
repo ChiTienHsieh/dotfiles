@@ -9,12 +9,19 @@ extends = "workspace"
 restrict_network = true
 # Kernel-enforced read + write deny. Relative globs anchor at the workspace and
 # `~` is not expanded (verified 2026-09-03: it became <cwd>/~/.ssh), so home-dir
-# entries use an absolute one-segment glob. Linux homes would need /home/*/... too.
+# entries use an absolute one-segment glob, listed once for macOS homes
+# (/Users/*) and once for Linux homes (/home/*, e.g. clawd-vm). Every /Users/*
+# entry needs its /home/* twin; tests/test_grok_sandbox.py checks the pairs.
+# ~/.secrets is a directory, so it is denied both as a path and with /**.
 deny = [
   "**/.env", "**/.env.*", "**/*.pem",
-  "/Users/*/.ssh/**", "/Users/*/.aws/**",
-  "/Users/*/.secrets", "/Users/*/.codex/auth.json",
-  "/Users/*/.claude/.credentials.json", "/Users/*/.config/gh/hosts.yml",
+  "/Users/*/.ssh/**", "/home/*/.ssh/**",
+  "/Users/*/.aws/**", "/home/*/.aws/**",
+  "/Users/*/.secrets", "/home/*/.secrets",
+  "/Users/*/.secrets/**", "/home/*/.secrets/**",
+  "/Users/*/.codex/auth.json", "/home/*/.codex/auth.json",
+  "/Users/*/.claude/.credentials.json", "/home/*/.claude/.credentials.json",
+  "/Users/*/.config/gh/hosts.yml", "/home/*/.config/gh/hosts.yml",
   # ~/.grok/auth.json is deliberately absent: it's grok's own state dir and
   # must stay usable by the grok process itself.
 ]
