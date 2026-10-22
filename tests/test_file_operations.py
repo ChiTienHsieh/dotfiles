@@ -131,6 +131,18 @@ class BakHideTests(unittest.TestCase):
                 self.assertEqual((root / "dir/.x.bak").read_text(), "old")
                 self.assertEqual((root / ".two words.bak").read_text(), "spaced")
 
+    def test_double_dash_ends_options_like_trash(self):
+        for shell in ("bash", "zsh"):
+            for command, created in (("bak", ".-dash.bak"), ("hide", ".-dash")):
+                with self.subTest(shell=shell, command=command), \
+                        tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    (root / "-dash").write_text("dash")
+                    result = run(shell, command + " -- -dash", directory)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual((root / created).read_text(), "dash")
+                    self.assertNotEqual(run(shell, command + " --", directory).returncode, 0)
+
     def test_missing_path_fails_but_others_still_run(self):
         for shell in ("bash", "zsh"):
             for command, created in (("bak", "dir/.x.bak"), ("hide", "dir/.x")):

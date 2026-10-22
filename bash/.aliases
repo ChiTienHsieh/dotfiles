@@ -178,12 +178,15 @@ _dot_path() {
     printf '%s/.%s\n' "$parent" "$leaf"
 }
 
-# bak <path>... - copy each path to a hidden backup beside it: dir/x -> dir/.x.bak
+# bak [--] <path>... - copy each path to a hidden backup beside it: dir/x -> dir/.x.bak
 # -H copies what a symlink named here points to (the dotfiles in ~ are links),
 # instead of a second link that changes along with the original.
 # An existing backup is left alone; remove it first to take a new one.
 bak() {
     local f dest result=0
+    if [[ "$1" == "--" ]]; then
+        shift
+    fi
     [[ $# -gt 0 ]] || { echo "bak: missing operand" >&2; return 1; }
     for f in "$@"; do
         dest="$(_dot_path "$f").bak"
@@ -197,10 +200,13 @@ bak() {
     return "$result"
 }
 
-# hide <path>... - hide each path in place: dir/x -> dir/.x
+# hide [--] <path>... - hide each path in place: dir/x -> dir/.x
 # Refuses when the hidden name is already taken instead of overwriting it.
 hide() {
     local f dest result=0
+    if [[ "$1" == "--" ]]; then
+        shift
+    fi
     [[ $# -gt 0 ]] || { echo "hide: missing operand" >&2; return 1; }
     for f in "$@"; do
         dest=$(_dot_path "$f")
