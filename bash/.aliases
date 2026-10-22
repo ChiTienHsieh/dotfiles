@@ -240,9 +240,12 @@ alias barc="vi ~/.bashrc"               # Edit bashrc
 alias viprofile="vi ~/.bash_profile"
 alias prompt="vi ~/.bash_prompt"
 
+# -----------------------------------------------------------------------------
+# Shared helpers
+# -----------------------------------------------------------------------------
 # _ask <var> <prompt> - read one line into <var> in both bash and zsh.
 # zsh's `read "var?prompt"` makes bash fail with "not a valid identifier".
-# No locals here, so the caller's local <var> is the one that gets set.
+# No locals here, so it sets the caller's <var>; callers declare it local.
 _ask() {
     printf '%s' "$2" >&2
     read -r "$1"
