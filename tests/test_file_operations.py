@@ -79,6 +79,21 @@ class BakHideTests(unittest.TestCase):
                 for original in ("dir/x", "two words", "folder/inner"):
                     self.assertTrue((root / original).exists())
 
+    def test_bak_of_symlink_copies_the_target(self):
+        # The dotfiles in ~ are symlinks; a backup that is another link to the
+        # same file would change along with it.
+        for shell in ("bash", "zsh"):
+            with self.subTest(shell=shell), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "real").write_text("v1")
+                (root / "link").symlink_to("real")
+                result = run(shell, "bak link", directory)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                backup = root / ".link.bak"
+                self.assertFalse(backup.is_symlink())
+                (root / "real").write_text("v2")
+                self.assertEqual(backup.read_text(), "v1")
+
     def test_hide_renames_each_path_in_place(self):
         for shell in ("bash", "zsh"):
             with self.subTest(shell=shell), tempfile.TemporaryDirectory() as directory:
