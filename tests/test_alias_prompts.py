@@ -1,4 +1,5 @@
 """Exercise the interactive alias helpers in both supported shells."""
+import json
 import os
 from pathlib import Path
 import re
@@ -10,10 +11,11 @@ ALIASES = Path(__file__).resolve().parents[1] / "bash/.aliases"
 SHELLS = ("bash", "zsh")
 
 
-def run(shell, script, home, stdin="", cwd=None):
+def run(shell, script, home, stdin="", cwd=None, **extra_env):
     env = dict(os.environ, HOME=str(home))
-    for name in ("BASH_ENV", "ENV", "ZDOTDIR", "OPENAI_API_KEY", "PWD"):
+    for name in ("BASH_ENV", "ENV", "ZDOTDIR", "OPENAI_API_KEY", "ADDALI_MODEL", "PWD"):
         env.pop(name, None)
+    env.update(extra_env)
     return subprocess.run([shell, "-c", 'source "$1"; ' + script, "fixture", str(ALIASES)],
                           cwd=cwd or home, env=env, input=stdin, text=True,
                           capture_output=True)
@@ -72,6 +74,48 @@ class AddaliTests(unittest.TestCase):
                 result = run(shell, "addali", home, stdin="\n")
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse((Path(home) / ".aliases.local").exists())
+
+
+class SuggestNameTests(unittest.TestCase):
+    # Stub curl: keep the request body, answer with $FAKE_RESPONSE.
+    STUB = ('curl() { while [ $# -gt 0 ]; do [ "$1" = -d ] && printf "%s" "$2" > "$HOME/body.json"; '
+            'shift; done; printf "%s" "$FAKE_RESPONSE"; }; ')
+    REASONING_REPLY = json.dumps({"output": [
+        {"type": "reasoning", "summary": []},
+        {"type": "message", "content": [{"type": "output_text", "text": " qq "}]},
+    ]})
+
+    def suggest(self, shell, home, response, **extra_env):
+        return run(shell, self.STUB + "suggest_alternative_name 'l\"s' 'l\"s, ll'", home,
+                   OPENAI_API_KEY="dummy", FAKE_RESPONSE=response, **extra_env)
+
+    def test_model_comes_from_env_and_reply_after_reasoning_is_used(self):
+        for shell in SHELLS:
+            with self.subTest(shell=shell), tempfile.TemporaryDirectory() as home:
+                result = self.suggest(shell, home, self.REASONING_REPLY, ADDALI_MODEL="custom-model")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, "qq\n")
+                body = json.loads((Path(home) / "body.json").read_text())
+                self.assertEqual(body["model"], "custom-model")
+                self.assertIn('l"s, ll', body["input"])
+
+    def test_default_model_is_an_undated_alias(self):
+        for shell in SHELLS:
+            with self.subTest(shell=shell), tempfile.TemporaryDirectory() as home:
+                result = self.suggest(shell, home, self.REASONING_REPLY)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                model = json.loads((Path(home) / "body.json").read_text())["model"]
+                self.assertTrue(model)
+                self.assertNotRegex(model, r"\d{4}-?\d{2}-?\d{2}$")
+
+    def test_api_error_is_reported_instead_of_suggested(self):
+        error = json.dumps({"error": {"message": "The model `gone` does not exist"}})
+        for shell in SHELLS:
+            with self.subTest(shell=shell), tempfile.TemporaryDirectory() as home:
+                result = self.suggest(shell, home, error, ADDALI_MODEL="gone")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("The model `gone` does not exist", result.stderr)
 
 
 if __name__ == "__main__":

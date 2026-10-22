@@ -204,7 +204,8 @@ _ask() {
 # -----------------------------------------------------------------------------
 # Smart alias creator with conflict detection and AI suggestions
 # -----------------------------------------------------------------------------
-# Requires: OPENAI_API_KEY in environment
+# Requires: OPENAI_API_KEY in environment. ADDALI_MODEL overrides the model;
+# the default is an undated alias so a retired snapshot can't pin it.
 
 check_name_conflict() {
     local name="$1"
@@ -217,25 +218,36 @@ check_name_conflict() {
 suggest_alternative_name() {
     local original_name="$1"
     local conflicted_names="$2"
+    local model="${ADDALI_MODEL:-gpt-4.1-nano}"
+    local question body response suggestion
 
     if [ -z "$OPENAI_API_KEY" ]; then
         echo ""
         return 1
     fi
 
-    local prompt="I want to create a bash alias named '$original_name' but it conflicts with existing commands. These names are already taken: $conflicted_names. Please suggest 1 short alternative name (preferably 2-4 characters) that would be similar but not conflict. Reply with just the suggested name, nothing else."
+    question="I want to create a bash alias named '$original_name' but it conflicts with existing commands. These names are already taken: $conflicted_names. Please suggest 1 short alternative name (preferably 2-4 characters) that would be similar but not conflict. Reply with just the suggested name, nothing else."
+    body=$(jq -n --arg model "$model" --arg input "$question" \
+        '{model: $model, input: $input}') || return 1
 
-    local suggestion=$(curl -s -X POST \
+    response=$(curl -s -X POST \
         "https://api.openai.com/v1/responses" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
-        -d "{
-            \"model\": \"gpt-4.1-nano-2025-04-14\",
-            \"input\": \"$prompt\"
-        }" | jq -r '.output[0].content[0].text' 2>/dev/null || echo "")
+        -d "$body")
 
-    suggestion=$(echo "$suggestion" | xargs)
-    echo "$suggestion"
+    # Reasoning models put a reasoning item before the message, so don't
+    # assume the text is at output[0].
+    suggestion=$(printf '%s' "$response" | jq -r '[.output[]? | select(.type == "message")
+        | .content[]? | select(.type == "output_text") | .text][0] // empty' 2>/dev/null)
+    if [ -z "$suggestion" ]; then
+        # Say why (e.g. a retired model) instead of failing silently.
+        printf '%s' "$response" | jq -r --arg model "$model" \
+            '.error.message // empty | "OpenAI (\($model)): \(.)"' >&2 2>/dev/null
+        return 1
+    fi
+
+    echo "$suggestion" | xargs
 }
 
 addali() {
