@@ -181,21 +181,35 @@ _dot_path() {
 # bak <path>... - copy each path to a hidden backup beside it: dir/x -> dir/.x.bak
 # -H copies what a symlink named here points to (the dotfiles in ~ are links),
 # instead of a second link that changes along with the original.
+# An existing backup is left alone; remove it first to take a new one.
 bak() {
-    local f result=0
+    local f dest result=0
     [[ $# -gt 0 ]] || { echo "bak: missing operand" >&2; return 1; }
     for f in "$@"; do
-        cp -vRH -- "$f" "$(_dot_path "$f").bak" || result=1
+        dest="$(_dot_path "$f").bak"
+        if [[ -e $dest || -L $dest ]]; then
+            echo "bak: '$dest' already exists" >&2
+            result=1
+        else
+            cp -vRH -- "$f" "$dest" || result=1
+        fi
     done
     return "$result"
 }
 
 # hide <path>... - hide each path in place: dir/x -> dir/.x
+# Refuses when the hidden name is already taken instead of overwriting it.
 hide() {
-    local f result=0
+    local f dest result=0
     [[ $# -gt 0 ]] || { echo "hide: missing operand" >&2; return 1; }
     for f in "$@"; do
-        mv -v -- "$f" "$(_dot_path "$f")" || result=1
+        dest=$(_dot_path "$f")
+        if [[ -e $dest || -L $dest ]]; then
+            echo "hide: '$dest' already exists" >&2
+            result=1
+        else
+            mv -v -- "$f" "$dest" || result=1
+        fi
     done
     return "$result"
 }

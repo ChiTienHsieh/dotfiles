@@ -107,6 +107,30 @@ class BakHideTests(unittest.TestCase):
                 for original in ("dir/x", "two words", "folder"):
                     self.assertFalse(os.path.lexists(root / original))
 
+    def test_existing_target_is_left_alone(self):
+        for shell in ("bash", "zsh"):
+            with self.subTest(shell=shell, command="hide"), \
+                    tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.make_files(root)
+                (root / "dir/.x").write_text("keep")
+                result = run(shell, 'hide dir/x "two words"', directory)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((root / "dir/.x").read_text(), "keep")
+                self.assertEqual((root / "dir/x").read_text(), "nested")
+                self.assertEqual((root / ".two words").read_text(), "spaced")
+            with self.subTest(shell=shell, command="bak"), \
+                    tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.make_files(root)
+                (root / ".folder.bak").mkdir()
+                (root / "dir/.x.bak").write_text("old")
+                result = run(shell, 'bak folder dir/x "two words"', directory)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(os.listdir(root / ".folder.bak"), [])
+                self.assertEqual((root / "dir/.x.bak").read_text(), "old")
+                self.assertEqual((root / ".two words.bak").read_text(), "spaced")
+
     def test_missing_path_fails_but_others_still_run(self):
         for shell in ("bash", "zsh"):
             for command, created in (("bak", "dir/.x.bak"), ("hide", "dir/.x")):
