@@ -170,8 +170,55 @@ trash() {
     done
     return "$trash_result"
 }
-bak() { cp -vr "$@" ".${@}.bak"; }      # Create backup with .bak suffix
-hide() { mv -v "$@" ".${@}"; }          # Hide file (prepend dot)
+
+# _dot_path <path> - add a dot to the last part of a path: dir/x -> dir/.x
+_dot_path() {
+    local parent leaf
+    parent=$(dirname -- "$1") && leaf=$(basename -- "$1") || return 1
+    printf '%s/.%s\n' "$parent" "$leaf"
+}
+
+# bak [--] <path>... - copy each path to a hidden backup beside it: dir/x -> dir/.x.bak
+# -H copies what a symlink named here points to (the dotfiles in ~ are links),
+# instead of a second link that changes along with the original.
+# An existing backup is left alone; remove it first to take a new one.
+bak() {
+    local f dest result=0
+    if [[ "$1" == "--" ]]; then
+        shift
+    fi
+    [[ $# -gt 0 ]] || { echo "bak: missing operand" >&2; return 1; }
+    for f in "$@"; do
+        dest="$(_dot_path "$f").bak"
+        if [[ -e $dest || -L $dest ]]; then
+            echo "bak: '$dest' already exists" >&2
+            result=1
+        else
+            cp -vRH -- "$f" "$dest" || result=1
+        fi
+    done
+    return "$result"
+}
+
+# hide [--] <path>... - hide each path in place: dir/x -> dir/.x
+# Refuses when the hidden name is already taken instead of overwriting it.
+hide() {
+    local f dest result=0
+    if [[ "$1" == "--" ]]; then
+        shift
+    fi
+    [[ $# -gt 0 ]] || { echo "hide: missing operand" >&2; return 1; }
+    for f in "$@"; do
+        dest=$(_dot_path "$f")
+        if [[ -e $dest || -L $dest ]]; then
+            echo "hide: '$dest' already exists" >&2
+            result=1
+        else
+            mv -v -- "$f" "$dest" || result=1
+        fi
+    done
+    return "$result"
+}
 
 # Find large files
 Find_files_bigger_than() {
@@ -194,9 +241,21 @@ alias viprofile="vi ~/.bash_profile"
 alias prompt="vi ~/.bash_prompt"
 
 # -----------------------------------------------------------------------------
+# Shared helpers
+# -----------------------------------------------------------------------------
+# _ask <var> <prompt> - read one line into <var> in both bash and zsh.
+# zsh's `read "var?prompt"` makes bash fail with "not a valid identifier".
+# No locals here, so it sets the caller's <var>; callers declare it local.
+_ask() {
+    printf '%s' "$2" >&2
+    read -r "$1"
+}
+
+# -----------------------------------------------------------------------------
 # Smart alias creator with conflict detection and AI suggestions
 # -----------------------------------------------------------------------------
-# Requires: OPENAI_API_KEY in environment
+# Requires: OPENAI_API_KEY in environment. ADDALI_MODEL overrides the model;
+# the default is an undated alias so a retired snapshot can't pin it.
 
 check_name_conflict() {
     local name="$1"
@@ -209,24 +268,43 @@ check_name_conflict() {
 suggest_alternative_name() {
     local original_name="$1"
     local conflicted_names="$2"
+    local model="${ADDALI_MODEL:-gpt-4.1-nano}"
+    local question body response suggestion
+    local name_re='^[A-Za-z0-9_][A-Za-z0-9_.-]*$'
 
     if [ -z "$OPENAI_API_KEY" ]; then
         echo ""
         return 1
     fi
 
-    local prompt="I want to create a bash alias named '$original_name' but it conflicts with existing commands. These names are already taken: $conflicted_names. Please suggest 1 short alternative name (preferably 2-4 characters) that would be similar but not conflict. Reply with just the suggested name, nothing else."
+    question="I want to create a bash alias named '$original_name' but it conflicts with existing commands. These names are already taken: $conflicted_names. Please suggest 1 short alternative name (preferably 2-4 characters) that would be similar but not conflict. Reply with just the suggested name, nothing else."
+    body=$(jq -n --arg model "$model" --arg input "$question" \
+        '{model: $model, input: $input}') || return 1
 
-    local suggestion=$(curl -s -X POST \
+    response=$(curl -s -X POST \
         "https://api.openai.com/v1/responses" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
-        -d "{
-            \"model\": \"gpt-4.1-nano-2025-04-14\",
-            \"input\": \"$prompt\"
-        }" | jq -r '.output[0].content[0].text' 2>/dev/null || echo "")
+        -d "$body")
 
-    suggestion=$(echo "$suggestion" | xargs)
+    # Reasoning models put a reasoning item before the message, so don't
+    # assume the text is at output[0].
+    suggestion=$(printf '%s' "$response" | jq -r '[.output[]? | select(.type == "message")
+        | .content[]? | select(.type == "output_text") | .text][0] // empty' 2>/dev/null)
+    if [ -z "$suggestion" ]; then
+        # Say why (e.g. a retired model) instead of failing silently.
+        printf '%s' "$response" | jq -r --arg model "$model" \
+            '.error.message // empty | "OpenAI (\($model)): \(.)"' >&2 2>/dev/null
+        return 1
+    fi
+
+    # addali writes the name into ~/.aliases.local, which every shell sources,
+    # so only accept a plain name.
+    suggestion=$(echo "$suggestion" | xargs 2>/dev/null)
+    if [[ ! $suggestion =~ $name_re ]]; then
+        echo "OpenAI ($model) did not reply with a plain name" >&2
+        return 1
+    fi
     echo "$suggestion"
 }
 
@@ -235,8 +313,9 @@ addali() {
     local conflicted_names=""
     local llm_calls=0
     local max_llm_calls=5
+    local suggested_name choice alias_command alias_command_escaped full_alias
 
-    read "alias_name?Enter the alias name: "
+    _ask alias_name "Enter the alias name: "
 
     if [ -z "$alias_name" ]; then
         echo "Alias name cannot be empty!"
@@ -251,7 +330,7 @@ addali() {
 
         if [ $llm_calls -ge $max_llm_calls ]; then
             echo "(╯°□°)╯ Max LLM calls reached"
-            read "alias_name?Enter name: "
+            _ask alias_name "Enter name: "
             [ -z "$alias_name" ] && return 1
             continue
         fi
@@ -262,14 +341,14 @@ addali() {
 
         if [ -z "$suggested_name" ]; then
             echo "(´・ω・\`) AI failed"
-            read "alias_name?Enter name: "
+            _ask alias_name "Enter name: "
         else
             echo "(°▽°) Suggestion: '$suggested_name'"
-            read "choice?Accept? (y/n/manual): "
+            _ask choice "Accept? (y/n/manual): "
             case $choice in
                 y|Y) alias_name="$suggested_name" ;;
                 n|N) conflicted_names="$conflicted_names, $alias_name"; continue ;;
-                *)   read "alias_name?Enter your preferred name: " ;;
+                *)   _ask alias_name "Enter your preferred name: " ;;
             esac
         fi
 
@@ -278,7 +357,7 @@ addali() {
 
     echo "(・∀・) '$alias_name' available"
 
-    read "alias_command?Enter the command to alias: "
+    _ask alias_command "Enter the command to alias: "
     [ -z "$alias_command" ] && echo "Command cannot be empty!" && return 1
 
     alias_command_escaped=$(echo "$alias_command" | sed "s/'/'\\\\''/g")
@@ -296,8 +375,9 @@ addali() {
 # Usage: navigate to a directory, run `addcd`, enter alias name
 addcd() {
     local current_dir="$(pwd)"
+    local alias_name
 
-    read "alias_name?Alias name to cd here ($current_dir): "
+    _ask alias_name "Alias name to cd here ($current_dir): "
 
     if [ -z "$alias_name" ]; then
         echo "(´・ω・\`) Name required"
@@ -307,7 +387,7 @@ addcd() {
     # Check for conflicts
     if check_name_conflict "$alias_name"; then
         echo "(・_・;) '$alias_name' exists: $(type "$alias_name" 2>&1 | head -1)"
-        read "alias_name?Different name: "
+        _ask alias_name "Different name: "
         [ -z "$alias_name" ] && return 1
 
         if check_name_conflict "$alias_name"; then
@@ -393,6 +473,7 @@ pp() {
 # pc - Preview prompt, confirm, send to claude (interactive mode)
 pc() {
     local prompts_dir="/tmp/prompts"
+    local confirm confirm2
 
     if [[ ! -d "$prompts_dir" ]]; then
         echo "(´・ω・\`) $prompts_dir doesn't exist"
@@ -412,7 +493,7 @@ pc() {
     echo "=== END PREVIEW ==="
     echo ""
 
-    read "confirm?Send to claude? (y/n/e to edit): "
+    _ask confirm "Send to claude? (y/n/e to edit): "
     case "$confirm" in
         y|Y)
             claude "$(cat "$latest")"
@@ -420,7 +501,7 @@ pc() {
         e|E)
             nvim "$latest"
             # After editing, ask again
-            read "confirm2?Send now? (y/n): "
+            _ask confirm2 "Send now? (y/n): "
             [[ "$confirm2" == "y" || "$confirm2" == "Y" ]] && claude "$(cat "$latest")"
             ;;
         *)
@@ -479,20 +560,8 @@ wheredef() {
 }
 
 # -----------------------------------------------------------------------------
-# Claude Code MCP helpers
+# Claude Code helpers
 # -----------------------------------------------------------------------------
-cldaddcontext7() {
-    echo "(°ロ°) Adding Context7 MCP..."
-    claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
-    echo "(ﾉ◕ヮ◕)ﾉ Use 'use context7' in prompts"
-}
-
-cldaddplaywright() {
-    echo "(°ロ°) Adding Playwright MCP..."
-    claude mcp add playwright npx @playwright/mcp@latest
-    echo "(ﾉ◕ヮ◕)ﾉ Say 'use playwright mcp to open browser'"
-}
-
 # Safe planning session for sensitive dirs (e.g. ~).
 # plan mode  = CC can read & propose a plan, but cannot edit/move/delete anything.
 # safe-mode disables customizations, hooks, plugins, skills, and MCP servers.
