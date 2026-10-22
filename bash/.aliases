@@ -170,8 +170,33 @@ trash() {
     done
     return "$trash_result"
 }
-bak() { cp -vr "$@" ".${@}.bak"; }      # Create backup with .bak suffix
-hide() { mv -v "$@" ".${@}"; }          # Hide file (prepend dot)
+
+# _dot_path <path> - add a dot to the last part of a path: dir/x -> dir/.x
+_dot_path() {
+    local parent leaf
+    parent=$(dirname -- "$1") && leaf=$(basename -- "$1") || return 1
+    printf '%s/.%s\n' "$parent" "$leaf"
+}
+
+# bak <path>... - copy each path to a hidden backup beside it: dir/x -> dir/.x.bak
+bak() {
+    local f result=0
+    [[ $# -gt 0 ]] || { echo "bak: missing operand" >&2; return 1; }
+    for f in "$@"; do
+        cp -vR -- "$f" "$(_dot_path "$f").bak" || result=1
+    done
+    return "$result"
+}
+
+# hide <path>... - hide each path in place: dir/x -> dir/.x
+hide() {
+    local f result=0
+    [[ $# -gt 0 ]] || { echo "hide: missing operand" >&2; return 1; }
+    for f in "$@"; do
+        mv -v -- "$f" "$(_dot_path "$f")" || result=1
+    done
+    return "$result"
+}
 
 # Find large files
 Find_files_bigger_than() {

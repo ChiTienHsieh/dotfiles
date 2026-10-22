@@ -1,4 +1,4 @@
-"""Exercise trash in both supported shells with real disposable files."""
+"""Exercise trash, bak and hide in both supported shells with real disposable files."""
 import os
 from pathlib import Path
 import subprocess
@@ -50,6 +50,59 @@ class TrashTests(unittest.TestCase):
                                             env=dict(os.environ, HOME=directory),
                                             text=True, capture_output=True)
                     self.assertNotEqual(result.returncode, 0)
+
+
+def run(shell, command, directory):
+    return subprocess.run([shell, "-c", 'source "$1"; ' + command, "fixture", str(ALIASES)],
+                          cwd=directory, env=dict(os.environ, HOME=directory),
+                          text=True, capture_output=True)
+
+
+class BakHideTests(unittest.TestCase):
+    def make_files(self, root):
+        (root / "dir").mkdir()
+        (root / "dir/x").write_text("nested")
+        (root / "two words").write_text("spaced")
+        (root / "folder").mkdir()
+        (root / "folder/inner").write_text("inner")
+
+    def test_bak_copies_each_path_beside_itself(self):
+        for shell in ("bash", "zsh"):
+            with self.subTest(shell=shell), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.make_files(root)
+                result = run(shell, 'bak dir/x "two words" folder/', directory)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual((root / "dir/.x.bak").read_text(), "nested")
+                self.assertEqual((root / ".two words.bak").read_text(), "spaced")
+                self.assertEqual((root / ".folder.bak/inner").read_text(), "inner")
+                for original in ("dir/x", "two words", "folder/inner"):
+                    self.assertTrue((root / original).exists())
+
+    def test_hide_renames_each_path_in_place(self):
+        for shell in ("bash", "zsh"):
+            with self.subTest(shell=shell), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.make_files(root)
+                result = run(shell, 'hide dir/x "two words" folder/', directory)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual((root / "dir/.x").read_text(), "nested")
+                self.assertEqual((root / ".two words").read_text(), "spaced")
+                self.assertEqual((root / ".folder/inner").read_text(), "inner")
+                for original in ("dir/x", "two words", "folder"):
+                    self.assertFalse(os.path.lexists(root / original))
+
+    def test_missing_path_fails_but_others_still_run(self):
+        for shell in ("bash", "zsh"):
+            for command, created in (("bak", "dir/.x.bak"), ("hide", "dir/.x")):
+                with self.subTest(shell=shell, command=command), \
+                        tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    self.make_files(root)
+                    result = run(shell, command + " missing dir/x", directory)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertTrue((root / created).exists())
+                    self.assertNotEqual(run(shell, command, directory).returncode, 0)
 
 
 if __name__ == "__main__":
