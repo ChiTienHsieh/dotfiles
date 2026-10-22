@@ -161,8 +161,13 @@ def absolute_paths_in(value: object) -> set[Path]:
     except TypeError:
         text = str(value)
 
+    try:
+        home = re.escape(str(Path.home()))
+    except RuntimeError:
+        return set()
+
     paths: set[Path] = set()
-    for match in re.finditer(r"/Users/[^\s\"'`<>|;&{}()\[\]]+", text):
+    for match in re.finditer(home + r"/[^\s\"'`<>|;&{}()\[\]]+", text):
         raw = match.group(0).rstrip(",:.")
         paths.add(Path(raw))
     return paths
