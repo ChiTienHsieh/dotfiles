@@ -267,6 +267,7 @@ suggest_alternative_name() {
     local conflicted_names="$2"
     local model="${ADDALI_MODEL:-gpt-4.1-nano}"
     local question body response suggestion
+    local name_re='^[A-Za-z0-9_][A-Za-z0-9_.-]*$'
 
     if [ -z "$OPENAI_API_KEY" ]; then
         echo ""
@@ -294,7 +295,14 @@ suggest_alternative_name() {
         return 1
     fi
 
-    echo "$suggestion" | xargs
+    # addali writes the name into ~/.aliases.local, which every shell sources,
+    # so only accept a plain name.
+    suggestion=$(echo "$suggestion" | xargs 2>/dev/null)
+    if [[ ! $suggestion =~ $name_re ]]; then
+        echo "OpenAI ($model) did not reply with a plain name" >&2
+        return 1
+    fi
+    echo "$suggestion"
 }
 
 addali() {

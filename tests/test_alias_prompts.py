@@ -129,6 +129,15 @@ class SuggestNameTests(unittest.TestCase):
                 self.assertTrue(model)
                 self.assertNotRegex(model, r"\d{4}-?\d{2}-?\d{2}$")
 
+    def test_reply_that_is_not_a_plain_name_is_rejected(self):
+        for text in ("x; touch pwned", "it's", "two\nlines", "-x"):
+            for shell in SHELLS:
+                with self.subTest(shell=shell, text=text), \
+                        tempfile.TemporaryDirectory() as home:
+                    result = self.suggest(shell, home, reply(text))
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(result.stdout, "")
+
     def test_api_error_is_reported_instead_of_suggested(self):
         error = json.dumps({"error": {"message": "The model `gone` does not exist"}})
         for shell in SHELLS:
