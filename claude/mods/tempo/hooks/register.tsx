@@ -15,7 +15,7 @@ const GO_NOTE = `【Tempo：autonomous】Sprin 不想被問，能自己判斷的
 - 該列選項時直接採推薦項，一句話交代理由。
 - 能自己測的自己驗，別叫他動手。
 - 做不完的講清楚卡在哪，不留給下一個 agent。
-- 機密、force-push、付費、不可回復的刪除、push 到別人的 repo：照舊先問。`
+- 機密、破壞性 Git（force-push／reset／discard）、付費、資料遺失、對外送出、push 到別人的 repo：照舊先問。`
 
 // 切換當下留給模型的一句，讓進行中的對話馬上知道節奏換了。
 const NOTE: Record<Mode, string> = {
@@ -30,7 +30,7 @@ async function switchTo($: EngineInterface, next: Mode) {
 
   await update($, mode, () => next)
   $.ui.status(next === 'go' ? 'Tempo：autonomous' : undefined)
-  // 留不下來（例如這個 run 不讓 plugin 寫）也沒關係，下一則 prompt 照樣依 mode 附規則。
+  // append 被拒（這個 run 不讓 plugin 寫）也沒關係，下一則 prompt 照樣依 mode 附規則。
   await $.session
     .append({ message: { type: 'user', content: [{ type: 'text', text: NOTE[next] }] } })
     .catch(() => undefined)
@@ -83,11 +83,10 @@ export const register: Register = on => {
     return (
       <Box>
         <Text dimColor>Tempo </Text>
-        {MODES.map((m, i) => (
+        {MODES.map(m => (
           <Button
             key={m}
             label={LABEL[m]}
-            hotkey={String(i)}
             variant={m === current ? 'primary' : 'secondary'}
             onPress={() => switchTo($, m)}
           />
