@@ -110,7 +110,7 @@ Some terminals map `Shift+Tab` differently. If `BTab` does not work, proceed wit
 
 ## Sending Prompts
 
-- Right before sending, re-capture the target pane and confirm what it is doing now. If you cannot read it or cannot tell what it is doing, do not send; report the blocker instead.
+- Right before sending, re-capture the target pane to apply the re-read rule in `delegate` (`## 傳訊與權限`).
 - Put long prompts in a scratch file.
 - Send one concise instruction that tells the worker to read that file.
 - Default to `scripts/agent-send-prompt.sh PANE 'ONE-LINE PROMPT'`; it pastes the literal prompt, verifies it is visible, sends Enter separately, and retries Enter once if needed.
