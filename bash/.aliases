@@ -39,6 +39,7 @@ alias t="type"                          # Check what a command is
 # macOS specific
 alias pbc="pbcopy"                      # Copy to clipboard
 alias fixclip="killall useractivityd sharingd"  # Unstick iPhone<->Mac Universal Clipboard
+alias fixpb="fixclip"                   # fixpb = fixclip (same thing)
 Textedit() { open -e "$@"; }            # Open in TextEdit
 
 # Recover normal Chrome when orphaned Playwright daemons keep it headless.
