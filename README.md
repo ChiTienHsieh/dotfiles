@@ -29,7 +29,7 @@ dotfiles/
 ├── bun/ npm/ pnpm/                  # seeds for local package-manager safeguards
 ├── nvim/                            # Neovim config (git submodule)
 ├── agents/                          # AGENTS.md shared by all agents + notes
-├── claude/                          # Claude Code: CLAUDE.md, settings, hooks, agents
+├── claude/                          # Claude Code: CLAUDE.md, settings, hooks, agents, mods
 ├── codex/                           # Codex CLI: config seed + portable overlay, hooks, sandbox profiles
 ├── grok/                            # Grok: sandbox profile
 ├── skills/                          # shared/, claude/, codex/ skills
