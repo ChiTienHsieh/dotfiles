@@ -1,13 +1,13 @@
 ---
 name: html-explainer
-description: Recipe for effective self-contained HTML learning artifacts — single-file explainer pages that teach ONE concept through a strong analogy carried throughout, an interactive micro-world the reader manipulates, and a built-in comprehension quiz. Use when the user asks for an HTML explainer, learning page, concept lesson, or a code/diff explainer doc that teaches a person to understand a change (not a merge-decision review).
+description: 做出有效的單檔 HTML 學習頁的配方：一頁只教一個概念，靠一個貫穿全頁的類比、一個讀者可以動手玩的互動小世界，和一組內建的理解測驗。使用者要 HTML explainer、學習頁、概念課，或要一份教人看懂某次改動的 code／diff 解說頁（不是決定要不要 merge 的 review）時用。
 ---
 
 # html-explainer — 有效的 HTML 學習頁配方
 
 一份自包含 HTML，教懂**一個概念**。目標不是讓讀者「看過」，是讓讀者變成**參與者**：讀完能預測行為、能推到沒教過的情境、能判斷 AI 的輸出是不是唬爛。
 
-## 三支柱（缺一份就不算學習頁）
+## 三支柱（少一根就不算學習頁）
 
 1. **解說** —— 先背景、再直覺、最後細節。
 2. **微世界** —— 讀者親手操作概念，不是看動畫。
@@ -28,7 +28,7 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 - 類比**就是**解說本身，不是旁邊的裝飾。讀者跟著故事走完，概念就該吸收進去；最後才用一行錨點對回術語（「這在技術上叫 X」）。
 - **一頁一類比**，從背景一路扛到測驗，絕不中途換世界觀、絕不混搭兩套比喻。
 - 挑類比先想「扛得動整個概念嗎」：只撐得起前兩段的類比是壞類比。
-- 類比要用讀者真的活過的世界。呼叫方若已指定讀者的偏好框架就沿用它；專有名詞不確定就查證或停在機制層，不要憑印象掰。
+- 類比要從讀者自己的生活經驗裡挑。呼叫方若已指定讀者的偏好框架就沿用它；專有名詞不確定就查證或停在機制層，不要憑印象掰。
 - 角色稱呼要自然變化但保留身分線索；避免每次重複「名字＝職位」模板。同一角色可依場景改用職稱或口語稱呼，但不要為變化而新增難記角色。
 
 ## 微世界設計
@@ -61,7 +61,7 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 - 直覺 = 這次改動的目標與本質，一句話
 - 微世界 = 可玩的關鍵行為（改前 vs 改後對照、逐步執行器）
 - 細節走讀 = literate diff：照理解順序走過改動，散文串接、嵌 code 片段
-- 測驗 = 5 題關於這次改動；若呼叫方明確指定 learning-gated learning/code-explainer 交接，沒過才不往下游送
+- 測驗 = 5 題，全考這次改動；只有呼叫方明確指定 learning-gated learning/code-explainer 交接時，沒過才擋下不往下游送
 - 一次性解說檔預設放目標 repo 外；若呼叫方要納入 docs，才放進 repo。
 
 ## 交付與驗收
@@ -75,5 +75,5 @@ description: Recipe for effective self-contained HTML learning artifacts — sin
 
 ## 跟其他 skill 的分工
 
-- **html-artifacts**：一般工作產出（計畫、review、報告）的 HTML。學習頁歸這裡。目的不是「教懂人」的一般 report/review，不用本 skill。
+- **html-artifacts**：一般工作產出（計畫、review、報告）的 HTML。學習頁歸本 skill。目的不是「教懂人」的一般 report/review，不用本 skill。
 - **playground / dataviz**：前者是「調參數→複製 prompt」工具、後者是圖表規範——都不是教學頁；但微世界需要圖表時可參照 dataviz 的配色紀律。
