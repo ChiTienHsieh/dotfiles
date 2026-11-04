@@ -1,6 +1,6 @@
 # Codex CLI 筆記
 
-Codex CLI / app 的怪癖、死路，和只在特定版本成立的發現。每條標日期，過時就刪。委派相關的怪癖（tmux 經 Guardian、hooks、CodexBar、`codex review`）在 `skills/shared/delegate/runbook/codex.md` 的 Quirks 段。
+Codex CLI / app 的怪癖、死路，和只在特定版本成立的發現。每條標日期，過時就刪。委派相關的怪癖（tmux 經 Guardian、hooks、CodexBar、`codex review`）在 `skills/shared/delegate/runbook/codex.md` 的「眉角」段。
 
 ## Portable config sync（2026-08-08、`codex-cli 0.145.0` 官方文件與 live RPC 驗證）
 
