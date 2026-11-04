@@ -14,5 +14,5 @@
 
 ## `.claude/` writes — 高摩擦，整併再動
 - 修改 Claude Code 設定或處理可由設定根治的摩擦前，先讀 `~/dotfiles/claude/notes/settings-friction.md`。
-- 規劃與高層對齊用 `level-up` skill 的 preflight，不用 Plan Mode 的 plan file：高層決定會牽動之後一連串低層決定，一份 plan.md 記不住那份共識。
+- 規劃、對大方向用 `level-up` skill 的 preflight，不用 Plan Mode 的 plan file：大方向一定，後面一連串細節決定都跟著變，一份 plan.md 記不住那份共識。
 - 臨時筆記 / WIP 放 `~/scratch/`、`/tmp/` 或 repo 內 notes 資料夾，不往 `.claude/` 倒（`.claude/plans/` 是 Plan Mode 專屬）。

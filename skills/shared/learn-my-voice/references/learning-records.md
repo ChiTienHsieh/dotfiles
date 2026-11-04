@@ -1,6 +1,6 @@
 # Persistent learning records
 
-這一層保存跨專案仍有用的抽象寫作選擇；公開內容邊界以 `voice-profile.md` 為準。
+這一層放跨專案都用得上的寫作偏好，記原則不記原文；哪些能公開，以 `voice-profile.md` 為準。
 
 ## 位置與同步
 
@@ -19,9 +19,9 @@ learning/
 profile 指定的 dotfiles 程式碼庫追蹤。驗證失敗時停止，不寫入副本、快取、其他
 checkout 或替代紀錄位置。
 
-每次更新先讀取並遵守 `voice-profile.md` 的公開同步決定：
+每次更新前先讀 `voice-profile.md`，照它寫的公開和同步方式做：
 
-1. 只保存會改變未來代筆結果的最小公開證據。
+1. 只記會改變之後代筆寫法的證據，能公開的才記、越少越好。
 2. 沿用 [exploration-workflow.md](exploration-workflow.md) 的 commit boundary，只處理
    本輪更新的 `learning/` 檔案；不明變更依 `tidy-workspace` 處理。
 3. 同步到 profile 指定的公開 dotfiles 程式碼庫。

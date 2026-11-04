@@ -29,7 +29,7 @@ metadata:
    - ChatGPT 分享對話：`scripts/fetch_chatgpt_share.py`。
    - claude.ai 分享對話：`scripts/fetch_claude_share.py`（見下方「抓 claude.ai 分享對話」）。
    - YouTube 影片：先讀 [references/youtube.md](references/youtube.md)，適合抓字幕時再用 `scripts/fetch_youtube_transcript.py`。
-3. 輸出存在這次任務自己的目錄，依網址類型通常是 `fetched-chatgpt/`、`fetched-claude/` 或 `fetched-youtube/`。
+3. 輸出放在這次任務自己的目錄下，依網址類型通常是 `fetched-chatgpt/`、`fetched-claude/` 或 `fetched-youtube/`。
 4. agent 閱讀時優先用輸出的 Markdown；之後要做結構化處理就用 JSON。
 5. ChatGPT 分享要留著原始 HTML，之後改進 parser 時就不用重抓。
 
