@@ -5,8 +5,8 @@
 預設 branch 名為 `explore/<topic-slug>`，從目前 `HEAD` 建立。
 
 - Checkpoint 只包含本輪明確範圍內的 Markdown 與專案 voice notes。
-- 同一 worktree 出現任務外或來源不明的變更時，依 `tidy-workspace` 處理；若沒有
-  變更負責範圍協調流程可用，就保留現況並停止。未確認的檔案或 diff 區塊不得
+- 同一 worktree 出現任務外或來源不明的變更時，依 `tidy-workspace` 處理；沒辦法
+  釐清這些變更歸誰管，就先不動、停下來。未確認的檔案或 diff 區塊不得
   納入 commit。
 
 Explore branch 保存探索過程，不代表內容已定稿或獲使用者認可。
@@ -26,7 +26,7 @@ SSOT。初始格式：
 - Co-edited files: `<paths>`
 
 ## Confirmed choices
-- 使用者明確說過，或具備足夠修改證據的寫法。
+- 使用者明確說過，或從他多次修改看得出來的寫法。
 
 ## Working hypotheses
 - 從修改推測、仍需更多證據的偏好。
@@ -42,15 +42,15 @@ SSOT。初始格式：
 
 ### Commit boundary
 
-只暫存本輪明確擁有的檔案。若 index（暫存區）已有其他內容，只有在目標檔案沒有
+只暫存本輪負責的檔案。若 index（暫存區）已有其他內容，只有在目標檔案沒有
 partial staging（同檔只暫存部分修改），而且目前完整內容就是要保存的 checkpoint
 時，才能用 `git commit --only -- <paths>`；commit 後確認原有 staged diff 未變。
 無法證明時停止，不移動既有 staged state。
 
 ### Agent 動筆前
 
-重新讀取目標內容與 diff。若範圍內已有適合進 Git 歷史的變更，只保存明確檔案
-路徑：只有能確認由使用者完成時才用 `explore(user): <brief intent>`；來源不明或
+重新讀取目標內容與 diff。若範圍內已有適合進 Git 歷史的變更，只 commit 指名的那幾個
+檔案：只有能確認由使用者完成時才用 `explore(user): <brief intent>`；來源不明或
 混合時用 `explore(checkpoint): <brief intent>`，且不能拿來建立使用者偏好。
 
 ### Agent 修改後

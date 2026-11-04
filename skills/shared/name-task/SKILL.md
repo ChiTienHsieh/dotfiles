@@ -1,9 +1,9 @@
 ---
 name: name-task
-description: 更新 task／session 標題。當使用者要求 name／rename task、送出最後回覆前 task 到達有意義的等待、理解或完成節點（一般 turn 結束不改名），或 Chief of Staff／排程工作要整理標題時使用。
+description: 更新 task／session 標題。當使用者要求 name／rename task、送最後回覆前 task 剛好走到值得標記的點：要等使用者、有東西要使用者看懂、或做完了（一般 turn 結束不改名），或 Chief of Staff／排程工作要整理標題時使用。
 ---
 
-只有標題能幫助使用者看出下一步行動或應理解內容時才更新。
+只有改標題能讓使用者看出下一步要做什麼、或有什麼要看懂時，才改。
 
 ## 流程
 
