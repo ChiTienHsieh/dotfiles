@@ -1,16 +1,16 @@
-# 設定可解的摩擦 → 建議 `/fork`（lazy — 收尾回顧時讀）
+# 改設定就能根治的摩擦 → 建議 `/fork`（lazy — 收尾回顧時讀）
 
 從 `claude/CLAUDE.md` 移出的完整做法。觸發條件寫在 CLAUDE.md，細節在這。
 
 ## 修改 Claude Code 設定
 
-- `settings*.json`、`hooks/`、`skills/`、`plans/`、`scheduled_tasks` 等受保護路徑寫入會跳確認；改 `~/.claude/agents/*.md`、`keybindings.json`、`settings*.json` 前先跟 user 對齊動機。
+- `settings*.json`、`hooks/`、`skills/`、`plans/`、`scheduled_tasks` 等受保護路徑寫入會跳確認；改 `~/.claude/agents/*.md`、`keybindings.json`、`settings*.json` 前，先跟 user 講清楚為什麼要改。
 - 把相關設定修改整併後再動，不要一次編一行、反覆觸發確認。
 
-## 設定可解的摩擦 → 建議 `/fork`
+## 改設定就能根治的摩擦 → 建議 `/fork`
 
 - **觸發時機**：任務做完回顧時，發現某個摩擦（沙盒一直擋某指令、某類指令每次跳權限確認、缺 alias / hook / 權限）其實用 Claude Code 設定就能根治 → 主動提醒使用者。
 - **為什麼用 `/fork`**：當下 thread 改設定會打斷主線、又觸發 `.claude/` 寫入確認。`/fork` 岔出一條保留同樣 context 的對話，在那邊單獨處理設定，主線乾淨。
 - **CC 要給的東西**：一句**很短的 zh-tw prompt**，使用者貼到 fork 對話就能直接叫 CC 動手。fork 的 context 一樣，不用重述背景 — 只講「要設定什麼」。
 - **一定要附上安全判斷**：簡短說明「這個設定改了安不安全 / 有什麼副作用」，讓使用者自己決定。不要只丟指令不講風險。
-- **不要每次都觸發** — 只有摩擦真的「設定可解」且「值得一勞永逸」才提；一次性小卡頓不用講。
+- **不要每次都觸發** — 只有那個摩擦真的「改設定就能根治」而且「值得一勞永逸」才提；一次性小卡頓不用講。
