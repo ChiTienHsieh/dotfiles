@@ -1,12 +1,12 @@
 ---
-name: wife-pdf
-description: Create plain zh-TW Typst/PDF decision documents for non-technical family readers. Use for a wife PDF, spouse/family-friendly summary, or an explanation of technical, career, financial, or household choices.
+name: warm-pdf
+description: Create plain, warm zh-TW Typst/PDF documents that walk a non-technical reader (family, manager, client) through a decision. Use when someone needs a friendly, conclusion-first explanation of a technical, career, financial, or everyday choice, delivered as Typst source plus a compiled PDF.
 disable-model-invocation: true
 ---
 
-# wife-pdf
+# warm-pdf
 
-用 Typst 製作清楚、溫暖、決策導向的 zh-TW 家庭文件，同時交付 source 與編譯後 PDF。
+用 Typst 製作清楚、溫暖、先講結論的 zh-TW 文件，給非技術背景的讀者看一個決策；同時交付 source 與編譯後 PDF。
 
 ## Resources
 
@@ -16,7 +16,7 @@ disable-model-invocation: true
 
 ## Content contract
 
-- 用自然的 zh-TW 和日常語彙，把技術概念改寫成非技術背景的家人能快速理解的版本。
+- 用自然的 zh-TW 和日常語彙，把技術概念改寫成非技術背景的讀者能快速理解的版本。
 - 先說結論，再說理由；保持短句、短段落，用表格或色塊比較選項、條件、時間與風險。
 - 單頁 PDF 至少自然放一個 kaomoji；多頁文件少量使用，不要每頁硬塞。
 
