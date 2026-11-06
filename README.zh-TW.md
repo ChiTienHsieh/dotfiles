@@ -17,7 +17,7 @@ cd ~/dotfiles
 source ~/.bash_profile
 ```
 
-`install.sh` 把 `~` 下的每個檔案連結到這個 repo。會被覆蓋的檔案先備份到 `~/.dotfiles_backup/<時間戳>/`，要移除就把備份複製回去。
+`install.sh` 把 `~` 下的每個檔案連結到這個 repo。會被覆蓋的檔案先備份到 `~/.dotfiles_backup/<時間戳>/`，想還原（解除安裝）就把備份複製回去。
 
 ## 內容
 
@@ -26,7 +26,7 @@ dotfiles/
 ├── bash/ zsh/ vim/ tmux/ ghostty/ zed/   # shell、編輯器、終端機設定
 ├── git/                             # .gitconfig、全域 ignore、pre-commit hooks
 ├── gh/                              # GitHub CLI 設定
-├── bun/ npm/ pnpm/                  # 本機套件管理器防護的種子檔
+├── bun/ npm/ pnpm/                  # 套件管理器的防護設定（seed，只複製一次）
 ├── nvim/                            # Neovim 設定（git submodule）
 ├── agents/                          # 所有 agent 共用的 AGENTS.md 與 notes
 ├── claude/                          # Claude Code：CLAUDE.md、settings、hooks、agents
@@ -51,7 +51,7 @@ dotfiles/
 ~/.codex/AGENTS.md  =  agents/AGENTS.md + codex/AGENTS.md  # install.sh 串接產生
 ```
 
-改 repo 裡的檔案，再跑一次 `./install.sh`。`~/.codex` 只連結受管理的檔案，既有的 `config.toml` 保持為 Codex runtime 管理的實體檔。若已安裝 Codex CLI，installer 會透過原子 config RPC，只同步 `codex/config.portable.toml` 宣告的設定；其餘設定與 session 資料保留。
+改 repo 裡的檔案，再跑一次 `./install.sh`。`~/.codex` 只連結受管理的檔案，既有的 `config.toml` 還是一般檔案，由 Codex runtime 自己管。裝了 Codex CLI 的話，installer 會走 Codex 的 config RPC（一次寫完，不會寫一半），只同步 `codex/config.portable.toml` 列出的設定；其他設定和 session 資料都不動。
 
 `skills/shared/` 同時裝進 Claude Code 與 Codex；`skills/claude/`、`skills/codex/` 只裝各自的 runtime。只想重新同步 skills：
 
@@ -66,7 +66,7 @@ dotfiles/
 - `~/.secrets/index.sh`：API key 與 token，shell 啟動時 source
 - `~/.aliases.local`：本機專用 alias
 - `~/.gitconfig.local`：credential helper 與只有這台機器要的 git 設定
-- `~/.codex/config.toml`：runtime 管理的設定；dotfiles 只管理可攜設定檔宣告的鍵
+- `~/.codex/config.toml`：由 runtime 自己管；dotfiles 只管 `config.portable.toml` 裡列出的那幾個鍵
 
 ## 更新
 

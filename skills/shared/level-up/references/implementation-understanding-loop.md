@@ -1,6 +1,6 @@
 # Implementation Understanding Loop
 
-這是 `level-up` 的 implementation mode 總覽。它把任務切成 pre / during / post 三段，用來暴露 unknowns、保留決策脈絡、確認 user 在 merge/push 前真的理解關鍵改動。
+這是 `level-up` 的 implementation mode 總覽。它把任務切成 pre / during / post 三段，用來把還不知道的事挖出來、留下決策脈絡、確認 user 在 merge/push 前真的懂關鍵改動。
 
 ## 何時觸發
 

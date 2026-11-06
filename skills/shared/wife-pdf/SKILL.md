@@ -1,12 +1,12 @@
 ---
 name: wife-pdf
-description: Create plain zh-TW Typst/PDF decision documents for non-technical family readers. Use for a wife PDF, spouse/family-friendly summary, or an explanation of technical, career, financial, or household choices.
+description: 用 Typst 做白話的 zh-TW PDF，給不懂技術的家人看、幫他們做決定。使用者要 wife PDF、給另一半或家人看的摘要，或要解釋技術、職涯、財務、家務上的選擇時用。
 disable-model-invocation: true
 ---
 
 # wife-pdf
 
-用 Typst 製作清楚、溫暖、決策導向的 zh-TW 家庭文件，同時交付 source 與編譯後 PDF。
+用 Typst 做給家人看的 zh-TW 文件：講清楚、語氣溫暖、重點是幫忙做決定；source 和編好的 PDF 一起交。
 
 ## Resources
 
@@ -16,7 +16,7 @@ disable-model-invocation: true
 
 ## Content contract
 
-- 用自然的 zh-TW 和日常語彙，把技術概念改寫成非技術背景的家人能快速理解的版本。
+- 用自然的 zh-TW 和日常語彙，把技術的東西講到不懂技術的家人一看就懂。
 - 先說結論，再說理由；保持短句、短段落，用表格或色塊比較選項、條件、時間與風險。
 - 單頁 PDF 至少自然放一個 kaomoji；多頁文件少量使用，不要每頁硬塞。
 

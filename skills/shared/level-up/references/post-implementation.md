@@ -19,14 +19,14 @@
 
 ## 報告排序
 
-使用 decisions-first, mechanics-last：
+決定先講、機械改動最後（decisions-first, mechanics-last）：
 
-1. Design decisions and tradeoffs.
-2. Data model / migration / persistence changes.
-3. Type/API interfaces and compatibility.
-4. User-facing behavior and edge cases.
-5. Risk, tests, and residual uncertainty.
-6. Mechanical refactoring and file movement.
+1. 設計決定與取捨。
+2. 資料模型、migration、persistence 的改動。
+3. 型別／API 介面與相容性。
+4. 使用者看得到的行為與邊界情況。
+5. 風險、測試、還沒確定的地方。
+6. 純機械的重構與搬檔。
 
 ## 交付方式（拆關，不要一次倒完）
 
@@ -42,11 +42,11 @@
 
 ## Quiz 設計
 
-- 沿用本次 session 已由 router 載入的 MCQ anti-tell 與 distractor
+- 照 router 這次已經載入的 MCQ anti-tell 與 distractor
   contract。
 - 題目測「user 能否判斷改動是否合理」，不要測背誦哪幾個檔案改了。
 - 一關一題，題數跟著決策數走；高風險可加一題 tiny application check。
-- 正確答案應要求理解 tradeoff，例如 compatibility、migration order、failure mode、rollback path。
+- 要懂 tradeoff 才答得出正確答案，例如 compatibility、migration order、failure mode、rollback path。
 - user 答錯時，回到相關決策脈絡重講，不要急著放行。
 
 ## 完成條件

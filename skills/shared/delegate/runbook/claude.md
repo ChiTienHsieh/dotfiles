@@ -1,36 +1,35 @@
-# Claude as worker
+# Claude 當 worker
 
-**If you ARE Claude Code, use the built-in `Agent` tool — never shell out to `claude -p`.**
-The CLI lane below is only for callers on a different runtime (Codex, Grok).
+**你自己就是 Claude Code 的話，用內建的 `Agent` tool，絕不從 shell 呼叫 `claude -p`。**
+下面的 CLI 走法只給不同 runtime 的呼叫方（Codex、Grok）。
 
-## Native lane (caller is Claude Code)
+## 內建走法（呼叫方是 Claude Code）
 
-- `Agent` tool with the six-part spec as the prompt. Subagents inherit the parent model
-  unless the agent definition or the `model` parameter says otherwise.
+- 用 `Agent` tool，把六項齊全的 spec 當 prompt 傳進去。subagent 會繼承上層的 model，
+  除非 agent 定義或 `model` 參數另有指定。
 
-## CLI lane (caller is Codex or Grok)
+## CLI 走法（呼叫方是 Codex 或 Grok）
 
 ```bash
 SPEC=/abs/path/spec.md; OUT=/abs/path/claude-out.md
 claude -p "$(cat "$SPEC")" --permission-mode auto --output-format text > "$OUT"
 ```
 
-- `--permission-mode auto` is mandatory: `bypassPermissions` exits 1 on the first tool use.
-- `claude -p --permission-mode auto` is **not** a kernel sandbox profile. Writes are limited to cwd
-  plus the `~/.claude/settings.json` allow-list, and the `auto` classifier — not a human — gates
-  escalation. This lane is weaker than the codex/grok lanes: feed it trusted inputs only.
-- There is no separate credential-deny profile for this lane. The live settings file is the only
-  source of what is denied — run `grep -n -A10 '"deny"' ~/.claude/settings.json` immediately before
-  delegating and treat that output as truth. Do not assume `.env` reads are blocked, and do not
-  point this lane at a tree with live secrets unless that output shows the deny you need.
+- `--permission-mode auto` 一定要加：`bypassPermissions` 在第一次用工具時就會 exit 1。
+- `claude -p --permission-mode auto` **不是** kernel 層的 sandbox profile。寫入只限 cwd
+  加上 `~/.claude/settings.json` 的 allow-list，而且決定要不要放行升權的是 `auto` 分類器，
+  不是人。這條路比 codex／grok 那兩條弱：只能餵可信任的輸入。
+- 這條路沒有另外的憑證 deny profile。哪些被擋，唯一的依據是現場的 settings 檔：委派前一刻跑
+  `grep -n -A10 '"deny"' ~/.claude/settings.json`，以那個輸出為準。不要假設 `.env` 的讀取
+  有被擋；輸出裡沒有你需要的 deny，就不要把這條路指向有真實 secret 的目錄樹。
 
-## Quirks
+## 眉角
 
-- `claude -p` spends the same subscription quota as an interactive session; it is not a separate
-  budget, so it counts against the numbers `pick-worker` reports.
-- `--permission-mode bypassPermissions` exits 1 the moment the nested run touches a tool, so a
-  nested worker that "did nothing" is usually this, not a refusal. `auto` is the only mode that works.
-- It loads `~/.claude/CLAUDE.md` including `@` imports, so it sees the shared `agents/AGENTS.md` —
-  a spec that contradicts those rules gets refused rather than obeyed.
-- Output goes to stdout; `--output-format text` keeps it parseable. Redirect to an absolute path,
-  since the nested run's cwd is the caller's cwd.
+- `claude -p` 用的是跟互動 session 同一份訂閱 quota，不是另一筆預算，所以會算進
+  `pick-worker` 回報的數字。
+- `--permission-mode bypassPermissions` 在巢狀執行一碰到工具就 exit 1，所以巢狀 worker
+  「什麼都沒做」多半是這個原因，不是拒絕。只有 `auto` 能用。
+- 它會載入 `~/.claude/CLAUDE.md`，連 `@` 引入的也會，所以看得到共用的 `agents/AGENTS.md`：
+  spec 跟那些規則衝突會被拒絕，不會照做。
+- 輸出走 stdout；`--output-format text` 讓它好解析。重導向要用絕對路徑，
+  因為巢狀執行的 cwd 就是呼叫方的 cwd。

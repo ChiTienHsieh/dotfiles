@@ -1,20 +1,19 @@
 ---
 name: "gu-log"
-description: "Locate and route work across gu-log, gu-log-api, and gu-log-ios. Use for tasks involving any of those repos or the blog."
+description: "找到 gu-log、gu-log-api、gu-log-ios 三個 repo 的位置，並把跨 repo 的工作導到該負責的 repo。任務涉及這幾個 repo 或部落格時使用。"
 ---
 
 # gu-log
 
-This skill only locates the repos and routes cross-repo work. Project workflows
-belong in each repo.
+這個 skill 只負責找 repo 位置和分派跨 repo 的工作。各專案的工作流程
+放在各自的 repo。
 
-1. Read `paths.local` in this skill directory to locate `gu-log`, `gu-log-api`,
-   and `gu-log-ios`.
-2. If it is missing, ask the user to copy `paths.local.example` to
-   `paths.local` and fill in the checkout paths.
-3. Choose the repo that owns the task. Once inside, read its root `AGENTS.md`
-   when present and follow its bootstrap and topic routing. Otherwise inspect
-   the repo-local instructions before acting.
-4. Read sibling-repo context only when the task crosses repo boundaries.
+1. 讀這個 skill 目錄下的 `paths.local`，找到 `gu-log`、`gu-log-api`、
+   `gu-log-ios` 的位置。
+2. 沒有這個檔的話，請使用者把 `paths.local.example` 複製成
+   `paths.local`，填入各 checkout 的路徑。
+3. 選出這項任務歸屬的 repo。進去之後，根目錄有 `AGENTS.md` 就讀它，
+   照它的 bootstrap 和主題分派走；沒有的話，動手前先看 repo 自己的指示。
+4. 只有任務跨了 repo 邊界時，才去讀其他 repo 的脈絡。
 
-Never copy machine-specific paths into tracked files or public artifacts.
+機器專用的路徑絕不複製進追蹤檔或公開的產出物。

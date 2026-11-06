@@ -17,9 +17,9 @@
 
 ## 互動方式
 
-- 沿用本次 session 已由 router 載入的 Engagement-First contract 與
-  `learning/user-profile.md`；不要在本檔重複比喻規則。
-- 問題要優先問「答案會改變實作路線」的事，一次問少量，避免把訪談做成表單地獄。
+- 照 router 這次已經載入的 Engagement-First contract 和
+  `learning/user-profile.md` 走；比喻規則不在這裡重抄。
+- 先問「答案會改變做法」的事，一次少問幾題，不要問成填表單。
 - user 若不確定，給 2-3 個可比較選項，並說清楚 tradeoff。
 - 「決策確認」預設用已載入的 **shotcall MCQ** contract：先概念故事、
   再一題選項全合理的決策題，user 的選擇＝決策定案。
@@ -29,7 +29,7 @@
 
 輸出一份 decisions-first implementation plan：
 
-1. Decisions likely to change: data model, interfaces, user-facing behavior, architecture risk.
+1. Decisions likely to change：資料模型、介面、使用者看得到的行為、架構風險。
 2. Confirmed intent: user 已確認的取捨與偏好。
 3. Known unknowns: 還沒查清但已知道會影響什麼。
 4. Implementation outline: 主要步驟與驗證方式。

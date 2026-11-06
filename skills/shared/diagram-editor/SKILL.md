@@ -1,6 +1,6 @@
 ---
 name: diagram-editor
-description: Single-file HTML editor for Mermaid flowcharts — humans edit and annotate visually, agents read plain Mermaid text. Use when the user wants to hand a Mermaid flowchart to a human for GUI editing or markup, asks for the diagram editor / mermaid editor, or wants an edit-in-browser-then-paste-back-to-agent diagram workflow. Ships assets/editor.html to copy or adapt per task.
+description: 單一 HTML 檔的 Mermaid 流程圖編輯器：人在畫面上改圖、加註解，agent 讀純文字的 Mermaid。使用者要把 Mermaid 流程圖交給人用 GUI 改或畫記、要 diagram editor / mermaid editor，或想走「瀏覽器改完再貼回給 agent」的流程時用。附 assets/editor.html，每個任務複製一份或改一份。
 ---
 
 # diagram-editor — Mermaid 流程圖的人機交接編輯器
@@ -35,7 +35,7 @@ Mermaid 對 AI 友善(token 少、純語意),但人類難以直接改文字、�
 
 ## 結構化註解慣例(本工具的核心價值)
 
-- `%% @comment 節點ID: 內容`——綁定節點;`%% @comment A-->B: 內容`——綁定邊(箭頭寫該邊實際的型別)。匯出時緊跟在對應定義行之後;同目標多行註解會合併、逐行輸出。
+- `%% @comment 節點ID: 內容`——綁定節點;`%% @comment A-->B: 內容`——綁定邊(箭頭寫該邊實際的型別)。匯出時緊跟在對應定義行之後;同一個節點或邊有多行註解時會集中放一起、一行一行輸出。
 - 同端點有多條平行邊時,邊註解**靠相鄰性綁定**:緊跟在哪條邊的定義行後面就綁哪條。不相鄰又有多條候選的註解不猜——原位原樣保留並警告,要綁定就把註解移到目標邊的定義行正下方。
 - 無 `@` 的 `%%` 行是文件層級註解,匯出時放在標頭後。
 - 「匯出給 agent」會在最前面加一行 `%% [diagram-editor] …` preamble 說明此慣例;編輯器重新匯入時會把這行丟掉,不會越疊越多。
