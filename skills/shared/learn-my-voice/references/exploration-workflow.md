@@ -26,7 +26,7 @@ SSOT。初始格式：
 - Co-edited files: `<paths>`
 
 ## Confirmed choices
-- 使用者明確說過，或從他多次修改看得出來的寫法。
+- 使用者明確說過，或從他的修改明顯看得出來的寫法。
 
 ## Working hypotheses
 - 從修改推測、仍需更多證據的偏好。
@@ -42,7 +42,7 @@ SSOT。初始格式：
 
 ### Commit boundary
 
-只暫存本輪負責的檔案。若 index（暫存區）已有其他內容，只有在目標檔案沒有
+只暫存本輪明確歸自己管的檔案。若 index（暫存區）已有其他內容，只有在目標檔案沒有
 partial staging（同檔只暫存部分修改），而且目前完整內容就是要保存的 checkpoint
 時，才能用 `git commit --only -- <paths>`；commit 後確認原有 staged diff 未變。
 無法證明時停止，不移動既有 staged state。
