@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""The allow-listed tmux-read wrapper must never mutate tmux or run code."""
+"""The allow-listed tmux-read wrapper must never mutate tmux or run code,
+and every tmux binary it may exec must hit a prompt rule in codex/rules/tmux.rules."""
 
+import ast
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_loader
 from pathlib import Path
+import shlex
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills/shared/tmux-orchestration/scripts/tmux-read"
+TMUX_RULES = ROOT / "codex/rules/tmux.rules"
 
 
 def load_tmux_read():
@@ -19,6 +23,24 @@ def load_tmux_read():
 
 
 tmux_read = load_tmux_read()
+
+
+def load_prefix_rules(path):
+    """Read the prefix_rule(...) calls of a Codex rules file as plain values."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    return [
+        {kw.arg: ast.literal_eval(kw.value) for kw in node.keywords}
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "prefix_rule"
+    ]
+
+
+def prefix_matches(pattern, argv):
+    """Codex prefix_rule matching: each pattern token is a word or a list of alternatives."""
+    return len(argv) >= len(pattern) and all(
+        word in (token if isinstance(token, list) else [token])
+        for token, word in zip(pattern, argv)
+    )
 
 
 class TmuxReadTests(unittest.TestCase):
@@ -84,6 +106,27 @@ class TmuxReadTests(unittest.TestCase):
         self.assert_rejected(["capture-pane", "-p", "-S", "$(id)"])
         self.assert_rejected(["display-message", "-p", "a", "b"])
         self.assert_rejected(["list-panes", "stray"])
+
+
+class TmuxRulesContractTests(unittest.TestCase):
+    rules = load_prefix_rules(TMUX_RULES)
+
+    def test_every_tmux_binary_tmux_read_may_exec_is_prompted(self) -> None:
+        for binary in ("tmux", *tmux_read.TMUX_CANDIDATES):
+            argv = [binary, "list-sessions"]
+            decisions = {
+                rule["decision"]
+                for rule in self.rules
+                if prefix_matches(rule["pattern"], argv)
+            }
+            self.assertIn("prompt", decisions, msg=binary)
+
+    def test_match_examples_satisfy_their_rule(self) -> None:
+        # Codex refuses to load a rules file whose match examples miss their rule.
+        for rule in self.rules:
+            for example in rule.get("match", []):
+                argv = shlex.split(example) if isinstance(example, str) else example
+                self.assertTrue(prefix_matches(rule["pattern"], argv), msg=example)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,15 @@
 # tmux controls a persistent server outside the current process sandbox.
 # Every invocation must remain visible to Guardian, including read-only queries.
+# Keep every absolute path in tmux-read's TMUX_CANDIDATES listed here;
+# tests/test_tmux_read.py checks it.
 prefix_rule(
-    pattern=[["tmux", "/opt/homebrew/bin/tmux", "/usr/local/bin/tmux"]],
+    pattern=[[
+        "tmux",
+        "/opt/homebrew/bin/tmux",
+        "/usr/local/bin/tmux",
+        "/usr/bin/tmux",
+        "/bin/tmux",
+    ]],
     decision="prompt",
     justification="Every tmux command must receive Guardian review before accessing the external tmux server.",
     match=[
@@ -11,5 +19,7 @@ prefix_rule(
         "/opt/homebrew/bin/tmux list-sessions",
         "/opt/homebrew/bin/tmux split-window",
         "/usr/local/bin/tmux list-sessions",
+        "/usr/bin/tmux list-sessions",
+        "/bin/tmux list-sessions",
     ],
 )
