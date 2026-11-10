@@ -4,7 +4,9 @@
 *.swo
 *~
 
-# AI chatroom (subagent working files)
+# 只為舊機器保留：2026-07 以前 subagent 會把產出寫進 ./ai_chatroom/（e83f4f0 已拿掉這個做法），
+# 裡面可能有私人內容。這條拿掉後它會變成 untracked，容易被誤 commit 進公開 repo，
+# 每台機器的 ai_chatroom/ 都清掉後再刪。
 ai_chatroom/
 
 # Generated run artifacts
@@ -19,7 +21,10 @@ __pycache__/
 # Claude Code worktrees (created locally, never version-controlled)
 .claude/worktrees/
 
-# Auto-downloaded plugin skills
+# 只為舊安裝保留：2026-06 以前的 install.sh 會把 ~/.claude/skills 整個連到這裡，
+# 舊機器上 plugin 自動下載的 skill 可能還留在這。
+# Claude 專用 skill 要放 skills/claude/；放進 claude/skills/ 會被 git 忽略，也不會被安裝。
+# 每台機器的 claude/skills/ 都清空後，就刪掉這條。
 claude/skills/
 
 # playwright-cli page snapshots
