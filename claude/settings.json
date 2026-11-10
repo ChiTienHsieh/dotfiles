@@ -61,7 +61,8 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "python3 ~/.claude/hooks/bash-helper-guard.py"}
+          {"type": "command", "command": "python3 ~/.claude/hooks/bash-helper-guard.py"},
+          {"type": "command", "command": "python3 ~/.claude/hooks/hook-bypass-guard.py"}
         ]
       }
     ]
