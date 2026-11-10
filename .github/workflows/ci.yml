@@ -32,7 +32,7 @@ jobs:
             exit 0
           fi
           if [ "${PR_AUTHOR}" = ChiTienHsieh ]; then
-            echo "::error::Open this PR with another authorized account so @ChiTienHsieh remains available for the required CODEOWNER approval."
+            echo "::error::Open this PR with another authorized account so @ChiTienHsieh remains available for the required CODEOWNER approval. See the PR account rule in AGENTS.md, section 自主做完."
             exit 1
           fi
 
