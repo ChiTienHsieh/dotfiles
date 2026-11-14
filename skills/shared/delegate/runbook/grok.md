@@ -11,7 +11,7 @@ The CLI lane below is only for callers on a different runtime (Claude Code, Code
 ## CLI lane (caller is Claude Code or Codex)
 
 ```bash
-SPEC=$(mktemp -t grok-spec).md; OUT=/abs/path/grok-out.md    # write the spec into $SPEC first
+SPEC=$(mktemp -d)/spec.md; OUT=/abs/path/grok-out.md    # write the spec into $SPEC first
 grok --prompt-file "$SPEC" --sandbox cc-worker --permission-mode acceptEdits \
   --allow 'Bash(pytest:*)' --disable-web-search --no-auto-update > "$OUT"
 ```

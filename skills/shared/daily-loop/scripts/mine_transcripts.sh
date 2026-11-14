@@ -368,7 +368,7 @@ def commas(o): [ o | to_entries | sort_by(-.value) | .[] | "\(.key)×\(.value)" 
   ( "" ),
   ( "## Projects" ),
   ( .projects[]
-    | ( "### \(.cwd)  [\(.sources | join("+"))]" + (if .branch then "" else "" end) ),
+    | ( "### \(.cwd)  [\(.sources | join("+"))]" ),
       ( "- sessions: \(.sessions), user turns: \(.user_turns), error-ish: \(.errorish)" ),
       ( "- tools: " + ( commas(.tools) | if . == "" then "(none)" else . end ) ),
       ( if (.bash_bins | length) > 0
