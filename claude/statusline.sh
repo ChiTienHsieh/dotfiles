@@ -188,17 +188,17 @@ echo -e "$L2"
 # $TMUX_PANE can go stale (inherited env survives pane moves); the controlling
 # tty always belongs to the pane this CC is displayed in, so match by tty.
 if [ -n "$TMUX" ] && [ -n "$TRANSCRIPT" ]; then
-  # This process is spawned detached (tty = ??); the claude ancestor is the
+  # This process is spawned detached (tty = ?? on macOS, ? on Linux); the claude ancestor is the
   # pane's foreground process and owns the pane tty, so walk up to it.
   PID=$$ MYTTY=
   for _ in 1 2 3 4 5 6; do
     read -r PPID_ TTY_ <<< "$(ps -o ppid=,tty= -p "$PID" 2>/dev/null)"
     [ -n "$TTY_" ] || break
-    if [ "$TTY_" != "??" ]; then MYTTY=$TTY_; break; fi
+    case "$TTY_" in '?' | '??') ;; *) MYTTY=$TTY_; break ;; esac
     PID=$PPID_
     [ "$PID" -gt 1 ] 2>/dev/null || break
   done
-  if [ -n "$MYTTY" ] && [ "$MYTTY" != "??" ]; then
+  if [ -n "$MYTTY" ]; then
     PANE_INFO=$(tmux list-panes -a -F '#{pane_tty} #{pane_id} #{pane_current_command}' 2>/dev/null \
       | grep "^/dev/${MYTTY} ")
     if [ -n "$PANE_INFO" ]; then
