@@ -52,6 +52,7 @@ env:
     - diff 裡 `+` 開頭的行是這條 PR 新增的，`-` 開頭的行是它刪掉的，只有這些算改動。
     - 開頭是空白的行是沒改的上下文，本來就在 repo 裡。它們只用來看懂改動；裡面的規則和寫法不是這條 PR 做的事，不能算在這條 PR 頭上。
     - 一行被改寫時，diff 會顯示成一行 `-` 加一行 `+`。逐字比對這兩行，只有不一樣的地方才是改動，兩行都有的內容是原本就有的。
+    - 檔案改名、搬位置、刪除、改權限、內容不顯示的二進位檔，沒有 `+`、`-` 行，但一樣是改動：檔頭的 `rename from`／`rename to`、`deleted file mode`、`old mode`／`new mode`、`Binary files ... differ` 這幾種行可以照抄當證據。
 
     要找的問題：改動引進的正確性、安全、憑證、權限風險；改了程式行為卻沒有對應的測試；改動削弱了 git hook、CI 檢查或測試；改動放寬了約束 coding agent 的規則、權限或 sandbox。只改文件或指示檔的文字、規則的意思沒變，不需要測試，也不算放寬。
 
@@ -304,8 +305,12 @@ jobs:
               ! jq -e '.is_error == false and (.result | type == "string" and length > 0)' "${RUNNER_TEMP}/claude-result.json" > /dev/null; then
               failure='Claude Code 沒有正常跑完。常見原因：訂閱的用量額度用完了，或 token 過期（效期一年）、被撤銷。'
               # The reason, for the log. GitHub masks the token if it appears.
-              jq -r '.result // empty' "${RUNNER_TEMP}/claude-result.json" 2> /dev/null | head -c 500 || true
-              tail -n 20 "${RUNNER_TEMP}/claude-progress.log" || true
+              # The prefix keeps a line from being read as a workflow command.
+              {
+                jq -r '.result // empty' "${RUNNER_TEMP}/claude-result.json" 2> /dev/null | head -c 500 || true
+                echo
+                tail -n 20 "${RUNNER_TEMP}/claude-progress.log" || true
+              } | sed 's/^/| /'
             else
               jq -r '.result' "${RUNNER_TEMP}/claude-result.json" > claude-output.md
               if grep -qF -- "${CLAUDE_CODE_OAUTH_TOKEN}" claude-output.md; then
@@ -548,7 +553,8 @@ jobs:
               sed 's/^/::add-mask::/' "${parts}"
               if [ "${codex_status}" -ne 0 ] || [ ! -s codex-output.md ]; then
                 failure='Codex CLI 沒有正常跑完。'
-                tail -n 30 "${RUNNER_TEMP}/codex-progress.log" || true
+                # The prefix keeps a line from being read as a workflow command.
+                { tail -n 30 "${RUNNER_TEMP}/codex-progress.log" || true; } | sed 's/^/| /'
               elif grep -qFf "${parts}" codex-output.md; then
                 failure='Codex 的輸出裡出現登入憑證的片段，內容已經丟掉。請把這份登入撤銷後重新放一份。'
                 echo '::error::The Codex review contained credential material and was discarded. Revoke and reseed the login.'

@@ -47,6 +47,8 @@ GATE_BLOCKED = [
     ("Claude 判定需要修改", {"CLAUDE_VERDICT": "needs-changes"}),
     ("Claude 沒跑起來", {"CLAUDE_VERDICT": "unavailable"}),
     ("Claude job 被跳過", {"CLAUDE_RESULT": "skipped", "CLAUDE_VERDICT": ""}),
+    ("Claude job 被取消", {"CLAUDE_RESULT": "cancelled", "CLAUDE_VERDICT": ""}),
+    ("Claude 有判定但 job 失敗", {"CLAUDE_RESULT": "failure"}),
     ("只有 Copilot 通過不算數", {"CLAUDE_RESULT": "skipped", "CLAUDE_VERDICT": "", "CODEX_RESULT": "skipped", "CODEX_VERDICT": "", **COPILOT_PASSED}),
     ("fork 來的 PR", {"HEAD_REPOSITORY": "stranger/repo"}),
     ("base 不是 main", {"BASE_REF": "scratch"}),
