@@ -23,6 +23,7 @@ jobs:
           CODEX_HOME: ${{ runner.temp }}/codex-home
         shell: bash
         run: |
+          set +e
           set -uo pipefail
           umask 077
           mkdir -p "${CODEX_HOME}"
@@ -45,13 +46,6 @@ jobs:
           sb() { echo "--- $*"; codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- "$@"; echo "rc=$?"; }
           sysctl kernel.apparmor_restrict_unprivileged_userns kernel.unprivileged_userns_clone kernel.yama.ptrace_scope || true
           command -v bwrap || true
-          sb cat pr-review-input.md
-          sb cat "${CODEX_HOME}/auth.json"
-          sb sudo -n cat "${CODEX_HOME}/auth.json"
-          sb ls -la "${CODEX_HOME}"
-          sb touch "${GITHUB_WORKSPACE}/sandbox-write-probe"; ls sandbox-write-probe || true
-          sb curl -sS -m 5 -o /dev/null https://example.com
-          sb sh -c 'id; grep -i -E "nonewprivs|seccomp" /proc/self/status'
           echo "=== after allowing userns via sysctl"
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           sb cat pr-review-input.md
