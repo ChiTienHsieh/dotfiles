@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手搖飲自助點餐機 · scripted demo 範例</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; padding: 16px; background: #0f172a; color: #1f2937;
+         font-family: system-ui, "Microsoft JhengHei", sans-serif; transition: background-color .25s ease; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  /* 播放器外框：跟舞台一亮一暗（淺色模式深色包亮色，深色模式反過來），控制列接在舞台正下方，不蓋在舞台上 */
+  .player { height: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column;
+            border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, .45); }
+  /* 舞台：被示範的畫面。顏色集中成變數，深色模式只要換這一組 */
+  #stage { --bg: #fffaf3; --surface: #fff; --ink: #1f2937; --muted: #78716c; --line: #f1e4d6; --line-2: #ead7c3; --line-3: #d6c2ad;
+           --brand: #7c4a2d; --brand-ink: #fff; --sel: #7c4a2d; --sel-ink: #fff; --accent: #b45309; --accent-ink: #fff;
+           --price: #92400e; --tip: #1f2937; --tip-ink: #fff;
+           flex: 1; min-height: 0; position: relative; overflow: hidden; display: flex; flex-direction: column;
+           background: var(--bg); color: var(--ink); }
+
+  /* 深色模式：觀眾按控制列的「☾ 深色」，播放器在 <html> 加上 data-sd-theme="dark"。
+     舞台換深色、頁面外框換米白（控制列由播放器自己換），永遠一亮一暗 */
+  [data-sd-theme="dark"] body { background: #eee8d5; }
+  [data-sd-theme="dark"] .player { box-shadow: 0 20px 60px rgba(92, 72, 20, .28); }
+  /* 深色配色取自 Dracula：底色 #282a36、卡片 #343746、框線 #44475a；不要用接近純黑的底色，層次會糊在一起 */
+  [data-sd-theme="dark"] #stage { --bg: #282a36; --surface: #343746; --ink: #cecdda; --muted: #9ea9d2; --line: #44475a; --line-2: #525672; --line-3: #6272a4;
+           --brand: #21222c; --brand-ink: #f8f8f2; --sel: #ffb86c; --sel-ink: #282a36; --accent: #ff79c6; --accent-ink: #282a36;
+           --price: #ffb86c; --tip: #f8f8f2; --tip-ink: #282a36; color-scheme: dark; }
+
+  .brand { padding: 14px 22px; background: var(--brand); color: var(--brand-ink); font-weight: 700; letter-spacing: 1px; }
+  .brand small { font-weight: 400; opacity: .8; margin-left: 8px; letter-spacing: 0; }
+  .screen { flex: 1; padding: 20px 24px; overflow: auto; }
+  .screen[hidden] { display: none; }
+  h2 { margin: 0 0 14px; font-size: 20px; }
+
+  .menu { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .drink { padding: 16px; border: 2px solid var(--line-2); border-radius: 14px; background: var(--surface); text-align: left; }
+  .drink b { display: block; font-size: 16px; } .drink span { color: var(--price); }
+  .drink:hover { border-color: var(--accent); }
+
+  .row { margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+  .row-title { font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opt { padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--line-3); background: var(--surface); }
+  .opt.on { background: var(--sel); border-color: var(--sel); color: var(--sel-ink); }
+  .info { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--muted);
+          font-size: 12px; line-height: 17px; text-align: center; color: var(--muted); background: var(--surface); padding: 0; }
+  .tip { display: none; position: absolute; left: 26px; top: -6px; width: 170px; padding: 6px 10px; border-radius: 8px;
+         background: var(--tip); color: var(--tip-ink); font-size: 12px; font-weight: 400; text-align: left; }
+  .info:hover .tip, .info.sd-hover .tip { display: block; }   /* sd-hover：導覽演 hover 時播放器加的 class */
+  .note { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-3); background: var(--surface); color: inherit; font: inherit; }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
+  .primary { padding: 10px 20px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .ghost { padding: 10px 16px; border: 1px solid var(--line-3); border-radius: 12px; background: var(--surface); }
+  .sd-press { transform: scale(.96); }
+
+  .cart-item { padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 8px; }
+  .cart-item small { color: var(--muted); }
+  .total { font-size: 18px; font-weight: 700; }
+  .ticket { margin: 30px auto; width: 240px; padding: 26px; border-radius: 16px; background: var(--surface); border: 2px dashed var(--accent);
+            text-align: center; }
+  .ticket b { display: block; font-size: 44px; color: var(--accent); }
+
+</style>
+</head>
+<body>
+
+<div class="player">
+<main id="stage">
+  <div class="brand">茶語時光<small>自助點餐</small></div>
+
+  <section class="screen" data-screen="menu">
+    <h2>今天想喝什麼？</h2>
+    <div class="menu" data-demo="menu-grid">
+      <button class="drink" data-demo="drink-pearl" data-drink="pearl"><b>珍珠奶茶</b><span>$60</span></button>
+      <button class="drink" data-demo="drink-oolong" data-drink="oolong"><b>四季春青茶</b><span>$35</span></button>
+      <button class="drink" data-demo="drink-melon" data-drink="melon"><b>冬瓜檸檬</b><span>$50</span></button>
+      <button class="drink" data-demo="drink-matcha" data-drink="matcha"><b>抹茶拿鐵</b><span>$65</span></button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="custom" hidden>
+    <h2 id="cur-drink"></h2>
+    <div class="row" data-demo="sugar-row">
+      <div class="row-title">甜度</div>
+      <div class="opts">
+        <button class="opt" data-demo="sugar-full" data-sugar="full">全糖</button>
+        <button class="opt" data-demo="sugar-half" data-sugar="half">半糖</button>
+        <button class="opt" data-demo="sugar-less" data-sugar="less">微糖</button>
+        <button class="opt" data-demo="sugar-none" data-sugar="none">無糖</button>
+      </div>
+    </div>
+    <div class="row" data-demo="ice-row">
+      <div class="row-title">冰塊</div>
+      <div class="opts">
+        <button class="opt" data-demo="ice-normal" data-ice="normal">正常冰</button>
+        <button class="opt" data-demo="ice-less" data-ice="less">少冰</button>
+        <button class="opt" data-demo="ice-none" data-ice="none">去冰</button>
+      </div>
+    </div>
+    <div class="row" data-demo="topping-row">
+      <div class="row-title">加料
+        <button class="info" data-demo="topping-info" type="button">i<span class="tip">每樣加料 +10 元，可以複選</span></button>
+      </div>
+      <div class="opts">
+        <button class="opt" data-demo="top-pudding" data-top="pudding">布丁</button>
+        <button class="opt" data-demo="top-coconut" data-top="coconut">椰果</button>
+        <button class="opt" data-demo="top-aloe" data-top="aloe">蘆薈</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row-title">備註</div>
+      <input class="note" data-demo="note" placeholder="有特別需求可以寫在這裡">
+    </div>
+    <div class="bar">
+      <button class="ghost" data-demo="back">返回菜單</button>
+      <button class="primary" data-demo="add-to-cart">加入購物車</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="cart" hidden>
+    <h2>購物車</h2>
+    <div data-demo="cart-list"></div>
+    <div class="bar">
+      <span class="total" id="total"></span>
+      <button class="primary" data-demo="checkout">結帳</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="pay" hidden>
+    <h2>怎麼付款？</h2>
+    <div class="opts" data-demo="pay-options">
+      <button class="opt" data-demo="pay-card" data-pay="card">刷卡</button>
+      <button class="opt" data-demo="pay-mobile" data-pay="mobile">手機支付</button>
+      <button class="opt" data-demo="pay-cash" data-pay="cash">現金（到櫃檯付）</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="done" hidden>
+    <div class="ticket" data-demo="ticket">取餐號碼<b id="ticket-no"></b>做好會叫號</div>
+    <p style="text-align:center"><button class="ghost" data-demo="again">再點一杯</button></p>
+  </section>
+</main>
+<div id="tour-controls"></div>
+</div>
+
+
+<script src="player.js"></script>
+<script>
+  var DRINKS = { pearl: ['珍珠奶茶', 60], oolong: ['四季春青茶', 35], melon: ['冬瓜檸檬', 50], matcha: ['抹茶拿鐵', 65] };
+  var SUGAR = { full: '全糖', half: '半糖', less: '微糖', none: '無糖' };
+  var ICE = { normal: '正常冰', less: '少冰', none: '去冰' };
+  var TOPS = { pudding: '布丁', coconut: '椰果', aloe: '蘆薈' };
+
+  // 畫面完全由 state 決定：導覽跳到任何一步，都是「keyframe + 前面各步的 set」再呼叫 render
+  var initialState = { screen: 'menu', drink: null, sugar: 'full', ice: 'normal', tops: [], note: '', cart: [], ticket: null };
+
+  function priceOf(item) { return DRINKS[item.drink][1] + item.tops.length * 10; }
+
+  function render(s, stage) {
+    stage.querySelectorAll('[data-screen]').forEach(function (el) { el.hidden = el.getAttribute('data-screen') !== s.screen; });
+    stage.querySelector('#cur-drink').textContent = s.drink ? DRINKS[s.drink][0] : '';
+    stage.querySelectorAll('[data-sugar]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-sugar') === s.sugar); });
+    stage.querySelectorAll('[data-ice]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-ice') === s.ice); });
+    stage.querySelectorAll('[data-top]').forEach(function (b) { b.classList.toggle('on', s.tops.indexOf(b.getAttribute('data-top')) >= 0); });
+    var note = stage.querySelector('[data-demo="note"]');
+    if (note.value !== s.note) note.value = s.note;
+    stage.querySelector('[data-demo="cart-list"]').innerHTML = s.cart.map(function (it) {
+      var extra = it.tops.map(function (t) { return TOPS[t]; }).join('、');
+      return '<div class="cart-item"><b>' + DRINKS[it.drink][0] + '</b>　$' + priceOf(it) + '<br><small>' +
+        SUGAR[it.sugar] + '・' + ICE[it.ice] + (extra ? '・加' + extra : '') + (it.note ? '・備註：' + it.note : '') + '</small></div>';
+    }).join('');
+    stage.querySelector('#total').textContent = '合計 $' + s.cart.reduce(function (n, it) { return n + priceOf(it); }, 0);
+    stage.querySelector('#ticket-no').textContent = s.ticket || '';
+  }
+
+  var PEARL_HALF = { drink: 'pearl', sugar: 'half', ice: 'less', tops: [], note: '珍珠少一點' };
+  var PEARL_LESS = { drink: 'pearl', sugar: 'less', ice: 'less', tops: [], note: '珍珠少一點' };
+
+  var demo = ScriptedDemo.create({
+    stage: '#stage',
+    controls: '#tour-controls',
+    initialState: initialState,
+    render: render,
+    sections: [
+      {
+        title: '第一次點餐',
+        intro: '從選飲料到加進購物車：點一杯半糖少冰的珍珠奶茶。',
+        keyframe: {},
+        steps: [
+          { target: 'drink-pearl', focus: 'menu-grid', say: '先在菜單上點「珍珠奶茶」。',
+            set: { screen: 'custom', drink: 'pearl' }, after: 'sugar-row' },
+          { target: 'sugar-half', focus: 'sugar-row', say: '甜度選「半糖」。', set: { sugar: 'half' } },
+          { target: 'ice-less', focus: 'ice-row', say: '冰塊選「少冰」。', set: { ice: 'less' } },
+          { target: 'topping-info', focus: 'topping-row', do: 'hover', say: '不確定加料多少錢？把游標移到 i 上面就看得到。' },
+          { target: 'note', do: 'type', text: '珍珠少一點', say: '有特別需求，寫在備註。', set: { note: '珍珠少一點' } },
+          { target: 'add-to-cart', say: '最後按「加入購物車」。',
+            set: { screen: 'cart', cart: [PEARL_HALF] }, after: 'cart-list' }
+        ],
+        summary: { points: ['飲料 → 甜度 → 冰塊 → 加入購物車，四個動作就點好', '加料價格，游標移到 i 上就看得到', '特別需求寫在備註'] }
+      },
+      {
+        title: '改主意：半糖改微糖',
+        intro: '還沒結帳前都能改。這段從「選好半糖」那一刻開始，示範怎麼改成微糖。',
+        keyframe: { screen: 'custom', drink: 'pearl', sugar: 'half', ice: 'less', note: '珍珠少一點' },
+        steps: [
+          { target: 'sugar-less', focus: 'sugar-row', say: '改點「微糖」，原本的半糖會自動取消。', set: { sugar: 'less' } },
+          { target: 'add-to-cart', say: '再按一次「加入購物車」。',
+            set: { screen: 'cart', cart: [PEARL_LESS] }, after: 'cart-list' }
+        ],
+        summary: { points: ['結帳前選錯都能直接改', '同一排選項只能選一個，點新的就會換掉舊的'] }
+      },
+      {
+        title: '結帳取餐',
+        intro: '購物車確認好之後，付款、拿號碼牌。',
+        keyframe: { screen: 'cart', cart: [PEARL_LESS] },
+        steps: [
+          { target: 'checkout', say: '確認購物車沒問題，按「結帳」。', set: { screen: 'pay' }, after: 'pay-options' },
+          { target: 'pay-card', focus: 'pay-options', say: '選付款方式，這裡選「刷卡」。',
+            set: { screen: 'done', ticket: 'A027' }, after: 'ticket' }
+        ],
+        summary: { title: '自助點餐機的好處與限制',
+                   pros: ['不用排隊跟店員來回確認', '甜度、冰塊選項一眼看完'],
+                   cons: ['第一次用要找一下按鈕在哪', '付現金還是要到櫃檯'] }
+      }
+    ]
+  });
+
+  // 自由操作：點舞台上的東西，用 demo.update 改狀態（導覽中 update 會被忽略）
+  document.getElementById('stage').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var s = demo.state, d = b.dataset;
+    if (d.drink) demo.update({ screen: 'custom', drink: d.drink, sugar: 'full', ice: 'normal', tops: [], note: '' });
+    else if (d.sugar) demo.update({ sugar: d.sugar });
+    else if (d.ice) demo.update({ ice: d.ice });
+    else if (d.top) demo.update({ tops: s.tops.indexOf(d.top) >= 0 ? s.tops.filter(function (t) { return t !== d.top; }) : s.tops.concat(d.top) });
+    else if (d.demo === 'back') demo.update({ screen: 'menu' });
+    else if (d.demo === 'add-to-cart') demo.update({ screen: 'cart', cart: s.cart.concat([{ drink: s.drink, sugar: s.sugar, ice: s.ice, tops: s.tops, note: s.note }]) });
+    else if (d.demo === 'checkout' && s.cart.length) demo.update({ screen: 'pay' });
+    else if (d.pay) demo.update({ screen: 'done', ticket: 'A0' + (20 + s.cart.length) });
+    else if (d.demo === 'again') demo.update(JSON.parse(JSON.stringify(initialState)));
+  });
+  document.querySelector('[data-demo="note"]').addEventListener('input', function (e) { demo.update({ note: e.target.value }); });
+</script>
+</body>
+</html>
