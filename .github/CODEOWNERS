@@ -1,11 +1,19 @@
 # 一般 PR 過了 ci-gate 和 ai-review-gate 就自動合併，不用人工審核。
 # 下面這些是把關機制本身，要 repo owner approve：
 # - workflow 跑的是 PR 自己帶的版本。沒人看的話，一條 PR 就能先把審查關掉，再把自己合併進去。
-# - 其餘檔案決定 agent 的權限、sandbox 和 hook，或在 sandbox 外被自動執行。
+# - 其餘檔案決定 agent 的規則、權限、sandbox 和 hook，或在 sandbox 外被自動執行。
 #   有的是 symlink，主 checkout pull 下來就生效；有的等下次跑 install.sh 才生效。
 #   沒人看的話，agent 可以開 PR 放寬自己的限制，只剩 Copilot 審查擋著。
 
 /.github/ @ChiTienHsieh
+
+# agent 指示檔：規則寫在這裡（什麼時候要停下來問、要不要 review、tmux 預設唯讀），
+# 改鬆了，效果跟放寬權限一樣；CLAUDE.md 還決定 @ 引入哪些檔案。
+# 不加開頭的 /：任何一層的 AGENTS.md、CLAUDE.md 都算，agent 在那層工作時會自動讀進去
+AGENTS.md @ChiTienHsieh
+CLAUDE.md @ChiTienHsieh
+/claude/USER.md @ChiTienHsieh
+/claude/SOUL.md @ChiTienHsieh
 
 # Claude Code 權限、sandbox、hook、status line 與 subagent 定義（可指定 permissionMode）
 # 不加開頭的 /：任何一層的 .claude/ 都算
