@@ -1,2 +1,4 @@
-# Keep every change under explicit review by the repository owner.
-* @ChiTienHsieh
+# 一般 PR 過了 ci-gate 和 ai-review-gate 就自動合併，不用人工審核。
+# 只有把關機制本身（workflow、這份檔案）要 repo owner approve：
+# workflow 跑的是 PR 自己帶的版本，沒人看的話一條 PR 就能把審查關掉再合併自己。
+/.github/ @ChiTienHsieh
