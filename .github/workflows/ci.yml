@@ -152,6 +152,15 @@ jobs:
               compile(path.read_bytes(), str(path), "exec", ast.PyCF_ONLY_AST)
           PY
 
+      - name: Check skill frontmatter against the permission allowlist
+        # Skills change often and are not in CODEOWNERS, so a skill could grant
+        # itself commands through allowed-tools. The allowlist lives under
+        # .github/, which needs owner approval to change.
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/check_skill_frontmatter.py
+
       - name: Run behavior tests
         shell: bash
         run: |
