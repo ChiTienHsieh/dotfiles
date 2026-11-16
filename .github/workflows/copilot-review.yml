@@ -105,9 +105,10 @@ jobs:
           EOF
           else
             # The whole first verdict line must say 通過; a substring match would
-            # accept lines such as "結論：不通過".
+            # accept lines such as "結論：不通過". Multibyte characters stay outside
+            # bracket expressions so the match does not depend on the runner locale.
             verdict_line="$(grep -m 1 '結論' copilot-output.md || true)"
-            if printf '%s\n' "${verdict_line}" | grep -Eq '^[*_# `「]*結論[：:][*_ `]*通過[*_ 。`」]*$'; then
+            if printf '%s\n' "${verdict_line}" | grep -Eq '^[*_# `]*結論(：|:)[*_ `]*通過(。|[.])?[*_ `]*$'; then
               verdict=pass
             elif [ -n "${verdict_line}" ]; then
               verdict=needs-changes
