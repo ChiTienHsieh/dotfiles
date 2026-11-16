@@ -42,7 +42,7 @@ CLAUDE.md @ChiTienHsieh
 /skills/shared/delegate/scripts/ @ChiTienHsieh
 
 # 每個 zsh 一啟動就載入的檔，agent 跑指令用的 shell（Claude Code 的 Bash 工具、Codex）也算；
-# 它還決定 Codex 的 PATH 順序。`.zshrc` 和 `bash/` 常加 alias，沒列，仍只靠 CI 和 AI 審查擋。
+# 它還決定 Codex 的 PATH 順序。`.zshrc` 和 `bash/` 也會進 agent 的 shell，但常加 alias，這兩個沒列進來，還是只靠 CI 和 AI 審查擋。
 /zsh/.zshenv @ChiTienHsieh
 
 # git：每次 commit 都會跑的 hook（本 repo 與全域），以及決定 hook 路徑與 alias 的設定
