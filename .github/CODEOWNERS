@@ -3,7 +3,7 @@
 # - workflow 跑的是 PR 自己帶的版本。沒人看的話，一條 PR 就能先把審查關掉，再把自己合併進去。
 # - 其餘檔案決定 agent 的規則、權限、sandbox 和 hook，或在 sandbox 外被自動執行。
 #   有的是 symlink，主 checkout pull 下來就生效；有的等下次跑 install.sh 才生效。
-#   沒人看的話，agent 可以開 PR 放寬自己的限制，只剩 Copilot 審查擋著。
+#   沒人看的話，agent 可以開 PR 放寬自己的限制，只剩 AI 審查擋著。
 
 /.github/ @ChiTienHsieh
 
@@ -40,6 +40,10 @@ CLAUDE.md @ChiTienHsieh
 # 權限規則直接放行、不經詢問就能執行的 script
 /skills/shared/tmux-orchestration/scripts/tmux-read @ChiTienHsieh
 /skills/shared/delegate/scripts/ @ChiTienHsieh
+
+# 每個 zsh 一啟動就載入的檔，agent 跑指令用的 shell（Claude Code 的 Bash 工具、Codex）也算；
+# 它還決定 Codex 的 PATH 順序。`.zshrc` 和 `bash/` 常加 alias，沒列，仍只靠 CI 和 AI 審查擋。
+/zsh/.zshenv @ChiTienHsieh
 
 # git：每次 commit 都會跑的 hook（本 repo 與全域），以及決定 hook 路徑與 alias 的設定
 /hooks/pre-commit @ChiTienHsieh
