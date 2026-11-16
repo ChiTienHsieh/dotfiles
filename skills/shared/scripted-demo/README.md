@@ -16,8 +16,6 @@ tags:
 
 ## 先打開範例看看
 
-線上版（不用下載）：<https://chitienhsieh.github.io/dotfiles/scripted-demo/>，有電腦版、手機版範例，還有兩個假想新功能的完整示範。
-
 用瀏覽器打開 [`assets/example-bubble-tea.html`](assets/example-bubble-tea.html)，按底下的「▶ 播放」。
 
 手機畫面的範例是 [`assets/example-bubble-tea-phone.html`](assets/example-bubble-tea-phone.html)：同一家店的手機 App，游標換成手指點的圓點。

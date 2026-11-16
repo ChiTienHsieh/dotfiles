@@ -33,7 +33,6 @@ dotfiles/
 ├── codex/                           # Codex CLI: config seed + portable overlay, hooks, sandbox profiles
 ├── grok/                            # Grok: sandbox profile
 ├── skills/                          # shared/, claude/, codex/ skills
-├── docs/                            # GitHub Pages: live skill demos (scripted-demo)
 ├── hooks/                           # jargon allowlist for the pre-commit hook
 ├── macos/                           # macOS defaults (keyboard shortcuts), run manually
 ├── scripts/                         # sync-skills.sh and installer helpers
