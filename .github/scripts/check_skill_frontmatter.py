@@ -17,6 +17,7 @@ skill 本身改得很頻繁，不在 CODEOWNERS 裡，所以權限相關的欄�
 import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 # 不影響權限的欄位。要加新欄位，先確認它不會放行指令、掛 hook 或改權限模式。
@@ -36,7 +37,7 @@ ALLOWED_TOOLS = {
     "skills/shared/delegate/SKILL.md": "Bash(~/.claude/skills/delegate/scripts/pick-worker:*)",
 }
 
-KEY_LINE = re.compile(r"^([a-z][a-z-]*):(?: (.*))?$")
+KEY_LINE = re.compile(r"^([A-Za-z_][\w-]*):(?: (.*))?$")
 
 
 def check(path: str) -> list[str]:
@@ -52,7 +53,10 @@ def check(path: str) -> list[str]:
     key = None
     for line in lines[1 : lines.index("---", 1)]:
         match = KEY_LINE.match(line)
-        if "---" in line:
+        if not line.isprintable():
+            # 有些 YAML parser 把 U+2028 這類字元當換行，一行就能藏第二個欄位。
+            errors.append(f"{path}: frontmatter 裡不能有控制字元或特殊換行：{line!r}")
+        elif "---" in line:
             # Claude Code 碰到 --- 就當成 frontmatter 結束，跟這裡切的位置會對不上。
             errors.append(f"{path}: frontmatter 裡不能出現 ---：{line!r}")
         elif match:
@@ -69,12 +73,17 @@ def check(path: str) -> list[str]:
 
 def tracked_skill_files() -> list[str]:
     output = subprocess.run(
-        ["git", "ls-files", "-z", ":(icase)*skill.md"],
+        ["git", "ls-files", "-z"],
         check=True,
         capture_output=True,
         text=True,
     ).stdout
-    return [path for path in output.split("\0") if Path(path).name.lower() == "skill.md"]
+    # 檔名先做 Unicode 正規化再比對，ſKILL.md 這類長得像的檔名也算。
+    return [
+        path
+        for path in output.split("\0")
+        if path and unicodedata.normalize("NFKC", Path(path).name).casefold() == "skill.md"
+    ]
 
 
 def main(argv: list[str]) -> int:

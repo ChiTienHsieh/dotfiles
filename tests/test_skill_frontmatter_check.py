@@ -28,6 +28,7 @@ BLOCKED = [
     ),
     ("開頭有 BOM 和空行", "skills/x/SKILL.md", "﻿\n\n---\nname: x\nallowed-tools: Bash(*)\n---\n"),
     ("CRLF 換行", "skills/x/SKILL.md", "---\r\nname: x\r\nmodel: opus\r\n---\r\n"),
+    ("U+2028 藏第二個欄位", "skills/x/SKILL.md", "---\nname: x\ndescription: a\u2028allowed-tools: Bash(*)\n---\n"),
 ]
 
 ALLOWED = [
@@ -61,16 +62,17 @@ class SkillFrontmatterCheckTest(unittest.TestCase):
             with self.subTest(name):
                 self.assertEqual(self.check_case(rel, content), 0)
 
-    def test_finds_lowercase_file_name(self):
+    def test_finds_look_alike_file_names(self):
         # macOS 檔名不分大小寫，skill.md 一樣會被 Claude Code 當成 SKILL.md 讀到。
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            path = root / "skills" / "x" / "skill.md"
-            path.parent.mkdir(parents=True)
-            path.write_text("---\nname: x\nallowed-tools: Bash(*)\n---\n", encoding="utf-8")
-            subprocess.run(["git", "add", "."], cwd=root, check=True)
-            self.assertEqual(run_check(root).returncode, 1)
+        for name in ("skill.md", "Skill.md", "\u017fKILL.md"):
+            with self.subTest(name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+                path = root / "skills" / "x" / name
+                path.parent.mkdir(parents=True)
+                path.write_text("---\nname: x\nallowed-tools: Bash(*)\n---\n", encoding="utf-8")
+                subprocess.run(["git", "add", "."], cwd=root, check=True)
+                self.assertEqual(run_check(root).returncode, 1)
 
     def test_repository_skills_pass(self):
         result = run_check(SCRIPT.parents[2])
