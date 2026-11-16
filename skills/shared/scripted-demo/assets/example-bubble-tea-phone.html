@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手搖飲手機點餐 App · scripted demo 手機版範例</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; height: 100dvh; padding: 16px; background: #0f172a; color: #1f2937;
+         font-family: system-ui, "PingFang TC", "Microsoft JhengHei", sans-serif; transition: background-color .25s ease; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  .player { height: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column;
+            border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, .45); background: #0f172a; }
+  /* 手機版：舞台本身就是手機螢幕，置中放在播放器外框裡，外面一圈深色邊框當手機外殼。
+     高度跟著視窗縮，最高 844px（一般手機的高度）；寬度固定 390px（一般手機的寬度） */
+  .device { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; padding: 14px 0; }
+  #stage { --bg: #fffaf3; --surface: #fff; --ink: #1f2937; --muted: #78716c; --line: #f1e4d6; --line-3: #d6c2ad;
+           --brand: #7c4a2d; --brand-ink: #fff; --sel: #7c4a2d; --sel-ink: #fff; --accent: #b45309; --accent-ink: #fff; --price: #92400e;
+           width: 390px; max-width: 100%; height: min(100%, 844px); border: 8px solid #1f2937; border-radius: 34px;
+           position: relative; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); }
+  [data-sd-theme="dark"] body, [data-sd-theme="dark"] .player { background: #eee8d5; }
+  [data-sd-theme="dark"] .player { box-shadow: 0 20px 60px rgba(92, 72, 20, .28); }
+  [data-sd-theme="dark"] #stage { --bg: #282a36; --surface: #343746; --ink: #cecdda; --muted: #9ea9d2; --line: #44475a; --line-3: #6272a4;
+           --brand: #21222c; --brand-ink: #f8f8f2; --sel: #ffb86c; --sel-ink: #282a36; --accent: #ff79c6; --accent-ink: #282a36; --price: #ffb86c;
+           border-color: #93a1a1; color-scheme: dark; }
+  /* 觀眾自己用手機打開時，不用再畫一支手機：舞台直接滿版 */
+  @media (max-width: 520px) {
+    body { padding: 0; } .player { border-radius: 0; } .device { padding: 0; }
+    #stage { width: 100%; height: 100%; border: 0; border-radius: 0; }
+  }
+
+  .appbar { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--brand); color: var(--brand-ink); }
+  .appbar b { flex: 1; font-size: 16px; } .appbar .back { border: 0; background: none; font-size: 18px; padding: 0 4px; }
+  .appbar .back[hidden] { display: none; }
+  .screen { flex: 1; min-height: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .screen[hidden] { display: none; }
+  .drink { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-radius: 14px;
+           border: 1px solid var(--line); background: var(--surface); text-align: left; }
+  .drink span { color: var(--price); font-weight: 700; }
+  .group { padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+  .group b { display: block; margin-bottom: 8px; font-size: 14px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opt { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line-3); background: var(--surface); }
+  .opt.on { background: var(--sel); border-color: var(--sel); color: var(--sel-ink); }
+  .spacer { flex: 1; }
+  .primary { min-height: 48px; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 16px; }
+  .cart-item { padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+  .cart-item small { display: block; color: var(--muted); }
+  .ticket { margin: 24px auto 0; width: 220px; padding: 24px; border-radius: 16px; background: var(--surface); border: 2px dashed var(--accent); text-align: center; }
+  .ticket b { display: block; font-size: 44px; color: var(--accent); }
+  .sd-press { transform: scale(.96); }
+</style>
+</head>
+<body>
+
+<div class="player">
+<div class="device">
+<main id="stage">
+  <div class="appbar"><button class="back" data-demo="back" id="back" hidden>‹</button><b id="bar-title">茶語時光</b></div>
+
+  <section class="screen" data-screen="menu">
+    <button class="drink" data-demo="drink-pearl" data-drink="pearl"><b>珍珠奶茶</b><span>$60</span></button>
+    <button class="drink" data-drink="oolong"><b>四季春青茶</b><span>$35</span></button>
+    <button class="drink" data-drink="melon"><b>冬瓜檸檬</b><span>$50</span></button>
+  </section>
+
+  <section class="screen" data-screen="custom" hidden>
+    <div class="group" data-demo="sugar-row"><b>甜度</b><div class="opts">
+      <button class="opt" data-sugar="full">全糖</button><button class="opt" data-demo="sugar-half" data-sugar="half">半糖</button>
+      <button class="opt" data-sugar="less">微糖</button><button class="opt" data-sugar="none">無糖</button></div></div>
+    <div class="group" data-demo="ice-row"><b>冰塊</b><div class="opts">
+      <button class="opt" data-ice="normal">正常冰</button><button class="opt" data-demo="ice-less" data-ice="less">少冰</button>
+      <button class="opt" data-ice="none">去冰</button></div></div>
+    <div class="spacer"></div>
+    <button class="primary" data-demo="add">加入購物車</button>
+  </section>
+
+  <section class="screen" data-screen="cart" hidden>
+    <div class="cart-item" data-demo="cart-item"><b id="cart-name"></b><small id="cart-opts"></small></div>
+    <div class="spacer"></div>
+    <button class="primary" data-demo="pay">用手機付款 $60</button>
+  </section>
+
+  <section class="screen" data-screen="done" hidden>
+    <div class="ticket" data-demo="ticket">取餐號碼<b>A031</b>做好會推播通知你</div>
+  </section>
+</main>
+</div>
+<div id="tour-controls"></div>
+</div>
+
+
+<script src="player.js"></script>
+<script>
+  var SUGAR = { full: '全糖', half: '半糖', less: '微糖', none: '無糖' };
+  var ICE = { normal: '正常冰', less: '少冰', none: '去冰' };
+  var NAMES = { pearl: '珍珠奶茶', oolong: '四季春青茶', melon: '冬瓜檸檬' };
+  var TITLES = { menu: '茶語時光', custom: '', cart: '購物車', done: '訂單完成' };
+  var initialState = { screen: 'menu', drink: null, sugar: 'full', ice: 'normal' };
+
+  function render(s, stage) {
+    stage.querySelectorAll('[data-screen]').forEach(function (el) { el.hidden = el.getAttribute('data-screen') !== s.screen; });
+    stage.querySelector('#back').hidden = s.screen !== 'custom';
+    stage.querySelector('#bar-title').textContent = s.screen === 'custom' ? NAMES[s.drink] : TITLES[s.screen];
+    stage.querySelectorAll('[data-sugar]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-sugar') === s.sugar); });
+    stage.querySelectorAll('[data-ice]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-ice') === s.ice); });
+    stage.querySelector('#cart-name').textContent = s.drink ? NAMES[s.drink] : '';
+    stage.querySelector('#cart-opts').textContent = SUGAR[s.sugar] + '・' + ICE[s.ice];
+  }
+
+  var demo = ScriptedDemo.create({
+    stage: '#stage',
+    controls: '#tour-controls',
+    device: 'phone',          // 示範手機畫面：游標換成手指，驗收時多測手機大小
+    initialState: initialState,
+    render: render,
+    sections: [
+      {
+        title: '用手機點一杯',
+        intro: '在 App 裡點一杯半糖少冰的珍珠奶茶。',
+        keyframe: {},
+        steps: [
+          { target: 'drink-pearl', say: '點「珍珠奶茶」。', set: { screen: 'custom', drink: 'pearl' }, after: 'sugar-row' },
+          { target: 'sugar-half', focus: 'sugar-row', say: '甜度選「半糖」。', set: { sugar: 'half' } },
+          { target: 'ice-less', focus: 'ice-row', say: '冰塊選「少冰」。', set: { ice: 'less' } },
+          { target: 'add', say: '按「加入購物車」。', set: { screen: 'cart' }, after: 'cart-item' }
+        ],
+        summary: { points: ['點飲料 → 選甜度 → 選冰塊 → 加入購物車', '按鈕都夠大，單手就點得到'] }
+      },
+      {
+        title: '付款取餐',
+        intro: '在手機上付款，拿到取餐號碼。',
+        keyframe: { screen: 'cart', drink: 'pearl', sugar: 'half', ice: 'less' },
+        steps: [
+          { target: 'pay', say: '按「用手機付款」。', set: { screen: 'done' }, after: 'ticket' },
+          { target: 'ticket', do: 'point', say: '拿到取餐號碼，做好會推播通知。' }
+        ],
+        summary: { points: ['不用排隊點餐', '做好會通知，不用一直盯著叫號螢幕'] }
+      }
+    ]
+  });
+
+  document.getElementById('stage').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var d = b.dataset;
+    if (d.drink) demo.update({ screen: 'custom', drink: d.drink, sugar: 'full', ice: 'normal' });
+    else if (d.sugar) demo.update({ sugar: d.sugar });
+    else if (d.ice) demo.update({ ice: d.ice });
+    else if (d.demo === 'back') demo.update({ screen: 'menu' });
+    else if (d.demo === 'add') demo.update({ screen: 'cart' });
+    else if (d.demo === 'pay') demo.update({ screen: 'done' });
+  });
+</script>
+</body>
+</html>

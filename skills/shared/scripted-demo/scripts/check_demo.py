@@ -14,6 +14,7 @@
   - 連播途中切換淺色／深色兩次，導覽照樣播到最後一格
   - 加 --dark 時：先切到深色模式再檢查，並確認頁面真的替舞台換了深色配色
 三種視窗大小對應瀏覽器縮放 80%、100%、125%（以 1280x800 為 100%）。
+示範手機畫面的 demo（create 時 device: 'phone'）另外用手機大小 390x844 再測一次。
 """
 import argparse
 import json
@@ -23,6 +24,8 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 SIZES = [(1600, 1000), (1280, 800), (1024, 640)]
+# 示範手機畫面（create 時 device: 'phone'）的 demo，觀眾常直接用手機打開，所以多測一個手機大小
+PHONE = (390, 844)
 TOL = 1.5  # 像素誤差容忍
 
 
@@ -41,7 +44,8 @@ ANIMATED_PASS = """async () => {
       samples++;
       if (d.spotEl.style.display !== 'none' && d.cursorEl.style.display !== 'none') {
         const s = st.getBoundingClientRect(), a = d.spotEl.getBoundingClientRect(), c = d.cursorEl.getBoundingClientRect();
-        const x = c.left + 3, y = c.top + 2, tol = 3;
+        const tip = d.tipOffset || { x: 3, y: 2 };
+        const x = c.left + tip.x, y = c.top + tip.y, tol = 3;
         const add = kind => { badCount++; if (bad.length < 8) bad.push({ idx: d.idx, kind }); };
         if (x < a.left - tol || x > a.right + tol || y < a.top - tol || y > a.bottom + tol) add('游標跑到 spotlight 外面（暗處）');
         if (x < s.left || x > s.right || y < s.top || y > s.bottom) add('游標跑出舞台');
@@ -115,7 +119,8 @@ def main():
     with sync_playwright() as pw:
         launch = {"channel": "msedge"} if args.browser == "msedge" else {}
         browser = pw.chromium.launch(**launch)
-        for w, h in SIZES:
+        sizes = list(SIZES)
+        for w, h in sizes:  # 迴圈中可能補上 PHONE
             page = browser.new_page(viewport={"width": w, "height": h})
             js_errors = []
             page.on("pageerror", lambda e: js_errors.append(str(e)))
@@ -126,6 +131,8 @@ def main():
                 break
             # 先固定在淺色：頁面若用 create({ theme: 'dark' }) 預設深色，不加 --dark 時才真的檢查到淺色，
             # 加 --dark 時也才有淺色底色可以比對
+            if page.evaluate("window.__scriptedDemo.device") == "phone" and PHONE not in sizes:
+                sizes.append(PHONE)
             page.evaluate("window.__scriptedDemo.setTheme('light')")
             page.wait_for_timeout(300)
             if args.dark:
@@ -177,7 +184,7 @@ def main():
         browser.close()
 
     print(json.dumps({"theme": "dark" if args.dark else "light", "frames_checked_per_size": count,
-                      "sizes": [f"{w}x{h}" for w, h in SIZES], "screenshots": str(out),
+                      "sizes": [f"{w}x{h}" for w, h in sizes], "screenshots": str(out),
                       "failures": failures}, ensure_ascii=False, indent=2))
     sys.exit(1 if failures else 0)
 

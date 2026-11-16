@@ -5,6 +5,7 @@
 ## 目錄
 
 - 建立播放器
+- 手機畫面
 - 段落（section）
 - 步驟（step）
 - render 的約定
@@ -23,12 +24,24 @@ var demo = ScriptedDemo.create({
   controls: '#tour-controls', // 控制列放哪：舞台正下方的空 div，播放器會把控制列畫進去（淺色模式是深色控制列，深色模式是米白）
   initialState: { ... },      // 進導覽前、也是每段 keyframe 的底
   theme: 'light',             // 選填：一打開是 'light'（預設）還是 'dark'
+  device: 'desktop',          // 選填：被示範的是電腦畫面 'desktop'（預設）還是手機畫面 'phone'
   render: function (state, stage) { ... },
   sections: [ ... ]
 });
 ```
 
 `create` 也會設定 `window.__scriptedDemo`，給 `scripts/check_demo.py` 用，不要刪。
+
+## 手機畫面
+
+被示範的是手機 App 或手機版網頁時，`create` 加 `device: 'phone'`，舞台照手機的大小畫。完整寫法見 `../assets/example-bubble-tea-phone.html`。
+
+- 舞台本身就是手機螢幕：寬 390px、高最多 844px（一般手機的大小），置中放在播放器外框裡，外面一圈深色 `border` 當手機外殼。控制列照樣接在下面，跟電腦版一樣寬。
+- 游標換成手指點的半透明圓點，點在目標正中間；電腦版那種「小目標改指右下角外側」的規則不套用，因為手指本來就會蓋住按鈕。
+- 觀眾常直接用手機打開 demo：頁面加 `@media (max-width: 520px)`，把手機外殼拿掉、舞台滿版（範例已寫好）；控制列在窄螢幕會自己改成章節左右滑、旁白和播放鈕上下排。
+- 手機沒有滑鼠，劇本不要用 `do: 'hover'`；原本要 hover 才看得到的說明，改成點一下展開，或用 `point` 指過去。
+- 手機畫面高度有限，最小視窗（1024x640）下舞台只剩約 440px 高。一個畫面放不下時，先精簡版面；真的要捲動，就在 `render` 裡把那個區塊捲到目標的位置。
+- 驗收時 `check_demo.py` 看到 `device: 'phone'`，會另外用手機大小 390x844 再測一遍。
 
 ## 段落（section）
 

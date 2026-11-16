@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>後台想像功能：到場看板 · scripted demo</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; padding: 16px; background: #0f172a;
+         font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif; transition: background-color .25s ease; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .player { height: 100%; max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column;
+            border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, .45); }
+
+  /* 配色取自光超前端的 design tokens（Frontend/libs/ui/src/theme/design-tokens.ts） */
+  #stage { --bg: #FFFFFF; --bg-subtle: #F6FAFF; --bg-sunken: #EDF2F7; --ink: #0F172A; --ink-2: #334155; --muted: #64748B;
+           --line: #CBD5E1; --line-2: #E2E8F0; --primary: #E3791E; --primary-subtle: #FDF3E9; --on-primary: #111111;
+           --secondary: #2592B9; --sec-subtle: #EEF7FB; --ok: #1B5E20; --ok-bg: #E8F5E9; --warn-bg: #FFF3E0; --warn: #A33900;
+           --scrim: rgba(15, 23, 42, .45); --shadow: 0 8px 32px rgba(227, 121, 30, .20);
+           flex: 1; min-height: 0; position: relative; overflow: hidden; display: flex; background: var(--bg-subtle); color: var(--ink); font-size: 13px; }
+  [data-sd-theme="dark"] body { background: #eee8d5; }
+  [data-sd-theme="dark"] .player { box-shadow: 0 20px 60px rgba(92, 72, 20, .28); }
+  [data-sd-theme="dark"] #stage { --bg: #1E293B; --bg-subtle: #273449; --bg-sunken: #334155; --ink: #F1F5F9; --ink-2: #CBD5E1; --muted: #94A3B8;
+           --line: #475569; --line-2: #334155; --primary: #EC9C50; --primary-subtle: #4F2708; --on-primary: #111111;
+           --secondary: #62BADA; --sec-subtle: #0C3240; --ok: #A5D6A7; --ok-bg: #1B3A1F; --warn-bg: #4F2708; --warn: #F5C08B;
+           --scrim: rgba(0, 0, 0, .55); --shadow: 0 8px 32px rgba(0, 0, 0, .45); color-scheme: dark; }
+
+  /* 左側選單 */
+  .side { flex: 0 0 188px; display: flex; flex-direction: column; gap: 2px; padding: 14px 10px; background: var(--bg-subtle); border-right: 1px solid var(--line-2); }
+  .side .brand { display: flex; align-items: center; gap: 8px; padding: 0 6px 4px; font-weight: 700; font-size: 15px; }
+  .side .brand i { width: 24px; height: 24px; border-radius: 7px; background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+  .side small { padding: 0 6px 10px; color: var(--muted); font-size: 11px; }
+  .nav { padding: 8px 10px; border-radius: 10px; color: var(--ink-2); font-weight: 600; }
+  .nav.on { background: var(--primary-subtle); color: var(--ink); box-shadow: inset 3px 0 0 var(--primary); }
+
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .top { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 18px; background: var(--bg); border-bottom: 1px solid var(--line-2); }
+  .top h2 { margin: 0; font-size: 17px; } .top .crumb { color: var(--muted); font-weight: 400; }
+  .top .who { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .top .who i { width: 26px; height: 26px; border-radius: 50%; background: var(--primary-subtle); display: grid; place-items: center; font-style: normal; font-weight: 700; color: var(--warn); }
+  .badge-role { padding: 1px 7px; border-radius: 999px; background: var(--primary-subtle); color: var(--warn); font-weight: 700; font-size: 11px; }
+  .body { flex: 1; min-height: 0; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .body[hidden] { display: none; }
+
+  .table { border: 1px solid var(--line-2); border-radius: 14px; background: var(--bg); overflow: hidden; }
+  .tr { display: grid; align-items: center; gap: 8px; padding: 0 14px; min-height: 38px; border-top: 1px solid var(--line-2); }
+  .tr.head { border-top: 0; color: var(--muted); font-weight: 600; font-size: 12px; min-height: 34px; }
+  .tickets .tr { grid-template-columns: 2.2fr 1fr 1fr 1fr; }
+  .tickets button.tr { width: 100%; border: 0; border-top: 1px solid var(--line-2); background: none; text-align: left; }
+  .tr b { font-weight: 700; }
+  .pill { justify-self: start; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--bg-sunken); color: var(--ink-2); }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.late { background: var(--warn-bg); color: var(--warn); } .pill.prog { background: var(--primary-subtle); color: var(--warn); }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line-2); }
+  .tab { padding: 6px 12px; border: 0; background: none; color: var(--muted); font-weight: 700; border-bottom: 2px solid transparent; }
+  .tab.on { color: var(--ink); border-bottom-color: var(--primary); }
+  .new { margin-left: 4px; padding: 1px 6px; border-radius: 6px; background: var(--warn-bg); color: var(--warn); font-size: 11px; vertical-align: 1px; }
+  .kpis { display: flex; gap: 10px; }
+  .kpi { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); text-align: left; }
+  .kpi b { font-size: 20px; } .kpi.on { border-color: var(--primary); background: var(--primary-subtle); }
+  .tools { display: flex; align-items: center; gap: 10px; }
+  .tools .count { color: var(--muted); }
+  .btn { padding: 7px 16px; border: 0; border-radius: 999px; background: var(--primary); color: var(--on-primary); font-weight: 700; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.ghost { background: var(--bg); border: 1px solid var(--line); color: var(--ink); }
+  .people .tr { grid-template-columns: 28px 1.2fr 1fr 1.6fr 1.4fr; }
+  .people .tr[hidden] { display: none; }
+  .ck { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--line); background: var(--bg); padding: 0; }
+  .ck.on { background: var(--secondary); border-color: var(--secondary); box-shadow: inset 0 0 0 2px var(--bg); }
+  .foot { padding: 8px 14px; border-top: 1px solid var(--line-2); color: var(--muted); font-size: 12px; }
+
+  .dlg-wrap { position: absolute; inset: 0; display: grid; place-items: center; background: var(--scrim); }
+  .dlg-wrap[hidden] { display: none; }
+  .dlg { width: min(440px, 92%); padding: 16px 18px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
+  .dlg h3 { margin: 0; font-size: 17px; } .dlg p { margin: 0; color: var(--ink-2); }
+  .msg { padding: 10px 12px; border-radius: 12px; background: var(--bg-sunken); line-height: 1.6; }
+  .dlg .acts { display: flex; justify-content: flex-end; gap: 8px; }
+  .toast { position: absolute; right: 18px; bottom: 16px; padding: 10px 14px; border-radius: 12px; background: var(--ok-bg); color: var(--ok); font-weight: 700; box-shadow: var(--shadow); }
+  .toast[hidden] { display: none; }
+  .sd-press { transform: scale(.97); }
+</style>
+</head>
+<body>
+
+<div class="player">
+<main id="stage">
+  <nav class="side">
+    <div class="brand"><i></i>花蓮馬太鞍溪</div>
+    <small>● 進行中 · 管理平台</small>
+    <div class="nav">總覽儀表板</div>
+    <div class="nav">互助地圖</div>
+    <div class="nav on">任務管理</div>
+    <div class="nav">資源站點管理</div>
+    <div class="nav">緊急公告</div>
+    <div class="nav">重複審核</div>
+  </nav>
+
+  <div class="main">
+    <div class="top">
+      <h2 id="page-title">任務管理</h2>
+      <span class="who"><i>林</i>林○翰 <span class="badge-role">超級管理員</span></span>
+    </div>
+
+    <section class="body" data-screen="tickets">
+      <div class="table tickets" data-demo="ticket-table">
+        <div class="tr head"><span>任務單</span><span>狀態</span><span>需求</span><span>到場</span></div>
+        <button class="tr" data-demo="ticket-school"><b>光復國小教室泥水清理</b><span class="pill prog">處理中</span><span>2 筆</span><span>10 / 12</span></button>
+        <button class="tr" disabled><b>馬太鞍溪堤岸清淤</b><span class="pill prog">處理中</span><span>2 筆</span><span>3 / 8</span></button>
+        <button class="tr" disabled><b>大進村獨居長者物資配送</b><span class="pill">待承接</span><span>1 筆</span><span>0 / 2</span></button>
+      </div>
+    </section>
+
+    <section class="body" data-screen="board" hidden>
+      <div class="tabs"><button class="tab">詳情</button><button class="tab">需求</button><button class="tab on" data-demo="tab-board">到場看板<span class="new">新功能</span></button></div>
+      <div class="kpis" data-demo="kpis">
+        <button class="kpi" data-filter="all" data-demo="kpi-all"><span>已承接</span><b>12</b></button>
+        <button class="kpi" data-filter="here"><span>已到場</span><b>10</b></button>
+        <button class="kpi" data-filter="late" data-demo="kpi-late"><span>還沒到</span><b>2</b></button>
+      </div>
+      <div class="tools">
+        <button class="btn ghost" data-demo="select-all">全選</button>
+        <button class="btn" data-demo="nudge" id="nudge" disabled>傳提醒</button>
+        <span class="count" id="sel-count">還沒選人</span>
+      </div>
+      <div class="table people" data-demo="people">
+        <div class="tr head"><span></span><span>志工</span><span>承接時間</span><span>需求</span><span>到場狀態</span></div>
+        <div class="tr" data-late="1" data-demo="row-late"><span class="ck" data-ck></span><b>張○婷</b><span>08:31</span><span>教室鏟泥人力</span><span class="pill late">超過 3 小時還沒到</span></div>
+        <div class="tr" data-late="1"><span class="ck" data-ck></span><b>劉○安</b><span>09:10</span><span>高壓水槍操作</span><span class="pill late">超過 2 小時還沒到</span></div>
+        <div class="tr"><span class="ck"></span><b>陳○華</b><span>08:10</span><span>教室鏟泥人力</span><span class="pill ok">已到場 08:52</span></div>
+        <div class="tr"><span class="ck"></span><b>林○儀</b><span>08:15</span><span>教室鏟泥人力</span><span class="pill ok">已到場 09:05</span></div>
+        <div class="tr"><span class="ck"></span><b>吳○恩</b><span>09:02</span><span>高壓水槍操作</span><span class="pill">已回報完成</span></div>
+        <div class="foot" id="foot">顯示 5 / 12 位</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="dlg-wrap" id="dlg" hidden>
+    <div class="dlg" data-demo="dialog">
+      <h3>傳提醒給 2 位志工</h3>
+      <p>他們會在前台的通知鈴鐺看到這則訊息：</p>
+      <div class="msg" data-demo="msg">你承接的需求在「光復國小教室泥水清理」，還沒打卡到場。如果今天不能來，請在「我承接的」按「取消承接」，讓其他志工接。</div>
+      <div class="acts"><button class="btn ghost" data-demo="dlg-cancel">先不要</button><button class="btn" data-demo="send">送出提醒</button></div>
+    </div>
+  </div>
+  <div class="toast" data-demo="toast" id="toast" hidden>已提醒 2 位志工</div>
+</main>
+<div id="tour-controls"></div>
+</div>
+
+
+<script src="../../../skills/shared/scripted-demo/assets/player.js"></script>
+<script>
+  var initialState = { screen: 'tickets', filter: 'all', selected: false, dialog: false, toast: false };
+  var LATE = { screen: 'board', filter: 'late' };
+
+  function render(s, stage) {
+    stage.querySelectorAll('[data-screen]').forEach(function (el) { el.hidden = el.getAttribute('data-screen') !== s.screen; });
+    stage.querySelector('#page-title').innerHTML = s.screen === 'board' ? '任務管理 <span class="crumb">› 光復國小教室泥水清理</span>' : '任務管理';
+    stage.querySelectorAll('[data-filter]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-filter') === s.filter); });
+    stage.querySelectorAll('.people .tr:not(.head)').forEach(function (r) {
+      r.hidden = s.filter === 'late' ? !r.hasAttribute('data-late') : s.filter === 'here' ? r.hasAttribute('data-late') : false;
+    });
+    stage.querySelector('#foot').textContent = s.filter === 'late' ? '顯示 2 / 2 位' : s.filter === 'here' ? '顯示 3 / 10 位' : '顯示 5 / 12 位';
+    stage.querySelectorAll('[data-ck]').forEach(function (c) { c.classList.toggle('on', s.selected); });
+    stage.querySelector('#nudge').disabled = !s.selected;
+    stage.querySelector('#sel-count').textContent = s.selected ? '已選 2 位' : '還沒選人';
+    stage.querySelector('#dlg').hidden = !s.dialog;
+    stage.querySelector('#toast').hidden = !s.toast;
+  }
+
+  var demo = ScriptedDemo.create({
+    stage: '#stage',
+    controls: '#tour-controls',
+    initialState: initialState,
+    render: render,
+    sections: [
+      {
+        title: '看誰到現場了',
+        intro: '想像中的新功能，還沒有要做，只是拿來示範 scripted-demo。\n前台志工打卡到場之後，管理者在後台的「到場看板」看得到。',
+        keyframe: {},
+        steps: [
+          { target: 'ticket-school', focus: 'ticket-table', say: '在任務管理點「光復國小教室泥水清理」。', set: { screen: 'board' }, after: 'tab-board' },
+          { target: 'kpis', do: 'point', say: '上面三格是人數：已承接 12 位，已到場 10 位，還沒到 2 位。' },
+          { target: 'kpi-late', focus: 'kpis', say: '點「還沒到」，下面只留還沒打卡的志工。', set: { filter: 'late' }, after: 'people' },
+          { target: 'row-late', do: 'point', say: '每一位都寫了承接多久還沒到。' }
+        ],
+        summary: { points: ['不用一個一個打電話問「你到了嗎」', '一眼看出哪個需求的人還沒到齊'] }
+      },
+      {
+        title: '提醒還沒到的志工',
+        intro: '兩位志工承接很久還沒到，管理者一次傳提醒給他們。',
+        keyframe: LATE,
+        steps: [
+          { target: 'select-all', say: '按「全選」，選取這兩位。', set: { selected: true } },
+          { target: 'nudge', say: '按「傳提醒」。', set: { dialog: true }, after: 'msg', afterFocus: 'dialog' },
+          { target: 'msg', do: 'point', say: '先看志工會收到什麼：沒辦法來的話，請志工取消承接，讓別人接。' },
+          { target: 'send', say: '按「送出提醒」。', set: { dialog: false, toast: true, selected: false }, after: 'toast' }
+        ],
+        summary: { title: '好處與要注意的地方',
+                   pros: ['管理者不用一個一個打電話', '不能來的人取消承接，名額就空出來給別人'],
+                   cons: ['提醒太多次會變成騷擾', '還沒到不一定是放鳥，可能塞在路上'],
+                   questions: ['承接多久沒到，才算「還沒到」？', '提醒只用站內通知，還是也要傳簡訊？'] }
+      }
+    ]
+  });
+
+  document.getElementById('stage').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-demo], [data-filter]'); if (!b) return;
+    var n = b.getAttribute('data-demo'), f = b.getAttribute('data-filter');
+    if (f) demo.update({ filter: f, selected: false });
+    else if (n === 'ticket-school') demo.update({ screen: 'board' });
+    else if (n === 'select-all') demo.update({ filter: 'late', selected: true });
+    else if (n === 'nudge') demo.update({ dialog: true });
+    else if (n === 'dlg-cancel') demo.update({ dialog: false });
+    else if (n === 'send') demo.update({ dialog: false, toast: true, selected: false });
+  });
+</script>
+</body>
+</html>

@@ -24,6 +24,8 @@
     '[data-sd-theme="dark"] .sd-layer{--_dim:var(--sd-dark-dim,rgba(0,0,0,.45));--_accent:var(--sd-dark-accent,#60a5fa);--_curtain:#000;--_card:#343746;--_card-ink:#f8f8f2;--_card-muted:#9ea9d2;--_card-line:#44475a;--_card-q:#282a36}',
     '.sd-spot{position:absolute;display:none;border-radius:10px;box-shadow:0 0 0 9999px var(--_dim);outline:2px solid var(--_accent);transition:left var(--sd-move) cubic-bezier(.4,0,.2,1),top var(--sd-move) cubic-bezier(.4,0,.2,1),width var(--sd-move) cubic-bezier(.4,0,.2,1),height var(--sd-move) cubic-bezier(.4,0,.2,1)}',
     '.sd-cursor{position:absolute;display:none;width:22px;height:22px;transform:translate(-3px,-2px);transition:left var(--sd-move) cubic-bezier(.4,0,.2,1),top var(--sd-move) cubic-bezier(.4,0,.2,1),opacity var(--sd-move) ease;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}',
+    // 手機模式（device: 'phone'）：游標換成手指點的圓點，圓心就是點下去的位置
+    '.sd-phone .sd-cursor{width:30px;height:30px;transform:translate(-15px,-15px);filter:none}',
     '.sd-instant .sd-spot,.sd-instant .sd-cursor{transition:none}',
     '.sd-ripple{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:2px solid var(--_accent);animation:sd-ripple .45s ease-out forwards}',
     '@keyframes sd-ripple{from{transform:scale(.3);opacity:1}to{transform:scale(1.7);opacity:0}}',
@@ -61,10 +63,14 @@
     '.sd-narr{flex:1;min-width:0}.sd-narr small{display:block;font-size:12px;color:var(--_muted)}.sd-narr div{font-size:16px;color:var(--_head)}',
     '.sd-tp{display:flex;align-items:center;gap:6px}.sd-tp .sd-play{background:var(--_strong);color:var(--_strong-ink);border-color:var(--_strong);font-weight:700;padding:6px 16px}',
     '.sd-dots{display:flex;gap:4px;margin-top:10px}.sd-dots i{flex:1;height:4px;border-radius:2px;background:var(--_track);cursor:pointer}',
-    '.sd-dots i.sd-done{background:var(--_done)}.sd-dots i.sd-cur{background:var(--_hi)}'
+    '.sd-dots i.sd-done{background:var(--_done)}.sd-dots i.sd-cur{background:var(--_hi)}',
+    // 觀眾用手機打開 demo：章節改成左右滑，旁白和播放鈕上下排
+    '@media (max-width:640px){.sd-ctl{padding:10px 12px 8px}.sd-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.sd-row button{flex-shrink:0;white-space:nowrap}.sd-free{margin-left:12px}.sd-main{flex-direction:column;align-items:stretch;gap:8px}.sd-narr div{font-size:15px}.sd-tp{justify-content:center}}'
   ].join('\n');
 
   var CURSOR_SVG = '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 2l7.5 19 2.6-7.4L20.5 11z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+  // 手指：半透明圓點，深色外圈加白色內圈，亮底暗底都看得到，也不會整個蓋住底下的按鈕
+  var TOUCH_SVG = '<svg viewBox="0 0 30 30" width="30" height="30"><circle cx="15" cy="15" r="13" fill="rgba(255,255,255,.18)" stroke="rgba(17,17,17,.7)" stroke-width="2"/><circle cx="15" cy="15" r="10.5" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.25"/></svg>';
 
   function clone(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
   function patch(state, p) { if (p) Object.keys(p).forEach(function (k) { state[k] = clone(p[k]); }); return state; }
@@ -106,6 +112,10 @@
     this.spotRect = null;  // spotlight 目前的框（相對舞台）
     // 配色：'light'（預設）或 'dark'；寫在 <html data-sd-theme>，頁面 CSS 依它換舞台配色
     this.theme = o.theme || document.documentElement.getAttribute('data-sd-theme') || 'light';
+    // 被示範的是手機畫面還是電腦畫面：'phone' 時游標換成手指，點在目標正中間
+    this.device = o.device === 'phone' ? 'phone' : 'desktop';
+    // 游標元素左上角到「點下去那一點」的距離，給 scripts/check_demo.py 量動畫中的位置用
+    this.tipOffset = this.device === 'phone' ? { x: 15, y: 15 } : { x: 3, y: 2 };
 
     if (!document.getElementById('sd-style')) {
       var st = document.createElement('style'); st.id = 'sd-style'; st.textContent = CSS; document.head.appendChild(st);
@@ -344,7 +354,8 @@
   P._buildLayer = function () {
     this.layer = div('sd-layer');
     this.spotEl = div('sd-spot');
-    this.cursorEl = div('sd-cursor', CURSOR_SVG);
+    if (this.device === 'phone') this.layer.classList.add('sd-phone');
+    this.cursorEl = div('sd-cursor', this.device === 'phone' ? TOUCH_SVG : CURSOR_SVG);
     this.captionEl = div('sd-caption');
     this.cardWrap = div('sd-cardwrap');
     [this.spotEl, this.cursorEl, this.captionEl, this.cardWrap].forEach(function (e) { e.style.display = 'none'; this.layer.appendChild(e); }, this);
@@ -375,8 +386,10 @@
     var r = this._rel(e), W = this.stage.clientWidth, H = this.stage.clientHeight;
     // 游標箭頭往右下延伸：小目標（icon、小按鈕）把尖端貼在右下角外側（仍在 spotlight 的留白裡），
     // 箭頭整個落在目標外面，不會蓋住 icon；大目標對準中間
-    var x = r.width < SMALL ? r.left + r.width + TIP : r.left + r.width / 2;
-    var y = r.height < SMALL ? r.top + r.height + TIP : r.top + r.height / 2;
+    // 手機的手指本來就會蓋住按鈕，直接點正中間
+    var touch = this.device === 'phone';
+    var x = !touch && r.width < SMALL ? r.left + r.width + TIP : r.left + r.width / 2;
+    var y = !touch && r.height < SMALL ? r.top + r.height + TIP : r.top + r.height / 2;
     x = Math.min(Math.max(x, EDGE), W - EDGE);
     y = Math.min(Math.max(y, EDGE), H - EDGE);
     this.pt = { x: x, y: y };
@@ -548,6 +561,6 @@
 
   global.ScriptedDemo = {
     create: function (o) { var p = new Player(o); global.__scriptedDemo = p; return p; },
-    version: '1.1.0'
+    version: '1.2.0'
   };
 })(window);

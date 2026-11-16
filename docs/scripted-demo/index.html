@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>scripted-demo 示範</title>
+<style>
+  :root { --bg: #f8fafc; --card: #fff; --ink: #0f172a; --muted: #475569; --line: #e2e8f0; --accent: #c46416; --tag: #fdf3e9; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f172a; --card: #1e293b; --ink: #f1f5f9; --muted: #94a3b8; --line: #334155; --accent: #ec9c50; --tag: #4f2708; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.7 system-ui, "PingFang TC", "Microsoft JhengHei", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 16px 56px; }
+  h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.3; }
+  h2 { margin: 36px 0 12px; font-size: 19px; }
+  p { margin: 0 0 12px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  a.card { display: block; padding: 16px 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); color: inherit; text-decoration: none; }
+  a.card:hover { border-color: var(--accent); }
+  a.card b { display: block; font-size: 17px; }
+  a.card span { color: var(--muted); font-size: 14px; }
+  .tag { display: inline-block; margin-bottom: 6px; padding: 0 8px; border-radius: 999px; background: var(--tag); color: var(--accent); font-size: 12px; font-weight: 700; }
+  code { padding: 1px 5px; border-radius: 5px; background: var(--line); font-size: 14px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>scripted-demo：會自己演的操作示範</h1>
+  <p>每個示範都是一個 HTML 檔：假游標（手機版是手指）照劇本自己點，正在講的地方會打亮，下面有旁白，可以上一步、下一步、調速度，也可以按「自己點點看」直接操作。</p>
+  <p>點開任一個，按「▶ 播放」。</p>
+
+  <h2>光超（Wanguard）的想像功能</h2>
+  <p>下面兩個功能都是想像出來的，還沒有要做，只是拿來示範這個 skill。畫面照光超前端的配色和元件畫，資料都是假的。</p>
+  <div class="grid">
+    <a class="card" href="wanguard-site-checkin.html"><span class="tag">前台・手機</span><b>志工到場打卡</b><span>志工到現場按「我到現場了」，做完回報還缺不缺人。</span></a>
+    <a class="card" href="wanguard-admin-checkin-board.html"><span class="tag">後台・電腦</span><b>到場看板</b><span>管理者看誰到了、誰還沒到，一次傳提醒給還沒到的志工。</span></a>
+  </div>
+
+  <h2>skill 附的範例</h2>
+  <div class="grid">
+    <a class="card" href="example-bubble-tea.html"><span class="tag">電腦</span><b>手搖飲自助點餐機</b><span>點一杯珍奶、半路改主意、結帳拿號碼牌。</span></a>
+    <a class="card" href="example-bubble-tea-phone.html"><span class="tag">手機</span><b>手搖飲手機點餐 App</b><span>同一家店的手機版：點餐、付款、拿取餐號碼。</span></a>
+  </div>
+
+  <h2>自己做一個</h2>
+  <p>skill 本體在 <a href="https://github.com/ChiTienHsieh/dotfiles/tree/main/skills/shared/scripted-demo">GitHub 的 skills/shared/scripted-demo</a>。把整個資料夾放進 <code>~/.claude/skills/</code>，開 Claude Code 說「幫我做一個會自己演的 demo，示範 xxx 流程，給 yyy 看」。示範手機畫面時，跟 Claude 說「這是手機畫面」。</p>
+</main>
+</body>
+</html>

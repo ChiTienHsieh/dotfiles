@@ -33,6 +33,7 @@ dotfiles/
 ├── codex/                           # Codex CLI：config 種子與可攜設定、hooks、sandbox 設定
 ├── grok/                            # Grok：sandbox 設定
 ├── skills/                          # shared/、claude/、codex/ 三類 skills
+├── docs/                            # GitHub Pages：skill 的線上示範（scripted-demo）
 ├── hooks/                           # pre-commit hook 用的英文詞彙 allowlist
 ├── macos/                           # macOS defaults（鍵盤快捷鍵），手動執行
 ├── scripts/                         # sync-skills.sh 與安裝輔助腳本
