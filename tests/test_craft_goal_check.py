@@ -14,7 +14,10 @@ def run_check(text: str, *, via_file: bool = False) -> subprocess.CompletedProce
         with tempfile.NamedTemporaryFile("w", suffix=".txt", encoding="utf-8", delete=False) as handle:
             handle.write(text)
             path = handle.name
-        return subprocess.run([sys.executable, str(CHECK_SCRIPT), path], capture_output=True, text=True)
+        try:
+            return subprocess.run([sys.executable, str(CHECK_SCRIPT), path], capture_output=True, text=True)
+        finally:
+            Path(path).unlink()
     return subprocess.run([sys.executable, str(CHECK_SCRIPT)], input=text, capture_output=True, text=True)
 
 

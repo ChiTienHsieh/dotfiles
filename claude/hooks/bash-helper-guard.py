@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PreToolUse hook for the Bash tool.
 
-Denies two classes of commands that should route through the
+Denies three classes of commands that should route through the
 tmux-orchestration helper scripts instead of being hand-rolled:
 
   Rule A: polling loops around `tmux capture-pane` (or 3+ manually

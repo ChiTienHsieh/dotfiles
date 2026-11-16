@@ -61,7 +61,7 @@ lean on the git state alone. Do not read raw `.jsonl` — trust the digest.
 If Step 1 shows the branch is **behind** upstream, surface it and offer to catch
 up — do not pull silently:
 
-- Clean catch-up (behind only, not diverged) → offer `git pull --ff-only`.
+- Clean catch-up (behind only, not diverged) → offer `git pull --ff-only --no-rebase`.
 - Diverged (both ahead and behind) → present the divergence and let the user
   pick rebase/merge; do not pull here.
 
