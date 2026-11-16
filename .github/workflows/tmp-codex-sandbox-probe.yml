@@ -16,25 +16,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cli_version='0.167.0'
-          # The package's only dependency is its platform binary, pinned to
-          # the same version, so npm cannot float anything.
-          npm install --global --ignore-scripts --no-audit --no-fund "@openai/codex@${cli_version}"
-          codex --version | grep -F "${cli_version}"
-
-      - name: Probe
+          npm install --global --ignore-scripts --no-audit --no-fund "@openai/codex@0.167.0"
+          codex --version
+      - name: Diagnose
         env:
           CODEX_HOME: ${{ runner.temp }}/codex-home
         shell: bash
         run: |
-          echo "# Pull request diff" > pr-review-input.md
-          mkdir -p "${CODEX_HOME}"; echo diag-canary > "${CODEX_HOME}/diag.txt"
-          set -euo pipefail
+          set -uo pipefail
           umask 077
           mkdir -p "${CODEX_HOME}"
-          # Commands Codex runs get a read-only disk with no network, minus the
-          # directory that holds the login. Repository instructions
-          # (AGENTS.md), web search, and ChatGPT connectors stay off.
+          echo "# Pull request diff" > pr-review-input.md
+          echo diag-canary > "${CODEX_HOME}/auth.json"
           cat > "${CODEX_HOME}/config.toml" <<EOF
           default_permissions = "ci-review"
           project_doc_max_bytes = 0
@@ -49,38 +42,23 @@ jobs:
           [permissions.ci-review.filesystem]
           "${CODEX_HOME}" = "deny"
           EOF
-          # Every token, and every dot-separated piece of one, long enough to
-          # be worth masking in logs or refusing in the published review.
-          cat > "${RUNNER_TEMP}/codex-token-parts.jq" <<'EOF'
-          [.tokens // {} | .[] | strings | ., (split(".")[])] | map(select(length >= 16)) | unique[]
-          EOF
-
-          # Test with a canary before the real login is on disk.
-          canary="canary-${RANDOM}-${RANDOM}-${RANDOM}"
-          printf '%s\n' "${canary}" > "${CODEX_HOME}/auth.json"
-          in_sandbox() {
-            codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- "$@" 2>&1 || true
-          }
-          # Control: the sandbox has to run at all, or the denials prove nothing.
-          in_sandbox cat pr-review-input.md | grep -qF 'Pull request diff'
-          for reader in 'cat' 'sudo -n cat'; do
-            # shellcheck disable=SC2086 # split the reader into command and flags
-            if in_sandbox ${reader} "${CODEX_HOME}/auth.json" | grep -qF "${canary}"; then
-              echo "::error::The Codex sandbox let '${reader}' read the credential file."
-              exit 1
-            fi
-          done
-          in_sandbox touch "${GITHUB_WORKSPACE}/sandbox-write-probe" > /dev/null
-          if [ -e "${GITHUB_WORKSPACE}/sandbox-write-probe" ]; then
-            echo '::error::The Codex sandbox allowed a write.'
-            exit 1
-          fi
-          rm -f "${CODEX_HOME}/auth.json"
-
-          echo "probe passed; diagnostics follow"
-          set +e
-          codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- cat "${CODEX_HOME}/diag.txt"; echo "cat rc=$?"
-          codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- sudo -n cat "${CODEX_HOME}/diag.txt"; echo "sudo rc=$?"
-          codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- ls -la "${CODEX_HOME}" "${RUNNER_TEMP}"; echo "ls rc=$?"
-          codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- curl -sS -m 5 -o /dev/null https://example.com; echo "curl rc=$?"
-          codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- sh -c "id; cat /proc/self/status | grep -i -E \"nonewprivs|seccomp\""; echo "id rc=$?"
+          sb() { echo "--- $*"; codex sandbox --permission-profile ci-review --cd "${GITHUB_WORKSPACE}" -- "$@"; echo "rc=$?"; }
+          sysctl kernel.apparmor_restrict_unprivileged_userns kernel.unprivileged_userns_clone kernel.yama.ptrace_scope || true
+          command -v bwrap || true
+          sb cat pr-review-input.md
+          sb cat "${CODEX_HOME}/auth.json"
+          sb sudo -n cat "${CODEX_HOME}/auth.json"
+          sb ls -la "${CODEX_HOME}"
+          sb touch "${GITHUB_WORKSPACE}/sandbox-write-probe"; ls sandbox-write-probe || true
+          sb curl -sS -m 5 -o /dev/null https://example.com
+          sb sh -c 'id; grep -i -E "nonewprivs|seccomp" /proc/self/status'
+          echo "=== after allowing userns via sysctl"
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          sb cat pr-review-input.md
+          sb cat "${CODEX_HOME}/auth.json"
+          sb sudo -n cat "${CODEX_HOME}/auth.json"
+          sb ls -la "${CODEX_HOME}"
+          sb touch "${GITHUB_WORKSPACE}/sandbox-write-probe"; ls sandbox-write-probe || true
+          sb curl -sS -m 5 -o /dev/null https://example.com
+          sb sh -c 'id; grep -i -E "nonewprivs|seccomp" /proc/self/status'
+          sb sh -c "cat /proc/$$/environ | tr '\\0' '\\n' | grep -c . ; head -c 20 /proc/$$/mem"
