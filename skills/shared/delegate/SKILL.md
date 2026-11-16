@@ -34,7 +34,7 @@ Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/ski
 
 1. 跑 `~/.claude/skills/delegate/scripts/pick-worker`（照寫這個絕對路徑；在 Claude Code 裡要帶 `dangerouslyDisableSandbox`）。它會印出剩餘 quota、推薦的 provider 與理由，以及對應的 `runbook/<provider>.md`；`--provider <name>` 強制指定，`--quiet` 只印推薦結果。
 2. **推薦的 provider 就是你所在的 runtime 時，用內建 subagent**（Claude Code：`Agent` tool；Codex：內建 subagent；Grok：`spawn_subagent`），絕不從 shell 呼叫自己的 CLI。runbook 裡的 CLI 用法只給不同 runtime 的呼叫方。
-3. spec 寫成檔案、傳絕對路徑，照 runbook 派出去；六項都要有：目標 · 範圍內的檔案 · 介面（要遵守的 signature、schema、CLI 合約）· 限制 · 驗證指令 · reasoning effort。前端工作另把設計意圖寫進 spec，controller 自己跑 app、截圖，帶著具體的畫面回饋重派，直到 UI 符合設計意圖。
+3. spec 照 `agents/AGENTS.md` 寫 prompt 的規則來寫：開頭寫你抓到的使用者意圖，再補現況和限制（唯讀還是可寫、能動的範圍、要不要 commit／push 一律寫明），做法交給 worker。範圍內的檔案、要遵守的介面（signature、schema、CLI 合約）和驗證指令，只寫 worker 自己推不出來的；reasoning effort 有 flag 就照 runbook 設，不寫進 spec。給 headless CLI 的 spec 寫成檔案、傳絕對路徑，照 runbook 派出去。前端工作另把設計意圖寫進 spec，controller 自己跑 app、截圖，帶著具體的畫面回饋重派，直到 UI 符合設計意圖。
 
 三條絕對規則：
 
