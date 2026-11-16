@@ -224,8 +224,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Codex's Linux sandbox needs unprivileged user namespaces, which
-          # the hosted Ubuntu image blocks through AppArmor by default.
+          # Codex's Linux sandbox is built on unprivileged user namespaces,
+          # which the hosted Ubuntu image blocks through AppArmor: without
+          # this the sandbox cannot start at all. The runner is a throwaway VM
+          # where this job already has root, so the restriction protects
+          # nothing here, and lifting it is what lets the sandbox below
+          # confine the commands Codex runs.
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 > /dev/null
           umask 077
           mkdir -p "${CODEX_HOME}"
@@ -465,7 +469,10 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          for report in advisories/*/review-comment.md; do
+          # One artifact is unpacked straight into advisories/, several get a
+          # directory each.
+          for report in advisories/review-comment.md advisories/*/review-comment.md; do
+            [ -f "${report}" ] || continue
             # The first line is the reviewer's own marker comment.
             marker="$(head -n 1 "${report}")"
             jq -n --rawfile body "${report}" '{body: $body}' > comment.json
