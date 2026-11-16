@@ -176,6 +176,58 @@ class AiReviewWorkflowTest(unittest.TestCase):
                 self.assertFalse(called)
                 self.assertIn("審查沒有跑起來", comment)
 
+    def run_persist(self, refreshed=True, gh_exit=0, token="writeback", auth=FAKE_AUTH):
+        """跑存回憑證的 script，回傳（exit code, gh 收到的內容或 None, 憑證目錄還在不在）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ("bin", "ws", "temp", "home"):
+                (root / name).mkdir()
+            received = root / "gh-received"
+            gh = root / "bin" / "gh"
+            gh.write_text(f"#!/usr/bin/env bash\necho \"$*\" > '{received}'\ncat >> '{received}'\nexit {gh_exit}\n")
+            gh.chmod(0o755)
+            probe = step(self.codex, "sandbox-probe")["run"]
+            jq_filter = next(line for line in probe.splitlines() if line.startswith("[.tokens"))
+            (root / "temp" / "codex-token-parts.jq").write_text(jq_filter + "\n")
+            auth_file = root / "home" / "auth.json"
+            if auth is not None:
+                auth_file.write_text(json.dumps(auth))
+            before = json.dumps({**FAKE_AUTH, "last_refresh": "old"}) if refreshed else json.dumps(auth)
+            digest = subprocess.run(["sha256sum"], input=before, capture_output=True, text=True, check=True).stdout
+            (root / "temp" / "codex-auth.sha256").write_text(digest)
+            env = {
+                "PATH": f"{root / 'bin'}{os.pathsep}{os.environ['PATH']}",
+                "CODEX_HOME": str(root / "home"),
+                "RUNNER_TEMP": str(root / "temp"),
+                "GH_TOKEN": token,
+                "REPOSITORY": "owner/repo",
+            }
+            done = subprocess.run(
+                ["bash", "-c", step(self.codex, "persist")["run"]], cwd=root / "ws", env=env, capture_output=True, text=True
+            )
+            return done.returncode, received.read_text() if received.exists() else None, (root / "home").exists()
+
+    @unittest.skipUnless(shutil.which("jq") and shutil.which("sha256sum"), "需要 jq 和 sha256sum")
+    def test_refreshed_login_is_stored_back(self):
+        with self.subTest("沒換 token 就不動 secret"):
+            code, received, home_left = self.run_persist(refreshed=False)
+            self.assertEqual((code, received, home_left), (0, None, False))
+        with self.subTest("換了 token 就存回 environment secret"):
+            code, received, home_left = self.run_persist()
+            self.assertEqual(code, 0)
+            self.assertIn("secret set CODEX_AUTH_JSON --env codex-review --repo owner/repo", received)
+            self.assertIn(FAKE_AUTH["tokens"]["refresh_token"], received)
+            self.assertFalse(home_left)
+        for label, kwargs in [
+            ("存回失敗", {"gh_exit": 1}),
+            ("沒有存回用的 token", {"token": ""}),
+            ("登入在執行中失效", {"auth": None}),
+        ]:
+            with self.subTest(label):
+                code, _, home_left = self.run_persist(**kwargs)
+                self.assertNotEqual(code, 0)
+                self.assertFalse(home_left)
+
 
 if __name__ == "__main__":
     unittest.main()
