@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>scripted-demo 示範</title>
+<!-- 這個資料夾的 *.html 都是由 src/ 和 skills/shared/scripted-demo/assets/ 產出的單一檔案；改了 player.js 或原始檔，要重跑：
+     python3 skills/shared/scripted-demo/scripts/inline_player.py <原始檔> -o docs/scripted-demo/<名稱>.html -->
 <style>
   :root { --bg: #f8fafc; --card: #fff; --ink: #0f172a; --muted: #475569; --line: #e2e8f0; --accent: #c46416; --tag: #fdf3e9; }
   @media (prefers-color-scheme: dark) {
@@ -31,7 +33,7 @@
   <p>每個示範都是一個 HTML 檔：假游標（手機版是手指）照劇本自己點，正在講的地方會打亮，下面有旁白，可以上一步、下一步、調速度，也可以按「自己點點看」直接操作。</p>
   <p>點開任一個，按「▶ 播放」。</p>
 
-  <h2>光超（Wanguard）的想像功能</h2>
+  <h2>光超（Wanguard）的假想新功能</h2>
   <p>下面兩個功能都是想像出來的，還沒有要做，只是拿來示範這個 skill。畫面照光超前端的配色和元件畫，資料都是假的。</p>
   <div class="grid">
     <a class="card" href="wanguard-site-checkin.html"><span class="tag">前台・手機</span><b>志工到場打卡</b><span>志工到現場按「我到現場了」，做完回報還缺不缺人。</span></a>
@@ -46,6 +48,8 @@
 
   <h2>自己做一個</h2>
   <p>skill 本體在 <a href="https://github.com/ChiTienHsieh/dotfiles/tree/main/skills/shared/scripted-demo">GitHub 的 skills/shared/scripted-demo</a>。把整個資料夾放進 <code>~/.claude/skills/</code>，開 Claude Code 說「幫我做一個會自己演的 demo，示範 xxx 流程，給 yyy 看」。示範手機畫面時，跟 Claude 說「這是手機畫面」。</p>
+  <p>只下載這個資料夾：</p>
+  <p><code>git clone --depth 1 --filter=blob:none --sparse https://github.com/ChiTienHsieh/dotfiles.git &amp;&amp; git -C dotfiles sparse-checkout set skills/shared/scripted-demo</code></p>
 </main>
 </body>
 </html>

@@ -16,7 +16,7 @@ tags:
 
 ## 先打開範例看看
 
-線上版（不用下載）：<https://chitienhsieh.github.io/dotfiles/scripted-demo/>，有電腦版、手機版範例，還有兩個想像功能的完整示範。
+線上版（不用下載）：<https://chitienhsieh.github.io/dotfiles/scripted-demo/>，有電腦版、手機版範例，還有兩個假想新功能的完整示範。
 
 用瀏覽器打開 [`assets/example-bubble-tea.html`](assets/example-bubble-tea.html)，按底下的「▶ 播放」。
 
@@ -66,7 +66,7 @@ tags:
 - **給誰看**：一般同事、主管、還是新人；Claude 會依觀眾調整用詞
 - **分幾段**：例如「正常流程」「填錯怎麼改」「完成之後」
 - **長什麼樣**：有現成系統就說是哪個系統，Claude 會照它的樣子畫
-- **手機還是電腦**：被示範的是手機 App 或手機版網頁，就說「這是手機畫面」，Claude 會畫成手機大小，游標換成手指
+- **手機還是電腦**：要示範的是手機 App 或手機版網頁，就說「這是手機畫面」，Claude 會畫成手機大小，游標換成手指
 
 ## 拿到什麼
 

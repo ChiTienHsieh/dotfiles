@@ -206,7 +206,7 @@
     this.spotRect = null;  // spotlight 目前的框（相對舞台）
     // 配色：'light'（預設）或 'dark'；寫在 <html data-sd-theme>，頁面 CSS 依它換舞台配色
     this.theme = o.theme || document.documentElement.getAttribute('data-sd-theme') || 'light';
-    // 被示範的是手機畫面還是電腦畫面：'phone' 時游標換成手指，點在目標正中間
+    // 要示範的是手機畫面還是電腦畫面：'phone' 時游標換成手指，點在目標正中間
     this.device = o.device === 'phone' ? 'phone' : 'desktop';
     // 游標元素左上角到「點下去那一點」的距離，給 scripts/check_demo.py 量動畫中的位置用
     this.tipOffset = this.device === 'phone' ? { x: 15, y: 15 } : { x: 3, y: 2 };
