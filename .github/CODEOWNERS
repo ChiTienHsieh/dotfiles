@@ -8,7 +8,8 @@
 /.github/ @ChiTienHsieh
 
 # Claude Code 權限、sandbox、hook、status line 與 subagent 定義（可指定 permissionMode）
-/.claude/ @ChiTienHsieh
+# 不加開頭的 /：任何一層的 .claude/ 都算
+.claude/ @ChiTienHsieh
 /claude/settings.json @ChiTienHsieh
 /claude/hooks/ @ChiTienHsieh
 /claude/statusline.sh @ChiTienHsieh
@@ -40,6 +41,8 @@
 
 # 安裝流程：決定哪些檔案連進家目錄，並寫入權限與套件安全設定
 /install.sh @ChiTienHsieh
+# install.sh 會拉子模組，新的子模組可以把沒檢查過的 skill 帶進來
+/.gitmodules @ChiTienHsieh
 /scripts/ @ChiTienHsieh
 /npm/.npmrc @ChiTienHsieh
 /bun/.bunfig.toml @ChiTienHsieh

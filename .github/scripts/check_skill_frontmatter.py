@@ -3,15 +3,16 @@
 
 skill 可以在 frontmatter 幫自己放行指令（例如 allowed-tools），之後也可能出現
 其他會影響權限的欄位。這支程式放在 .github/ 底下，改它要 repo owner approve；
-skill 本身改得很頻繁，不在 CODEOWNERS 裡，所以權限相關的欄位由這裡把關：
+skill 本身改得很頻繁，不在 CODEOWNERS 裡，所以權限相關的欄位由這裡把關。
 
-- 只准用 SAFE_KEYS 裡的欄位，沒見過的欄位一律擋下（寧可誤擋）。
-- allowed-tools 只准 ALLOWED_TOOLS 列的 skill 用，值也要完全一樣。
+原則是格式不對就擋，不猜 YAML 會怎麼解讀：
+- frontmatter 每一行都要是單純的「欄位: 值」，只有 metadata 底下可以縮排兩格。
+  縮排、tab、續行、空行、註解、`?`、`{` 這些寫法一律擋。
+- 只准用 SAFE_KEYS 裡的欄位，沒見過的欄位一律擋。
+- allowed-tools 只准 ALLOWED_TOOLS 列的 skill 用，值要一字不差。
 
-用法：不帶參數就檢查 git 追蹤的所有 SKILL.md；也可以直接給檔案路徑。
+用法：不帶參數就檢查 git 追蹤的所有 SKILL.md（檔名不分大小寫）；也可以直接給檔案路徑。
 """
-
-from __future__ import annotations
 
 import re
 import subprocess
@@ -29,72 +30,60 @@ SAFE_KEYS = {
     "license",
 }
 
-# 准用 allowed-tools 的 skill，以及它准放行的內容（完全比對）。
+# 准用 allowed-tools 的 skill，以及它准放行的內容（一字不差）。
 ALLOWED_TOOLS = {
     "skills/claude/playwright-cli/SKILL.md": "Bash(playwright-cli:*)",
     "skills/shared/delegate/SKILL.md": "Bash(~/.claude/skills/delegate/scripts/pick-worker:*)",
 }
 
-# 頂層欄位：行首不是空白、不是註解，後面接冒號。其他寫法（引號、{...}）
-# 會被當成沒見過的欄位擋下。
-TOP_LEVEL_KEY = re.compile(r"^([^\s#][^:]*):(.*)$")
-
-
-def frontmatter_entries(text: str) -> list[tuple[str, str]]:
-    # 開頭的 BOM（檔案開頭看不見的編碼標記）和空行先去掉，免得藏一段 frontmatter 卻被當成沒有。
-    lines = text.lstrip("\ufeff \t\r\n").splitlines()
-    if not lines or lines[0].strip() != "---":
-        return []
-    entries: list[tuple[str, str]] = []
-    for line in lines[1:]:
-        if line.strip() == "---":
-            return entries
-        match = TOP_LEVEL_KEY.match(line)
-        if match:
-            entries.append((match.group(1), match.group(2)))
-        elif entries and line.strip() and not line.lstrip().startswith("#"):
-            key, value = entries[-1]
-            entries[-1] = (key, f"{value} {line}")
-    # 沒有結尾的 --- 就不是 frontmatter，Claude Code 也不會讀。
-    return []
-
-
-def normalize(value: str) -> str:
-    return " ".join(value.split()).strip("'\"")
+KEY_LINE = re.compile(r"^([a-z][a-z-]*):(?: (.*))?$")
 
 
 def check(path: str) -> list[str]:
+    # 開頭的 BOM（檔案開頭看不見的編碼標記）和空行先去掉，
+    # 不然前面墊一個空行，整段 frontmatter 就不會被檢查。
+    text = Path(path).read_text(encoding="utf-8").lstrip("﻿ \t\r\n")
+    if not text.startswith("---"):
+        return []
+    lines = text.replace("\r\n", "\n").split("\n")
+    if lines[0] != "---" or "---" not in lines[1:]:
+        return [f"{path}: frontmatter 的開頭和結尾都要是單獨一行 ---"]
     errors = []
-    for key, value in frontmatter_entries(Path(path).read_text(encoding="utf-8")):
-        if key == "allowed-tools":
-            expected = ALLOWED_TOOLS.get(path)
-            if expected is None:
-                errors.append(f"{path}: 這個 skill 不在 allowed-tools 白名單裡")
-            elif normalize(value) != expected:
-                errors.append(
-                    f"{path}: allowed-tools 跟白名單不同（白名單：{expected}；"
-                    f"實際：{normalize(value)}）"
-                )
-        elif key not in SAFE_KEYS:
-            errors.append(f"{path}: 沒見過的 frontmatter 欄位 {key!r}")
+    key = None
+    for line in lines[1 : lines.index("---", 1)]:
+        match = KEY_LINE.match(line)
+        if "---" in line:
+            # Claude Code 碰到 --- 就當成 frontmatter 結束，跟這裡切的位置會對不上。
+            errors.append(f"{path}: frontmatter 裡不能出現 ---：{line!r}")
+        elif match:
+            key, value = match.group(1), match.group(2) or ""
+            if key == "allowed-tools":
+                if ALLOWED_TOOLS.get(path) != value:
+                    errors.append(f"{path}: allowed-tools 不在白名單裡，或跟白名單寫的不一樣")
+            elif key not in SAFE_KEYS:
+                errors.append(f"{path}: 沒見過的 frontmatter 欄位 {key!r}")
+        elif not (key == "metadata" and line.startswith("  ")):
+            errors.append(f"{path}: 這一行不是「欄位: 值」的寫法：{line!r}")
     return errors
 
 
-def main(argv: list[str]) -> int:
-    paths = argv or subprocess.run(
-        ["git", "ls-files", "*SKILL.md"],
+def tracked_skill_files() -> list[str]:
+    output = subprocess.run(
+        ["git", "ls-files", "-z", ":(icase)*skill.md"],
         check=True,
         capture_output=True,
         text=True,
-    ).stdout.split()
+    ).stdout
+    return [path for path in output.split("\0") if Path(path).name.lower() == "skill.md"]
+
+
+def main(argv: list[str]) -> int:
+    paths = argv or tracked_skill_files()
     errors = [error for path in paths for error in check(path)]
     for error in errors:
         print(f"::error::{error}")
     if errors:
-        print(
-            "要放行的話，由 repo owner 改 .github/scripts/check_skill_frontmatter.py"
-            " 的白名單。"
-        )
+        print("要放行的話，由 repo owner 改 .github/scripts/check_skill_frontmatter.py 的白名單。")
         return 1
     print(f"檢查了 {len(paths)} 個 SKILL.md，frontmatter 都在白名單內。")
     return 0
