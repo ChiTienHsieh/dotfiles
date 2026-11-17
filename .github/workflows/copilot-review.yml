@@ -39,8 +39,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # The rules every reviewer gets. They live here, not in a file, so it
-  # always come from main together with the rest of this workflow.
+  # The rules every reviewer gets. They live here, not in a file, so
+  # they always come from main together with the rest of this workflow.
   #
   # The scope rules exist because reviewers used to blame a pull request for
   # rules that were already on main: the diff carries 80 lines of unchanged
