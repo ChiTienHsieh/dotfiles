@@ -236,8 +236,8 @@ jobs:
           persist-credentials: false
 
       - name: Audit GitHub Actions workflows
-        # TODO: Add actionlint after it recognizes GitHub's documented
-        # copilot-requests permission instead of rejecting the workflow.
+        # TODO: Add actionlint. It used to reject the copilot-requests
+        # permission; no workflow asks for that permission any more.
         uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
         with:
           advanced-security: false
