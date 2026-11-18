@@ -51,18 +51,22 @@ class ReactRouterPayload:
     def __init__(self, values: list[Any]) -> None:
         self.values = values
 
-    def resolve_ref(self, value: Any) -> Any:
+    def resolve_ref(self, value: Any, active: frozenset[int] = frozenset()) -> Any:
+        # Tree nodes point at both parent and children, so the payload has
+        # cycles; `active` holds the refs on the current path and cuts them.
         if isinstance(value, int):
-            if value < 0:
+            if value < 0 or value in active:
                 return None
             if value < len(self.values):
-                return self.resolve_ref(self.values[value])
+                return self.resolve_ref(self.values[value], active | {value})
             return value
         if isinstance(value, list):
-            return [self.resolve_ref(item) for item in value]
+            return [self.resolve_ref(item, active) for item in value]
         if isinstance(value, dict):
             return {
-                str(self.resolve_ref(int(key[1:]) if key.startswith("_") else key)): self.resolve_ref(val)
+                str(self.resolve_ref(int(key[1:]) if key.startswith("_") else key, active)): self.resolve_ref(
+                    val, active
+                )
                 for key, val in value.items()
             }
         return value
