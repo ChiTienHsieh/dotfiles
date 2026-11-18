@@ -1,0 +1,6 @@
+{
+  "name": "sprin-mods",
+  "owner": { "name": "Sprin" },
+  "description": "Sprin 自己用的 Claude Code mods",
+  "plugins": [{ "name": "tempo", "source": "./tempo" }]
+}

@@ -1,0 +1,2 @@
+# Claude Code 載入 mod 時會在 .claude-plugin/types/ 生成型別檔，每台機器、每個版本都不一樣。
+*/.claude-plugin/types/

@@ -1,0 +1,7 @@
+{
+  "name": "tempo",
+  "version": "0.1.0",
+  "author": { "name": "Sprin" },
+  "description": "切換 Claude 的工作節奏：off 照常，autonomous 少問、自己驗、做到底",
+  "types": "./types/index.d.ts"
+}
