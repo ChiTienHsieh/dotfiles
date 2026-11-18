@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-WORKFLOW = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "copilot-review.yml"
+WORKFLOW = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ai-review.yml"
 
 # 一條該放行的 PR；每個案例只改其中幾項。
 PASSING = {
@@ -16,22 +16,8 @@ PASSING = {
     "BASE_REF": "main",
     "CLAUDE_RESULT": "success",
     "CLAUDE_VERDICT": "pass",
-    # Copilot 只在過渡用的 pull_request 觸發跑，平常是被跳過的。
-    "COPILOT_RESULT": "skipped",
-    "COPILOT_VERDICT": "",
-    "EVENT_NAME": "pull_request_target",
     "HEAD_REPOSITORY": "owner/repo",
     "REPOSITORY": "owner/repo",
-}
-
-COPILOT_PASSED = {"COPILOT_RESULT": "success", "COPILOT_VERDICT": "pass"}
-
-# 過渡用的 pull_request 觸發：拿不到憑證，Claude 被跳過，由 Copilot 代審。
-TRANSITIONAL = {
-    "EVENT_NAME": "pull_request",
-    "CLAUDE_RESULT": "skipped",
-    "CLAUDE_VERDICT": "",
-    **COPILOT_PASSED,
 }
 
 GATE_BLOCKED = [
@@ -40,12 +26,9 @@ GATE_BLOCKED = [
     ("Claude job 被跳過", {"CLAUDE_RESULT": "skipped", "CLAUDE_VERDICT": ""}),
     ("Claude job 被取消", {"CLAUDE_RESULT": "cancelled", "CLAUDE_VERDICT": ""}),
     ("Claude 有判定但 job 失敗", {"CLAUDE_RESULT": "failure"}),
-    ("只有 Copilot 通過不算數", {"CLAUDE_RESULT": "skipped", "CLAUDE_VERDICT": "", **COPILOT_PASSED}),
     ("fork 來的 PR", {"HEAD_REPOSITORY": "stranger/repo"}),
     ("base 不是 main", {"BASE_REF": "scratch"}),
     ("作者不是 owner 或 collaborator", {"AUTHOR_ASSOCIATION": "CONTRIBUTOR"}),
-    ("過渡用的 pull_request 觸發，Copilot 沒通過", {**TRANSITIONAL, "COPILOT_VERDICT": "needs-changes"}),
-    ("過渡用的 pull_request 觸發，Copilot 被跳過", {**TRANSITIONAL, "COPILOT_RESULT": "skipped", "COPILOT_VERDICT": ""}),
 ]
 
 # （說明, 審查者的輸出, 預期判定）
@@ -85,8 +68,10 @@ class AiReviewWorkflowTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         workflow = load_workflow()
+        # YAML 1.1 把 `on` 這個 key 讀成布林值 true。
+        cls.triggers = workflow.get("on") or workflow["true"]
         cls.jobs = workflow["jobs"]
-        cls.rules = {name: workflow["env"][name] for name in ("REVIEW_RULES", "REVIEW_FILES_NOTE")}
+        cls.rules = {"REVIEW_RULES": workflow["env"]["REVIEW_RULES"]}
         cls.claude = cls.jobs["claude-review"]
         cls.gate = cls.jobs["ai-review-gate"]["steps"][0]["run"]
 
@@ -96,9 +81,6 @@ class AiReviewWorkflowTest(unittest.TestCase):
 
     def test_gate_passes_when_claude_passes(self):
         self.assertEqual(self.run_gate({}), 0)
-
-    def test_gate_passes_on_the_transitional_trigger_when_copilot_passes(self):
-        self.assertEqual(self.run_gate(TRANSITIONAL), 0)
 
     def test_gate_blocks(self):
         for label, overrides in GATE_BLOCKED:
@@ -110,21 +92,21 @@ class AiReviewWorkflowTest(unittest.TestCase):
         gate = self.jobs["ai-review-gate"]
         self.assertIn("always()", gate["if"])
         self.assertEqual(gate["name"], "ai-review-gate")
-        self.assertEqual(sorted(gate["needs"]), ["claude-review", "read-only-review"])
+        self.assertEqual(sorted(gate["needs"]), ["claude-review"])
 
-    def test_only_the_claude_job_on_the_trusted_trigger_gets_secrets(self):
+    def test_the_only_trigger_runs_the_base_branch_version(self):
+        # pull_request 觸發會跑 PR 自己帶的 workflow，不能加回來。
+        self.assertEqual(list(self.triggers), ["pull_request_target"])
+
+    def test_only_the_claude_job_gets_secrets(self):
         for name, job in self.jobs.items():
             with self.subTest(name):
                 if name == "claude-review":
                     self.assertEqual(job["environment"], "ai-review")
-                    self.assertIn("github.event_name == 'pull_request_target'", job["if"])
                     self.assertIn("head.repo.full_name == github.repository", job["if"])
                 else:
                     self.assertNotIn("secrets.", json.dumps(job))
                     self.assertNotIn("environment", job)
-
-    def test_copilot_only_runs_on_the_transitional_trigger(self):
-        self.assertIn("github.event_name == 'pull_request'", self.jobs["read-only-review"]["if"])
 
     def run_claude(self, output="", *, exit_code=0, is_error=False, token=TOKEN, install="success"):
         """跑 Claude 審查步驟的 script，回傳（判定, 留言內容, claude 收到的參數或 None, claude 收到的 stdin）。"""
