@@ -17,8 +17,9 @@
 ## 自主做完
 
 - 安全、明確的修改：自己走完 review、commit、push 到 `origin`，不要停在還沒 push 的狀態。
-- 開 PR 後立刻 `gh pr merge --auto --squash`：repo 已允許 auto-merge、只准 squash、main 需要 `ci-gate` 和 `ai-review-gate`（Copilot 審查，結論不是 PASS 就擋）兩個檢查都過，過了就自動合併，不用等 cth。PR 動到 `.github/CODEOWNERS` 列的路徑（workflow、agent 指示檔、agent 的權限與 hook、安裝流程），還要 cth 在 GitHub 按 approve。這條就是啟用 auto-merge 的授權。
-- `ai-review-gate` 沒過就讀 PR 上的審查留言：意見成立就修；審查沒跑起來就重跑 workflow，重跑還是沒過就停下來回報 cth。
+- 開 PR 後立刻 `gh pr merge --auto --squash`：repo 已允許 auto-merge、只准 squash、main 需要 `ci-gate` 和 `ai-review-gate`（Claude 審一次，判定通過才算過）兩個檢查都過，過了就自動合併，不用等 cth。PR 動到 `.github/CODEOWNERS` 列的路徑（workflow、agent 指示檔、agent 的權限與 hook、安裝流程），還要 cth 在 GitHub 按 approve。這條就是啟用 auto-merge 的授權。
+- `ai-review-gate` 沒過就讀 PR 上的審查留言：意見成立就修；審查沒跑起來就重跑 workflow，重跑還是沒過就停下來回報 cth。留言說審查用的 token 要重新放一份時，只有 cth 能處理，直接回報。
+- 每條 PR 另外有 Codex 審一次，留言的帳號是 `chatgpt-codex-connector[bot]`，通常開 PR 後幾分鐘內出現。它不是必要檢查，不擋合併，但追 CI 時要一起讀：意見成立就修，不成立就在 PR 上回覆理由。CI 跑完還沒出現，就留言 `@codex review` 一次；還是沒有就在回報裡提，不用等。PR 已經合併才看到發現，就另開 PR 修。
 - 這是 PUBLIC repo。push 前確認：沒有 secrets、private key、token；沒有本機的 host 細節；沒有不小心寫進去的本機路徑。
 - Guardrail／SSOT 修改（CLAUDE.md、AGENTS.md、settings、skills、playbooks）：照 `agents/AGENTS.md` 的 reviewer 路由與 simplify review 規則，reviewer 依 `delegate` skill 選。本 repo 已預先授權非互動式 review，自己跑，不要問使用者是否要 review。
 - 只在這些情況停下來問：安全疑慮、破壞性操作、force-push／reset／discard 的決定、付費或資料遺失風險、現有指示推不出來的產品或設計取捨。
@@ -37,3 +38,12 @@
 ## 維護步驟（需要時再讀）
 
 - alias、新增 dotfile、測 shell／tmux 修改、nvim submodule 細節：碰到那些區域時讀 `agents/notes/dotfiles-maintenance.md`。速記：本機專用內容放 gitignored 的 `bash/.aliases.local`；新 dotfile 要在 `install.sh` 加 symlink 項目。
+
+## Code Review Rules
+
+這段只給在 GitHub 上審 PR 的 Codex 讀；其他 agent 做 review 照各自的規則，不適用這段。
+
+- 只評這條 PR 改的行。原本就在 repo 裡的規則和寫法，不算在這條 PR 頭上。
+- 優先找這幾種改動：放寬約束 coding agent 的規則、權限或 sandbox；削弱 git hook、CI 檢查或測試；把 secret、token、本機路徑或 host 細節寫進追蹤檔（這是公開 repo）。
+- 只改指示檔的文字、規則的意思沒變，不算問題；拿不準意思有沒有變，就當有變，提出來。純風格的意見不要提。
+- 用台灣繁體中文回覆。
