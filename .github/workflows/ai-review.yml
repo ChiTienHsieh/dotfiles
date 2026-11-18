@@ -4,9 +4,10 @@ name: AI review
 # passes.
 #
 # pull_request_target runs the workflow definition from the base branch, never
-# from the pull request, so a pull request cannot rewrite these jobs to print the reviewer's credential or to skip
-# the review. The price: no job here may execute anything from the pull
-# request. The head commit is checked out as data only.
+# from the pull request, so a pull request cannot rewrite these jobs to print
+# the reviewer's credential or to skip the review. The price: no job here may
+# execute anything from the pull request. The head commit is checked out as
+# data only.
 on:
   # zizmor flags every pull_request_target workflow. This one is deliberate:
   # the trigger is what keeps the credential out of reach, and the jobs treat
