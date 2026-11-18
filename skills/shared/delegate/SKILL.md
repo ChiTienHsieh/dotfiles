@@ -61,7 +61,7 @@ Claude Code、Codex、Grok 都會載入這份檔案（Grok 透過 `~/.claude/ski
 1. 內建 subagent 卡住 → 還在 `## When` 的門檻內，就由目前的 agent 自己收尾。
 2. 還是卡住 → review 或研究改交給另一家 provider 的唯讀 worker。
 3. 每家 provider 的 quota 都偏低 → `pick-worker` 會印出最早的 reset 時間；睡到那時候（留一點緩衝，不要留著 lock 或寫一半的檔案），或用 `--provider grok`，codexbar 看不到 grok 的 quota。
-4. 醒來後重跑 `pick-worker`，再繼續被打斷的工作。quota 數字不要憑印象講；reset 時間不清楚就回報 blocker，不要用猜的。
+4. 醒來後重跑 `pick-worker`，再繼續被打斷的工作。quota 數字絕不憑印象講；reset 時間不清楚就回報 blocker，不要用猜的。
 
 ## Reviewer 授權
 
