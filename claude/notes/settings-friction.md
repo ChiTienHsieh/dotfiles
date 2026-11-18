@@ -4,7 +4,7 @@
 
 ## 修改 Claude Code 設定
 
-- `settings*.json`、`hooks/`、`skills/`、`plans/`、`scheduled_tasks` 等受保護路徑寫入會跳確認；改 `~/.claude/agents/*.md`、`keybindings.json`、`settings*.json` 前，先跟 user 講清楚為什麼要改。
+- `settings*.json`、`hooks/`、`skills/`、`plans/`、`scheduled_tasks` 等受保護路徑寫入會跳確認；改 `~/.claude/agents/*.md`、`keybindings.json`、`settings*.json` 前，先跟 user 講清楚為什麼要改，他同意了再動手。
 - 把相關設定修改整併後再動，不要一次編一行、反覆觸發確認。
 
 ## 改設定就能根治的摩擦 → 建議 `/fork`
