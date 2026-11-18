@@ -1,23 +1,19 @@
-# MCQ, Shotcall, and Adaptive Response
+# MCQ、shotcall 與怎麼回應答案
 
-Ask exactly one substantive question at a time. The chat question is the sole
-authority for progression.
+一次只問一題有料的問題。能不能前進，只看聊天裡這一題的回答。
 
-## Choose the Question Type
+## 選題型
 
-- **quiz:** tests understanding and has one correct answer. Use by default for
-  pure teaching.
-- **shotcall:** settles a real design decision. Use by default for preflight and
-  debrief decision points; the learner's pick is the decision, not a guess at a
-  hidden correct answer.
+- **quiz**：測理解，只有一個正確答案。純教學預設用這個。
+- **shotcall**：決定一個真實的設計取捨。preflight 和 debrief 的決策點預設用這個；學習者選的就是決定，不是在猜藏起來的正確答案。
 
-The learner may request either type by name mid-session.
+學習者可以在課中直接點名要哪一種。
 
-## Shared Format
+## 共用格式
 
-- Use bold for the question, not heading syntax.
-- Put each option on its own line without blank lines between options.
-- Match difficulty to the current level and selected depth.
+- 題目用粗體，不用標題語法。
+- 選項一行一個，選項之間不空行。
+- 難度跟著目前這關和選的深度走。
 
 ```markdown
 **問題: <question>**
@@ -30,68 +26,55 @@ D) <option D>
 ---
 ```
 
-## Quiz Anti-Tells
+## Quiz 不能洩題
 
-Make the learner reason instead of reading the shape of the answer:
+要讓學習者真的想，不是看答案的形狀猜：
 
-- Vary the correct position genuinely across A/B/C/D. Check the previous 2–3
-  levels, spread positions roughly evenly across the session, and choose a
-  different slot when a pattern is forming.
-- Keep position history only in session working memory; never persist it.
-- Keep all options roughly equal in length. Put the full justification after the
-  answer, not in the correct option.
-- Make three options plausible through real misconceptions, half-truths, wrong
-  layers, or true-but-irrelevant claims.
-- At depth 1, softer distractors are acceptable. At depth 2–3, use near-misses
-  rather than strawmen.
-- Exactly one option may be deliberately absurd for fun; it must not become
-  accidentally correct.
+- 正確答案的位置要真的在 A/B/C/D 之間換。回頭看前兩三關放在哪，整堂課大致平均分配，發現開始有規律就換一個位置。
+- 位置紀錄只放在這個 session 的工作記憶裡，不寫進任何檔案。
+- 四個選項長度差不多。完整的理由放在回應答案時講，不要塞在正確選項裡。
+- 錯誤選項要用真的會有人誤會的點、半對半錯的說法、層次搞錯、或對但無關的敘述，三個都要像真的。
+- 深度 1 的錯誤選項可以軟一點；深度 2 到 3 要用差一點就對的，不要立稻草人。
+- 最多一個選項可以故意荒謬搞笑，但不能剛好變成對的。
 
-## Shotcall Contract
+## Shotcall 的約定
 
-- Offer at least three serious, defensible options with real tradeoffs. A joke
-  option may remain but does not count as one of the serious choices.
-- Mark the agent's recommendation with ★ and one concise reason. Recommendation
-  position may be explicit, but option lengths should remain comparable.
-- Teach the relevant concept and hidden cost before asking; a bare poll is not a
-  preflight.
-- Treat the learner's choice as authoritative. There is no wrong-answer flow.
-- Accept a better out-of-list option or principle and record its substance as
-  the decision.
-- Record the decision content, never the option letter.
-- Ask one shotcall per turn.
+- 至少給三個認真、站得住腳、各有取捨的選項。搞笑選項可以留，但不算在三個裡面。
+- agent 的推薦用 ★ 標出來，附一句理由。推薦放哪個位置可以明講，但選項長度要差不多。
+- 問之前先把相關概念和看不見的代價教完；只丟一個投票不算 preflight。
+- 學習者選什麼就是什麼，shotcall 沒有「答錯」這條路。
+- 學習者提出清單外更好的選項或原則就接受，把內容記成決定。
+- 記決定的內容，不記選項字母。
+- 一回合只問一個 shotcall。
 
-## Respond to a Quiz
+## 回應 quiz 的答案
 
-### Correct
+### 答對
 
-Confirm briefly, explain why it works, then advance and preview the next level.
+簡短確認，講為什麼這樣是對的，然後前進並預告下一關。
 
 ### 答錯
 
-語氣一樣鼓勵，留在同一關。換一個真的不一樣的角度重講：職場鬼故事模式就換一個事故（Ben 弄壞別的東西），類比模式就換一個場景。不要把同一段解釋換幾個字就重貼。然後出一題新的檢查題；只有會影響後面怎麼教的時候才記缺口。
+語氣一樣鼓勵，留在同一關。換一個真的不一樣的角度重講：職場鬼故事模式就換一個事故（讓 Ron 或 Harry 弄壞別的東西），類比模式就換一個場景。不要把同一段解釋換幾個字就重貼。然後出一題新的檢查題；只有會影響後面怎麼教的時候才記缺口。
 
 重試通過後，在給學習者看的進度表把這關標「逆轉」，收尾慶祝會特別標這幾關。
 
-Use this miss ladder:
+連續答錯照這個階梯處理：
 
-- 2 misses: use a simpler analogy or narrower example.
-- 3 misses: isolate the missing prerequisite.
-- 4+ misses: ask whether to split smaller, pause, or switch to a simpler concept.
+- 錯 2 次：換更簡單的類比，或把例子縮小。
+- 錯 3 次：把缺的先備知識單獨抓出來補。
+- 錯 4 次以上：問學習者要拆更小、先停一下，還是換個簡單一點的概念。
 
-## Respond to a Shotcall
+## 回應 shotcall 的選擇
 
-Confirm the chosen tradeoff, explain its main consequence, and silently record
-the decision. In debrief, preserving the implemented choice means it can proceed;
-overriding it creates follow-up correction work. Do not label either choice
-correct or wrong.
+確認學習者選的取捨，講它主要的後果，然後靜默記下這個決定。在 debrief 裡，維持原本實作的選擇就是放行；推翻它就會多出一張後續修正的工單。兩種選擇都不要標成對或錯。
 
 ## 定位小測驗
 
 學習者說某關太難、整則訊息只打 `quiz me`、Level 0 回碼後面加 `?`（例如 `A2H?`），或開課時摸不清學習者的起點，就先用定位小測驗找出哪裡已經會、哪裡要補。打 `quiz me` 是要做定位小測驗，不是要這關的 quiz。目的是定位，不是考倒人；開頭講一句「先問三題，看看你現在的程度」，讓學習者知道答錯也沒關係。
 
 - 通常三題，一次只出一題，學習者答完才出下一題。三題各打一個這門課接下來最需要的先備知識，不要三題都在考同一件事。
-- 每一題答完都不走上面「Respond to a Quiz」的流程：答對簡短確認，不預告下一關；答錯、回「不會」、回「用猜的」（猜對也算）都只記成缺口，不追問、不重講，直接出下一題，教到那關再補。這些缺口不是每個都寫進學習紀錄，照 `learning-records.md` 的更新門檻。
+- 每一題答完都不走上面「回應 quiz 的答案」的流程：答對簡短確認，不預告下一關；答錯、回「不會」、回「用猜的」（猜對也算）都只記成缺口，不追問、不重講，直接出下一題，教到那關再補。這些缺口不是每個都寫進學習紀錄，照 `learning-records.md` 的更新門檻。
 - 學習者作答時順手補的推理（例如「這要看設定」）比選了哪個選項更看得出程度。回應時點出那句推理好在哪，肯定它。
 - 三題答完，用一兩句話總結哪些已經會、哪些要補，接著說課程怎麼照結果調整：哪關前面插一關補、哪關講快一點。進度表跟著改。
 

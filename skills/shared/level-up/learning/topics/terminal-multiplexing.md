@@ -4,7 +4,7 @@
 
 ## 證據
 
-- 能在情境題區分 pane、window、session、client 與 server，理解 detach 的持續性及還原配置不等於還原現場；仍缺實機操作練習。
+- 能在情境題區分 pane、window、session、client 與 server，理解 detach 之後 session 還活著，以及還原配置不等於還原現場；仍缺實機操作練習。
 - 能判斷 mouse mode 開啟時，終端機會把拖曳事件交給 tmux，而非先完成原生選取。
 
 ## 下一步

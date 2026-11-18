@@ -1,62 +1,62 @@
-# Kaomoji Guide for PingFang TC Font
+# PingFang TC 字型的 Kaomoji 指南
 
-This guide documents which kaomoji render correctly in Typst with PingFang TC font (macOS default Chinese font).
+這份指南記錄哪些 kaomoji 在 Typst 搭配 PingFang TC 字型（macOS 預設中文字型）下能正常顯示。
 
-## Tested & Safe Kaomoji
+## 測過、安全的 Kaomoji
 
-These kaomoji have been tested and render correctly:
+這些 kaomoji 測過了，顯示正常：
 
-### Happy/Positive
-- `╰(°▽°)╯` - Very happy, celebratory
-- `(°▽°)` - Simple happy face
-- `(￣▽￣)／` - Casual, relaxed greeting
+### 開心／正向
+- `╰(°▽°)╯` - 很開心、慶祝
+- `(°▽°)` - 簡單的笑臉
+- `(￣▽￣)／` - 隨興、放鬆的打招呼
 
-### Neutral/Shrug
-- `┐(￣ヘ￣)┌` - Shrug, mild frustration
-- `¯\_(ツ)_/¯` - Classic shrug (ASCII version)
+### 中性／聳肩
+- `┐(￣ヘ￣)┌` - 聳肩、有點無奈
+- `¯\_(ツ)_/¯` - 經典聳肩（ASCII 版）
 
-### Surprised
-- `ヽ(°〇°)ﾉ` - Surprised with raised arms
+### 驚訝
+- `ヽ(°〇°)ﾉ` - 驚訝、舉起雙手
 
-### Working Hard
-- `(ง •̀_•́)ง` - Fighting spirit (may need testing)
+### 努力中
+- `(ง •̀_•́)ง` - 鬥志滿滿（可能還要再測）
 
-## Problematic Characters (Avoid)
+## 有問題的字元（避免）
 
-These characters don't render properly in PingFang TC:
+這些字元在 PingFang TC 下顯示不正常：
 
-### Markdown Checkboxes
-- `- [ ]` and `- [x]` - Render as weird squares in Typst PDF
-- **Solution**: Use plain bullet points `- Item` instead
-- Or use emoji checkmarks if needed: `✓` (but test first)
+### Markdown 勾選框
+- `- [ ]` 和 `- [x]` - 在 Typst PDF 裡會變成奇怪的方塊
+- **解法**：改用一般的項目符號 `- Item`
+- 真的需要的話，也可以用 emoji 勾勾：`✓`（但先測）
 
-### Kaomoji - Combining Characters Issue
-- `(◕‿◕)` - The `‿` (undertie) renders as square
-- `(◕_◕)` - May work as alternative
+### Kaomoji - 組合字元 (combining characters) 的問題
+- `(◕‿◕)` - `‿`（undertie）會變成方塊
+- `(◕_◕)` - 可以試試這個替代版
 
-### Thai/Special Scripts
-- `(๑•̀ㅂ•́)و✧` - Thai `๑` and Arabic `و` don't render
-- Anything with `๑`, `و`, `✧` characters
+### 泰文／特殊文字
+- `(๑•̀ㅂ•́)و✧` - 泰文 `๑` 和阿拉伯文 `و` 顯示不出來
+- 任何含 `๑`、`و`、`✧` 的都不行
 
-### Emoji-Style
-- Most emoji don't render well in PDF
-- Stick to ASCII-based kaomoji
+### Emoji 風格
+- 大多數 emoji 在 PDF 裡顯示不好
+- 只用 ASCII 系的 kaomoji
 
-## Testing New Kaomoji
+## 測新的 Kaomoji
 
-To test a kaomoji:
+要測一個 kaomoji：
 
-1. Add it to a .typ file
-2. Compile with `typst compile file.typ`
-3. Open PDF and check for squares (□) or missing characters
-4. If squares appear, the kaomoji is not safe to use
+1. 把它加進一個 .typ 檔
+2. 用 `typst compile file.typ` 編譯
+3. 打開 PDF，看有沒有方塊（□）或缺字
+4. 出現方塊，這個 kaomoji 就不能用
 
-## Typst Syntax Note
+## Typst 語法提醒
 
-In Typst, use `#h(0.3em)` to add spacing before kaomoji:
+在 Typst 裡，kaomoji 前面用 `#h(0.3em)` 加一點間距：
 
 ```typst
 - 應該可以做好 #h(0.3em) (°▽°)
 ```
 
-This prevents the kaomoji from touching the preceding text.
+這樣 kaomoji 才不會貼著前面的文字。
