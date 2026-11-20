@@ -118,8 +118,11 @@ jobs:
           INSTALL_OUTCOME: ${{ steps.install-claude.outcome }}
         shell: bash
         run: |
+          # The shellcheck SC2016 directives below: backticks inside single
+          # quotes are Markdown for the PR comment, not command substitution.
           set -euo pipefail
           failure=''
+          # shellcheck disable=SC2016
           if [ "${INSTALL_OUTCOME}" != success ]; then
             failure='Claude Code CLI 沒有裝起來。'
           elif [ -z "${CLAUDE_CODE_OAUTH_TOKEN}" ]; then
@@ -175,6 +178,7 @@ jobs:
 
           # Fail closed: anything other than an explicit PASS blocks the merge.
           verdict=unavailable
+          # shellcheck disable=SC2016
           if [ -n "${failure}" ]; then
             {
               echo "**審查沒有跑起來。** ${failure}所以審查關卡不通過。"
@@ -193,6 +197,7 @@ jobs:
           fi
           echo "verdict=${verdict}" >> "${GITHUB_OUTPUT}"
 
+          # shellcheck disable=SC2016
           {
             echo '<!-- dotfiles-claude-review -->'
             case "${verdict}" in
