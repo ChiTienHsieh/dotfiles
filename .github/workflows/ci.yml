@@ -235,9 +235,29 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Lint GitHub Actions workflows
+        # Catches mistakes GitHub only reports at run time, or never: typos
+        # in expressions, needs on a missing job, bad contexts, and
+        # shellcheck findings in run scripts. ai-review.yml runs from the
+        # base branch, so a broken edit would otherwise surface only after
+        # it merges.
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        shell: bash
+        run: |
+          set -euo pipefail
+          # actionlint skips run scripts silently when shellcheck is missing.
+          shellcheck --version
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            --output "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}"
+          echo "${ACTIONLINT_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check --strict
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
+          "${RUNNER_TEMP}/actionlint" -color
+
       - name: Audit GitHub Actions workflows
-        # TODO: Add actionlint. It used to reject the copilot-requests
-        # permission; no workflow asks for that permission any more.
         uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
         with:
           advanced-security: false
