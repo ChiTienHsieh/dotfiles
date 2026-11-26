@@ -1,81 +1,81 @@
-# HTML Artifact Patterns
+# HTML Artifact 模式
 
-Use this reference when an HTML artifact would be more useful than Markdown. Pick the smallest pattern that makes the work easier to review, compare, manipulate, or send back to Codex.
+HTML artifact 比 Markdown 更好用時讀這份參考。挑能讓工作更好 review、比較、操作，或送回 Codex 的最小模式。
 
-This catalog is inspired by Thariq Shihipar's HTML effectiveness examples and the public `dogum/html-artifacts` skill. Use it as pattern guidance, not as a requirement to make every output elaborate.
+這份目錄的靈感來自 Thariq Shihipar 的 HTML effectiveness 範例和公開的 `dogum/html-artifacts` skill。拿它當模式參考，不是要求每個輸出都做得很花。
 
-## Planning And Exploration
+## 計畫與探索
 
-Use when the user needs to compare options, choose a path, or inspect tradeoffs.
+使用者要比較選項、選一條路，或檢查取捨時用。
 
-- **Implementation plan**: sections for goal, constraints, phases, risks, test plan, and open questions; add status toggles only if the artifact will be revisited.
-- **Decision matrix**: sortable table with criteria, weights, score, rationale, and recommended option.
-- **Architecture explorer**: split-pane diagram plus details panel for components, data flow, ownership, and failure modes.
-- **Roadmap board**: grouped columns for now/next/later or milestone-based delivery; include copyable task lists.
+- **實作計畫**：目標、限制、階段、風險、測試計畫、未決問題各一段；只有 artifact 之後還會回來看時才加狀態切換。
+- **決策矩陣**：可排序表格，欄位有條件、權重、分數、理由和建議選項。
+- **架構瀏覽器**：分割面板，一邊是圖解、一邊是細節面板，看元件、資料流、負責歸屬和失敗模式。
+- **Roadmap 看板**：依 now／next／later 或里程碑分欄；附可複製的任務清單。
 
-Useful controls: tabs, filters, priority chips, expandable rationale, copy-as-Markdown.
+好用的控制項：tab、篩選、優先順序標籤 (chip)、可展開的理由、複製成 Markdown。
 
-## Code Review And Understanding
+## Code Review 與理解程式碼
 
-Use when Markdown would hide relationships between files, risks, and suggested fixes.
+Markdown 會藏住檔案、風險和建議修法之間的關係時用。
 
-- **Review dashboard**: findings by severity, affected area, status, and test coverage; keep the highest-risk issue visible first.
-- **Diff review walkthrough**: file list on the left, selected explanation on the right; use this for conceptual review, not as a replacement for real diffs.
-- **Module map**: nodes for modules and edges for imports, data flow, or ownership; link each node to key files.
-- **Risk register**: table for behavior risk, blast radius, mitigation, owner, and verification.
+- **Review dashboard**：發現的問題依嚴重度、影響範圍、狀態和測試覆蓋排列；風險最高的問題放最前面、一直看得到。
+- **Diff review 走讀**：左邊檔案清單，右邊是選中檔案的說明；用在概念層的 review，不是拿來取代真的 diff。
+- **模組地圖**：節點是模組，邊是 import、資料流或負責歸屬；每個節點連到關鍵檔案。
+- **風險清單 (risk register)**：表格列出行為風險、波及範圍 (blast radius)、緩解方式、負責人和驗證方式。
 
-Useful controls: severity filters, file filters, copy finding, collapse resolved items.
+好用的控制項：嚴重度篩選、檔案篩選、複製單筆發現、收合已解決的項目。
 
-## Design Systems And Prototypes
+## 設計系統與 Prototype
 
-Use when visual comparison or interaction is the point of the deliverable.
+成品的重點就是視覺比較或互動時用。
 
-- **Token sheet**: colors, typography, spacing, radii, shadows, and component examples in one responsive page.
-- **Component variants**: grid of states, sizes, empty/error/loading variants, and accessibility notes.
-- **Clickable flow**: simple state machine with screens, transitions, and realistic copy.
-- **Animation sandbox**: controls for duration, easing, delay, density, and reduced-motion behavior.
+- **Token 表**：顏色、字體、間距、圓角、陰影和元件範例，放在同一個響應式頁面。
+- **元件變體**：各種狀態、尺寸、空／錯誤／載入中變體排成格子，附無障礙備註。
+- **可點擊的流程**：簡單的狀態機，有畫面、轉場和貼近真實的文案。
+- **動畫 sandbox**：可調時長、easing、延遲、密度，以及減少動態 (reduced-motion) 時的行為。
 
-Useful controls: theme switcher, state toggles, viewport preview, copy CSS variables.
+好用的控制項：主題切換、狀態切換、viewport 預覽、複製 CSS 變數。
 
-## Diagrams And Decks
+## 圖解與簡報
 
-Use when spatial arrangement carries meaning.
+空間排列本身帶有意義時用。
 
-- **Inline SVG diagram**: best for flows, sequence diagrams, system maps, and lifecycle views.
-- **Timeline**: best for incidents, migrations, launch plans, or research chronology.
-- **Slide deck**: full-screen sections with keyboard navigation when the user needs a presentation-like artifact.
-- **Comparison wall**: side-by-side panels for vendors, APIs, frameworks, or product options.
+- **Inline SVG 圖解**：最適合流程、序列圖、系統地圖和生命週期。
+- **時間軸**：最適合事故、遷移、上線計畫或研究的時間順序。
+- **投影片**：全螢幕分段加鍵盤翻頁，使用者要類似簡報的 artifact 時用。
+- **並排比較牆**：並排面板比較廠商、API、框架或產品選項。
 
-Useful controls: fit-to-screen, section nav, keyboard arrows, export speaker notes.
+好用的控制項：縮放到符合螢幕、段落導覽、鍵盤方向鍵、匯出講者備註。
 
-## Research And Reports
+## 研究與報告
 
-Use when the user needs a readable synthesis with source grouping, confidence, or multiple lenses.
+使用者要一份好讀的整理，有來源分組、信心程度或多種角度時用。
 
-- **Research synthesis**: summary, key claims, evidence, caveats, and source list.
-- **Status report**: current state, milestones, blockers, risks, and next actions.
-- **Incident report**: timeline, impact, detection, root cause, remediation, and follow-ups.
-- **Knowledge map**: topics, relationships, unresolved questions, and recommended reading order.
+- **研究整理**：摘要、主要論點、證據、但書和來源清單。
+- **狀態報告**：目前狀態、里程碑、卡住的地方、風險和下一步。
+- **事故報告**：時間軸、影響、怎麼發現、根本原因、修復和後續追蹤。
+- **知識地圖**：主題、關聯、未解的問題和建議閱讀順序。
 
-Useful controls: section nav, confidence filters, copy citation block, print-friendly mode.
+好用的控制項：段落導覽、信心程度篩選、複製引用區塊、方便列印的模式。
 
-## Custom Editors
+## 自訂編輯器
 
-Use when the user needs to manipulate structured data before bringing it back to Codex or another tool.
+使用者要先改結構化資料，再帶回 Codex 或其他工具時用。
 
-- **Triage board**: edit priority, owner, label, status, and notes; export Markdown or JSON.
-- **Prompt tuner**: edit variables, compare prompt variants, and copy the selected prompt.
-- **Feature flag editor**: toggle flags, variants, rollout notes, and export config.
-- **Content planner**: reorder sections, edit titles, and export outline.
+- **Triage 看板**：編輯優先順序、負責人、標籤、狀態和備註；匯出 Markdown 或 JSON。
+- **Prompt 調整器**：編輯變數、比較 prompt 變體、複製選中的 prompt。
+- **Feature flag 編輯器**：切換 flag、變體、推出備註，匯出設定。
+- **內容規劃器**：重排段落、改標題、匯出大綱。
 
-Useful controls: local-only state, reset, import JSON, export JSON, copy Markdown.
+好用的控制項：只存本機的狀態、重設、匯入 JSON、匯出 JSON、複製 Markdown。
 
-## Practical Checks
+## 實務檢查
 
-- Make the artifact useful before making it pretty.
-- Keep content visible and scannable on mobile and desktop.
-- Keep interactions obvious; hidden magic is just documentation debt wearing a nice jacket.
-- Provide copy/export when the artifact is part of an agent loop.
-- Use tables for dense comparable data, not cards.
-- Use cards only for repeated items where each item has mixed content.
-- Prefer native browser APIs over dependencies.
+- 先讓 artifact 有用，再弄漂亮。
+- 手機和桌機上內容都看得到、掃得快。
+- 互動要一眼看得出來；藏起來的魔法只是穿了件好看外套的文件債。
+- artifact 是 agent 流程的一環時，提供複製／匯出。
+- 密集、可比較的資料用表格，不用卡片。
+- 卡片只用在重複項目，而且每個項目內容混雜時。
+- 優先用瀏覽器原生 API，不加依賴。

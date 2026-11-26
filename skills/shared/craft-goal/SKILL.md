@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Craft Goal
 
-使用這個 skill，把一個粗略任務想法整理成下一個 agent session 可以可靠執行的 handoff prompt。目標不是寫漂亮 prompt，而是做出能交棒、能驗證、風險邊界清楚的 handoff。
+使用這個 skill，把一個粗略的任務想法整理成下一個 agent session 能照著跑完的 handoff prompt。目標不是寫漂亮 prompt，而是做出能交棒、能驗證、風險邊界清楚的 handoff。
 
 ## 先選接棒者：CC 還是 Codex
 
@@ -44,7 +44,7 @@ disable-model-invocation: true
 4. **做快速 feasibility check**
    - 檢查相關 repo paths、docs、commands、installed tools、existing config，避免接棒 agent 第一步就失敗。
    - 如果 `/goal` 依賴特定 CLI、plugin、connector、skill、browser automation、或其他工具，確認它不只是「應該存在」，而是當下真的可見且可用。
-   - 對 CLI 工具，至少檢查 command path 與版本；如果使用者要求 latest/up-to-date，確認版本是否符合當下可用資訊或明確標註未驗證。
+   - 對 CLI 工具，至少檢查 command path 與版本；如果使用者要求 latest/up-to-date，確認那個版本真的是現在最新的；查不到就明寫「未驗證」。
    - 對 Playwright CLI、`agent-browser` 這類會被接棒 agent 直接操作的工具，做最低成本 smoke test，例如確認 exact CLI 的 `--version` 與 relevant help command 可執行；若任務依賴 standalone browser，確認可用的啟動方式或把待驗證項寫進 handoff。
    - 不要混淆不同 browser automation surface：Playwright CLI、`agent-browser` CLI、MCP browser tools、以及 in-app browser skill 是不同能力；handoff 必須寫 exact tool name，並驗證同一個 tool。
    - 對 skill/plugin 依賴，確認 skill/plugin 在接棒 agent 當前可見路徑或 tool discovery 裡可見；不要只確認 repo tree 有檔案。
@@ -60,7 +60,7 @@ disable-model-invocation: true
    - 若沒有 subagent 工具或任務明顯 low-risk，改做 self-adversarial pass，並在 brief 裡說明未開 subagent 的原因。
    - 對 review findings 要明確處置：接受並修改、拒絕並說明理由，或列為接棒 agent 必須先確認的 open question。
    - 如果使用者明確要求 reviewer subagent review spec，review 對象應是 **目前最終 spec file**，不是過期 draft prompt。若 review 後又大幅改寫 spec，必須重新 review 或明確說明改動很小、不影響 review 結論。
-   - reviewer 結論若提到已修的 blocking finding，要本地確認檔案真的包含該修正，再告訴使用者「可 review」。
+   - reviewer 結論若提到已修的 blocking finding，要自己在本機確認檔案真的有這個修正，再告訴使用者「可 review」。
 
 6. **產出結果**
    - 給使用者一段簡短 zh-tw brief，方便快速 proofread。
@@ -106,19 +106,19 @@ Report:
 請在 `<repo path>` 依照 `<tracked spec path>` 完成所有任務；<commit/push policy>；完成後回報 <final deliverables>。
 ```
 
-## Task Spec File Guidance
+## 什麼時候要寫 task spec file
 
 出現以下情況時，建立 task spec file：
 
 - `/goal` prompt 超過 `scripts/check_goal_prompt.py` 的上限。
-- 任務有很多步驟、安全規則、或 external systems。
-- 接棒 agent 需要 exact config snippets、topic lists、command formats、verification criteria。
-- 任務之後需要 audit trail。
+- 任務有很多步驟、安全規則，或會碰到外部系統。
+- 接棒的 agent 需要一字不差的 config 片段、主題清單、指令格式、驗證標準。
+- 之後要能回頭查這個任務做了什麼（audit trail）。
 
 依 repo 慣例選檔案位置：
 
-- `runbook/`：operational setup、VM changes、config changes、incident-style handoff。
-- `studies/`：conceptual research 或 analysis。
+- `runbook/`：環境架設、VM 改動、config 改動、事故處理類的交接。
+- `studies/`：概念研究或分析。
 - repo 已有明確 docs/spec 目錄時，沿用既有慣例。
 - 不要在已有結構規則的 repo 裡自行發明新的 top-level directory。
 - spec file 只放接棒 agent 必須讀的 durable instruction。

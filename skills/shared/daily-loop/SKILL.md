@@ -1,93 +1,91 @@
 ---
 name: "daily-loop"
-description: "Mine recent Claude Code and Codex transcripts, identify durable workflow improvements, and ask the user which proposals to apply. Use for the daily loop, reviews of recent sessions, or requests to find recurring workflow friction."
+description: "挖最近的 Claude Code 與 Codex transcript，找出能長期用的工作流程改善，再問使用者要採用哪幾項。用在每日回顧、檢視最近的 session，或使用者想找反覆出現的工作流程摩擦時。"
 disable-model-invocation: true
 ---
 
 # daily-loop
 
-Mine recent agent work, propose 0–2 durable improvements, and let the user choose
-what to apply. Never rewrite rules, skills, scripts, or config before approval.
+挖最近 agent 做過的工作，提出 0 到 2 個能長期用的改善，讓使用者挑要採用哪些。
+使用者同意前，不改任何規則、skill、script 或設定。
 
-## Route direct requests elsewhere
+## 直接的請求轉去負責的地方
 
-- "Remember this / save this guidance" → follow the current memory policy.
-- "Wrap up this session / commit + push" → the `wrap` skill.
-- A direct config, permission, or hook change → use its owning workflow.
+- 「記住這個／把這段指引存起來」→ 照目前的 memory policy 做。
+- 「收尾這個 session／commit + push」→ `wrap` skill。
+- 直接要改設定、權限或 hook → 用負責那塊的 workflow。
 
-## Extract
+## 擷取
 
-Run the helper with checkpointing so the next digest can identify new sessions:
+跑 helper 時帶 checkpoint，下一次 digest 才認得出哪些是新 session：
 
 ```bash
 "$HOME/dotfiles/skills/shared/daily-loop/scripts/mine_transcripts.sh" --since 24 --checkpoint
 ```
 
-Use its digest, not raw transcript `.jsonl`. Treat script-computed signals as
-frequency hints, not conclusions. Run `mine_transcripts.sh --help` for options.
+用它產出的 digest，不要讀原始 transcript 的 `.jsonl`。script 算出來的訊號只是
+頻率提示，不是結論。選項見 `mine_transcripts.sh --help`。
 
-## Workflow
+## 流程
 
-### 1. Read prior proposals
+### 1. 讀之前的提案
 
-Read proposal history in `$HOME/scratch/daily-loop/state.jsonl`: current records
-use `kind:"proposal"`; legacy proposal records may omit `kind` but have both
-`fingerprint` and `status`. A missing file is normal. Do not repeat an idea
-already recorded unless the digest shows clear material recurrence.
+讀 `$HOME/scratch/daily-loop/state.jsonl` 裡的提案紀錄：現在的紀錄用
+`kind:"proposal"`；舊格式的提案紀錄可能沒有 `kind`，但同時有 `fingerprint` 和
+`status`。檔案不存在是正常的。已經記過的想法不要再提，除非 digest 顯示它明顯又
+反覆出現。
 
-### 2. Find candidates
+### 2. 找候選
 
-Look for, in priority order:
+依優先順序找：
 
-1. Recurring multi-step interaction → new skill.
-2. Repeatedly retyped preference → rule, routed through the current memory policy.
-3. Repeated manual command or permission prompt → helper/config improvement.
-4. Repeated errors or retries → friction worth surfacing, even without a fix.
+1. 反覆出現的多步驟互動 → 新 skill。
+2. 一再重打的偏好 → 規則，照目前的 memory policy 歸位。
+3. 重複手動下的指令或重複跳出的權限提示 → helper／設定改善。
+4. 重複的錯誤或重試 → 值得點出來的摩擦，就算還沒有解法。
 
-### 3. Apply the quality gate
+### 3. 過品質關卡
 
-Every proposal must pass all four checks:
+每個提案都要通過這四項檢查：
 
-- **Frequency**: seen in ≥2 distinct sessions OR ≥2 days. One-offs are noise.
-- **Durability**: helps future sessions, not only the current task.
-- **Non-duplication**: absent from existing rules, skills, and prior proposals.
-- **Concreteness**: names the exact owner or target and exact change.
+- **頻率**：至少在 2 個不同 session 或 2 天出現過。只出現一次的是雜訊。
+- **耐久**：對之後的 session 有幫助，不只對眼前這個任務。
+- **不重複**：現有規則、skill、之前的提案裡都沒有。
+- **具體**：寫明負責的 owner 或目標，以及確切要改什麼。
 
-Drop any candidate that fails. Return no proposal when none qualifies.
+沒過的候選就丟掉。沒有一個合格就不提案。
 
-### 4. Present proposals and ask
+### 4. 列出提案並詢問
 
-Rank at most two proposals. For each include:
+最多排兩個提案。每個都要寫：
 
-- **What and where**: type plus exact target or workflow owner.
-- **Why now**: digest evidence and expected payoff.
-- **Proposed edit**: exact rule, script change, or skill outline.
+- **改什麼、改哪裡**：類型，加上確切的目標或負責的 workflow。
+- **為什麼是現在**：digest 裡的證據和預期收穫。
+- **建議的修改**：確切的規則、script 改法或 skill 大綱。
 
-Ask the user which items to apply. Use the runtime's structured choice mechanism
-when available; otherwise use a numbered list with a "none" choice. Stop here
-until the user approves specific items.
+問使用者要採用哪幾項。runtime 有結構化的選擇機制就用它；沒有就用編號清單，加一個
+「都不要」的選項。停在這裡，等使用者同意具體項目再繼續。
 
-### 5. Route approved work
+### 5. 把同意的工作送去對的地方
 
-- Rule or memory → current memory/SSOT policy.
-- New skill → skill authoring workflow.
-- Config, permission, or hook → owning workflow.
-- Existing helper → normal scoped implementation.
+- 規則或 memory → 目前的 memory／SSOT policy。
+- 新 skill → skill 撰寫流程。
+- 設定、權限或 hook → 負責那塊的 workflow。
+- 現有 helper → 一般有範圍限制的實作。
 
-### 6. Record every proposal outcome
+### 6. 記下每個提案的結果
 
-Append one `kind:"proposal"` JSON line per item, including rejected and deferred
-items, to `$HOME/scratch/daily-loop/state.jsonl`:
+每一項（包括被拒絕和延後的）都在 `$HOME/scratch/daily-loop/state.jsonl` 追加一行
+`kind:"proposal"` 的 JSON：
 
 ```json
 {"kind":"proposal","ts":"<ISO8601>","day":"<YYYY-MM-DD>","type":"new-skill|rule|script-change","fingerprint":"<stable-id>","target_file":"<path>","summary":"<one line>","status":"accepted|rejected|deferred"}
 ```
 
-Build `fingerprint` from type, normalized target, and pattern key. The helper
-alone writes `kind:"run"` records and owns their source-prefixed session keys;
-do not hand-write run records.
+`fingerprint` 由類型、正規化後的目標和 pattern key 組成。`kind:"run"` 紀錄只由
+helper 寫，它帶來源前綴的 session key 也由 helper 管；不要手寫 run 紀錄。
 
-## Privacy
+## 隱私
 
-Digest snippets are verbatim user prompts. Keep the digest and state under
-`$HOME/scratch/daily-loop/`; never commit that directory.
+digest 裡的片段是使用者 prompt 的原文。digest 和 state 都放在
+`$HOME/scratch/daily-loop/` 底下；那個目錄永遠不 commit。
